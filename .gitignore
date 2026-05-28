@@ -34,3 +34,13 @@ coverage/
 # Build
 dist/
 build/
+
+# Vercel
+.vercel/
+
+# Diagnostic
+.next.diagnostics
+.next.trace*
+
+# Sentry
+.sentryclirc

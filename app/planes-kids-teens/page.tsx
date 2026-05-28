@@ -4,7 +4,7 @@ import PlanCard from "@/components/cards/PlanCard";
 import { PLANES_KIDS } from "@/data/plans-kids";
 
 export const metadata: Metadata = {
-  title: "Planes Kids & Teens | 4ustudioacademy",
+  title: "Planes Kids & Teens",
   description: "Planes de música para niños y adolescentes: descubre la música, graba tu canción.",
 };
 
@@ -20,15 +20,13 @@ export default function PlanesKidsTeensPage() {
 
         <div className="relative z-20 max-w-7xl mx-auto w-full">
           <h1
-            className="text-white font-bold text-4xl md:text-5xl lg:text-6xl drop-shadow-[0_0_15px_rgba(255,255,255,0.08)]"
-            style={{ fontFamily: "'Poppins', sans-serif" }}
+            className="text-white font-bold text-4xl md:text-5xl lg:text-6xl drop-shadow-[0_0_15px_rgba(255,255,255,0.08)] font-poppins"
           >
             Planes{" "}
             <span className="text-[#ff7a00] drop-shadow-[0_0_12px_rgba(255,122,0,0.3)]">Kids &amp; Teens</span>
           </h1>
           <p
-            className="text-white/50 mt-4 text-lg max-w-xl"
-            style={{ fontFamily: "'Roboto', sans-serif" }}
+            className="text-white/50 mt-4 text-lg max-w-xl font-roboto"
           >
             Desarrolla confianza, autoestima y amor por la música desde temprana edad.
           </p>

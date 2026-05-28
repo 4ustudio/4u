@@ -4,7 +4,7 @@ import PlanCard from "@/components/cards/PlanCard";
 import { PLANES } from "@/data/plans-adults";
 
 export const metadata: Metadata = {
-  title: "Planes | 4ustudioacademy",
+  title: "Planes",
   description: "Planes de música para jóvenes y adultos: graba tu canción, conviértete en artista.",
 };
 
@@ -20,15 +20,13 @@ export default function PlanesPage() {
 
         <div className="relative z-20 max-w-7xl mx-auto w-full">
           <h1
-            className="text-white font-bold text-4xl md:text-5xl lg:text-6xl drop-shadow-[0_0_15px_rgba(255,255,255,0.08)]"
-            style={{ fontFamily: "'Poppins', sans-serif" }}
+            className="text-white font-bold text-4xl md:text-5xl lg:text-6xl drop-shadow-[0_0_15px_rgba(255,255,255,0.08)] font-poppins"
           >
             Planes para Jóvenes y{" "}
             <span className="text-[#ff7a00] drop-shadow-[0_0_12px_rgba(255,122,0,0.3)]">Adultos</span>
           </h1>
           <p
-            className="text-white/50 mt-4 text-lg max-w-xl"
-            style={{ fontFamily: "'Roboto', sans-serif" }}
+            className="text-white/50 mt-4 text-lg max-w-xl font-roboto"
           >
             Graba tu canción, conviértete en artista, construye tu proyecto musical.
           </p>

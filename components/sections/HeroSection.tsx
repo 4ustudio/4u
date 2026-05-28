@@ -1,4 +1,3 @@
-import Link from "next/link";
 import StatsCard from "@/components/cards/StatsCard";
 import GlowEffect from "@/components/ui/GlowEffect";
 import Container from "@/components/ui/Container";
@@ -19,6 +18,8 @@ export default function HeroSection() {
           backgroundImage: "url('/images/banner-principal.jpg')",
           backgroundPosition: 'center right',
         }}
+        role="img"
+        aria-label="4uStudio Academy — estudio de música profesional"
       />
 
       <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-transparent" />
@@ -31,32 +32,23 @@ export default function HeroSection() {
         <Container>
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-12">
             <div className="max-w-xl">
-              <p
-                className="text-sm md:text-base font-medium tracking-[0.2em] uppercase text-[#ff7a00] mb-6"
-                style={{ fontFamily: "'Poppins', sans-serif" }}
-              >
+              <p className="text-sm md:text-base font-medium tracking-[0.2em] uppercase text-[#ff7a00] mb-6 font-poppins">
                 🎵 LA MÚSICA TE TRANSFORMA
               </p>
 
-              <h1
-                className="text-6xl md:text-7xl lg:text-8xl font-bold text-white leading-[1.05] mb-8"
-                style={{ fontFamily: "'Poppins', sans-serif" }}
-              >
+              <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold text-white leading-[1.05] mb-8 font-poppins">
                 Cumple tus{" "}
                 <span className="text-[#ff7a00] drop-shadow-[0_0_20px_rgba(255,122,0,0.5)]">sueños</span>
                 {" "}musicales
               </h1>
 
-              <p
-                className="text-base md:text-lg text-white/60 max-w-lg mb-10 leading-relaxed"
-                style={{ fontFamily: "'Roboto', sans-serif" }}
-              >
+              <p className="text-base md:text-lg text-white/60 max-w-lg mb-10 leading-relaxed font-roboto">
                 Aprende, crea y conecta con tu pasión. Cursos para niños, adolescentes y adultos de todos los niveles.
               </p>
 
               <div className="flex flex-wrap gap-4">
                 <Button href="/planes" size="md">
-                  <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                     <path d="M8 5v14l11-7z"/>
                   </svg>
                   Ver Video

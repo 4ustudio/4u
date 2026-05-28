@@ -3,7 +3,8 @@ import PageLayout from "@/components/layout/PageLayout";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Corporativo | 4ustudioacademy",
+  title: "Corporativo",
+  description: "Soluciones de audio estratégico para marcas: jingles, audio branding y producción técnica profesional.",
 };
 
 const SERVICES = [
@@ -16,16 +17,12 @@ export default function CorporativoPage() {
   return (
     <PageLayout>
       <section className="relative w-full overflow-hidden">
-        {/* Background glow */}
         <div className="absolute top-1/4 -left-40 w-96 h-96 bg-orange-500/10 blur-3xl rounded-full" />
         <div className="absolute bottom-1/4 -right-40 w-80 h-80 bg-orange-500/5 blur-3xl rounded-full" />
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 py-24 md:py-32">
           <div className="max-w-3xl">
-            <h1
-              className="text-4xl md:text-5xl font-bold text-white mb-8 leading-tight"
-              style={{ fontFamily: "'Poppins', sans-serif" }}
-            >
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-8 leading-tight font-poppins">
               Audio{" "}
               <span className="text-[#ff7a00] drop-shadow-[0_0_12px_rgba(255,122,0,0.3)]">Estratégico</span>{" "}
               para Marcas
@@ -33,10 +30,7 @@ export default function CorporativoPage() {
           </div>
 
           <div className="w-full bg-white/[0.04] backdrop-blur-xl border border-white/10 rounded-2xl p-8 md:p-12 shadow-2xl max-w-4xl">
-            <p
-              className="text-white/60 text-lg leading-relaxed mb-8"
-              style={{ fontFamily: "'Roboto', sans-serif" }}
-            >
+            <p className="text-white/60 text-lg leading-relaxed mb-8 font-roboto">
               Soluciones de audio profesional para empresas que desean comunicar con
               identidad sonora única y memorable.
             </p>
@@ -44,17 +38,16 @@ export default function CorporativoPage() {
               {SERVICES.map(({ text }) => (
                 <li
                   key={text}
-                  className="flex items-center gap-3 text-white/60"
-                  style={{ fontFamily: "'Roboto', sans-serif" }}
+                  className="flex items-center gap-3 text-white/60 font-roboto"
                 >
-                  <span className="text-[#ff7a00] font-bold drop-shadow-[0_0_4px_rgba(255,122,0,0.4)] flex-shrink-0">✓</span>
+                  <span className="text-[#ff7a00] font-bold drop-shadow-[0_0_4px_rgba(255,122,0,0.4)] flex-shrink-0" aria-hidden="true">✓</span>
                   <span>{text}</span>
                 </li>
               ))}
             </ul>
             <Link
               href="/contacto"
-              className="inline-block text-white font-semibold px-8 py-4 rounded-full transition-all duration-300 shadow-xl shadow-[#ff7a00]/20 hover:shadow-2xl hover:shadow-[#ff7a00]/40 hover:-translate-y-0.5"
+              className="inline-block text-white font-semibold px-8 py-4 rounded-full transition-all duration-300 shadow-xl shadow-[#ff7a00]/20 hover:shadow-2xl hover:shadow-[#ff7a00]/40 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff7a00]/50"
               style={{ backgroundColor: "#ff7a00", fontFamily: "'Poppins', sans-serif" }}
             >
               Solicitar cotización

@@ -32,14 +32,13 @@ export default function CourseCard({ course }: CourseCardProps) {
           {course.title}
         </h3>
         <div className="flex items-center gap-2">
-          <span className="flex items-center gap-1.5">
+          <span className="flex items-center gap-1.5" aria-hidden="true">
             <span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" />
             <span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" />
             <span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" />
           </span>
           <span
-            className="text-xs text-white/50"
-            style={{ fontFamily: "'Roboto', sans-serif" }}
+            className="text-xs text-white/50 font-roboto"
           >
             {course.status}
           </span>

@@ -11,11 +11,6 @@ export interface Course {
   icon: React.ReactNode;
 }
 
-export interface StatsItem {
-  number: string;
-  label: string;
-}
-
 export interface PlanFeature {
   text: string;
 }

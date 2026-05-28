@@ -39,7 +39,7 @@ export default function Button({
       href={href}
       onClick={onClick}
       className={cn(
-        "inline-flex items-center gap-2 font-semibold rounded-full transition-all duration-300",
+        "inline-flex items-center gap-2 font-semibold rounded-full transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff7a00]/50",
         variantStyles[variant],
         sizeStyles[size],
         className

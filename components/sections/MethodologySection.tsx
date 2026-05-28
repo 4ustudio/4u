@@ -5,9 +5,9 @@ import { benefits } from "@/data/benefits";
 
 export default function MethodologySection() {
   return (
-    <section className="w-full py-20 md:py-28 bg-gray-50 relative overflow-hidden">
-      <div className="absolute top-1/3 -left-40 w-80 h-80 bg-[#ff7a00]/5 blur-3xl rounded-full" />
-      <div className="absolute bottom-1/3 -right-40 w-80 h-80 bg-[#ff7a00]/5 blur-3xl rounded-full" />
+    <section className="w-full py-20 md:py-28 bg-gradient-to-b from-amber-50/30 via-white to-amber-50/20 relative overflow-hidden">
+      <div className="absolute top-1/4 -left-40 w-80 h-80 bg-[#ff7a00]/5 blur-3xl rounded-full" />
+      <div className="absolute bottom-1/4 -right-40 w-80 h-80 bg-[#ff7a00]/5 blur-3xl rounded-full" />
 
       <Container>
         <SectionTitle
@@ -17,12 +17,12 @@ export default function MethodologySection() {
           description="Un método probado que te lleva desde tu primera clase hasta tu canción publicada."
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 mt-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 mt-14">
           <div className="space-y-6">
             {methodology.map((step) => (
               <div
                 key={step.number}
-                className="group flex gap-5 p-5 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md hover:border-[#ff7a00]/10 transition-all duration-500"
+                className="group flex gap-5 p-6 rounded-2xl bg-white border border-stone-100 shadow-md hover:shadow-lg hover:border-[#ff7a00]/15 transition-all duration-500"
               >
                 <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#ff7a00]/10 border border-[#ff7a00]/20 flex items-center justify-center">
                   <span className="text-[#ff7a00] font-bold text-sm font-poppins">
@@ -30,10 +30,10 @@ export default function MethodologySection() {
                   </span>
                 </div>
                 <div>
-                  <h3 className="text-gray-900 font-semibold text-lg mb-1.5 font-poppins">
+                  <h3 className="text-gray-900 font-semibold text-lg mb-2 font-poppins">
                     {step.title}
                   </h3>
-                  <p className="text-gray-500 text-sm leading-relaxed font-roboto">
+                  <p className="text-gray-500 text-sm leading-[1.7] font-roboto">
                     {step.description}
                   </p>
                 </div>
@@ -41,11 +41,11 @@ export default function MethodologySection() {
             ))}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             {benefits.map((benefit) => (
               <div
                 key={benefit.title}
-                className="group flex flex-col p-5 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md hover:border-[#ff7a00]/10 hover:-translate-y-0.5 transition-all duration-500"
+                className="group flex flex-col p-5 rounded-2xl bg-white border border-stone-100 shadow-sm hover:shadow-md hover:border-[#ff7a00]/15 hover:-translate-y-0.5 transition-all duration-500"
               >
                 <div className="mb-3 text-[#ff7a00] opacity-70 group-hover:opacity-100 transition-opacity duration-300">
                   {benefit.icon}

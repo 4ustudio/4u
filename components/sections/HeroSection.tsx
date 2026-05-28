@@ -12,7 +12,7 @@ const stats = [
 
 export default function HeroSection() {
   return (
-    <section className="relative w-full min-h-[90vh] overflow-hidden bg-black flex items-center justify-center pt-16">
+    <section className="relative w-full min-h-[90dvh] overflow-hidden bg-black flex items-center justify-center pt-16">
       <div className="absolute inset-0">
         <OptimizedImage
           src="/images/hero/banner-principal.jpg"

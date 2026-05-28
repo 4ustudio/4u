@@ -1,12 +1,42 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import Button from "@/components/ui/Button";
 import { navLinks } from "@/data/navigation";
 
 export default function Header() {
   const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [open]);
+
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === "Escape" && open) {
+      setOpen(false);
+      toggleRef.current?.focus();
+    }
+  }, [open]);
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
+
+  useEffect(() => {
+    if (open && menuRef.current) {
+      const first = menuRef.current.querySelector<HTMLElement>("a, button");
+      first?.focus();
+    }
+  }, [open]);
 
   return (
     <header className="fixed w-full top-0 z-50 bg-black/20 backdrop-blur-xl border-b border-white/10">
@@ -39,6 +69,7 @@ export default function Header() {
           </Button>
 
           <button
+            ref={toggleRef}
             className="lg:hidden flex flex-col gap-1.5 p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff7a00]/50 rounded"
             onClick={() => setOpen(!open)}
             aria-label="Menú de navegación"
@@ -54,10 +85,19 @@ export default function Header() {
 
       {open && (
         <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden"
+          onClick={() => setOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {open && (
+        <div
           id="mobile-menu"
+          ref={menuRef}
           role="navigation"
           aria-label="Navegación móvil"
-          className="lg:hidden border-t border-white/10 bg-black/60 backdrop-blur-xl"
+          className="relative z-50 lg:hidden border-t border-white/10 bg-black/60 backdrop-blur-xl"
         >
           <div className="flex flex-col px-6 lg:px-8 py-4 gap-3">
             {navLinks.map((link) => (

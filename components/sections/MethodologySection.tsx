@@ -1,63 +1,47 @@
-import Container from "@/components/ui/Container";
-import SectionTitle from "@/components/ui/SectionTitle";
-import { methodology } from "@/data/methodology";
-import { benefits } from "@/data/benefits";
+const highlights = [
+  {
+    title: "Metodología práctica",
+    description: "Aprende haciendo música desde el primer día con un enfoque práctico y motivador.",
+    icon: (
+      <path d="M12 3 3 7.5l9 4.5 9-4.5L12 3Zm-6 7v4.5c0 2 2.7 3.5 6 3.5s6-1.5 6-3.5V10" />
+    ),
+  },
+  {
+    title: "Clases presenciales y online",
+    description: "Elige la modalidad que mejor se adapte a tu estilo de vida. Tú decides dónde y cuándo aprender.",
+    icon: (
+      <path d="M4 6h16v10H4zM8 20h8m-4-4v4" />
+    ),
+  },
+  {
+    title: "Acompañamiento personalizado",
+    description: "Te guiamos en cada paso de tu proceso para que sigas creciendo con seguridad y confianza.",
+    icon: (
+      <path d="M16 19c0-2.2-1.8-4-4-4s-4 1.8-4 4M12 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM22 19c0-1.7-1-3.2-2.5-3.8M17 5.3a3 3 0 0 1 0 5.4" />
+    ),
+  },
+];
 
 export default function MethodologySection() {
   return (
-    <section className="w-full py-20 md:py-28 bg-white relative">
-      <Container>
-        <SectionTitle
-          label="Cómo funciona"
-          title="Tu camino"
-          accent="musical"
-          description="Un método probado que te lleva desde tu primera clase hasta tu canción publicada."
-        />
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 mt-14">
-          <div className="space-y-6">
-            {methodology.map((step) => (
-              <div
-                key={step.number}
-                className="flex gap-5 p-6 rounded-xl bg-white border border-stone-100 shadow-sm hover:shadow-md transition-all duration-300"
-              >
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#ff7a00]/10 border border-[#ff7a00]/20 flex items-center justify-center">
-                  <span className="text-[#ff7a00] font-bold text-sm font-poppins">
-                    {String(step.number).padStart(2, "0")}
-                  </span>
-                </div>
-                <div>
-                  <h3 className="text-gray-900 font-semibold text-lg mb-2 font-poppins">
-                    {step.title}
-                  </h3>
-                  <p className="text-gray-500 text-sm leading-[1.7] font-roboto">
-                    {step.description}
-                  </p>
-                </div>
+    <section className="relative w-full bg-white py-3">
+      <div className="home-frame">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+          {highlights.map((item) => (
+            <article key={item.title} className="flex gap-4 rounded-md bg-stone-50 px-5 py-4">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-white text-[#ff7a00] shadow-sm">
+                <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  {item.icon}
+                </svg>
               </div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            {benefits.map((benefit) => (
-              <div
-                key={benefit.title}
-                className="flex flex-col p-5 rounded-xl bg-white border border-stone-100 shadow-sm hover:shadow-md transition-all duration-300"
-              >
-                <div className="mb-3 text-[#ff7a00] opacity-70">
-                  {benefit.icon}
-                </div>
-                <h4 className="text-gray-900 font-semibold text-sm mb-1.5 font-poppins">
-                  {benefit.title}
-                </h4>
-                <p className="text-gray-400 text-xs leading-relaxed font-roboto">
-                  {benefit.description}
-                </p>
+              <div>
+                <h3 className="mb-1 text-[13px] font-bold text-gray-900 font-poppins">{item.title}</h3>
+                <p className="text-[11px] leading-relaxed text-gray-500 font-roboto">{item.description}</p>
               </div>
-            ))}
-          </div>
+            </article>
+          ))}
         </div>
-      </Container>
+      </div>
     </section>
   );
 }

@@ -14,11 +14,11 @@ export default function Home() {
       <Header />
       <HeroSection />
       <HeroFeaturesBar />
-      <TrustBarSection />
       <CoursesSection />
       <MethodologySection />
       <TestimonialStrip />
       <CTASection />
+      <TrustBarSection />
       <Footer />
     </>
   );

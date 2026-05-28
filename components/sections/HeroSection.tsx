@@ -2,20 +2,41 @@ import Button from "@/components/ui/Button";
 import OptimizedImage from "@/components/ui/OptimizedImage";
 
 const stats = [
-  { number: "+1.200", label: "Estudiantes" },
-  { number: "+25", label: "Cursos" },
-  { number: "4.9/5", label: "Valoración" },
+  {
+    number: "+1,200",
+    label: "Estudiantes",
+    icon: (
+      <path d="M12 3 3 7.5l9 4.5 9-4.5L12 3Zm-6 7v4.5c0 2 2.7 3.5 6 3.5s6-1.5 6-3.5V10" />
+    ),
+  },
+  {
+    number: "+25",
+    label: "Cursos",
+    icon: (
+      <path d="M9 18V5l10-2v13M9 18a3 3 0 1 1-2-2.83M19 16a3 3 0 1 1-2-2.83" />
+    ),
+  },
+  {
+    number: "4.9/5",
+    label: "Valoración",
+    icon: (
+      <path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3l-5.6 2.9 1.1-6.2L3 9.6l6.2-.9L12 3Z" />
+    ),
+  },
 ];
 
 const statsRow = (
-  <div className="flex gap-2">
+  <div className="grid grid-cols-3 divide-x divide-white/10 overflow-hidden rounded-2xl border border-white/15 bg-black/45 shadow-2xl backdrop-blur-md">
     {stats.map((stat) => (
       <div
         key={stat.label}
-        className="bg-black/40 backdrop-blur-md border border-white/10 rounded-xl px-3 py-2.5 text-center min-w-[95px] shadow-xl"
+        className="min-w-[92px] px-5 py-3.5 text-center"
       >
-        <p className="text-[#ff7a00] font-bold text-sm font-poppins">{stat.number}</p>
-        <p className="text-white/60 text-[10px] font-roboto">{stat.label}</p>
+        <svg className="mx-auto mb-2 h-5 w-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          {stat.icon}
+        </svg>
+        <p className="text-[#ff7a00] font-bold text-base font-poppins">{stat.number}</p>
+        <p className="text-white/70 text-[10px] font-roboto">{stat.label}</p>
       </div>
     ))}
   </div>
@@ -23,67 +44,76 @@ const statsRow = (
 
 export default function HeroSection() {
   return (
-    <section className="relative w-full min-h-[680px] overflow-hidden bg-black pt-16">
+    <section className="hero-home relative w-full overflow-hidden bg-black">
       <div className="absolute inset-0">
         <OptimizedImage
           src="/images/hero/banner-principal.jpg"
           alt="4uStudio Academy — estudio de música profesional"
           fill
           priority
-          className="object-cover"
+          className="object-cover object-center"
           sizes="100vw"
         />
       </div>
 
-      <div className="absolute inset-0 bg-gradient-to-r from-black/65 via-black/20 to-transparent" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-black/5" />
-      <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at 65% 50%, rgba(255, 122, 0, 0.06) 0%, transparent 60%)' }} />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/45 to-black/15" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/30" />
+      <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 55% 47%, transparent 0 18%, rgba(255, 122, 0, 0.5) 18.15% 18.85%, transparent 19.2% 100%)" }} />
 
-      <div className="relative z-10 w-full max-w-[1280px] mx-auto px-6 lg:px-8 h-full">
-        <div className="flex flex-col lg:flex-row items-start justify-between gap-10 lg:gap-0 min-h-[616px] pt-8 lg:pt-12">
-          <div className="max-w-[480px] w-full">
-            <p className="text-sm md:text-base font-medium tracking-[0.2em] uppercase text-[#ff7a00] mb-4 font-poppins">
-              🎵 LA MÚSICA TE TRANSFORMA
+      <div className="home-frame relative z-10">
+        <div className="hero-home-inner relative">
+          <div className="hero-copy w-full">
+            <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/35 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-white/80 font-poppins backdrop-blur-md">
+              <span className="text-[#ff7a00]">♫</span> LA MÚSICA TE TRANSFORMA
             </p>
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-[1.05] mb-5 font-poppins tracking-[-0.02em]">
+            <h1 className="hero-heading mb-4 font-extrabold text-white font-poppins">
               Cumple tus{" "}
-              <span className="text-[#ff7a00]">sueños</span>
-              {" "}musicales
+              <span className="text-[#ff7a00]">sueños</span>{" "}
+              musicales
             </h1>
-            <p className="text-base md:text-lg text-white/60 max-w-md mb-8 leading-relaxed font-roboto">
-              Aprende, crea y conecta con tu pasión. Cursos para niños, adolescentes y adultos de todos los niveles.
+            <p className="text-base md:text-lg text-white/80 max-w-[430px] mb-7 leading-snug font-roboto">
+              Aprende, crea y conecta con tu pasión. Nuestros cursos están diseñados para niños, adolescentes y adultos de todos los niveles.
             </p>
 
-            <div className="flex lg:hidden mb-8">
+            <div className="flex lg:hidden mb-6">
               {statsRow}
             </div>
 
-            <div className="flex flex-wrap gap-4">
-              <Button href="/planes" size="md">
-                <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                  <path d="M8 5v14l11-7z"/>
-                </svg>
-                Ver Video
-              </Button>
-              <Button href="/planes" variant="secondary" size="md">
+            <div className="flex flex-wrap items-center gap-4">
+              <Button href="/planes" size="md" className="px-7 py-3.5">
                 Ver Cursos
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
               </Button>
+              <a href="/nosotros" className="inline-flex items-center gap-3 text-white font-semibold text-sm font-poppins">
+                <span className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-[#ff7a00] bg-black/30 text-[#ff7a00]">
+                  <svg className="ml-0.5 h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </span>
+                <span className="flex flex-col leading-tight">
+                  Ver Video
+                  <small className="text-[11px] font-normal text-white/65">Conoce 4U Studio</small>
+                </span>
+              </a>
             </div>
           </div>
 
-          <div className="flex flex-col items-start lg:items-end gap-4">
-            <div className="hidden lg:flex">
-              {statsRow}
-            </div>
+          <div className="hero-visual-layer hidden lg:block">
+            <OptimizedImage
+              src="/images/hero/banner-principal.jpg"
+              alt="Estudiantes de 4U Studio cantando"
+              fill
+              priority
+              className="object-cover object-[78%_60%]"
+              sizes="52vw"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/25 via-transparent to-black/10" />
+          </div>
 
-            <div className="hidden lg:block w-[260px] lg:w-[300px] h-[320px] lg:h-[360px] rounded-2xl overflow-hidden shadow-2xl border border-white/10">
-              <div className="w-full h-full bg-gradient-to-br from-[#ff7a00]/10 via-[#ff7a00]/5 to-transparent flex flex-col items-center justify-center gap-3">
-                <svg className="w-12 h-12 text-white/20" viewBox="0 0 384 512" fill="currentColor" aria-hidden="true">
-                  <path d="M192 0C139 0 96 43 96 96V256c0 53 43 96 96 96s96-43 96-96V96c0-53-43-96-96-96zM64 216c0-13.3-10.7-24-24-24s-24 10.7-24 24v40c0 89.1 66.2 162.7 152 174.4V464H120c-13.3 0-24 10.7-24 24s10.7 24 24 24h72 72c13.3 0 24-10.7 24-24s-10.7-24-24-24H216V430.4c85.8-11.7 152-85.3 152-174.4V216c0-13.3-10.7-24-24-24s-24 10.7-24 24v40c0 66.3-53.7 120-120 120s-120-53.7-120-120V216z"/>
-                </svg>
-                <span className="text-white/15 text-xs font-poppins tracking-wider uppercase">Estudiantes</span>
-              </div>
-            </div>
+          <div className="hero-stats hidden lg:block">
+            {statsRow}
           </div>
         </div>
       </div>

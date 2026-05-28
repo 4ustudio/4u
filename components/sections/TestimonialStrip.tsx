@@ -1,63 +1,37 @@
+import OptimizedImage from "@/components/ui/OptimizedImage";
 import { testimonials } from "@/data/testimonials";
-
-function AvatarPlaceholder({ name }: { name: string }) {
-  const initials = name
-    .split(" ")
-    .map((n) => n[0])
-    .join("");
-
-  return (
-    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#ff7a00]/20 to-[#ff7a00]/5 border border-[#ff7a00]/20 flex items-center justify-center flex-shrink-0">
-      <span className="text-[#ff7a00] font-bold text-lg font-poppins">{initials}</span>
-    </div>
-  );
-}
 
 export default function TestimonialStrip() {
   const featured = testimonials[0];
 
   return (
-    <section className="w-full py-20 md:py-28 bg-white relative">
-      <div className="relative z-10 max-w-4xl mx-auto px-6 lg:px-8">
-        <div className="relative">
-          <svg
-            className="absolute -top-8 -left-4 w-16 h-16 text-[#ff7a00]/10"
-            viewBox="0 0 512 512"
-            fill="currentColor"
-            aria-hidden="true"
-          >
-            <path d="M464 256h-80v-48c0-35.3 28.7-64 64-64h8c13.3 0 24-10.7 24-24V56c0-13.3-10.7-24-24-24h-8c-88.4 0-160 71.6-160 160v240c0 26.5 21.5 48 48 48h128c26.5 0 48-21.5 48-48V304c0-26.5-21.5-48-48-48zm-288 0H96v-48c0-35.3 28.7-64 64-64h8c13.3 0 24-10.7 24-24V56c0-13.3-10.7-24-24-24h-8C71.6 32 0 103.6 0 192v240c0 26.5 21.5 48 48 48h128c26.5 0 48-21.5 48-48V304c0-26.5-21.5-48-48-48z" />
-          </svg>
-
-          <div className="bg-white shadow-sm border border-stone-100 rounded-xl p-8 md:p-10">
-            <p className="text-stone-600 text-lg md:text-xl leading-[1.7] mb-8 font-roboto pl-10 md:pl-12">
-              {featured.text}
-            </p>
-
-            <div className="flex items-center gap-4">
-              <AvatarPlaceholder name={featured.name} />
-              <div>
-                <p className="text-stone-900 font-semibold text-sm font-poppins">
-                  {featured.name}
-                </p>
-                <p className="text-stone-400 text-xs font-roboto">
-                  {featured.age} · {featured.course}
-                </p>
-                <div className="flex items-center gap-0.5 mt-1" aria-label={`${featured.rating} de 5 estrellas`}>
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <svg
-                      key={i}
-                      className={`w-3.5 h-3.5 ${i < featured.rating ? "text-[#ff7a00]" : "text-stone-200"}`}
-                      viewBox="0 0 576 512"
-                      fill="currentColor"
-                      aria-hidden="true"
-                    >
-                      <path d="M316.9 18C311.6 7 300.4 0 288.1 0s-23.4 7-28.8 18L195 150.3 51.4 171.5c-12 1.8-22 10.2-25.7 21.7s-.7 24.2 7.9 32.7L137.8 329 113.2 474.7c-2 12 3 24.2 12.9 31.3s23 8 33.8 2.3l128.3-68.5 128.3 68.5c10.8 5.7 23.9 4.9 33.8-2.3s14.9-19.3 12.9-31.3L438.5 329 542.4 225.9c8.6-8.5 11.7-21.2 7.9-32.7s-13.7-19.9-25.7-21.7L380.9 150.3 316.9 18z" />
-                    </svg>
-                  ))}
+    <section className="w-full bg-white py-3">
+      <div className="home-frame">
+        <div className="grid grid-cols-1 overflow-hidden rounded-md bg-stone-50 md:grid-cols-[1fr_300px]">
+          <div className="flex items-center gap-4 px-6 py-5">
+            <span className="self-start text-4xl font-black leading-none text-[#ff7a00] font-poppins">“</span>
+            <div>
+              <p className="max-w-xl text-[15px] font-semibold italic leading-snug text-gray-800 font-roboto">
+                La música no solo cambia tu sonido, cambia tu vida. Atrévete a comenzar tu historia musical hoy.
+              </p>
+              <div className="mt-3 flex items-center gap-3">
+                <div className="h-8 w-8 rounded-full bg-[#ff7a00]/15" />
+                <div>
+                  <p className="text-[12px] font-bold text-gray-900 font-poppins">María Fernanda L.</p>
+                  <p className="text-[10px] text-gray-500 font-roboto">{featured.course}</p>
                 </div>
               </div>
             </div>
+          </div>
+          <div className="relative hidden min-h-[150px] md:block">
+            <OptimizedImage
+              src="/images/hero/banner-principal.jpg"
+              alt="Estudiante de canto en 4U Studio"
+              fill
+              className="object-cover object-[82%_48%]"
+              sizes="300px"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-stone-50 via-stone-50/20 to-transparent" />
           </div>
         </div>
       </div>

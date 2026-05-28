@@ -1,44 +1,42 @@
 import Link from "next/link";
 import CourseCard from "@/components/cards/CourseCard";
-import Container from "@/components/ui/Container";
-import SectionTitle from "@/components/ui/SectionTitle";
 import { courses } from "@/data/courses";
 
 export default function CoursesSection() {
   return (
-    <section id="cursos" className="w-full py-12 md:py-20 bg-white relative">
-      <Container>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
-          <div className="lg:col-span-4">
-            <SectionTitle
-              label="Explora tu talento"
-              title="Encuentra tu"
-              accent="curso ideal"
-              description="Descubre nuestra variedad de cursos diseñados para cada pasión musical. Todos los niveles, todas las edades."
-            />
+    <section id="cursos" className="relative w-full bg-white py-10 md:py-12">
+      <div className="home-frame">
+        <div className="home-course-grid grid gap-6 lg:items-start">
+          <div>
+            <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.08em] text-[#ff7a00] font-poppins">
+              Explora tu talento
+            </p>
+            <h2 className="mb-4 text-[38px] font-extrabold leading-[1] tracking-normal text-gray-900 font-poppins">
+              Encuentra tu <span className="text-[#ff7a00]">curso ideal</span>
+            </h2>
+            <p className="text-sm leading-relaxed text-gray-500 font-roboto">
+              Descubre nuestra variedad de cursos diseñados para cada pasión musical.
+            </p>
+            <Link
+              href="/planes"
+              className="mt-5 inline-flex items-center gap-2 rounded-full border border-[#ff7a00]/35 px-4 py-2 text-[12px] font-semibold text-[#ff7a00] transition-colors hover:bg-[#ff7a00] hover:text-white font-poppins"
+            >
+              Ver todos los cursos
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            </Link>
           </div>
 
-          <div className="lg:col-span-8">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="min-w-0">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
               {courses.map((course) => (
                 <CourseCard key={course.title} course={course} />
               ))}
             </div>
-
-            <div className="text-center mt-10 group">
-              <Link
-                href="/planes"
-                className="inline-flex items-center gap-2 text-[#ff7a00] font-semibold hover:text-stone-900 transition-colors duration-300 font-poppins"
-              >
-                Ver todos los cursos
-                <svg className="w-5 h-5 fill-current transition-transform group-hover:translate-x-1" viewBox="0 0 320 512">
-                  <path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" />
-                </svg>
-              </Link>
-            </div>
           </div>
         </div>
-      </Container>
+      </div>
     </section>
   );
 }

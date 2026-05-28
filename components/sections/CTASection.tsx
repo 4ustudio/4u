@@ -3,33 +3,42 @@ import Button from "@/components/ui/Button";
 
 export default function CTASection() {
   return (
-    <section className="w-full py-20 md:py-28 bg-gradient-to-b from-amber-50/30 to-stone-50 relative overflow-hidden">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-[#ff7a00]/5 blur-3xl rounded-full" />
+    <section className="w-full bg-white py-4">
+      <div className="home-frame">
+        <div className="flex flex-col items-start justify-between gap-4 rounded-md bg-stone-50 px-6 py-4 md:flex-row md:items-center">
+          <div className="flex items-center gap-4">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-[#ff7a00] text-[#ff7a00]">
+              <svg className="h-7 w-7" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+                <path d="M3 17h5l3-8 5 15 4-11 3 4h6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+            <div>
+              <h2 className="text-[18px] font-extrabold leading-tight text-gray-900 font-poppins">
+                ¿Listo para transformar tu pasión en tu camino?
+              </h2>
+              <p className="text-[12px] text-gray-500 font-roboto">
+                Únete a más de 1,200 estudiantes que ya están viviendo de la música.
+              </p>
+            </div>
+          </div>
 
-      <div className="relative z-10 max-w-2xl mx-auto px-6 text-center">
-        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight font-poppins tracking-tight">
-          ¿Listo para{" "}
-          <span className="text-[#ff7a00]">transformar tu pasión</span>{" "}
-          en tu camino?
-        </h2>
-        <p className="text-gray-500 text-base leading-relaxed mb-10 max-w-lg mx-auto font-roboto">
-          Únete a más de 1.200 estudiantes que están viviendo la música en 4uStudio Academy.
-        </p>
-
-        <div className="flex flex-wrap justify-center gap-4">
-          <Button href="/contacto" size="lg">
-            Agendar Clase
-            <svg className="w-5 h-5 fill-current" viewBox="0 0 320 512" aria-hidden="true" focusable="false">
-              <path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" />
-            </svg>
-          </Button>
-          <Link
-            href="/planes"
-            className="inline-flex items-center gap-2 font-semibold rounded-full transition-all duration-300 px-10 py-4 text-lg border-2 border-stone-200 text-stone-500 hover:border-[#ff7a00]/40 hover:text-[#ff7a00] hover:-translate-y-0.5"
-            style={{ fontFamily: "'Poppins', sans-serif" }}
-          >
-            Conocer más
-          </Link>
+          <div className="flex w-full flex-wrap gap-3 md:w-auto md:justify-end">
+            <Button href="/contacto" size="sm" className="px-6 py-2.5">
+              Agendar mi clase
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M8 2v4M16 2v4M4 10h16M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            </Button>
+            <Link
+              href="/planes"
+              className="inline-flex items-center gap-2 rounded-full border border-gray-300 px-6 py-2.5 text-[13px] font-semibold text-gray-900 transition-colors hover:border-[#ff7a00]/50 hover:text-[#ff7a00] font-poppins"
+            >
+              Conocer más
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            </Link>
+          </div>
         </div>
       </div>
     </section>

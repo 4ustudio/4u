@@ -1,45 +1,183 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import PageLayout from "@/components/layout/PageLayout";
-import PlanCard from "@/components/cards/PlanCard";
-import { PLANES_KIDS } from "@/data/plans-kids";
+import OptimizedImage from "@/components/ui/OptimizedImage";
 
 export const metadata: Metadata = {
   title: "Planes Kids & Teens",
   description: "Planes de música para niños y adolescentes: descubre la música, graba tu canción.",
 };
 
+const kidsPlans = [
+  {
+    label: "Plan 1",
+    title: "Plan Kids & Teens 1 -",
+    accent: "Descubro la Música",
+    price: "$1.100.000",
+    color: "#ff6b00",
+    imagePosition: "object-[25%_55%]",
+    description: "El primer paso para que los más jóvenes exploren la música, desarrollen su talento y aprendan jugando.",
+    features: [
+      "Clases con profesores especializados",
+      "Clases de instrumento o canto adaptadas a su edad",
+      "Metodología lúdica, dinámica y creativa",
+      "Desarrollo oído musical, ritmo y expresión",
+      "Introducción a ensambles musicales sencillos",
+      "Clases grabadas y entregadas en MP3",
+    ],
+    objective: "Que el niño o adolescente descubra su talento natural mientras aprende y se divierte.",
+  },
+  {
+    label: "Plan 2",
+    title: "Plan Kids & Teens 2 -",
+    accent: "Grabo Mi Canción",
+    price: "$1.600.000",
+    color: "#1397a5",
+    imagePosition: "object-[70%_55%]",
+    description: "Vive la experiencia de crear tu propia canción y grabarla como un verdadero artista.",
+    features: [
+      "Estudio de grabación y uso de micrófono",
+      "Grabación profesional cada 3 meses",
+      "Mezcla básica profesional",
+      "Entrega de tu canción como recuerdo",
+      "Clases grabadas y entregadas en MP3",
+      "Aprendizaje guiado por profesionales",
+    ],
+    objective: "Vivir la emoción de crear y grabar tu canción, fortaleciendo la autoestima y la confianza.",
+  },
+];
+
 export default function PlanesKidsTeensPage() {
   return (
     <PageLayout>
-      <section className="relative w-full overflow-hidden flex items-end pb-16 pt-32 px-6 lg:px-8"
-        style={{ minHeight: "380px" }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-transparent z-10" />
-        <div className="absolute top-1/2 -translate-y-1/2 right-0 w-[500px] h-[500px] bg-orange-500/20 blur-3xl rounded-full" />
-        <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-orange-500/8 blur-3xl rounded-full" />
-
-        <div className="relative z-20 max-w-7xl mx-auto w-full">
-          <h1
-            className="text-white font-bold text-4xl md:text-5xl lg:text-6xl drop-shadow-[0_0_15px_rgba(255,255,255,0.08)] font-poppins"
-          >
-            Planes{" "}
-            <span className="text-[#ff7a00] drop-shadow-[0_0_12px_rgba(255,122,0,0.3)]">Kids &amp; Teens</span>
-          </h1>
-          <p
-            className="text-white/50 mt-4 text-lg max-w-xl font-roboto"
-          >
-            Desarrolla confianza, autoestima y amor por la música desde temprana edad.
-          </p>
+      <section className="relative -mt-16 overflow-hidden bg-black px-6 pb-7 pt-20 lg:px-8">
+        <OptimizedImage
+          src="/images/hero/banner-principal.jpg"
+          alt="Planes Kids & Teens"
+          fill
+          priority
+          className="object-cover object-[82%_45%] opacity-40"
+          sizes="100vw"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/85 to-black/35" />
+        <div className="plans-frame relative grid min-h-[220px] items-center gap-8 md:grid-cols-[120px_1fr]">
+          <div className="hidden text-[#ff6b00] md:block">
+            <svg className="h-28 w-28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M4 14v-2a8 8 0 0 1 16 0v2" />
+              <path d="M4 14a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h2v-5H4ZM20 14a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2h-2v-5h2Z" />
+            </svg>
+          </div>
+          <div className="border-l-4 border-[#ff6b00] pl-8">
+            <h1 className="text-5xl font-extrabold leading-tight tracking-normal text-white md:text-6xl font-poppins">
+              Nuestros <br />
+              Planes <span className="text-[#ff6b00]">Kids & Teens</span>
+            </h1>
+            <p className="mt-5 max-w-3xl text-xl leading-relaxed text-white font-roboto">
+              Planes diseñados para niños y adolescentes que quieren aprender, crear y vivir la música en un ambiente divertido, seguro e inspirador.
+            </p>
+          </div>
         </div>
       </section>
 
-      <section className="py-20 md:py-28 px-6 lg:px-8 bg-black">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
-          {PLANES_KIDS.map((plan) => (
-            <PlanCard key={plan.subtitle} {...plan} />
+      <section className="relative bg-white px-6 py-9 text-gray-950 lg:px-8">
+        <div className="plans-frame grid gap-8 lg:grid-cols-2">
+          {kidsPlans.map((plan) => (
+            <KidsPlanCard key={plan.label} {...plan} />
           ))}
+        </div>
+
+        <div className="plans-frame mt-10 grid items-center gap-6 rounded-2xl bg-white p-7 shadow-xl shadow-gray-950/10 ring-1 ring-gray-200 md:grid-cols-[1.2fr_1fr_1fr_auto]">
+          <FooterInfo title="¿No sabes qué plan elegir?" text="Te ayudamos a encontrar el plan ideal para el talento y los sueños de tu hijo." />
+          <FooterInfo title="Agenda una clase" text="Conoce nuestras instalaciones y vive la experiencia 4U." />
+          <FooterInfo title="Hablemos de tu proyecto" text="Cuéntanos sus intereses y objetivos y te guiamos en el camino." />
+          <Link href="/contacto" className="inline-flex items-center justify-center gap-3 rounded-lg bg-[#ff6b00] px-8 py-4 text-base font-bold text-white shadow-lg shadow-orange-500/25 font-poppins">
+            Agenda tu Clase
+            <span aria-hidden="true">▦</span>
+          </Link>
         </div>
       </section>
     </PageLayout>
+  );
+}
+
+function KidsPlanCard({
+  label,
+  title,
+  accent,
+  price,
+  color,
+  imagePosition,
+  description,
+  features,
+  objective,
+}: {
+  label: string;
+  title: string;
+  accent: string;
+  price: string;
+  color: string;
+  imagePosition: string;
+  description: string;
+  features: string[];
+  objective: string;
+}) {
+  return (
+    <article className="grid overflow-hidden rounded-2xl bg-white shadow-xl shadow-gray-950/10 ring-1 lg:grid-cols-[42%_58%]" style={{ borderColor: `${color}55` }}>
+      <div className="relative min-h-[370px]">
+        <OptimizedImage
+          src="/images/hero/banner-principal.jpg"
+          alt={accent}
+          fill
+          className={`object-cover ${imagePosition}`}
+          sizes="(max-width: 1024px) 100vw, 40vw"
+        />
+      </div>
+      <div className="p-5">
+        <span className="inline-flex rounded-lg px-4 py-2 text-sm font-extrabold uppercase text-white font-poppins" style={{ backgroundColor: color }}>
+          {label}
+        </span>
+        <h2 className="mt-4 text-xl font-extrabold uppercase leading-tight font-poppins">
+          {title}
+          <br />
+          <span className="normal-case" style={{ color }}>{accent}</span>
+        </h2>
+        <p className="mt-3 text-[13px] leading-relaxed text-gray-700 font-roboto">{description}</p>
+        <ul className="mt-4 space-y-1.5">
+          {features.map((feature) => (
+            <li key={feature} className="flex items-start gap-3 text-[13px] text-gray-800 font-roboto">
+              <span className="mt-0.5" style={{ color }}>◎</span>
+              {feature}
+            </li>
+          ))}
+        </ul>
+        <div className="mt-4 rounded-xl p-3.5" style={{ backgroundColor: `${color}12` }}>
+          <p className="font-extrabold font-poppins" style={{ color }}>Objetivo</p>
+          <p className="mt-1 text-[13px] leading-relaxed text-gray-700 font-roboto">{objective}</p>
+        </div>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
+          <p className="text-2xl font-extrabold font-poppins">{price}</p>
+          <Link href="/contacto" className="inline-flex items-center gap-3 rounded-lg px-6 py-3 text-sm font-bold text-white shadow-lg font-poppins" style={{ backgroundColor: color }}>
+            Conoce el {label}
+            <span aria-hidden="true">↗</span>
+          </Link>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function FooterInfo({ title, text }: { title: string; text: string }) {
+  return (
+    <div className="flex items-center gap-5 md:border-r md:border-gray-200 md:pr-6">
+      <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-orange-50 text-[#ff6b00]">
+        <svg className="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+          <path d="M8 2v4M16 2v4M4 10h16M6 4h12a2 2 0 0 1 2 2v14H4V6a2 2 0 0 1 2-2Z" />
+        </svg>
+      </span>
+      <span>
+        <strong className="block text-lg font-extrabold font-poppins">{title}</strong>
+        <span className="text-gray-500 font-roboto">{text}</span>
+      </span>
+    </div>
   );
 }

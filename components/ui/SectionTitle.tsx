@@ -16,7 +16,7 @@ export default function SectionTitle({ label, title, accent, description }: Sect
         </p>
       )}
         <h2
-          className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight font-poppins"
+          className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight font-poppins"
         >
         {title}{" "}
         {accent && (
@@ -25,7 +25,7 @@ export default function SectionTitle({ label, title, accent, description }: Sect
       </h2>
       {description && (
           <p
-            className="text-white/50 text-base leading-relaxed max-w-sm font-roboto"
+            className="text-gray-500 text-base leading-relaxed max-w-sm font-roboto"
           >
           {description}
         </p>

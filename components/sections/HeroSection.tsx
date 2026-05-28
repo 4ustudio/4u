@@ -24,10 +24,11 @@ export default function HeroSection() {
         />
       </div>
 
-      <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-transparent" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/35 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-black/10" />
+      <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-orange-500/10 to-transparent" />
 
-      <GlowEffect position="top-right" size="w-[350px] h-[350px]" opacity="bg-orange-500/20" />
+      <GlowEffect position="top-right" size="w-[450px] h-[450px]" opacity="bg-orange-500/25" />
       <GlowEffect position="bottom-left" size="w-[250px] h-[250px]" opacity="bg-orange-500/8" />
 
       <div className="relative z-10 w-full">

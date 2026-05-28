@@ -6,7 +6,7 @@ import { courses } from "@/data/courses";
 
 export default function CoursesSection() {
   return (
-    <section id="cursos" className="w-full py-20 md:py-28 bg-gradient-to-b from-black via-black/95 to-black">
+    <section id="cursos" className="w-full py-20 md:py-28 bg-white">
       <Container>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
           <div className="lg:col-span-4">

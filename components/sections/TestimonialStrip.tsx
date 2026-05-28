@@ -17,13 +17,11 @@ export default function TestimonialStrip() {
   const featured = testimonials[0];
 
   return (
-    <section className="w-full py-20 md:py-28 bg-gradient-to-b from-white to-stone-50 relative overflow-hidden">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#ff7a00]/5 blur-3xl rounded-full" />
-
+    <section className="w-full py-24 md:py-32 bg-white relative">
       <div className="relative z-10 max-w-4xl mx-auto px-6 lg:px-8">
         <div className="relative">
           <svg
-            className="absolute -top-8 -left-4 w-16 h-16 text-[#ff7a00]/15"
+            className="absolute -top-8 -left-4 w-16 h-16 text-[#ff7a00]/10"
             viewBox="0 0 512 512"
             fill="currentColor"
             aria-hidden="true"
@@ -31,7 +29,7 @@ export default function TestimonialStrip() {
             <path d="M464 256h-80v-48c0-35.3 28.7-64 64-64h8c13.3 0 24-10.7 24-24V56c0-13.3-10.7-24-24-24h-8c-88.4 0-160 71.6-160 160v240c0 26.5 21.5 48 48 48h128c26.5 0 48-21.5 48-48V304c0-26.5-21.5-48-48-48zm-288 0H96v-48c0-35.3 28.7-64 64-64h8c13.3 0 24-10.7 24-24V56c0-13.3-10.7-24-24-24h-8C71.6 32 0 103.6 0 192v240c0 26.5 21.5 48 48 48h128c26.5 0 48-21.5 48-48V304c0-26.5-21.5-48-48-48z" />
           </svg>
 
-          <div className="bg-white shadow-lg border border-stone-100 rounded-2xl p-8 md:p-10 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-500">
+          <div className="bg-white shadow-sm border border-stone-100 rounded-xl p-8 md:p-10">
             <p className="text-stone-600 text-lg md:text-xl leading-[1.7] mb-8 font-roboto pl-10 md:pl-12">
               {featured.text}
             </p>

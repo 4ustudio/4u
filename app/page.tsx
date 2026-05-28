@@ -12,15 +12,10 @@ export default function Home() {
     <>
       <Header />
       <HeroSection />
-      <div className="h-24 bg-gradient-to-b from-black via-stone-900/50 to-stone-50 -mt-12" />
       <TrustBarSection />
-      <div className="h-16 bg-gradient-to-b from-stone-50 via-stone-100/30 to-white" />
       <CoursesSection />
-      <div className="h-12 bg-gradient-to-b from-white to-amber-50/20" />
       <MethodologySection />
-      <div className="h-12 bg-gradient-to-b from-amber-50/20 to-white" />
       <TestimonialStrip />
-      <div className="h-12 bg-gradient-to-b from-white to-gray-950" />
       <CTASection />
       <Footer />
     </>

@@ -16,22 +16,12 @@ export default function TrustBarSection() {
         </p>
         <div className="flex flex-wrap items-center justify-center gap-10 md:gap-14 lg:gap-20">
           {brands.map((brand) => (
-            <div
+            <span
               key={brand.name}
-              className="group relative flex items-center justify-center"
+              className="text-base md:text-lg font-bold tracking-[0.15em] text-stone-300 hover:text-[#ff7a00] transition-colors duration-300 font-poppins cursor-default"
             >
-              <span
-                className="text-base md:text-lg font-bold tracking-[0.15em] text-stone-300 group-hover:text-[#ff7a00] transition-all duration-[400ms] delay-150 font-poppins"
-              >
-                {brand.name}
-              </span>
-              <div
-                className="absolute -inset-4 rounded-full opacity-0 group-hover:opacity-15 transition-opacity duration-[400ms] delay-[250ms]"
-                style={{
-                  background: `radial-gradient(circle, ${brand.color}15 0%, transparent 70%)`,
-                }}
-              />
-            </div>
+              {brand.name}
+            </span>
           ))}
         </div>
       </div>

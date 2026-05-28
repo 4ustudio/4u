@@ -5,10 +5,7 @@ import { benefits } from "@/data/benefits";
 
 export default function MethodologySection() {
   return (
-    <section className="w-full py-20 md:py-28 bg-gradient-to-b from-amber-50/30 via-white to-amber-50/20 relative overflow-hidden">
-      <div className="absolute top-1/4 -left-40 w-80 h-80 bg-[#ff7a00]/5 blur-3xl rounded-full" />
-      <div className="absolute bottom-1/4 -right-40 w-80 h-80 bg-[#ff7a00]/5 blur-3xl rounded-full" />
-
+    <section className="w-full py-24 md:py-32 bg-white relative">
       <Container>
         <SectionTitle
           label="Cómo funciona"
@@ -22,7 +19,7 @@ export default function MethodologySection() {
             {methodology.map((step) => (
               <div
                 key={step.number}
-                className="group flex gap-5 p-6 rounded-2xl bg-white border border-stone-100 shadow-md hover:shadow-lg hover:border-[#ff7a00]/15 hover:translate-x-1 transition-all duration-[400ms]"
+                className="flex gap-5 p-6 rounded-xl bg-white border border-stone-100 shadow-sm hover:shadow-md transition-all duration-300"
               >
                 <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#ff7a00]/10 border border-[#ff7a00]/20 flex items-center justify-center">
                   <span className="text-[#ff7a00] font-bold text-sm font-poppins">
@@ -45,9 +42,9 @@ export default function MethodologySection() {
             {benefits.map((benefit) => (
               <div
                 key={benefit.title}
-                className="group flex flex-col p-5 rounded-2xl bg-white border border-stone-100 shadow-sm hover:shadow-md hover:border-[#ff7a00]/15 hover:-translate-y-0.5 transition-all duration-[400ms]"
+                className="flex flex-col p-5 rounded-xl bg-white border border-stone-100 shadow-sm hover:shadow-md transition-all duration-300"
               >
-                <div className="mb-3 text-[#ff7a00] opacity-70 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="mb-3 text-[#ff7a00] opacity-70">
                   {benefit.icon}
                 </div>
                 <h4 className="text-gray-900 font-semibold text-sm mb-1.5 font-poppins">

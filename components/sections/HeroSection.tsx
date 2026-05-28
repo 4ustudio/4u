@@ -25,10 +25,9 @@ export default function HeroSection() {
       </div>
 
       <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at 30% 50%, rgba(255, 122, 0, 0.10) 0%, transparent 60%)' }} />
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-orange-500/25 blur-2xl rounded-full" />
       <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 via-transparent to-transparent" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-black/5" />
-      <div className="absolute bottom-0 left-0 right-0 h-56 bg-gradient-to-t from-orange-500/15 to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 h-56 bg-gradient-to-t from-orange-500/10 to-transparent" />
 
       <GlowEffect position="top-right" size="w-[500px] h-[500px]" opacity="bg-orange-500/30" />
       <GlowEffect position="bottom-left" size="w-[250px] h-[250px]" opacity="bg-orange-500/8" />

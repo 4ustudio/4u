@@ -33,11 +33,6 @@ body {
   animation: fadeInUp 0.6s ease-out forwards;
 }
 
-@keyframes softPulse {
-  0%, 100% { opacity: 0.12; }
-  50% { opacity: 0.18; }
-}
-
 .whatsapp-float {
   position: fixed;
   bottom: 15px;

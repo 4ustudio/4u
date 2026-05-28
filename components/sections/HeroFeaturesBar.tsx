@@ -7,7 +7,7 @@ const benefits = [
 
 export default function HeroFeaturesBar() {
   return (
-    <section className="relative z-20 -mt-10 pb-10 md:pb-14">
+    <section className="relative z-20 -mt-16 pb-10 md:pb-12">
       <div className="max-w-[1280px] mx-auto px-6 lg:px-8">
         <div className="bg-white rounded-2xl shadow-lg border border-stone-100 px-8 py-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">

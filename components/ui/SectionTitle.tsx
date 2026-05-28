@@ -10,13 +10,13 @@ export default function SectionTitle({ label, title, accent, description }: Sect
     <div>
       {label && (
           <p
-            className="text-sm font-medium tracking-[0.2em] uppercase text-[#ff7a00] mb-4 font-poppins"
+            className="text-sm font-medium tracking-[0.22em] uppercase text-[#ff7a00] mb-4 font-poppins"
           >
           {label}
         </p>
       )}
         <h2
-          className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight font-poppins"
+          className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-[1.1] font-poppins tracking-tight"
         >
         {title}{" "}
         {accent && (
@@ -25,7 +25,7 @@ export default function SectionTitle({ label, title, accent, description }: Sect
       </h2>
       {description && (
           <p
-            className="text-gray-500 text-base leading-relaxed max-w-sm font-roboto"
+            className="text-gray-500 text-base leading-[1.7] max-w-sm font-roboto"
           >
           {description}
         </p>

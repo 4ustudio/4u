@@ -21,12 +21,12 @@ export default function TrustBarSection() {
               className="group relative flex items-center justify-center"
             >
               <span
-                className="text-base md:text-lg font-bold tracking-[0.15em] text-stone-300 group-hover:text-[#ff7a00] transition-all duration-500 font-poppins"
+                className="text-base md:text-lg font-bold tracking-[0.15em] text-stone-300 group-hover:text-[#ff7a00] transition-all duration-[400ms] delay-150 font-poppins"
               >
                 {brand.name}
               </span>
               <div
-                className="absolute -inset-4 rounded-full opacity-0 group-hover:opacity-15 transition-opacity duration-500"
+                className="absolute -inset-4 rounded-full opacity-0 group-hover:opacity-15 transition-opacity duration-[400ms] delay-[250ms]"
                 style={{
                   background: `radial-gradient(circle, ${brand.color}15 0%, transparent 70%)`,
                 }}

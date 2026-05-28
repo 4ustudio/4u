@@ -22,7 +22,7 @@ export default function MethodologySection() {
             {methodology.map((step) => (
               <div
                 key={step.number}
-                className="group flex gap-5 p-6 rounded-2xl bg-white border border-stone-100 shadow-md hover:shadow-lg hover:border-[#ff7a00]/15 transition-all duration-500"
+                className="group flex gap-5 p-6 rounded-2xl bg-white border border-stone-100 shadow-md hover:shadow-lg hover:border-[#ff7a00]/15 hover:translate-x-1 transition-all duration-[400ms]"
               >
                 <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#ff7a00]/10 border border-[#ff7a00]/20 flex items-center justify-center">
                   <span className="text-[#ff7a00] font-bold text-sm font-poppins">
@@ -45,7 +45,7 @@ export default function MethodologySection() {
             {benefits.map((benefit) => (
               <div
                 key={benefit.title}
-                className="group flex flex-col p-5 rounded-2xl bg-white border border-stone-100 shadow-sm hover:shadow-md hover:border-[#ff7a00]/15 hover:-translate-y-0.5 transition-all duration-500"
+                className="group flex flex-col p-5 rounded-2xl bg-white border border-stone-100 shadow-sm hover:shadow-md hover:border-[#ff7a00]/15 hover:-translate-y-0.5 transition-all duration-[400ms]"
               >
                 <div className="mb-3 text-[#ff7a00] opacity-70 group-hover:opacity-100 transition-opacity duration-300">
                   {benefit.icon}

@@ -50,18 +50,21 @@ export default function Footer() {
         </div>
       </a>
 
-      <footer className="w-full bg-stone-950 border-t border-stone-900">
+      <footer className="w-full bg-stone-950 bg-gradient-to-b from-stone-900/20 to-stone-950 border-t border-stone-900">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
             <div className="col-span-2 md:col-span-1">
-              <span className="text-xl font-bold text-white font-poppins">
-                4U <span className="text-[#ff7a00]">Studio</span>
-              </span>
+              <div className="relative inline-block">
+                <div className="absolute -inset-4 bg-[#ff7a00]/8 blur-xl rounded-full opacity-60" />
+                <span className="relative text-xl font-bold text-white font-poppins">
+                  4U <span className="text-[#ff7a00]">Studio</span>
+                </span>
+              </div>
               <p className="mt-3 text-sm leading-relaxed text-stone-400 font-roboto">
                 Cumple tus sueños musicales. Academia de música profesional para todas las edades.
               </p>
-              <p className="mt-3 text-xs text-stone-500 italic font-roboto">
-                Tu música, tu estudio, tu momento.
+              <p className="mt-3 text-xs text-stone-500 italic font-roboto tracking-wide">
+                Tu música. Tu estudio. Tu momento.
               </p>
               <div className="flex items-center gap-3 mt-6">
                 {socialLinks.map((s) => (
@@ -70,7 +73,7 @@ export default function Footer() {
                     href={s.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-8 h-8 rounded-full bg-stone-800/50 border border-stone-700/50 flex items-center justify-center text-stone-400 hover:text-[#ff7a00] hover:border-[#ff7a00]/30 hover:bg-stone-800 transition-all duration-300"
+                    className="w-8 h-8 rounded-full bg-stone-800/50 border border-stone-700/50 flex items-center justify-center text-stone-400 hover:text-[#ff7a00] hover:border-[#ff7a00]/30 hover:bg-stone-800 hover:shadow-[0_0_12px_rgba(255,122,0,0.2)] transition-all duration-300"
                     aria-label={s.label}
                   >
                     {s.icon}
@@ -142,7 +145,8 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-stone-900">
+        <div>
+          <div className="h-px bg-gradient-to-r from-transparent via-stone-800 to-transparent" />
           <div className="max-w-7xl mx-auto px-6 lg:px-8 py-6 flex flex-col md:flex-row items-center justify-between gap-3">
             <p className="text-sm text-stone-500 font-roboto">
               © {new Date().getFullYear()} 4uStudio Academy. Todos los derechos reservados.

@@ -24,7 +24,9 @@ export default function HeroSection() {
         />
       </div>
 
-      <div className="absolute inset-0 bg-gradient-to-r from-black/65 via-black/25 to-transparent" />
+      <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at 30% 50%, rgba(255, 122, 0, 0.10) 0%, transparent 60%)' }} />
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-orange-500/25 blur-2xl rounded-full" />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 via-transparent to-transparent" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-black/5" />
       <div className="absolute bottom-0 left-0 right-0 h-56 bg-gradient-to-t from-orange-500/15 to-transparent" />
 
@@ -39,7 +41,7 @@ export default function HeroSection() {
                 🎵 LA MÚSICA TE TRANSFORMA
               </p>
 
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-[1.08] mb-6 font-poppins">
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-[1.08] mb-6 font-poppins tracking-[-0.02em]">
                 Cumple tus{" "}
                 <span className="text-[#ff7a00] drop-shadow-[0_0_15px_rgba(255,122,0,0.4)]">sueños</span>
                 {" "}musicales

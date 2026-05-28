@@ -32,16 +32,34 @@ export default function CourseCard({ course }: CourseCardProps) {
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
         ) : (
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage: [
-                `linear-gradient(135deg, ${course.color}30 0%, ${course.color}15 40%, ${course.color}08 70%, ${course.color}03 100%)`,
-                `repeating-linear-gradient(90deg, transparent, transparent 12px, rgba(255,255,255,0.04) 12px, rgba(255,255,255,0.04) 13px)`,
-                `repeating-linear-gradient(0deg, transparent, transparent 10px, rgba(255,255,255,0.025) 10px, rgba(255,255,255,0.025) 11px)`,
-              ].join(", "),
-            }}
-          />
+          <div className="absolute inset-0">
+            <div className="absolute inset-0" style={{
+              background: `linear-gradient(135deg, ${course.color}40 0%, ${course.color}15 40%, ${course.color}08 70%, ${course.color}03 100%)`
+            }} />
+            <div
+              className="absolute inset-0 opacity-[0.025]"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+                backgroundSize: '128px 128px',
+              }}
+            />
+            <svg className="absolute inset-0 w-full h-full opacity-[0.04]" viewBox="0 0 400 220" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M0 40 Q200 55 400 38" stroke="white" strokeWidth="0.5" fill="none" />
+              <path d="M0 70 Q200 85 400 68" stroke="white" strokeWidth="0.5" fill="none" />
+              <path d="M0 100 Q200 115 400 98" stroke="white" strokeWidth="0.5" fill="none" />
+              <path d="M0 130 Q200 145 400 128" stroke="white" strokeWidth="0.5" fill="none" />
+              <path d="M0 160 Q200 175 400 158" stroke="white" strokeWidth="0.5" fill="none" />
+            </svg>
+            <div className="absolute inset-0" style={{
+              background: `radial-gradient(circle at 90% 10%, ${course.color}25 0%, transparent 60%)`
+            }} />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent" />
+            <div className="absolute top-[18%] left-1/2 -translate-x-1/2 opacity-10 group-hover:opacity-20 transition-opacity duration-700">
+              <div className="w-20 h-20 md:w-24 md:h-24">
+                {course.icon}
+              </div>
+            </div>
+          </div>
         )}
       </div>
 
@@ -50,14 +68,6 @@ export default function CourseCard({ course }: CourseCardProps) {
           <span className="inline-block px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider rounded-full bg-white/80 backdrop-blur-sm border border-gray-200 text-gray-500 font-poppins">
             {course.duration}
           </span>
-        </div>
-      )}
-
-      {!course.image && (
-        <div className="absolute top-[15%] left-1/2 -translate-x-1/2 opacity-8 group-hover:opacity-15 transition-opacity duration-700">
-          <div className="w-24 h-24 md:w-28 md:h-28">
-            {course.icon}
-          </div>
         </div>
       )}
 
@@ -98,16 +108,17 @@ export default function CourseCard({ course }: CourseCardProps) {
       </div>
 
       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-white/95 via-white/90 to-white/70 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-5">
-        <p className="text-gray-600 text-sm leading-relaxed mb-1 font-roboto">
+        <p className="text-gray-600 text-sm leading-relaxed mb-1 font-roboto translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
           {course.description}
         </p>
         {instructor && (
-          <p className="text-xs text-[#ff7a00] font-medium font-poppins">
+          <p className="text-xs text-[#ff7a00] font-medium font-poppins translate-y-2 group-hover:translate-y-0 transition-transform duration-500 delay-75">
             {instructor.name}
           </p>
         )}
       </div>
 
+      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[#ff7a00]/25 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
       <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-[#ff7a00]/8 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
     </div>
   );

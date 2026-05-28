@@ -9,7 +9,7 @@ const features = [
 export default function CTASection() {
   return (
     <section className="w-full py-20 md:py-28 bg-gradient-to-b from-gray-950 via-gray-900 to-black relative overflow-hidden">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-orange-500/15 blur-3xl rounded-full" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-orange-500/[0.12] blur-3xl rounded-full animate-[softPulse_4s_ease-in-out_infinite]" />
       <div className="absolute top-0 -left-40 w-64 h-64 bg-orange-500/8 blur-3xl rounded-full" />
       <div className="absolute bottom-0 -right-40 w-64 h-64 bg-orange-500/8 blur-3xl rounded-full" />
 
@@ -33,7 +33,7 @@ export default function CTASection() {
 
         <div className="w-16 h-px bg-white/20 mx-auto mb-10" />
 
-        <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight font-poppins">
+        <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight font-poppins tracking-tight">
           ¿Listo para{" "}
           <span className="text-[#ff7a00] drop-shadow-[0_0_10px_rgba(255,122,0,0.3)]">transformar tu pasión</span>{" "}
           en tu camino?

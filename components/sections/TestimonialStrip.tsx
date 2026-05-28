@@ -31,7 +31,7 @@ export default function TestimonialStrip() {
             <path d="M464 256h-80v-48c0-35.3 28.7-64 64-64h8c13.3 0 24-10.7 24-24V56c0-13.3-10.7-24-24-24h-8c-88.4 0-160 71.6-160 160v240c0 26.5 21.5 48 48 48h128c26.5 0 48-21.5 48-48V304c0-26.5-21.5-48-48-48zm-288 0H96v-48c0-35.3 28.7-64 64-64h8c13.3 0 24-10.7 24-24V56c0-13.3-10.7-24-24-24h-8C71.6 32 0 103.6 0 192v240c0 26.5 21.5 48 48 48h128c26.5 0 48-21.5 48-48V304c0-26.5-21.5-48-48-48z" />
           </svg>
 
-          <div className="bg-white shadow-lg border border-stone-100 rounded-2xl p-8 md:p-10">
+          <div className="bg-white shadow-lg border border-stone-100 rounded-2xl p-8 md:p-10 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-500">
             <p className="text-stone-600 text-lg md:text-xl leading-[1.7] mb-8 font-roboto pl-10 md:pl-12">
               {featured.text}
             </p>

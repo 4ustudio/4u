@@ -6,12 +6,9 @@ import { courses } from "@/data/courses";
 
 export default function CoursesSection() {
   return (
-    <section id="cursos" className="w-full py-20 md:py-28 bg-white relative">
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-stone-200 to-transparent" />
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-1 bg-[#ff7a00]/20 rounded-b-full" />
-
+    <section id="cursos" className="w-full py-16 md:py-24 bg-white relative">
       <Container>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           <div className="lg:col-span-4">
             <SectionTitle
               label="Explora tu talento"

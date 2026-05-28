@@ -5,7 +5,7 @@ import { benefits } from "@/data/benefits";
 
 export default function MethodologySection() {
   return (
-    <section className="w-full py-24 md:py-32 bg-white relative">
+    <section className="w-full py-20 md:py-28 bg-white relative">
       <Container>
         <SectionTitle
           label="Cómo funciona"

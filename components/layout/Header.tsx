@@ -40,13 +40,13 @@ export default function Header() {
 
   return (
     <header className="fixed w-full top-0 z-50 bg-black/20 backdrop-blur-xl border-b border-white/10">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 drop-shadow-[0_0_8px_rgba(255,122,0,0.3)] font-poppins">
+      <div className="max-w-[1280px] mx-auto px-6 lg:px-8 h-16 flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-2 font-poppins">
           <span className="text-xl font-bold text-white">4U</span>
           <span className="text-lg font-light text-[#ff7a00]">Studio</span>
         </Link>
 
-        <nav className="hidden lg:flex items-center gap-6">
+        <nav className="hidden lg:flex items-center gap-8">
           {navLinks.map((link) => (
             <Link
               key={link.href}

@@ -17,7 +17,7 @@ export default function TestimonialStrip() {
   const featured = testimonials[0];
 
   return (
-    <section className="w-full py-24 md:py-32 bg-white relative">
+    <section className="w-full py-20 md:py-28 bg-white relative">
       <div className="relative z-10 max-w-4xl mx-auto px-6 lg:px-8">
         <div className="relative">
           <svg

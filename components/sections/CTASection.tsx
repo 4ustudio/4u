@@ -3,7 +3,7 @@ import Button from "@/components/ui/Button";
 
 export default function CTASection() {
   return (
-    <section className="w-full py-24 md:py-32 bg-gradient-to-b from-amber-50/30 to-stone-50 relative overflow-hidden">
+    <section className="w-full py-20 md:py-28 bg-gradient-to-b from-amber-50/30 to-stone-50 relative overflow-hidden">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-[#ff7a00]/5 blur-3xl rounded-full" />
 
       <div className="relative z-10 max-w-2xl mx-auto px-6 text-center">

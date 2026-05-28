@@ -9,6 +9,11 @@ export interface Course {
   status: string;
   color: string;
   icon: React.ReactNode;
+  image?: string;
+  description?: string;
+  duration?: string;
+  level?: string;
+  instructorId?: string;
 }
 
 export interface PlanFeature {
@@ -25,6 +30,47 @@ export interface PlanCardProps {
   features: PlanFeature[];
   instruments?: string[];
   highlighted: boolean;
+}
+
+export interface Instructor {
+  id: string;
+  name: string;
+  role: string;
+  bio: string;
+  photo?: string;
+  specialties: string[];
+  social?: {
+    instagram?: string;
+    youtube?: string;
+  };
+}
+
+export interface Testimonial {
+  id: string;
+  name: string;
+  age?: string;
+  text: string;
+  photo?: string;
+  course?: string;
+  rating: number;
+}
+
+export interface FAQ {
+  question: string;
+  answer: string;
+  category: "general" | "planes" | "cursos" | "kids";
+}
+
+export interface Benefit {
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+}
+
+export interface Step {
+  number: number;
+  title: string;
+  description: string;
 }
 
 export type ButtonVariant = "primary" | "secondary" | "whatsapp";

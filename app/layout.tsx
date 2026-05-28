@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://4ustudioacademy.com"),
   title: {
     default: "4ustudioacademy",
     template: "%s | 4ustudioacademy",
@@ -16,12 +17,14 @@ export const metadata: Metadata = {
     siteName: "4ustudioacademy",
     locale: "es_CO",
     type: "website",
+    images: [{ url: "/images/branding/og-image.svg", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
     title: "4ustudioacademy",
     description:
       "Cumple tus sueños musicales — Academia de música con planes para jóvenes, adultos, niños y adolescentes.",
+    images: ["/images/branding/og-image.svg"],
   },
   robots: {
     index: true,

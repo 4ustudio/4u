@@ -2,18 +2,18 @@ import Button from "@/components/ui/Button";
 
 export default function CTASection() {
   return (
-    <section className="w-full py-32 md:py-40 bg-black relative overflow-hidden">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-orange-500/15 blur-3xl rounded-full" />
-      <div className="absolute top-0 -left-40 w-80 h-80 bg-orange-500/5 blur-3xl rounded-full" />
-      <div className="absolute bottom-0 -right-40 w-80 h-80 bg-orange-500/5 blur-3xl rounded-full" />
+    <section className="w-full py-20 md:py-28 bg-black relative overflow-hidden">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-orange-500/12 blur-3xl rounded-full" />
+      <div className="absolute top-0 -left-40 w-64 h-64 bg-orange-500/5 blur-3xl rounded-full" />
+      <div className="absolute bottom-0 -right-40 w-64 h-64 bg-orange-500/5 blur-3xl rounded-full" />
 
-      <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
-        <h2 className="text-5xl md:text-6xl font-bold text-white mb-8 leading-tight font-poppins">
+      <div className="relative z-10 max-w-3xl mx-auto px-6 text-center">
+        <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight font-poppins">
           ¿Listo para{" "}
-          <span className="text-[#ff7a00] drop-shadow-[0_0_15px_rgba(255,122,0,0.4)]">transformar tu pasión</span>{" "}
+          <span className="text-[#ff7a00] drop-shadow-[0_0_10px_rgba(255,122,0,0.3)]">transformar tu pasión</span>{" "}
           en tu camino?
         </h2>
-        <p className="text-white/50 text-lg leading-relaxed mb-12 max-w-2xl mx-auto font-roboto">
+        <p className="text-white/50 text-base leading-relaxed mb-10 max-w-xl mx-auto font-roboto">
           Únete a más de 1.200 estudiantes que están viviendo la música en 4uStudio Academy.
         </p>
         <div className="flex flex-wrap justify-center gap-4">

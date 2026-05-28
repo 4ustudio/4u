@@ -16,7 +16,7 @@ export default function ContactoPage() {
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-orange-500/10 blur-3xl rounded-full" />
         <div className="absolute top-0 -right-40 w-80 h-80 bg-orange-500/5 blur-3xl rounded-full" />
 
-        <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 py-24 md:py-32">
+        <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 py-16 md:py-24">
           <div className="max-w-2xl mx-auto text-center">
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-6 drop-shadow-[0_0_10px_rgba(255,255,255,0.08)] font-poppins">
               Contáctanos

@@ -21,19 +21,19 @@ export default function Footer() {
       </a>
 
       <footer className="w-full bg-black border-t border-white/5">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-24">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-12">
-            <div className="col-span-2 md:col-span-1">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div className="md:col-span-1">
               <span className="text-xl font-bold text-white font-poppins">
                 4U <span className="text-[#ff7a00]">Studio</span>
               </span>
-              <p className="mt-4 text-sm leading-relaxed text-white/60 max-w-xs font-roboto">
+              <p className="mt-3 text-sm leading-relaxed text-white/60 font-roboto">
                 Cumple tus sueños musicales. Academia de música profesional para todas las edades.
               </p>
             </div>
 
             <div>
-              <h4 className="text-white/80 font-semibold mb-6 text-sm uppercase tracking-[0.15em] font-poppins">
+              <h4 className="text-white/80 font-semibold mb-4 text-sm uppercase tracking-[0.15em] font-poppins">
                 Enlaces
               </h4>
               <ul className="space-y-3">
@@ -57,7 +57,7 @@ export default function Footer() {
             </div>
 
             <div>
-              <h4 className="text-white/80 font-semibold mb-6 text-sm uppercase tracking-[0.15em] font-poppins">
+              <h4 className="text-white/80 font-semibold mb-4 text-sm uppercase tracking-[0.15em] font-poppins">
                 Servicios
               </h4>
               <ul className="space-y-3">
@@ -74,7 +74,7 @@ export default function Footer() {
             </div>
 
             <div>
-              <h4 className="text-white/80 font-semibold mb-6 text-sm uppercase tracking-[0.15em] font-poppins">
+              <h4 className="text-white/80 font-semibold mb-4 text-sm uppercase tracking-[0.15em] font-poppins">
                 Contacto
               </h4>
               <ul className="space-y-3">
@@ -95,7 +95,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-white/5">
-          <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8 py-6 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-white/40 font-roboto">
               © {new Date().getFullYear()} 4uStudio Academy. Todos los derechos reservados.
             </p>

@@ -43,7 +43,7 @@ export async function getMyDashboardData() {
   const now = new Date()
   const today = now.toISOString().split('T')[0]
 
-  const [usageResult, { data: sessions }] = await Promise.all([
+  const [usageResult, { data: sessions }, { data: schedules }] = await Promise.all([
     admin().rpc('fn_monthly_usage', {
       p_student_id: student.id,
       p_year:  now.getFullYear(),
@@ -56,6 +56,13 @@ export async function getMyDashboardData() {
       .order('scheduled_date', { ascending: true })
       .order('start_time',     { ascending: true })
       .limit(50),
+    admin()
+      .from('student_schedules')
+      .select('*, course:courses(name), classroom:classrooms(name), instructor:instructors(name)')
+      .eq('student_id', student.id)
+      .eq('status', 'active')
+      .order('day_of_week')
+      .order('start_time'),
   ])
 
   const allSessions = (sessions ?? []) as any[]
@@ -73,6 +80,7 @@ export async function getMyDashboardData() {
     usage: (usageResult as any).data?.[0] ?? null,
     upcoming,
     past,
+    schedules: (schedules ?? []) as any[],
   }
 }
 
@@ -190,6 +198,70 @@ export async function resetPasswordAction(
 
   if (error) return { error: error.message }
   return { success: true }
+}
+
+export async function registerAction(
+  _prev: { error?: string },
+  formData: FormData
+): Promise<{ error?: string }> {
+  const first_name = (formData.get('first_name') as string)?.trim()
+  const last_name  = (formData.get('last_name')  as string)?.trim()
+  const email      = (formData.get('email')      as string)?.trim()
+  const phone      = (formData.get('phone')      as string)?.trim()
+  const password   = (formData.get('password')   as string)
+
+  if (!first_name || !email || !phone || !password) {
+    return { error: 'Completa todos los campos obligatorios.' }
+  }
+  if (password.length < 6) {
+    return { error: 'La contraseña debe tener al menos 6 caracteres.' }
+  }
+
+  const supabase = await createAuthServerClient()
+
+  // 1. Crear usuario en auth.users (crea sesión automáticamente)
+  const { data: authData, error: authError } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { data: { role: 'student' } },
+  })
+
+  if (authError) {
+    if (authError.message.toLowerCase().includes('already registered') ||
+        authError.message.toLowerCase().includes('already been registered')) {
+      return { error: 'Ya existe una cuenta con ese email. Inicia sesión.' }
+    }
+    return { error: authError.message }
+  }
+
+  if (!authData.user?.id) {
+    return { error: 'No se pudo crear la cuenta. Intenta de nuevo.' }
+  }
+
+  // 2. Crear registro en students vinculado al nuevo user
+  const { error: studentError } = await admin()
+    .from('students')
+    .insert({
+      first_name,
+      last_name,
+      name: `${first_name} ${last_name}`.trim(),
+      email,
+      phone,
+      user_id: authData.user.id,
+      status: 'active',
+      student_type: 'new',
+    })
+
+  if (studentError) {
+    // Limpiar usuario auth si falla la creación del estudiante
+    await admin().auth.admin.deleteUser(authData.user.id)
+    if (studentError.code === '23505') {
+      return { error: 'Ya existe un estudiante con ese email.' }
+    }
+    return { error: studentError.message }
+  }
+
+  redirect('/mi-cuenta')
 }
 
 export async function logoutAction() {

@@ -70,10 +70,19 @@ function LoginForm() {
             {isPending ? 'Ingresando...' : 'Ingresar'}
           </button>
 
-          <div className="text-center pt-2">
+          <div className="text-center pt-2 space-y-2">
+            <div>
+              <span className="text-xs text-white/40 font-roboto">¿No tienes cuenta? </span>
+              <a
+                href="/mi-cuenta/registro"
+                className="text-xs text-[#ff7a00] hover:brightness-110 transition-all font-roboto font-medium"
+              >
+                Crear cuenta
+              </a>
+            </div>
             <a
               href="/mi-cuenta/recuperar-contrasena"
-              className="text-xs text-white/40 hover:text-white/70 transition-colors font-roboto"
+              className="block text-xs text-white/30 hover:text-white/60 transition-colors font-roboto"
             >
               Olvidé mi contraseña
             </a>

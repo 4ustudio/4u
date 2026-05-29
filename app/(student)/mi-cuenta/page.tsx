@@ -8,6 +8,11 @@ import type { MonthlyUsage } from '@/types/admin'
 
 export const dynamic = 'force-dynamic'
 
+const DAY_NAME: Record<number, string> = {
+  1: 'Lunes', 2: 'Martes', 3: 'Miércoles',
+  4: 'Jueves', 5: 'Viernes', 6: 'Sábado',
+}
+
 const STATUS_COLOR: Record<string, string> = {
   pending:     'bg-yellow-900/40 text-yellow-400 border-yellow-500/20',
   confirmed:   'bg-green-900/40 text-green-400 border-green-500/20',
@@ -23,7 +28,6 @@ const STATUS_LABEL: Record<string, string> = {
 }
 
 export default async function MiCuentaPage() {
-  // Auth check
   const supabase = await createAuthServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/mi-cuenta/login')
@@ -32,7 +36,7 @@ export default async function MiCuentaPage() {
   if (!data) redirect('/mi-cuenta/login')
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { student, usage, upcoming, past } = data as any
+  const { student, usage, upcoming, past, schedules } = data as any
   const now = new Date()
   const monthLabel = now.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' })
   const usageTyped = usage as MonthlyUsage | null
@@ -44,15 +48,13 @@ export default async function MiCuentaPage() {
       <main className="max-w-5xl mx-auto px-4 py-8 space-y-8">
 
         {/* ── Saludo ─────────────────────────────────────────────── */}
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-white font-poppins">
-              Hola, {student.first_name ?? student.name} 👋
-            </h1>
-            <p className="text-sm text-white/40 mt-1 font-roboto">
-              {student.email} · {student.student_type === 'new' ? 'Estudiante nuevo' : 'Estudiante regular'}
-            </p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold text-white font-poppins">
+            Hola, {student.first_name ?? student.name} 👋
+          </h1>
+          <p className="text-sm text-white/40 mt-1 font-roboto">
+            {student.email} · {student.student_type === 'new' ? 'Estudiante nuevo' : 'Estudiante regular'}
+          </p>
         </div>
 
         {/* ── Cuota del mes ────────────────────────────────────────── */}
@@ -76,6 +78,34 @@ export default async function MiCuentaPage() {
             </div>
           )}
         </section>
+
+        {/* ── Horarios fijos ────────────────────────────────────────── */}
+        {schedules?.length > 0 && (
+          <section>
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-white/40 mb-3 font-roboto">
+              Horarios fijos
+            </h2>
+            <div className="rounded-xl border border-white/10 bg-white/[0.03] overflow-hidden divide-y divide-white/5">
+              {schedules.map((s: any) => (
+                <div key={s.id} className="flex items-center gap-4 px-5 py-4">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm text-white font-poppins">
+                      {DAY_NAME[s.day_of_week] ?? `Día ${s.day_of_week}`} · {s.start_time?.slice(0, 5)}
+                      {s.frequency === 'biweekly' && <span className="text-white/30 text-xs ml-1">(quincenal)</span>}
+                    </p>
+                    <p className="text-xs text-white/40 font-roboto mt-0.5">
+                      {s.course?.name ?? '—'} · {s.classroom?.name ?? '—'}
+                      {s.instructor?.name ? ` · ${s.instructor.name}` : ''}
+                    </p>
+                  </div>
+                  <span className="text-[10px] px-2.5 py-1 rounded-full shrink-0 border font-roboto font-semibold bg-green-900/40 text-green-400 border-green-500/20">
+                    Activo
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* ── Próximas clases ───────────────────────────────────────── */}
         <section>
@@ -110,25 +140,20 @@ export default async function MiCuentaPage() {
         )}
 
         {/* ── Agendar nueva clase ───────────────────────────────────── */}
-        {usageTyped && usageTyped.classes_available > 0 ? (
-          <section>
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-white/40 mb-3 font-roboto">
-              Agendar nueva clase
-            </h2>
+        <section>
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-white/40 mb-3 font-roboto">
+            Agendar nueva clase
+          </h2>
+          {usageTyped && usageTyped.classes_available > 0 ? (
             <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 sm:p-6">
               <BookingCalendar serverAction={studentBookAction} mode="student" />
             </div>
-          </section>
-        ) : usageTyped && usageTyped.classes_available <= 0 ? (
-          <section>
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-white/40 mb-3 font-roboto">
-              Agendar nueva clase
-            </h2>
+          ) : (
             <div className="rounded-xl border border-white/10 bg-white/[0.03] p-5 text-sm text-white/40 font-roboto text-center">
               No tienes clases disponibles este mes. Comunícate con 4U Studio para más información.
             </div>
-          </section>
-        ) : null}
+          )}
+        </section>
 
       </main>
     </>

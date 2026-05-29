@@ -42,7 +42,7 @@ export default async function MiCuentaPage() {
     return (
       <>
         <StudentNav userEmail={user.email ?? ''} />
-        <main className="max-w-5xl mx-auto px-4 py-16 flex flex-col items-center text-center gap-4">
+        <main className="max-w-5xl mx-auto px-4 pt-[74px] pb-16 flex flex-col items-center text-center gap-4">
           <div className="h-14 w-14 rounded-full border border-white/10 flex items-center justify-center">
             <svg className="h-6 w-6 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -70,7 +70,7 @@ export default async function MiCuentaPage() {
     <>
       <StudentNav userEmail={user.email ?? ''} />
 
-      <main className="max-w-5xl mx-auto px-4 py-8 space-y-8">
+      <main className="max-w-5xl mx-auto px-4 pt-[74px] pb-8 space-y-8">
 
         {/* ── Saludo ─────────────────────────────────────────────── */}
         <div>

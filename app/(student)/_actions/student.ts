@@ -118,24 +118,25 @@ export async function studentBookAction(
     return { status: 'error', message: 'Selecciona el instrumento o curso.' }
   }
 
-  // Para queries que necesitan service_role (RPCs, courses) usar admin()
-  // con fallback al cliente autenticado si el admin falla
+  // Usar cliente autenticado para todos los reads (courses, slots)
+  // Las policies RLS de courses/classrooms/instructors permiten acceso authenticated
+  const authClient = await createAuthServerClient()
 
-  // Buscar course_id por nombre (usando admin para bypasear RLS en courses)
-  const { data: course } = await admin()
+  const { data: course } = await authClient
     .from('courses')
     .select('id, name')
     .ilike('name', courseName)
+    .eq('is_active', true)
     .single()
 
   if (!course) {
     return { status: 'error', message: `El curso "${courseName}" no está disponible actualmente.` }
   }
 
-  // Buscar salon disponible en esa fecha/hora
   const startTime = `${selectedTime24h}:00`
 
-  const { data: slots, error: slotsError } = await admin().rpc('fn_available_slots', {
+  // fn_available_slots es SECURITY DEFINER — funciona con cliente autenticado
+  const { data: slots, error: slotsError } = await authClient.rpc('fn_available_slots', {
     p_date: selectedDateIso,
     p_student_id: student.id,
   })
@@ -152,8 +153,8 @@ export async function studentBookAction(
     return { status: 'error', message: 'El horario seleccionado no está disponible. Elige otro horario.' }
   }
 
-  // Reservar la clase
-  const { data: bookResult, error: bookError } = await admin().rpc('fn_book_session', {
+  // fn_book_session es SECURITY DEFINER — funciona con cliente autenticado
+  const { data: bookResult, error: bookError } = await authClient.rpc('fn_book_session', {
     p_student_id:   student.id,
     p_classroom_id: availableSlot.classroom_id,
     p_course_id:    course.id,

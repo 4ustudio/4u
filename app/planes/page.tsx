@@ -55,7 +55,7 @@ export default function PlanesPage() {
               button="Explorar planes para Kids & Teens"
               icon="group"
               imagePosition="object-[70%_50%]"
-              imageSrc="/images/courses/plan-kids/Niña-Plan kids.png"
+              imageSrc="/images/courses/plan-kids/nina-plan-kids.png"
               bullets={["Aprende de forma divertida y práctica", "Clases dinámicas y motivadoras", "Aumenta tu confianza y creatividad"]}
               plans={kidsPlans}
             />

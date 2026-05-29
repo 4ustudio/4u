@@ -32,8 +32,33 @@ export default async function MiCuentaPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/mi-cuenta/login')
 
-  const data = await getMyDashboardData()
-  if (!data) redirect('/mi-cuenta/login')
+  // Pasamos el user.id directamente para evitar una segunda llamada a getUser()
+  // que puede fallar en contexto de Server Component con cookies de solo lectura
+  const data = await getMyDashboardData(user.id)
+
+  // Si el usuario está autenticado pero no tiene perfil de estudiante,
+  // mostrar mensaje en lugar de redirigir (causaría loop con el middleware)
+  if (!data) {
+    return (
+      <>
+        <StudentNav userEmail={user.email ?? ''} />
+        <main className="max-w-5xl mx-auto px-4 py-16 flex flex-col items-center text-center gap-4">
+          <div className="h-14 w-14 rounded-full border border-white/10 flex items-center justify-center">
+            <svg className="h-6 w-6 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </div>
+          <h2 className="text-white font-poppins font-bold text-lg">Perfil no encontrado</h2>
+          <p className="text-white/40 font-roboto text-sm max-w-sm">
+            Tu cuenta existe pero no está vinculada a un perfil de estudiante.
+            Comunícate con 4U Studio Academy para que activen tu acceso.
+          </p>
+          <p className="text-white/25 font-roboto text-xs">{user.email}</p>
+        </main>
+      </>
+    )
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { student, usage, upcoming, past, schedules } = data as any

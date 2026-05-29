@@ -27,15 +27,21 @@ async function getAuthenticatedStudent() {
 
 // ─── Datos del dashboard ─────────────────────────────────────────────
 
-export async function getMyDashboardData() {
-  const supabase = await createAuthServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+export async function getMyDashboardData(userId?: string) {
+  // Aceptar userId externo para evitar segunda llamada a getUser()
+  // desde el Server Component (que ya validó la sesión)
+  let uid = userId
+  if (!uid) {
+    const supabase = await createAuthServerClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return null
+    uid = user.id
+  }
 
   const { data: student } = await admin()
     .from('students')
     .select('*')
-    .eq('user_id', user.id)
+    .eq('user_id', uid)
     .single()
 
   if (!student) return null

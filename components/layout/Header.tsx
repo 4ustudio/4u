@@ -70,7 +70,7 @@ export default function Header() {
 
         <div className="flex items-center gap-3">
           <Button
-            href="/contacto"
+            href="/agendar"
             size="sm"
             className="hidden lg:inline-flex px-5 py-2 text-[13px]"
           >
@@ -124,7 +124,7 @@ export default function Header() {
               </Link>
             ))}
             <Link
-              href="/contacto"
+              href="/agendar"
               onClick={() => setOpen(false)}
               className="flex items-center gap-2 text-white font-semibold px-6 py-2.5 rounded-full text-sm text-center justify-center mt-2"
               style={{ backgroundColor: "#ff7a00", fontFamily: "'Poppins', sans-serif" }}

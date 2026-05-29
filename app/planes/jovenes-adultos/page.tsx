@@ -118,7 +118,7 @@ export default function PlanesJovenesAdultosPage() {
                 <p className="text-gray-500 font-roboto">Te ayudamos a elegir el mejor camino.</p>
               </div>
             </div>
-            <CTAItem title="Agenda tu Clase" text="Conoce nuestras instalaciones" href="/contacto" />
+            <CTAItem title="Agenda tu Clase" text="Conoce nuestras instalaciones" href="/agendar" />
             <CTAItem title="Solicita asesoría" text="Hablemos de tu proyecto" href="/contacto" />
           </div>
         </div>
@@ -170,7 +170,7 @@ function AdultPlanCard({
         </div>
         <div className="mt-6 flex items-center justify-between gap-4">
           <p className="text-lg font-extrabold font-poppins">{price}</p>
-          <Link href="/contacto" className={`inline-flex items-center gap-3 rounded-lg border px-5 py-2.5 text-sm font-bold font-poppins ${featured ? "border-[#ff6b00] text-[#ff6b00]" : "border-[#ff6b00]/50 text-[#ff6b00]"}`}>
+          <Link href="/agendar" className={`inline-flex items-center gap-3 rounded-lg border px-5 py-2.5 text-sm font-bold font-poppins ${featured ? "border-[#ff6b00] text-[#ff6b00]" : "border-[#ff6b00]/50 text-[#ff6b00]"}`}>
             Ver plan <span aria-hidden="true">→</span>
           </Link>
         </div>

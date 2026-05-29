@@ -88,7 +88,7 @@ export default function PlanCard({
       </ul>
 
       <Link
-        href="/contacto"
+        href="/agendar"
         className={`w-full text-center text-white font-semibold py-3.5 rounded-full text-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 ${
           highlighted
             ? "shadow-xl shadow-[#ff7a00]/25 hover:shadow-2xl hover:shadow-[#ff7a00]/40 hover:-translate-y-0.5"

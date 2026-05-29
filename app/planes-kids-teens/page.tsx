@@ -90,7 +90,7 @@ export default function PlanesKidsTeensPage() {
           <FooterInfo title="¿No sabes qué plan elegir?" text="Te ayudamos a encontrar el plan ideal para el talento y los sueños de tu hijo." />
           <FooterInfo title="Agenda una clase" text="Conoce nuestras instalaciones y vive la experiencia 4U." />
           <FooterInfo title="Hablemos de tu proyecto" text="Cuéntanos sus intereses y objetivos y te guiamos en el camino." />
-          <Link href="/contacto" className="inline-flex items-center justify-center gap-3 rounded-lg bg-[#ff6b00] px-8 py-4 text-base font-bold text-white shadow-lg shadow-orange-500/25 font-poppins">
+          <Link href="/agendar" className="inline-flex items-center justify-center gap-3 rounded-lg bg-[#ff6b00] px-8 py-4 text-base font-bold text-white shadow-lg shadow-orange-500/25 font-poppins">
             Agenda tu Clase
             <span aria-hidden="true">▦</span>
           </Link>
@@ -156,7 +156,7 @@ function KidsPlanCard({
         </div>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
           <p className="text-2xl font-extrabold font-poppins">{price}</p>
-          <Link href="/contacto" className="inline-flex items-center gap-3 rounded-lg px-6 py-3 text-sm font-bold text-white shadow-lg font-poppins" style={{ backgroundColor: color }}>
+          <Link href="/agendar" className="inline-flex items-center gap-3 rounded-lg px-6 py-3 text-sm font-bold text-white shadow-lg font-poppins" style={{ backgroundColor: color }}>
             Conoce el {label}
             <span aria-hidden="true">↗</span>
           </Link>

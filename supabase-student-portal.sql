@@ -1,7 +1,18 @@
 -- ═══════════════════════════════════════════════════════════════════
--- Portal de Estudiantes — Migración
+-- Portal de Estudiantes — Migración completa
 -- Ejecutar en Supabase Dashboard → SQL Editor
 -- ═══════════════════════════════════════════════════════════════════
+
+-- 0. Columnas extendidas de students (necesarias para el panel admin)
+ALTER TABLE students ADD COLUMN IF NOT EXISTS first_name      TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS last_name       TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS address         TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS city            TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS birth_date      DATE;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS profession      TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS music_genre     TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS document_type   TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS document_number TEXT;
 
 -- 1. Columna que vincula cada estudiante con su cuenta Auth
 ALTER TABLE students

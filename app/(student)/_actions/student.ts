@@ -239,12 +239,11 @@ export async function registerAction(
   }
 
   // 2. Crear registro en students vinculado al nuevo user
+  // Usamos columnas garantizadas en el schema base (name, email, phone, user_id)
   const { error: studentError } = await admin()
     .from('students')
     .insert({
-      first_name,
-      last_name,
-      name: `${first_name} ${last_name}`.trim(),
+      name: `${first_name} ${last_name}`.trim() || first_name,
       email,
       phone,
       user_id: authData.user.id,

@@ -5,11 +5,24 @@ import Link from "next/link";
 import Image from "next/image";
 import Button from "@/components/ui/Button";
 import { navLinks } from "@/data/navigation";
+import { createBrowserClient } from "@/lib/supabase/client";
 
 export default function Header() {
   const [open, setOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const supabase = createBrowserClient();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsLoggedIn(!!session);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setIsLoggedIn(!!session);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     if (open) {
@@ -67,6 +80,19 @@ export default function Header() {
         </nav>
 
         <div className="flex items-center gap-3">
+          {/* Botón portal — desktop */}
+          <Link
+            href={isLoggedIn ? "/mi-cuenta" : "/mi-cuenta/login"}
+            className="hidden lg:inline-flex items-center gap-1.5 text-[13px] font-medium text-white/60 hover:text-white transition-colors"
+            style={{ fontFamily: "'Roboto', sans-serif" }}
+          >
+            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+            {isLoggedIn ? "Mi cuenta" : "Iniciar sesión"}
+          </Link>
+
           <Button
             href="/agendar"
             size="sm"
@@ -121,6 +147,18 @@ export default function Header() {
                 {link.label}
               </Link>
             ))}
+            <Link
+              href={isLoggedIn ? "/mi-cuenta" : "/mi-cuenta/login"}
+              onClick={() => setOpen(false)}
+              className="text-sm font-medium text-white/60 hover:text-[#ff7a00] transition-colors py-2 flex items-center gap-2"
+              style={{ fontFamily: "'Roboto', sans-serif" }}
+            >
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              {isLoggedIn ? "Mi cuenta" : "Iniciar sesión"}
+            </Link>
             <Link
               href="/agendar"
               onClick={() => setOpen(false)}

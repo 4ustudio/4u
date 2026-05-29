@@ -2,6 +2,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import Link from 'next/link'
 import type { ClassSession } from '@/types/admin'
 
+export const dynamic = 'force-dynamic'
+
 function getWeekRange() {
   const now   = new Date()
   const day   = now.getDay() || 7           // 1=Lun … 7=Dom

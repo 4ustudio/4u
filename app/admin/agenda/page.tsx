@@ -2,6 +2,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import WeekCalendar from './_components/WeekCalendar'
 import type { ClassSession } from '@/types/admin'
 
+export const dynamic = 'force-dynamic'
+
 function getWeekStart(query?: string): string {
   if (query) return query
   const now  = new Date()

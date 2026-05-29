@@ -5,6 +5,8 @@ import { notFound } from 'next/navigation'
 import StudentEditForm from './_form'
 import type { Student, MonthlyUsage } from '@/types/admin'
 
+export const dynamic = 'force-dynamic'
+
 async function getStudentData(id: string) {
   const now = new Date()
 

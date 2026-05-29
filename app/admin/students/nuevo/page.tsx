@@ -2,6 +2,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import NewStudentForm from './_form'
 import type { Lead } from '@/types/admin'
 
+export const dynamic = 'force-dynamic'
+
 async function getLeads(): Promise<Lead[]> {
   const { data } = await createAdminClient()
     .from('appointments')

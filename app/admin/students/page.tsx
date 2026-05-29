@@ -2,6 +2,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import Link from 'next/link'
 import type { Student } from '@/types/admin'
 
+export const dynamic = 'force-dynamic'
+
 async function getStudents(): Promise<Student[]> {
   const { data, error } = await createAdminClient()
     .from('students')

@@ -418,96 +418,8 @@ export default function BookingCalendar({ serverAction, mode = 'public' }: Booki
                 </div>
               </div>
 
-              {/* Resumen */}
-              <div>
-                <p className="text-sm font-bold text-white mb-4 font-poppins">3. Resumen de tu reserva</p>
-
-                <div className="rounded-xl border border-white/[0.1] bg-white/[0.03] backdrop-blur-sm p-5 space-y-4">
-                  {selectedDate && selectedTime ? (
-                    <>
-                      {/* Mini ficha con foto del instructor */}
-                      <div className="flex items-center gap-3 pb-4 border-b border-white/[0.06]">
-                        <div className="h-12 w-12 rounded-full overflow-hidden shrink-0 ring-2 ring-[#ff7a00]/20">
-                          <Image
-                            src="/images/instructors/Perfil.png"
-                            alt="Andrés Ospina"
-                            width={48}
-                            height={48}
-                            className="object-cover w-full h-full"
-                          />
-                        </div>
-                        <div>
-                          <p className="text-white/45 text-[10px] font-roboto">Instructor</p>
-                          <p className="text-white font-semibold text-sm font-poppins">Andrés Ospina</p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-3 text-xs font-roboto">
-                        <div className="flex justify-between items-center">
-                          <span className="text-white/40 flex items-center gap-2">
-                            <svg className="h-3.5 w-3.5 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
-                              <rect x="3" y="4" width="18" height="18" rx="2" />
-                              <line x1="16" y1="2" x2="16" y2="6" />
-                              <line x1="8" y1="2" x2="8" y2="6" />
-                              <line x1="3" y1="10" x2="21" y2="10" />
-                            </svg>
-                            Fecha
-                          </span>
-                          <span className="text-white/80 font-medium">{formattedDate}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-white/40 flex items-center gap-2">
-                            <svg className="h-3.5 w-3.5 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
-                              <circle cx="12" cy="12" r="10" />
-                              <polyline points="12 6 12 12 16 14" />
-                            </svg>
-                            Hora
-                          </span>
-                          <span className="text-white/80 font-medium">{selectedTime}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-white/40 flex items-center gap-2">
-                            <svg className="h-3.5 w-3.5 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
-                              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                              <circle cx="12" cy="10" r="3" />
-                            </svg>
-                            Modalidad
-                          </span>
-                          <span className="text-white/80 font-medium">Presencial</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-white/40 flex items-center gap-2">
-                            <svg className="h-3.5 w-3.5 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
-                              <rect x="2" y="3" width="20" height="14" rx="2" />
-                              <line x1="8" y1="21" x2="16" y2="21" />
-                              <line x1="12" y1="17" x2="12" y2="21" />
-                            </svg>
-                            Sede
-                          </span>
-                          <span className="text-white/80 font-medium">4U Studio Center</span>
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="flex flex-col items-center gap-3 py-3">
-                      <div className="h-14 w-14 rounded-full border border-dashed border-white/[0.12] flex items-center justify-center">
-                        <svg className="h-6 w-6 text-white/20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
-                          <rect x="3" y="4" width="18" height="18" rx="2" />
-                          <line x1="16" y1="2" x2="16" y2="6" />
-                          <line x1="8" y1="2" x2="8" y2="6" />
-                          <line x1="3" y1="10" x2="21" y2="10" />
-                        </svg>
-                      </div>
-                      <p className="text-white/30 text-xs font-roboto text-center leading-relaxed">
-                        Selecciona una fecha y un horario<br />
-                        para ver el resumen de tu reserva.
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Campos de contacto */}
-                <div className="space-y-3 mt-4">
+              {/* Campos de contacto */}
+              <div className="space-y-3 mt-4">
                   <input
                     type="text"
                     name="name"
@@ -534,7 +446,6 @@ export default function BookingCalendar({ serverAction, mode = 'public' }: Booki
                     disabled={isPending}
                     className="w-full rounded-xl border border-white/10 bg-white/[0.06] px-4 py-2.5 text-white text-sm placeholder:text-white/30 font-roboto focus:outline-none focus:ring-2 focus:ring-[#ff7a00]/40 transition-all disabled:opacity-50"
                   />
-                </div>
               </div>
 
               {/* Errores */}

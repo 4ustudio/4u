@@ -12,13 +12,15 @@ function admin(): any { return createAdminClient() }
 // ─── Helpers ────────────────────────────────────────────────────────
 
 async function getAuthenticatedStudent() {
+  // Usar cliente autenticado (anon key + sesión + RLS) para el lookup
+  // Evita depender del service_role key para queries del portal estudiante
   const supabase = await createAuthServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data: student } = await admin()
+  const { data: student } = await supabase
     .from('students')
-    .select('id, name, first_name, last_name, email, phone, student_type, status, enrolled_at')
+    .select('id, name, email, phone, student_type, status, enrolled_at, user_id')
     .eq('user_id', user.id)
     .single()
 
@@ -116,7 +118,10 @@ export async function studentBookAction(
     return { status: 'error', message: 'Selecciona el instrumento o curso.' }
   }
 
-  // Buscar course_id por nombre
+  // Para queries que necesitan service_role (RPCs, courses) usar admin()
+  // con fallback al cliente autenticado si el admin falla
+
+  // Buscar course_id por nombre (usando admin para bypasear RLS en courses)
   const { data: course } = await admin()
     .from('courses')
     .select('id, name')

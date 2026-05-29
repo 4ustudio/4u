@@ -2,69 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import PageLayout from "@/components/layout/PageLayout";
 import OptimizedImage from "@/components/ui/OptimizedImage";
+import { PLANES_ADULTOS } from "@/data/plans-adults";
 
 export const metadata: Metadata = {
   title: "Planes para Jóvenes y Adultos",
   description: "Planes musicales para jóvenes y adultos de 4U Studio Academy.",
 };
 
-const plans = [
-  {
-    index: "01",
-    title: "Plan Base - Cumplo mi sueño",
-    description: "Comienza tu experiencia musical con lo esencial.",
-    price: "$1.100.000",
-    tags: ["8 clases al mes", "Clases grupales", "Estudio básico"],
-    featured: true,
-    imagePosition: "object-[35%_45%]",
-    image: "/images/courses/planes-tipos/Plan 1.png",
-  },
-  {
-    index: "02",
-    title: "Plan Base Plus - Más estudio",
-    description: "Más práctica y recursos para avanzar.",
-    price: "$1.600.000",
-    tags: ["8 clases al mes", "Clases grupales", "Más estudio"],
-    imagePosition: "object-[55%_52%]",
-    image: "/images/courses/planes-tipos/Plan 1B.png",
-  },
-  {
-    index: "03",
-    title: "Plan Artista - Tengo mi canción",
-    description: "Produce tu canción original de inicio a fin.",
-    price: "$3.500.000",
-    tags: ["Producción musical", "6 clases", "Grabación"],
-    imagePosition: "object-[72%_45%]",
-    image: "/images/courses/planes-tipos/Plan 2.png",
-  },
-  {
-    index: "04",
-    title: "Plan Artista Pro - Proyecto artístico",
-    description: "Desarrolla tu identidad y lanza tu proyecto.",
-    price: "$4.500.000",
-    tags: ["Producción avanzada", "Coaching", "Estrategia"],
-    imagePosition: "object-[45%_72%]",
-    image: "/images/courses/planes-tipos/Plan 3.png",
-  },
-  {
-    index: "05",
-    title: "Plan Profesional - Construyo mi carrera",
-    description: "Formación integral para una carrera sólida.",
-    price: "Según cotización",
-    tags: ["Formación completa", "Producción", "Difusión"],
-    imagePosition: "object-[62%_52%]",
-    image: "/images/courses/planes-tipos/Plan 4.png",
-  },
-  {
-    index: "06",
-    title: "Plan Corporativo - Audio para marcas",
-    description: "Soluciones de audio profesional para tu empresa.",
-    price: "Según cotización",
-    tags: ["Voice over", "Audio branding", "Entrega profesional"],
-    imagePosition: "object-[80%_52%]",
-    image: "/images/courses/planes-tipos/Plan 5.png",
-  },
-];
+const FILTERS = ["Todos", "Inicial", "Artista", "Profesional", "Empresas"];
 
 export default function PlanesJovenesAdultosPage() {
   return (
@@ -94,7 +39,7 @@ export default function PlanesJovenesAdultosPage() {
       <section className="bg-white px-6 pb-28 pt-7 text-gray-950 lg:px-8">
         <div className="plans-frame">
           <div className="mb-6 flex flex-wrap justify-center gap-4">
-            {["Todos", "Inicial", "Artista", "Profesional", "Empresas"].map((filter, index) => (
+            {FILTERS.map((filter, index) => (
               <button
                 key={filter}
                 className={`inline-flex min-w-[132px] items-center justify-center gap-3 rounded-lg px-6 py-3 text-sm font-bold shadow-md font-poppins ${
@@ -107,8 +52,8 @@ export default function PlanesJovenesAdultosPage() {
           </div>
 
           <div className="grid gap-6 lg:grid-cols-3">
-            {plans.map((plan) => (
-              <AdultPlanCard key={plan.index} {...plan} />
+            {PLANES_ADULTOS.map((plan) => (
+              <AdultPlanCard key={plan.id} plan={plan} />
             ))}
           </div>
 
@@ -133,51 +78,55 @@ export default function PlanesJovenesAdultosPage() {
   );
 }
 
-function AdultPlanCard({
-  index,
-  title,
-  description,
-  price,
-  tags,
-  featured,
-  imagePosition,
-  image,
-}: {
-  index: string;
-  title: string;
-  description: string;
-  price: string;
-  tags: string[];
-  featured?: boolean;
-  imagePosition: string;
-  image: string;
-}) {
+function AdultPlanCard({ plan }: { plan: typeof PLANES_ADULTOS[0] }) {
+  const featured = !!plan.highlighted;
   return (
     <article className={`overflow-hidden rounded-xl shadow-xl shadow-gray-950/10 ring-1 ring-gray-200 ${featured ? "bg-gray-950 text-white" : "bg-white text-gray-950"}`}>
       <div className="relative h-[165px]">
         <OptimizedImage
-          src={image}
-          alt={title}
+          src={plan.image}
+          alt={plan.name}
           fill
-          className={`object-cover ${imagePosition}`}
+          className={`object-cover ${plan.imagePosition ?? ""}`}
           sizes="(max-width: 1024px) 100vw, 33vw"
         />
         <span className="absolute left-5 top-5 rounded-md bg-[#ff6b00] px-3 py-2 text-base font-extrabold text-white font-poppins">
-          {index}
+          {String(plan.id).padStart(2, "0")}
         </span>
+        {plan.highlighted && (
+          <span className="absolute right-5 top-5 rounded-full bg-[#ff6b00] px-3 py-1 text-xs font-bold text-white font-poppins">
+            {plan.badge}
+          </span>
+        )}
       </div>
       <div className="p-5">
-        <h2 className="text-xl font-extrabold leading-tight font-poppins">{title}</h2>
-        <p className={`mt-2 text-sm ${featured ? "text-white/80" : "text-gray-600"} font-roboto`}>{description}</p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {tags.map((tag) => (
-            <span key={tag} className={`rounded-full px-3 py-1.5 text-xs font-bold ring-1 font-roboto ${featured ? "bg-white/5 text-white/85 ring-white/15" : "bg-white text-gray-700 ring-gray-200"}`}>
-              <span className="text-[#ff6b00]">◎</span> {tag}
-            </span>
+        <p className="text-xs font-semibold uppercase tracking-wider text-[#ff6b00] font-roboto mb-1">{plan.subtitle}</p>
+        <h2 className="text-xl font-extrabold leading-tight font-poppins">{plan.name}</h2>
+        <p className={`mt-2 text-sm ${featured ? "text-white/80" : "text-gray-600"} font-roboto`}>{plan.description}</p>
+        <ul className="mt-4 space-y-1.5">
+          {plan.features.map((f) => (
+            <li key={f} className={`flex items-start gap-2 text-xs font-roboto ${featured ? "text-white/75" : "text-gray-600"}`}>
+              <span className="mt-0.5 text-[#ff6b00] shrink-0">◎</span> {f}
+            </li>
           ))}
-        </div>
+        </ul>
+        {plan.instruments && (
+          <p className={`mt-3 text-xs font-roboto ${featured ? "text-white/50" : "text-gray-400"}`}>
+            Instrumentos: {plan.instruments.join(", ")}
+          </p>
+        )}
+        {plan.limitedOffer && (
+          <p className="mt-2 text-[11px] text-[#ff6b00] font-roboto font-semibold">
+            ⏳ Oferta por tiempo limitado · Proceso cada 3 meses
+          </p>
+        )}
+        {plan.priceAlt && (
+          <p className={`mt-2 text-[11px] font-roboto ${featured ? "text-white/50" : "text-gray-400"}`}>
+            {plan.priceAlt}
+          </p>
+        )}
         <div className="mt-6 flex items-center justify-between gap-4">
-          <p className="text-lg font-extrabold font-poppins">{price}</p>
+          <p className="text-lg font-extrabold font-poppins">{plan.price}</p>
           <Link href="/agendar" className={`inline-flex items-center gap-3 rounded-lg border px-5 py-2.5 text-sm font-bold font-poppins ${featured ? "border-[#ff6b00] text-[#ff6b00]" : "border-[#ff6b00]/50 text-[#ff6b00]"}`}>
             Ver plan <span aria-hidden="true">→</span>
           </Link>

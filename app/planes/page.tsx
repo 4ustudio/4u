@@ -2,17 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import PageLayout from "@/components/layout/PageLayout";
 import OptimizedImage from "@/components/ui/OptimizedImage";
+import { PLANES_ADULTOS } from "@/data/plans-adults";
 
 export const metadata: Metadata = {
   title: "Planes de estudio",
   description: "Elige entre planes para jóvenes y adultos o planes Kids & Teens.",
 };
 
-const adultPlans = [
-  "Plan Base - Cumplo Mi Sueño",
-  "Plan Artista - Tengo Mi Canción",
-  "Plan Artista Pro - Mi Proyecto Artístico",
-];
+const adultPlans = PLANES_ADULTOS.slice(0, 3).map((p) => p.name);
 
 const kidsPlans = [
   "Plan Kids & Teens 1",

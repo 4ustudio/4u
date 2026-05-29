@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Button from "@/components/ui/Button";
 import { navLinks } from "@/data/navigation";
-import { createBrowserClient } from "@/lib/supabase/client";
+import { createBrowserClient } from "@supabase/ssr";
 
 export default function Header() {
   const [open, setOpen] = useState(false);
@@ -14,7 +14,10 @@ export default function Header() {
   const toggleRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    const supabase = createBrowserClient();
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
     supabase.auth.getSession().then(({ data: { session } }) => {
       setIsLoggedIn(!!session);
     });

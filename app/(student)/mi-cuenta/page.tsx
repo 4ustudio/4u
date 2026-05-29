@@ -55,7 +55,6 @@ export default async function MiCuentaPage() {
             Comunícate con 4U Studio Academy para que activen tu acceso.
           </p>
           <p className="text-white/25 font-roboto text-xs">{user.email}</p>
-          <p className="text-white/15 font-roboto text-[10px] font-mono">{user.id}</p>
         </main>
       </>
     )

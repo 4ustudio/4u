@@ -38,7 +38,10 @@ export async function getMyDashboardData(userId?: string) {
     uid = user.id
   }
 
-  const { data: student } = await admin()
+  // Usar cliente autenticado (anon key + sesión) para respetar RLS
+  // Esto funciona gracias a la policy: SELECT WHERE auth.uid() = user_id
+  const authClient = await createAuthServerClient()
+  const { data: student } = await authClient
     .from('students')
     .select('*')
     .eq('user_id', uid)

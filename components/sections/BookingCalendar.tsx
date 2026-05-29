@@ -41,6 +41,16 @@ function buildWALink(name: string, course: string) {
   return `https://api.whatsapp.com/send/?phone=${WA_PHONE}&text=${encodeURIComponent(msg)}`;
 }
 
+function buildWALinkDirect(course: string, date: Date | null, time: string | null) {
+  let msg = `Hola! Me gustaría agendar una clase de ${course} en 4U Studio Academy.`;
+  if (date && time) {
+    const dateStr = date.toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" });
+    msg += ` Me interesa el ${dateStr} a las ${time}.`;
+  }
+  msg += ` ¿Podrían ayudarme?`;
+  return `https://api.whatsapp.com/send/?phone=${WA_PHONE}&text=${encodeURIComponent(msg)}`;
+}
+
 // ─── Calendar helper ───────────────────────────────────────────
 function calendarDays(year: number, month: number) {
   const firstDow = new Date(year, month, 1).getDay(); // 0=Dom
@@ -558,6 +568,27 @@ export default function BookingCalendar({ serverAction, mode = 'public' }: Booki
                   </>
                 )}
               </button>
+
+              {/* Separador */}
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-white/[0.08]" />
+                <span className="text-white/25 text-[10px] font-roboto uppercase tracking-wider">o</span>
+                <div className="h-px flex-1 bg-white/[0.08]" />
+              </div>
+
+              {/* WhatsApp */}
+              <a
+                href={buildWALinkDirect(selectedCourse, selectedDate, selectedTime)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center justify-center gap-2.5 rounded-xl py-4 text-sm font-bold text-white font-poppins transition-all hover:brightness-110 h-14"
+                style={{ backgroundColor: "#25D366", boxShadow: "0 0 25px rgba(37,211,102,0.2)" }}
+              >
+                <svg className="h-5 w-5 fill-white shrink-0" viewBox="0 0 448 512" aria-hidden="true">
+                  <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6z" />
+                </svg>
+                Agendar por WhatsApp
+              </a>
 
               {/* Nota seguridad */}
               <p className="text-center text-white/25 text-[10px] font-roboto flex items-center justify-center gap-1.5">

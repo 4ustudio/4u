@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import Button from "@/components/ui/Button";
 import { navLinks } from "@/data/navigation";
 
@@ -41,18 +42,15 @@ export default function Header() {
   return (
     <header className="fixed w-full top-0 z-50 bg-black/25 backdrop-blur-md border-b border-white/10">
       <div className="home-frame h-[58px] flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 font-poppins leading-none">
-          <div className="flex flex-col">
-            <span className="text-[18px] font-extrabold tracking-tight text-white">
-              <span className="text-[#ff7a00]">4U</span> STUDIO
-            </span>
-            <span className="text-[8px] uppercase tracking-[0.55em] text-white/65 pl-7">academy</span>
-          </div>
-          <span className="hidden sm:inline-flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#ff7a00] text-[#ff7a00]">
-            <svg className="h-5 w-5" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-              <path d="M3 17h5l3-8 5 15 4-11 3 4h6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </span>
+        <Link href="/" className="flex items-center gap-2 shrink-0">
+          <Image
+            src="/images/icons/Recurso 1.png"
+            alt="4U Studio"
+            width={120}
+            height={40}
+            className="h-9 w-auto"
+            priority
+          />
         </Link>
 
         <nav className="hidden lg:flex items-center gap-7">

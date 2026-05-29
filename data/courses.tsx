@@ -7,8 +7,10 @@ export const courses: Course[] = [
     status: "Básico a Avanzado",
     color: "#ff7a00",
     description: "Domina la guitarra desde los fundamentos hasta técnicas avanzadas. Acústica, eléctrica o ambas.",
+    highlights: ["Técnica", "Ritmo", "Acordes", "Improvisación"],
     duration: "8 sesiones/mes",
     level: "Básico a Avanzado",
+    image: "/images/courses/planes-tipos/Plan 1.png",
     instructorId: "andres-ospina",
     icon: (
       <svg className="w-16 h-16" viewBox="0 0 512 512" fill="white" opacity="0.3">
@@ -22,8 +24,10 @@ export const courses: Course[] = [
     status: "Básico a Avanzado",
     color: "#488DEF",
     description: "Aprende piano clásico o moderno con método progresivo. Lectura de partituras, improvisación y más.",
+    highlights: ["Técnica", "Armonía", "Lectura", "Repertorio"],
     duration: "8 sesiones/mes",
     level: "Básico a Avanzado",
+    image: "/images/courses/planes-tipos/Plan 2.png",
     instructorId: "valentina-rios",
     icon: (
       <svg className="w-16 h-16" viewBox="0 0 512 512" fill="white" opacity="0.3">
@@ -37,8 +41,10 @@ export const courses: Course[] = [
     status: "Básico a Avanzado",
     color: "#ec4899",
     description: "Desarrolla tu voz con técnica vocal profesional. Respiración, afinación, proyección y repertorio.",
+    highlights: ["Respiración", "Afinación", "Interpretación", "Proyección vocal"],
     duration: "8 sesiones/mes",
     level: "Básico a Avanzado",
+    image: "/images/courses/planes-tipos/Plan 3.png",
     instructorId: "valentina-rios",
     icon: (
       <svg className="w-16 h-16" viewBox="0 0 512 512" fill="white" opacity="0.3">
@@ -52,8 +58,10 @@ export const courses: Course[] = [
     status: "Básico a Avanzado",
     color: "#f59e0b",
     description: "Domina la batería desde los grooves básicos hasta fills avanzados. Técnica, independencia y creatividad.",
+    highlights: ["Groove", "Técnica", "Lectura", "Performance"],
     duration: "8 sesiones/mes",
     level: "Básico a Avanzado",
+    image: "/images/courses/planes-tipos/Plan 4.png",
     instructorId: "diego-martinez",
     icon: (
       <svg className="w-16 h-16" viewBox="0 0 512 512" fill="white" opacity="0.3">
@@ -67,12 +75,31 @@ export const courses: Course[] = [
     status: "Básico a Avanzado",
     color: "#10b981",
     description: "Construye la base rítmica de cualquier banda. Técnica de mano, grooves, walking bass y slap.",
+    highlights: ["Ritmo", "Técnica", "Armonía", "Improvisación"],
     duration: "8 sesiones/mes",
     level: "Básico a Avanzado",
+    image: "/images/courses/planes-tipos/Plan 5.png",
     instructorId: "andres-ospina",
     icon: (
       <svg className="w-16 h-16" viewBox="0 0 512 512" fill="white" opacity="0.3">
         <path d="M501.6 10.4c7.5 7.5 8.7 19.1 2.8 27.9L384 200.8V272c0 8.8-7.2 16-16 16s-16-7.2-16-16V208.8L216.2 392.1c-4.7 5.9-11.6 9.4-19 9.9L159 405l-20.9 41.7c-9.6 19.2-39.9 18.6-48.8-1L68.7 334.9c-6.8-17.3 6.4-36.9 24.6-36.9h8.9c9.8 0 19.1 4.9 24.6 13.3l20.8 33.6 38.2-19.1c6.2-3.1 13.2-4.1 20-2.9l51.2-74.1L55.1 0 0 55.1l233.7 256.9 120.5-162.4c8.2-11.1 22.3-15.6 35.1-11.3l45.1 18c6.5 2.6 12.1 7 16.1 12.7z"/>
+      </svg>
+    ),
+  },
+  {
+    title: "Producción Musical",
+    subtitle: "Grabación y mezcla",
+    status: "Básico a Avanzado",
+    color: "#a855f7",
+    description: "Aprende producción musical desde la composición hasta la masterización. Graba, mezcla y produce como un profesional.",
+    highlights: ["DAW", "Mezcla", "Grabación", "Masterización"],
+    duration: "8 sesiones/mes",
+    level: "Básico a Avanzado",
+    image: "/images/courses/planes-tipos/Plan 6.png",
+    instructorId: "carlos-mendoza",
+    icon: (
+      <svg className="w-16 h-16" viewBox="0 0 512 512" fill="white" opacity="0.3">
+        <path d="M448 32H64C28.7 32 0 60.7 0 96v320c0 35.3 28.7 64 64 64h384c35.3 0 64-28.7 64-64V96c0-35.3-28.7-64-64-64zm0 384H64V96h384v320zM208 192c-8.8 0-16 7.2-16 16v96c0 8.8 7.2 16 16 16s16-7.2 16-16v-96c0-8.8-7.2-16-16-16zm-64 32c-8.8 0-16 7.2-16 16v32c0 8.8 7.2 16 16 16s16-7.2 16-16v-32c0-8.8-7.2-16-16-16zm128-64c-8.8 0-16 7.2-16 16v160c0 8.8 7.2 16 16 16s16-7.2 16-16V176c0-8.8-7.2-16-16-16zm64 32c-8.8 0-16 7.2-16 16v96c0 8.8 7.2 16 16 16s16-7.2 16-16v-96c0-8.8-7.2-16-16-16z"/>
       </svg>
     ),
   },

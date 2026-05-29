@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import BookSessionModal from './BookSessionModal'
 import SessionDetailModal from './SessionDetailModal'
-import type { ClassSession } from '@/types/admin'
+import type { ClassSession, AvailableSlot } from '@/types/admin'
 
 // Slots por día de la semana
 // ISODOW: 1=Lun…5=Vie → 10:00–21:00  |  6=Sáb → 08:00–13:00  |  7=Dom → cerrado
@@ -45,6 +45,18 @@ const STATUS_COLOR: Record<string, string> = {
   no_show:     'border-l-gray-500 bg-gray-800/30 opacity-50',
 }
 
+function getSlotStatus(
+  date: string,
+  time: string,
+  availabilityByDay: Record<string, AvailableSlot[]>
+): 'available' | 'occupied' | 'unknown' {
+  const daySlots = availabilityByDay[date]
+  if (!daySlots || daySlots.length === 0) return 'unknown'
+  const slotsForTime = daySlots.filter(s => s.slot_time.slice(0, 5) === time)
+  if (slotsForTime.length === 0) return 'unknown'
+  return slotsForTime.some(s => s.is_available) ? 'available' : 'occupied'
+}
+
 interface Props {
   weekStart:   string
   sessions:    ClassSession[]
@@ -53,9 +65,10 @@ interface Props {
   courses:     { id: string; name: string }[]
   classrooms:  { id: string; name: string }[]
   instructors: { id: string; name: string }[]
+  availabilityByDay: Record<string, AvailableSlot[]>
 }
 
-export default function WeekCalendar({ weekStart, sessions, blocked, students, courses, classrooms, instructors }: Props) {
+export default function WeekCalendar({ weekStart, sessions, blocked, students, courses, classrooms, instructors, availabilityByDay }: Props) {
   const router = useRouter()
   const [bookSlot, setBookSlot] = useState<{ date: string; time: string } | null>(null)
   const [viewSession, setViewSession] = useState<ClassSession | null>(null)
@@ -116,7 +129,8 @@ export default function WeekCalendar({ weekStart, sessions, blocked, students, c
 
       {/* Leyenda */}
       <div className="flex flex-wrap gap-3 mb-3 text-xs text-white/40">
-        <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-white/5 border border-white/10" />Disponible</span>
+        <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-green-900/30 border border-green-500/40" />Disponible</span>
+        <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-red-900/50 border border-red-900/50" />Ocupado</span>
         <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-green-900/30 border-l-2 border-l-green-400" />Confirmada</span>
         <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-yellow-900/20 border-l-2 border-l-yellow-400" />Pendiente</span>
         <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-red-900/20" />Sin disponibilidad</span>
@@ -215,15 +229,30 @@ export default function WeekCalendar({ weekStart, sessions, blocked, students, c
                     )
                   }
 
-                  // Slot disponible
+                  const slotStatus = getSlotStatus(dateStr, slot, availabilityByDay)
+
+                  if (slotStatus === 'occupied') {
+                    return (
+                      <td key={dateStr} className="px-1 py-1 border-l border-white/5 align-top">
+                        <button
+                          onClick={() => handleSlotClick(dateStr, slot, isodow, true)}
+                          className="w-full min-h-[52px] rounded border border-red-900/40 bg-red-950/20 hover:bg-red-900/20 transition-all group cursor-pointer"
+                          title="Ocupado — todos los salones están ocupados en este horario"
+                        >
+                          <span className="text-red-400/40 text-[10px]">Ocupado</span>
+                        </button>
+                      </td>
+                    )
+                  }
+
                   return (
                     <td key={dateStr} className="px-1 py-1 border-l border-white/5 align-top">
                       <button
                         onClick={() => handleSlotClick(dateStr, slot, isodow, true)}
-                        className="w-full min-h-[52px] rounded border border-white/5 bg-white/[0.02] hover:bg-orange-500/8 hover:border-orange-500/20 transition-all group"
+                        className="w-full min-h-[52px] rounded border border-green-900/30 bg-green-900/15 hover:bg-green-700/20 hover:border-green-500/40 transition-all group cursor-pointer"
                         title="Crear clase"
                       >
-                        <span className="text-white/20 group-hover:text-orange-400/60 text-lg transition-colors">+</span>
+                        <span className="text-green-400/50 group-hover:text-green-300/80 text-lg transition-colors">+</span>
                       </button>
                     </td>
                   )

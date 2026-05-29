@@ -45,7 +45,9 @@ CREATE TABLE IF NOT EXISTS courses (
   id        UUID    DEFAULT gen_random_uuid() PRIMARY KEY,
   name      TEXT    NOT NULL UNIQUE,
   slug      TEXT    NOT NULL UNIQUE,
-  is_active BOOLEAN NOT NULL DEFAULT true
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  category  TEXT    NOT NULL DEFAULT 'general'
+              CHECK (category IN ('kids', 'adultos', 'general'))
 );
 
 INSERT INTO courses (name, slug) VALUES
@@ -312,6 +314,10 @@ CREATE TABLE IF NOT EXISTS student_schedules (
   -- ISODOW: 1=Lunes … 6=Sábado
   day_of_week   SMALLINT NOT NULL CHECK (day_of_week BETWEEN 1 AND 6),
   start_time    TIME     NOT NULL,
+
+  -- Frecuencia: semanal o quincenal (reservado para futuros planes)
+  frequency     TEXT NOT NULL DEFAULT 'weekly'
+                CHECK (frequency IN ('weekly', 'biweekly')),
 
   -- Vigencia: desde cuándo aplica y hasta cuándo (NULL = indefinido)
   active_from   DATE NOT NULL DEFAULT CURRENT_DATE,
@@ -1075,56 +1081,61 @@ DECLARE
   v_skipped   INT  := 0;
   v_errors    TEXT[] := '{}';
   v_result    JSONB;
+  v_quota     INT;
 BEGIN
-  FOR v_schedule IN
-    SELECT * FROM student_schedules
-    WHERE student_id = p_student_id
-      AND status      = 'active'
-      AND active_from <= v_last_day
-      AND (active_until IS NULL OR active_until >= v_first_day)
-    ORDER BY day_of_week, start_time
-  LOOP
-    v_date := v_first_day;
+  v_date := v_first_day;
 
-    WHILE v_date <= v_last_day LOOP
-      IF  EXTRACT(ISODOW FROM v_date)::SMALLINT = v_schedule.day_of_week
-      AND v_date >= v_schedule.active_from
-      AND (v_schedule.active_until IS NULL OR v_date <= v_schedule.active_until)
-      THEN
-        -- Evitar duplicados: ya existe una sesión no cancelada para este slot/horario
-        IF EXISTS (
-          SELECT 1 FROM class_sessions
-          WHERE student_id    = p_student_id
-            AND scheduled_date = v_date
-            AND start_time     = v_schedule.start_time
-            AND schedule_id    = v_schedule.id
-            AND status NOT IN ('cancelled', 'rescheduled')
-        ) THEN
-          v_skipped := v_skipped + 1;
+  WHILE v_date <= v_last_day LOOP
+    FOR v_schedule IN
+      SELECT * FROM student_schedules
+      WHERE student_id = p_student_id
+        AND status      = 'active'
+        AND active_from <= v_date
+        AND (active_until IS NULL OR active_until >= v_date)
+        AND day_of_week = EXTRACT(ISODOW FROM v_date)::SMALLINT
+      ORDER BY start_time
+    LOOP
+      -- Evitar duplicados: ya existe una sesión no cancelada para este slot/horario
+      IF EXISTS (
+        SELECT 1 FROM class_sessions
+        WHERE student_id    = p_student_id
+          AND scheduled_date = v_date
+          AND start_time     = v_schedule.start_time
+          AND schedule_id    = v_schedule.id
+          AND status NOT IN ('cancelled', 'rescheduled')
+      ) THEN
+        v_skipped := v_skipped + 1;
+      ELSE
+        v_result := fn_book_session(
+          p_student_id    := p_student_id,
+          p_classroom_id  := v_schedule.classroom_id,
+          p_course_id     := v_schedule.course_id,
+          p_date          := v_date,
+          p_start_time    := v_schedule.start_time,
+          p_instructor_id := v_schedule.instructor_id,
+          p_schedule_id   := v_schedule.id
+        );
+
+        IF (v_result->>'success')::BOOLEAN THEN
+          v_generated := v_generated + 1;
         ELSE
-          v_result := fn_book_session(
-            p_student_id    := p_student_id,
-            p_classroom_id  := v_schedule.classroom_id,
-            p_course_id     := v_schedule.course_id,
-            p_date          := v_date,
-            p_start_time    := v_schedule.start_time,
-            p_instructor_id := v_schedule.instructor_id,
-            p_schedule_id   := v_schedule.id
-          );
-
-          IF (v_result->>'success')::BOOLEAN THEN
-            v_generated := v_generated + 1;
-          ELSE
-            v_skipped := v_skipped + 1;
-            v_errors  := array_append(v_errors,
-              to_char(v_date, 'YYYY-MM-DD') || ' ' || v_schedule.start_time::TEXT
-              || ': ' || (v_result->>'error'));
-          END IF;
+          v_skipped := v_skipped + 1;
+          v_errors  := array_append(v_errors,
+            to_char(v_date, 'YYYY-MM-DD') || ' ' || v_schedule.start_time::TEXT
+            || ': ' || (v_result->>'error'));
         END IF;
       END IF;
-
-      v_date := v_date + INTERVAL '1 day';
     END LOOP;
+
+    -- Si no queda cupo mensual, detener todo el proceso
+    SELECT classes_available INTO v_quota
+    FROM fn_monthly_usage(p_student_id, p_year, p_month);
+
+    IF v_quota <= 0 THEN
+      EXIT;
+    END IF;
+
+    v_date := v_date + INTERVAL '1 day';
   END LOOP;
 
   RETURN jsonb_build_object(
@@ -1237,4 +1248,19 @@ ALTER TABLE credit_adjustments       ENABLE ROW LEVEL SECURITY;
 --   fn_generate_monthly_sessions(student_id, year, month)
 --   fn_available_slots(date, student_id?, instructor_id?)
 --   fn_monthly_usage(student_id, year, month)
+--
+-- MIGRACIONES POSTERIORES (ejecutar en orden si la DB ya existe):
+--   2026-05-01: ALTER TABLE student_schedules ADD COLUMN IF NOT EXISTS frequency TEXT NOT NULL DEFAULT 'weekly' CHECK (frequency IN ('weekly', 'biweekly'));
+--   2026-05-29: ALTER TABLE courses         ADD COLUMN IF NOT EXISTS category TEXT NOT NULL DEFAULT 'general' CHECK (category IN ('kids', 'adultos', 'general'));
+--   2026-05-29: ALTER TABLE students        ADD COLUMN IF NOT EXISTS first_name      TEXT;
+--   2026-05-29: ALTER TABLE students        ADD COLUMN IF NOT EXISTS last_name       TEXT;
+--   2026-05-29: ALTER TABLE students        ADD COLUMN IF NOT EXISTS address         TEXT;
+--   2026-05-29: ALTER TABLE students        ADD COLUMN IF NOT EXISTS city            TEXT;
+--   2026-05-29: ALTER TABLE students        ADD COLUMN IF NOT EXISTS birth_date      DATE;
+--   2026-05-29: ALTER TABLE students        ADD COLUMN IF NOT EXISTS profession      TEXT;
+--   2026-05-29: ALTER TABLE students        ADD COLUMN IF NOT EXISTS music_genre     TEXT;
+--   2026-05-29: ALTER TABLE students        ADD COLUMN IF NOT EXISTS document_type   TEXT;
+--   2026-05-29: ALTER TABLE students        ADD COLUMN IF NOT EXISTS document_number TEXT;
+--   2026-05-29: UPDATE students SET first_name = name WHERE first_name IS NULL;
+--   2026-05-29: UPDATE students SET last_name  = ''   WHERE last_name  IS NULL;
 -- ============================================================

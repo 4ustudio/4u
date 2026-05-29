@@ -4,9 +4,9 @@ import { courses } from "@/data/courses";
 
 export default function CoursesSection() {
   return (
-    <section id="cursos" className="relative w-full bg-white py-10 md:py-12">
+    <section id="cursos" className="relative w-full bg-white py-16 md:py-20">
       <div className="home-frame">
-        <div className="home-course-grid grid gap-6 lg:items-start">
+        <div className="home-course-grid grid gap-8 lg:items-start">
           <div>
             <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.08em] text-[#ff7a00] font-poppins">
               Explora tu talento
@@ -29,8 +29,8 @@ export default function CoursesSection() {
           </div>
 
           <div className="min-w-0">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
-              {courses.map((course) => (
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+              {courses.filter((c) => c.title !== 'Producción Musical').map((course) => (
                 <CourseCard key={course.title} course={course} />
               ))}
             </div>

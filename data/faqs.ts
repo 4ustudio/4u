@@ -12,8 +12,8 @@ export const faqs: FAQ[] = [
     category: "cursos",
   },
   {
-    question: "¿Cómo son las clases? ¿Presenciales o virtuales?",
-    answer: "Actualmente trabajamos con modalidad presencial en nuestros estudios. Cada clase es personalizada o en grupos reducidos para garantizar la atención que cada estudiante merece.",
+    question: "¿Cómo son las clases?",
+    answer: "Trabajamos con modalidad 100% presencial en nuestros estudios. Cada clase es personalizada para garantizar la atención que cada estudiante merece.",
     category: "general",
   },
   {
@@ -43,7 +43,7 @@ export const faqs: FAQ[] = [
   },
   {
     question: "¿Cómo puedo agendar una clase de prueba?",
-    answer: "Puedes contactarnos directamente por WhatsApp al +57 310 763 9163 o usar el formulario de nuestra página de contacto. Te atenderemos para coordinar una visita al estudio.",
+    answer: "Puedes contactarnos directamente por WhatsApp al +57 317 019 2639 o usar el formulario de nuestra página de contacto. Te atenderemos para coordinar una visita al estudio.",
     category: "general",
   },
   {

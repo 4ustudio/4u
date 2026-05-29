@@ -1,5 +1,5 @@
 export type AppointmentStatus = 'pending' | 'contacted' | 'scheduled' | 'cancelled'
-export type Modality = 'presencial' | 'virtual'
+export type Modality = 'presencial'
 
 export interface AppointmentInsert {
   name: string

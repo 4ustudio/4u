@@ -7,8 +7,8 @@ const highlights = [
     ),
   },
   {
-    title: "Clases presenciales y online",
-    description: "Elige la modalidad que mejor se adapte a tu estilo de vida. Tú decides dónde y cuándo aprender.",
+    title: "Clases presenciales personalizadas",
+    description: "Cada clase es 100% presencial con atención individual. Nada reemplaza la experiencia de aprender en vivo.",
     icon: (
       <path d="M4 6h16v10H4zM8 20h8m-4-4v4" />
     ),

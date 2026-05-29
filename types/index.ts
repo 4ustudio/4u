@@ -11,6 +11,7 @@ export interface Course {
   icon: React.ReactNode;
   image?: string;
   description?: string;
+  highlights?: string[];
   duration?: string;
   level?: string;
   instructorId?: string;

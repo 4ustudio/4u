@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getAvailableSlots } from '../_actions/sessions'
 import WeekCalendar from './_components/WeekCalendar'
-import type { ClassSession } from '@/types/admin'
+import type { ClassSession, AvailableSlot } from '@/types/admin'
 
 export const dynamic = 'force-dynamic'
 
@@ -47,6 +48,23 @@ async function getPageData(weekStart: string) {
     supabase.from('instructors').select('id, name').eq('status', 'active'),
   ])
 
+  // Fetch disponibilidad real por día (fn_available_slots)
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(weekStart + 'T12:00:00')
+    d.setDate(d.getDate() + i)
+    return d.toISOString().split('T')[0]
+  })
+
+  const availabilityResults = await Promise.allSettled(
+    days.map(day => getAvailableSlots(day))
+  )
+
+  const availabilityByDay: Record<string, AvailableSlot[]> = {}
+  days.forEach((day, i) => {
+    const result = availabilityResults[i]
+    availabilityByDay[day] = result.status === 'fulfilled' ? result.value : []
+  })
+
   return {
     sessions:    (sessions as ClassSession[]) ?? [],
     blocked:     blocked ?? [],
@@ -54,6 +72,7 @@ async function getPageData(weekStart: string) {
     courses:     courses  ?? [],
     classrooms:  classrooms ?? [],
     instructors: instructors ?? [],
+    availabilityByDay,
   }
 }
 

@@ -69,7 +69,18 @@ body {
 }
 
 .features-home {
-  margin-top: -98px;
+  margin-top: -8px;
+  padding-top: 36px;
+}
+
+.hero-home-inner {
+  min-height: 820px;
+  display: grid;
+  grid-template-columns: 38% 62%;
+  align-items: center;
+  padding-top: 76px;
+  padding-bottom: 120px;
+  position: relative;
 }
 
 .hero-stats {
@@ -114,7 +125,8 @@ body {
   }
 
   .features-home {
-    margin-top: -60px;
+    margin-top: -8px;
+    padding-top: 36px;
   }
 
   .hero-stats {

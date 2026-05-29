@@ -47,6 +47,7 @@ export default function PlanesPage() {
               button="Explorar planes para Jóvenes y Adultos"
               icon="single"
               imagePosition="object-[45%_50%]"
+              imageSrc="/images/courses/plan-adultos/Hombre-plan adultos.png"
               bullets={["Desarrolla tu estilo único", "Aprende con mentores expertos", "Lleva tu proyecto al siguiente nivel"]}
               plans={adultPlans}
             />
@@ -57,6 +58,7 @@ export default function PlanesPage() {
               button="Explorar planes para Kids & Teens"
               icon="group"
               imagePosition="object-[70%_50%]"
+              imageSrc="/images/courses/plan-kids/Niña-Plan kids.png"
               bullets={["Aprende de forma divertida y práctica", "Clases dinámicas y motivadoras", "Aumenta tu confianza y creatividad"]}
               plans={kidsPlans}
             />
@@ -102,6 +104,7 @@ function PlanPathCard({
   button,
   icon,
   imagePosition,
+  imageSrc,
   bullets,
   plans,
 }: {
@@ -111,6 +114,7 @@ function PlanPathCard({
   button: string;
   icon: "single" | "group";
   imagePosition: string;
+  imageSrc: string;
   bullets: string[];
   plans: string[];
 }) {
@@ -118,7 +122,7 @@ function PlanPathCard({
     <article className="overflow-hidden rounded-2xl bg-white shadow-2xl shadow-gray-950/10 ring-1 ring-gray-200">
       <div className="relative h-[315px]">
         <OptimizedImage
-          src="/images/hero/banner-principal.jpg"
+          src={imageSrc}
           alt={title}
           fill
           className={`object-cover ${imagePosition}`}

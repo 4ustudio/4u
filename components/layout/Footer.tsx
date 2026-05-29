@@ -1,8 +1,9 @@
 import Link from "next/link";
+import Image from "next/image";
 import WATracker from "@/components/ui/WATracker";
+import { ACADEMY } from "@/lib/constants";
 
-const WA_LINK =
-  "https://api.whatsapp.com/send/?phone=573107639163&text=Hola%20quiero%20más%20información%20sobre%204ustudioacademy.com";
+const WA_LINK = ACADEMY.waUrl;
 
 const socialLinks = [
   {
@@ -53,9 +54,13 @@ export default function Footer() {
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
             <div className="col-span-2 md:col-span-1">
-              <span className="text-xl font-bold text-white font-poppins">
-                4U <span className="text-[#ff7a00]">Studio</span>
-              </span>
+              <Image
+                src="/images/icons/Recurso 1.png"
+                alt="4U Studio"
+                width={140}
+                height={46}
+                className="h-10 w-auto"
+              />
               <p className="mt-3 text-sm leading-relaxed text-stone-400 font-roboto">
                 Cumple tus sueños musicales. Academia de música profesional para todas las edades.
               </p>
@@ -107,12 +112,17 @@ export default function Footer() {
               </h4>
               <ul className="space-y-3">
                 {[
-                  "Clases de música",
-                  "Producción musical",
-                  "Grabación profesional",
+                  { label: "Clases de música",    href: "/cursos" },
+                  { label: "Producción musical",   href: "/produccion" },
+                  { label: "Grabación profesional", href: "/contacto" },
                 ].map((s) => (
-                  <li key={s} className="text-sm text-stone-400 font-roboto tracking-wide">
-                    {s}
+                  <li key={s.label}>
+                    <Link
+                      href={s.href}
+                      className="text-sm text-stone-400 hover:text-[#ff7a00] transition-colors duration-300 tracking-wide font-roboto"
+                    >
+                      {s.label}
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -130,11 +140,11 @@ export default function Footer() {
                     rel="noopener noreferrer"
                     className="text-sm text-stone-400 hover:text-[#ff7a00] transition-colors duration-300 tracking-wide font-roboto"
                   >
-                    WhatsApp: +57 310 763 9163
+                    WhatsApp: {ACADEMY.phoneDisplay}
                   </a>
                 </li>
                 <li className="text-sm text-stone-500 font-roboto tracking-wide">
-                  Medellín, Colombia
+                  {ACADEMY.address}
                 </li>
               </ul>
             </div>

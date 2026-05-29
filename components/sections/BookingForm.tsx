@@ -4,8 +4,9 @@ import { useActionState } from 'react'
 import { createAppointment } from '@/app/agendar/actions'
 import { validateBooking } from '@/lib/validations/booking'
 import type { BookingFormState } from '@/types/booking'
+import { ACADEMY } from '@/lib/constants'
 
-const WA_PHONE = '573107639163'
+const WA_PHONE = ACADEMY.phone
 
 const COURSES = [
   { value: '', label: 'Selecciona un curso' },
@@ -158,29 +159,7 @@ export default function BookingForm() {
         />
       </div>
 
-      {/* Modalidad */}
-      <fieldset>
-        <legend className="text-white/50 text-xs uppercase tracking-widest font-roboto mb-2.5">
-          Modalidad
-        </legend>
-        <div className="flex gap-4">
-          {(['presencial', 'virtual'] as const).map((m) => (
-            <label key={m} className="flex items-center gap-2.5 cursor-pointer group">
-              <input
-                type="radio"
-                name="modality"
-                value={m}
-                defaultChecked={m === 'presencial'}
-                disabled={isPending}
-                className="accent-[#ff7a00] w-4 h-4 cursor-pointer"
-              />
-              <span className="text-sm text-white/70 capitalize font-roboto group-hover:text-white transition-colors">
-                {m.charAt(0).toUpperCase() + m.slice(1)}
-              </span>
-            </label>
-          ))}
-        </div>
-      </fieldset>
+      <input type="hidden" name="modality" value="presencial" />
 
       {/* Comentarios */}
       <textarea

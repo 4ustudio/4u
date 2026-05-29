@@ -16,6 +16,7 @@ const kidsPlans = [
     price: "$1.100.000",
     color: "#ff6b00",
     imagePosition: "object-[25%_55%]",
+    image: "/images/courses/plan-kids/Plan 1 Kids.png",
     description: "El primer paso para que los más jóvenes exploren la música, desarrollen su talento y aprendan jugando.",
     features: [
       "Clases con profesores especializados",
@@ -34,6 +35,7 @@ const kidsPlans = [
     price: "$1.600.000",
     color: "#1397a5",
     imagePosition: "object-[70%_55%]",
+    image: "/images/courses/plan-kids/Plan 2 Teens.png",
     description: "Vive la experiencia de crear tu propia canción y grabarla como un verdadero artista.",
     features: [
       "Estudio de grabación y uso de micrófono",
@@ -107,6 +109,7 @@ function KidsPlanCard({
   price,
   color,
   imagePosition,
+  image,
   description,
   features,
   objective,
@@ -117,6 +120,7 @@ function KidsPlanCard({
   price: string;
   color: string;
   imagePosition: string;
+  image: string;
   description: string;
   features: string[];
   objective: string;
@@ -125,7 +129,7 @@ function KidsPlanCard({
     <article className="grid overflow-hidden rounded-2xl bg-white shadow-xl shadow-gray-950/10 ring-1 lg:grid-cols-[42%_58%]" style={{ borderColor: `${color}55` }}>
       <div className="relative min-h-[370px]">
         <OptimizedImage
-          src="/images/hero/banner-principal.jpg"
+          src={image}
           alt={accent}
           fill
           className={`object-cover ${imagePosition}`}

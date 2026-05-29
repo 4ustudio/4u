@@ -3,19 +3,51 @@ export type StudentType = 'new' | 'regular'
 export type SessionStatus =
   | 'pending' | 'confirmed' | 'completed'
   | 'cancelled' | 'rescheduled' | 'no_show'
+export type ScheduleStatus = 'active' | 'paused' | 'cancelled'
+export type Frequency = 'weekly' | 'biweekly'
 
 export interface Student {
   id: string
   created_at: string
   updated_at: string
   name: string
+  first_name: string | null
+  last_name: string | null
   phone: string
   email: string | null
+  address: string | null
+  city: string | null
+  birth_date: string | null
+  profession: string | null
+  music_genre: string | null
+  document_type: string | null
+  document_number: string | null
   status: StudentStatus
   student_type: StudentType
   enrolled_at: string
   lead_id: string | null
   notes: string | null
+  user_id: string | null
+}
+
+export interface StudentSchedule {
+  id: string
+  created_at: string
+  updated_at: string
+  student_id: string
+  instructor_id: string | null
+  course_id: string
+  classroom_id: string
+  day_of_week: number
+  start_time: string
+  frequency: Frequency
+  active_from: string
+  active_until: string | null
+  status: ScheduleStatus
+  notes: string | null
+  course?: { name: string } | null
+  classroom?: { name: string } | null
+  instructor?: { name: string } | null
 }
 
 export interface Classroom {
@@ -29,6 +61,7 @@ export interface AdminCourse {
   name: string
   slug: string
   is_active: boolean
+  category: string
 }
 
 export interface AdminInstructor {

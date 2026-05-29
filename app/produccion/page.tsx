@@ -206,7 +206,7 @@ export default function ProduccionPage() {
             src="/images/hero/Banner-2.jpg.jpeg"
             alt="Cantante en estudio 4U Studio Academy"
             fill
-            className="object-cover object-[40%_center]"
+            className="object-cover object-[40%_25%]"
             sizes="100vw"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/70" />

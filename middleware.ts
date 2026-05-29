@@ -26,17 +26,38 @@ export async function middleware(request: NextRequest) {
   // Refrescar sesión — no usar getSession() aquí (no es seguro en middleware)
   const { data: { user } } = await supabase.auth.getUser()
 
-  const isLoginPage = request.nextUrl.pathname === '/admin/login'
+  const pathname = request.nextUrl.pathname
 
-  if (!user && !isLoginPage) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/admin/login'
-    return NextResponse.redirect(url)
+  // ── Rutas /admin ──────────────────────────────────────────────────
+  if (pathname.startsWith('/admin')) {
+    const isLoginPage = pathname === '/admin/login'
+
+    if (!user && !isLoginPage) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/admin/login'
+      return NextResponse.redirect(url)
+    }
+
+    if (user && isLoginPage) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/admin'
+      return NextResponse.redirect(url)
+    }
   }
 
-  if (user && isLoginPage) {
+  // ── Rutas /mi-cuenta (dashboard — excluye login y recuperar) ──────
+  if (pathname === '/mi-cuenta') {
+    if (!user) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/mi-cuenta/login'
+      return NextResponse.redirect(url)
+    }
+  }
+
+  // Redirigir al dashboard si ya tiene sesión y entra al login del portal
+  if (pathname === '/mi-cuenta/login' && user) {
     const url = request.nextUrl.clone()
-    url.pathname = '/admin'
+    url.pathname = '/mi-cuenta'
     return NextResponse.redirect(url)
   }
 
@@ -44,5 +65,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ['/admin/:path*', '/mi-cuenta', '/mi-cuenta/login'],
 }

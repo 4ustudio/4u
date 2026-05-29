@@ -1,18 +1,18 @@
 const benefits = [
   { title: "Clases para todos", label: "Niños, adolescentes y adultos", icon: "users" },
-  { title: "Aprende a tu ritmo", label: "Modalidad presencial y online", icon: "chart" },
+  { title: "Clases personalizadas", label: "Atención individual para cada estudiante", icon: "chart" },
   { title: "Profesores expertos", label: "Músicos profesionales", icon: "guitar" },
   { title: "Certificación", label: "Al finalizar tu curso", icon: "award" },
 ];
 
 export default function HeroFeaturesBar() {
   return (
-    <section className="features-home relative z-20 bg-white pb-3">
+    <section className="features-home relative z-20 bg-white">
       <div className="home-frame">
         <div className="rounded-md border border-white/10 bg-black/90 px-8 py-5 shadow-2xl">
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:divide-x lg:divide-white/10">
             {benefits.map((b) => (
-              <div key={b.title} className="flex items-center gap-4 lg:px-6 first:pl-0">
+              <div key={b.title} className="flex items-center gap-4 lg:px-6 first:pl-0 min-h-[72px]">
                 <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-md bg-[#ff7a00]/10 text-[#ff7a00]">
                   <FeatureIcon name={b.icon} />
                 </div>

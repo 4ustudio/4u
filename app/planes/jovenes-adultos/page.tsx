@@ -17,6 +17,7 @@ const plans = [
     tags: ["8 clases al mes", "Clases grupales", "Estudio básico"],
     featured: true,
     imagePosition: "object-[35%_45%]",
+    image: "/images/courses/planes-tipos/Plan 1.png",
   },
   {
     index: "02",
@@ -25,6 +26,7 @@ const plans = [
     price: "$1.600.000",
     tags: ["8 clases al mes", "Clases grupales", "Más estudio"],
     imagePosition: "object-[55%_52%]",
+    image: "/images/courses/planes-tipos/Plan 1B.png",
   },
   {
     index: "03",
@@ -33,6 +35,7 @@ const plans = [
     price: "$3.500.000",
     tags: ["Producción musical", "6 clases", "Grabación"],
     imagePosition: "object-[72%_45%]",
+    image: "/images/courses/planes-tipos/Plan 2.png",
   },
   {
     index: "04",
@@ -41,6 +44,7 @@ const plans = [
     price: "$4.500.000",
     tags: ["Producción avanzada", "Coaching", "Estrategia"],
     imagePosition: "object-[45%_72%]",
+    image: "/images/courses/planes-tipos/Plan 3.png",
   },
   {
     index: "05",
@@ -49,6 +53,7 @@ const plans = [
     price: "Según cotización",
     tags: ["Formación completa", "Producción", "Difusión"],
     imagePosition: "object-[62%_52%]",
+    image: "/images/courses/planes-tipos/Plan 4.png",
   },
   {
     index: "06",
@@ -57,6 +62,7 @@ const plans = [
     price: "Según cotización",
     tags: ["Voice over", "Audio branding", "Entrega profesional"],
     imagePosition: "object-[80%_52%]",
+    image: "/images/courses/planes-tipos/Plan 5.png",
   },
 ];
 
@@ -135,6 +141,7 @@ function AdultPlanCard({
   tags,
   featured,
   imagePosition,
+  image,
 }: {
   index: string;
   title: string;
@@ -143,12 +150,13 @@ function AdultPlanCard({
   tags: string[];
   featured?: boolean;
   imagePosition: string;
+  image: string;
 }) {
   return (
     <article className={`overflow-hidden rounded-xl shadow-xl shadow-gray-950/10 ring-1 ring-gray-200 ${featured ? "bg-gray-950 text-white" : "bg-white text-gray-950"}`}>
       <div className="relative h-[165px]">
         <OptimizedImage
-          src="/images/hero/banner-principal.jpg"
+          src={image}
           alt={title}
           fill
           className={`object-cover ${imagePosition}`}

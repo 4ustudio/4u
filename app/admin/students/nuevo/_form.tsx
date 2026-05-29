@@ -24,6 +24,10 @@ export default function NewStudentForm({ leads }: { leads: Lead[] }) {
     setSelectedLead(lead)
   }
 
+  const leadName = selectedLead?.name ?? ''
+  const leadFirstName = leadName.includes(' ') ? leadName.split(' ').slice(0, -1).join(' ') : leadName
+  const leadLastName = leadName.includes(' ') ? leadName.split(' ').pop()! : ''
+
   return (
     <div className="space-y-5">
       {/* Selector de lead */}
@@ -58,14 +62,26 @@ export default function NewStudentForm({ leads }: { leads: Lead[] }) {
 
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs text-white/50 mb-1.5">Nombre completo *</label>
+            <label className="block text-xs text-white/50 mb-1.5">Nombres *</label>
             <input
-              type="text" name="name" required disabled={isPending}
-              defaultValue={selectedLead?.name ?? ''}
+              type="text" name="first_name" required disabled={isPending}
+              defaultValue={leadFirstName}
               className={inputClass}
-              placeholder="Juan Pérez"
+              placeholder="Juan"
             />
           </div>
+          <div>
+            <label className="block text-xs text-white/50 mb-1.5">Apellidos *</label>
+            <input
+              type="text" name="last_name" required disabled={isPending}
+              defaultValue={leadLastName}
+              className={inputClass}
+              placeholder="Pérez"
+            />
+          </div>
+        </div>
+
+        <div className="grid sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs text-white/50 mb-1.5">WhatsApp *</label>
             <input
@@ -75,15 +91,81 @@ export default function NewStudentForm({ leads }: { leads: Lead[] }) {
               placeholder="3001234567"
             />
           </div>
+          <div>
+            <label className="block text-xs text-white/50 mb-1.5">Email</label>
+            <input
+              type="email" name="email" disabled={isPending}
+              className={inputClass}
+              placeholder="opcional"
+            />
+          </div>
         </div>
 
-        <div>
-          <label className="block text-xs text-white/50 mb-1.5">Email</label>
-          <input
-            type="email" name="email" disabled={isPending}
-            className={inputClass}
-            placeholder="opcional"
-          />
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs text-white/50 mb-1.5">Dirección</label>
+            <input
+              type="text" name="address" disabled={isPending}
+              className={inputClass}
+              placeholder="opcional"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-white/50 mb-1.5">Ciudad</label>
+            <input
+              type="text" name="city" disabled={isPending}
+              className={inputClass}
+              placeholder="opcional"
+            />
+          </div>
+        </div>
+
+        <div className="grid sm:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-xs text-white/50 mb-1.5">Fecha de nacimiento</label>
+            <input
+              type="date" name="birth_date" disabled={isPending}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-white/50 mb-1.5">Profesión / Ocupación</label>
+            <input
+              type="text" name="profession" disabled={isPending}
+              className={inputClass}
+              placeholder="opcional"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-white/50 mb-1.5">Género musical favorito</label>
+            <input
+              type="text" name="music_genre" disabled={isPending}
+              className={inputClass}
+              placeholder="opcional"
+            />
+          </div>
+        </div>
+
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs text-white/50 mb-1.5">Tipo de documento</label>
+            <select name="document_type" disabled={isPending} className={inputClass + ' appearance-none'}>
+              <option value="">Seleccionar…</option>
+              <option value="CC">Cédula de Ciudadanía</option>
+              <option value="CE">Cédula de Extranjería</option>
+              <option value="TI">Tarjeta de Identidad</option>
+              <option value="NIT">NIT</option>
+              <option value="Pasaporte">Pasaporte</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs text-white/50 mb-1.5">Número de documento</label>
+            <input
+              type="text" name="document_number" disabled={isPending}
+              className={inputClass}
+              placeholder="opcional"
+            />
+          </div>
         </div>
 
         <div>

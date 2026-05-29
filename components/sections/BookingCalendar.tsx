@@ -1,10 +1,27 @@
 "use client";
 
 import { useState, useActionState } from "react";
+import Image from "next/image";
 import { createAppointment } from "@/app/agendar/actions";
 import type { BookingFormState } from "@/types/booking";
+import { ACADEMY } from "@/lib/constants";
 
-const WA_PHONE = "573107639163";
+type BookingAction = (prev: BookingFormState, data: FormData) => Promise<BookingFormState>
+
+type BookingCalendarProps = {
+  serverAction?: BookingAction
+  mode?: 'public' | 'student'
+}
+
+// Convierte "6:00 PM" → "18:00" para el campo hidden en modo estudiante
+function to24h(t: string): string {
+  const [time, period] = t.split(' ')
+  const [h, m] = time.split(':').map(Number)
+  const h24 = period === 'PM' && h !== 12 ? h + 12 : period === 'AM' && h === 12 ? 0 : h
+  return `${String(h24).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+}
+
+const WA_PHONE = ACADEMY.phone;
 const ORANGE = "#ff7a00";
 
 const COURSES = ["Canto", "Guitarra", "Piano", "Batería", "Bajo", "Producción Musical"];
@@ -43,8 +60,8 @@ function calendarDays(year: number, month: number) {
   return cells;
 }
 
-export default function BookingCalendar() {
-  const [state, formAction, isPending] = useActionState(createAppointment, initialState);
+export default function BookingCalendar({ serverAction, mode = 'public' }: BookingCalendarProps = {}) {
+  const [state, formAction, isPending] = useActionState(serverAction ?? createAppointment, initialState);
 
   const today = new Date();
   const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
@@ -98,7 +115,34 @@ export default function BookingCalendar() {
     ? selectedDate.toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
     : null;
 
-  // ─── SUCCESS STATE ───────────────────────────────────────────
+  // ─── SUCCESS STATE (modo estudiante) ────────────────────────
+  if (state.status === "success" && mode === 'student') {
+    return (
+      <div className="flex flex-col items-center text-center py-12 px-4 gap-5">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-500/15 ring-1 ring-green-500/30">
+          <svg className="h-8 w-8 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M20 6 9 17l-5-5" />
+          </svg>
+        </div>
+        <div className="space-y-1.5">
+          <h3 className="text-2xl font-extrabold text-white font-poppins">¡Clase agendada!</h3>
+          <p className="text-white/55 text-sm font-roboto leading-relaxed">
+            {state.submittedCourse ? `Tu clase de ${state.submittedCourse}` : 'Tu clase'} ha sido reservada.<br />
+            La verás reflejada en tu dashboard.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="px-6 py-2.5 rounded-full text-sm font-semibold font-poppins text-white border border-white/20 hover:border-white/40 transition-all"
+        >
+          Ver mis clases
+        </button>
+      </div>
+    );
+  }
+
+  // ─── SUCCESS STATE (modo público) ────────────────────────────
   if (state.status === "success") {
     const waLink = buildWALink(state.submittedName ?? "", state.submittedCourse ?? "");
     return (
@@ -138,8 +182,11 @@ export default function BookingCalendar() {
       <input type="hidden" name="notes"    value={notesValue} />
       <input type="hidden" name="modality" value="presencial" />
       <input type="hidden" name="source"   value="agendar" />
+      {/* Campos estructurados para el modo estudiante (ignorados en flujo público) */}
+      <input type="hidden" name="selected_date_iso" value={selectedDate ? selectedDate.toISOString().split('T')[0] : ''} />
+      <input type="hidden" name="selected_time_24h" value={selectedTime ? to24h(selectedTime) : ''} />
 
-      <div className="grid lg:grid-cols-[1fr_1.1fr_1fr] gap-5 items-start">
+      <div className="grid lg:grid-cols-[1fr_2fr] gap-5 items-start">
 
         {/* ─── COLUMNA IZQUIERDA: Instructor + info ──── */}
         <div className="space-y-4">
@@ -150,7 +197,7 @@ export default function BookingCalendar() {
 
           {/* Heading */}
           <div>
-            <h1 className="text-3xl md:text-4xl font-extrabold text-white leading-tight font-poppins">
+            <h1 className="text-4xl md:text-5xl font-extrabold text-white leading-[1.08] font-poppins">
               Agenda tu<br />
               curso <span style={{ color: ORANGE }}>ideal</span>
             </h1>
@@ -160,11 +207,17 @@ export default function BookingCalendar() {
           </div>
 
           {/* Instructor card */}
-          <div className="rounded-2xl border border-white/10 bg-white/[0.05] backdrop-blur-md p-4 space-y-3">
+          <div className="rounded-2xl border border-white/10 bg-white/[0.05] backdrop-blur-md p-7 space-y-5">
             {/* Avatar + nombre */}
-            <div className="flex items-center gap-3">
-              <div className="h-14 w-14 rounded-xl overflow-hidden shrink-0 bg-gradient-to-br from-orange-600 to-orange-800 flex items-center justify-center">
-                <span className="text-white font-bold text-xl font-poppins">AO</span>
+            <div className="flex items-center gap-5">
+              <div className="h-[170px] w-[170px] rounded-xl overflow-hidden shrink-0 shadow-xl shadow-black/40">
+                <Image
+                  src="/images/instructors/Perfil.png"
+                  alt="Andrés Ospina"
+                  width={170}
+                  height={170}
+                  className="object-cover w-full h-full"
+                />
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
@@ -185,15 +238,15 @@ export default function BookingCalendar() {
             </div>
 
             {/* Especialidades */}
-            <div>
-              <p className="text-white/40 text-[10px] uppercase tracking-wider mb-2 font-roboto">Especialidades:</p>
+            <div className="mt-4">
+              <p className="text-white/40 text-[10px] uppercase tracking-wider mb-2.5 font-roboto">Especialidades:</p>
               <div className="flex flex-wrap gap-1.5">
                 {COURSES.map((c) => (
                   <button
                     key={c}
                     type="button"
                     onClick={() => setSelectedCourse(c)}
-                    className="px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all font-roboto"
+                    className="px-2 py-0.5 rounded-md text-[10px] font-semibold transition-all font-roboto leading-tight"
                     style={
                       selectedCourse === c
                         ? { backgroundColor: ORANGE, color: "#fff" }
@@ -212,25 +265,28 @@ export default function BookingCalendar() {
             </p>
 
             {/* Disponibilidad */}
-            <div className="flex flex-wrap gap-2 text-[10px]">
-              <span className="flex items-center gap-1 text-white/60"><span className="h-1.5 w-1.5 rounded-full bg-orange-400 inline-block" />Presencial</span>
-              <span className="flex items-center gap-1 text-white/60"><span className="h-1.5 w-1.5 rounded-full bg-white/40 inline-block" />Virtual</span>
-              <span className="flex items-center gap-1 text-green-400"><span className="h-1.5 w-1.5 rounded-full bg-green-400 inline-block" />Disponible hoy</span>
+            <div className="flex flex-wrap gap-2 mt-4">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-orange-500/30 bg-orange-500/10 px-3 py-1 text-[10px] font-semibold text-orange-400 font-roboto"><span className="h-2 w-2 rounded-full bg-orange-400 inline-block" />Presencial</span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-[10px] font-semibold text-green-400 font-roboto"><span className="h-2 w-2 rounded-full bg-green-400 inline-block" />Disponible hoy</span>
             </div>
           </div>
 
-          {/* Info strip */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 gap-2">
+          {/* Info strip — grid 4 columnas iguales */}
+          <div className="grid grid-cols-4 rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-md overflow-hidden">
             {[
-              { icon: "⏱", label: "Duración", value: "60 minutos" },
-              { icon: "🖥", label: "Modalidad", value: "Presencial o Virtual" },
-              { icon: "📍", label: "Sede", value: "4U Studio Center" },
-              { icon: "🎵", label: "Incluye", value: "Material y seguimiento" },
-            ].map((item) => (
-              <div key={item.label} className="rounded-xl border border-white/10 bg-white/[0.04] p-3 text-center">
-                <span className="text-base">{item.icon}</span>
-                <p className="text-[10px] text-white/40 mt-1 font-roboto">{item.label}</p>
-                <p className="text-[11px] text-white/75 font-semibold mt-0.5 font-roboto leading-tight">{item.value}</p>
+              { icon: "⏱", label: "Duración", value: "60 min" },
+              { icon: "📍", label: "Modalidad", value: "Presencial" },
+              { icon: "📍", label: "Sede", value: "4U Studio" },
+              { icon: "🎵", label: "Incluye", value: "Material" },
+            ].map((item, i) => (
+              <div
+                key={item.label}
+                className="flex flex-col items-center justify-center py-4 px-1 text-center min-w-0"
+                style={i < 3 ? { borderRight: "1px solid rgba(255,255,255,0.1)" } : undefined}
+              >
+                <span className="text-lg mb-1.5 block leading-none">{item.icon}</span>
+                <p className="text-[10px] text-white/40 font-roboto truncate w-full">{item.label}</p>
+                <p className="text-[11px] text-white/75 font-semibold font-roboto truncate w-full">{item.value}</p>
               </div>
             ))}
           </div>
@@ -241,208 +297,277 @@ export default function BookingCalendar() {
           </p>
         </div>
 
-        {/* ─── COLUMNA CENTRAL: Calendario ─────────────── */}
-        <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-md p-5">
-          <p className="text-sm font-bold text-white mb-4 font-poppins">1. Selecciona una fecha</p>
+        {/* ─── PANEL ÚNICO DERECHO: Calendario + Horarios + Resumen ──── */}
+        <div className="relative rounded-2xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-lg overflow-hidden">
+          {/* Glow sutil naranja de fondo */}
+          <div className="pointer-events-none absolute -inset-20 opacity-50" style={{ background: "radial-gradient(ellipse 60% 50% at 50% 40%, rgba(255,122,0,0.08), transparent 70%)" }} aria-hidden="true" />
 
-          {/* Header mes */}
-          <div className="flex items-center justify-between mb-4">
-            <button
-              type="button"
-              onClick={prevMonth}
-              className="h-7 w-7 rounded-full border border-white/15 flex items-center justify-center text-white/60 hover:text-white hover:border-white/30 transition-colors"
-              aria-label="Mes anterior"
-            >
-              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
-                <path d="M15 18l-6-6 6-6" />
-              </svg>
-            </button>
-            <span className="text-sm font-bold text-white font-poppins">
-              {MONTHS_ES[viewDate.getMonth()]} {viewDate.getFullYear()}
-            </span>
-            <button
-              type="button"
-              onClick={nextMonth}
-              className="h-7 w-7 rounded-full border border-white/15 flex items-center justify-center text-white/60 hover:text-white hover:border-white/30 transition-colors"
-              aria-label="Mes siguiente"
-            >
-              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
-                <path d="M9 18l6-6-6-6" />
-              </svg>
-            </button>
-          </div>
+          <div className="relative lg:grid lg:grid-cols-[1fr_1fr]">
+            {/* ─── CALENDARIO ──── */}
+            <div className="p-6 lg:p-8 lg:border-r border-white/[0.08]">
+              <p className="text-sm font-bold text-white mb-6 font-poppins">1. Selecciona una fecha</p>
 
-          {/* Días de la semana */}
-          <div className="grid grid-cols-7 mb-1">
-            {DAYS_ES.map((d) => (
-              <div key={d} className="text-center text-[10px] font-bold text-white/35 py-1 font-roboto">
-                {d}
+              {/* Header mes */}
+              <div className="flex items-center justify-between mb-6">
+                <button
+                  type="button"
+                  onClick={prevMonth}
+                  className="h-11 w-11 rounded-full border border-white/15 flex items-center justify-center text-white/60 hover:text-white hover:bg-[#ff7a00]/20 hover:border-[#ff7a00]/40 transition-all"
+                  aria-label="Mes anterior"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+                    <path d="M15 18l-6-6 6-6" />
+                  </svg>
+                </button>
+                <span className="text-[26px] lg:text-[28px] font-bold text-white font-poppins tracking-tight">
+                  {MONTHS_ES[viewDate.getMonth()]} {viewDate.getFullYear()}
+                </span>
+                <button
+                  type="button"
+                  onClick={nextMonth}
+                  className="h-11 w-11 rounded-full border border-white/15 flex items-center justify-center text-white/60 hover:text-white hover:bg-[#ff7a00]/20 hover:border-[#ff7a00]/40 transition-all"
+                  aria-label="Mes siguiente"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+                    <path d="M9 18l6-6-6-6" />
+                  </svg>
+                </button>
               </div>
-            ))}
-          </div>
 
-          {/* Celdas */}
-          <div className="grid grid-cols-7 gap-0.5">
-            {cells.map(({ day, current }, idx) => {
-              const sun  = isSunday(day, current);
-              const past = isPast(day, current);
-              const tod  = isToday(day, current);
-              const sel  = isSelected(day, current);
-              const disabled = !current || sun || past;
-
-              return (
-                <button
-                  key={idx}
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => handleDay(day, current)}
-                  className={[
-                    "h-8 w-full rounded-lg text-xs font-semibold transition-all font-roboto",
-                    !current       ? "text-white/15 cursor-default"                          : "",
-                    current && sun  ? "text-red-400/50 cursor-not-allowed"                   : "",
-                    current && past && !sun ? "text-white/20 cursor-not-allowed"             : "",
-                    current && !disabled && !sel && !tod ? "text-white/70 hover:bg-white/10 hover:text-white" : "",
-                    tod && !sel    ? "ring-1 ring-orange-500 text-orange-400"                : "",
-                    sel            ? "text-white font-bold"                                  : "",
-                  ].filter(Boolean).join(" ")}
-                  style={sel ? { backgroundColor: ORANGE } : undefined}
-                  aria-label={current ? `${day} de ${MONTHS_ES[viewDate.getMonth()]}` : undefined}
-                  aria-pressed={sel}
-                >
-                  {day}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Leyenda */}
-          <div className="mt-4 flex items-center gap-2 text-[10px] text-white/40">
-            <span className="h-1.5 w-1.5 rounded-full bg-green-400 inline-block" />
-            Fechas disponibles
-          </div>
-        </div>
-
-        {/* ─── COLUMNA DERECHA: Horarios + Resumen ─────── */}
-        <div className="space-y-4">
-          {/* Horarios */}
-          <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-md p-5">
-            <p className="text-sm font-bold text-white mb-4 font-poppins">2. Horarios disponibles</p>
-            <div className="grid grid-cols-3 gap-2">
-              {TIME_SLOTS.map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => setSelectedTime(t)}
-                  className="py-2 rounded-lg text-xs font-semibold transition-all font-roboto"
-                  style={
-                    selectedTime === t
-                      ? { backgroundColor: ORANGE, color: "#fff", boxShadow: `0 4px 12px rgba(255,107,0,0.35)` }
-                      : { backgroundColor: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.65)", border: "1px solid rgba(255,255,255,0.1)" }
-                  }
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Resumen */}
-          <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-md p-5 space-y-4">
-            <p className="text-sm font-bold text-white font-poppins">3. Completa tu reserva</p>
-
-            {/* Summary row */}
-            {selectedDate && selectedTime && (
-              <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3 space-y-2 text-xs font-roboto">
-                {[
-                  { icon: "👤", label: "Instructor", value: "Andrés Ospina" },
-                  { icon: "📅", label: "Fecha", value: formattedDate ?? "" },
-                  { icon: "⏰", label: "Hora", value: selectedTime },
-                  { icon: "🖥", label: "Modalidad", value: "Presencial" },
-                  { icon: "📍", label: "Sede", value: "4U Studio Center" },
-                ].map((r) => (
-                  <div key={r.label} className="flex justify-between items-center gap-2">
-                    <span className="text-white/40 flex items-center gap-1.5">
-                      <span>{r.icon}</span>{r.label}
-                    </span>
-                    <span className="text-white/80 font-medium text-right leading-tight">{r.value}</span>
+              {/* Días de la semana */}
+              <div className="grid grid-cols-7 mb-3">
+                {DAYS_ES.map((d) => (
+                  <div key={d} className="text-center text-[11px] font-bold text-white/35 py-1 font-roboto">
+                    {d}
                   </div>
                 ))}
               </div>
-            )}
 
-            {/* Campos de contacto */}
-            <div className="space-y-3">
-              <input
-                type="text"
-                name="name"
-                required
-                placeholder="Nombre completo *"
-                autoComplete="name"
-                disabled={isPending}
-                className="w-full rounded-xl border border-white/10 bg-white/[0.06] px-4 py-2.5 text-white text-sm placeholder:text-white/30 font-roboto focus:outline-none focus:ring-2 focus:border-orange-500/30 transition-all disabled:opacity-50"
-                style={{ ["--tw-ring-color" as string]: "rgba(255,107,0,0.4)" }}
-              />
-              <input
-                type="tel"
-                name="phone"
-                required
-                placeholder="WhatsApp * Ej: 3001234567"
-                autoComplete="tel"
-                disabled={isPending}
-                className="w-full rounded-xl border border-white/10 bg-white/[0.06] px-4 py-2.5 text-white text-sm placeholder:text-white/30 font-roboto focus:outline-none focus:ring-2 transition-all disabled:opacity-50"
-                style={{ ["--tw-ring-color" as string]: "rgba(255,107,0,0.4)" }}
-              />
-              <input
-                type="email"
-                name="email"
-                placeholder="Email (opcional)"
-                autoComplete="email"
-                disabled={isPending}
-                className="w-full rounded-xl border border-white/10 bg-white/[0.06] px-4 py-2.5 text-white text-sm placeholder:text-white/30 font-roboto focus:outline-none focus:ring-2 transition-all disabled:opacity-50"
-                style={{ ["--tw-ring-color" as string]: "rgba(255,107,0,0.4)" }}
-              />
+              {/* Celdas */}
+              <div className="grid grid-cols-7 gap-2">
+                {cells.map(({ day, current }, idx) => {
+                  const sun  = isSunday(day, current);
+                  const past = isPast(day, current);
+                  const tod  = isToday(day, current);
+                  const sel  = isSelected(day, current);
+                  const disabled = !current || sun || past;
+
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      disabled={disabled}
+                      onClick={() => handleDay(day, current)}
+                      className={[
+                        "h-10 w-10 mx-auto rounded-full text-sm font-semibold transition-all font-roboto flex items-center justify-center",
+                        !current       ? "text-white/15 cursor-default"                          : "",
+                        current && sun  ? "text-red-400/40 cursor-not-allowed"                   : "",
+                        current && past && !sun ? "text-white/20 cursor-not-allowed"             : "",
+                        current && !disabled && !sel && !tod ? "text-white/70 hover:bg-white/10 hover:text-white" : "",
+                        tod && !sel    ? "text-[#ff7a00] font-bold"                             : "",
+                        sel            ? "text-white font-bold"                                  : "",
+                      ].filter(Boolean).join(" ")}
+                      style={sel ? { backgroundColor: ORANGE, boxShadow: "0 0 30px rgba(255,122,0,0.45)" } : undefined}
+                      aria-label={current ? `${day} de ${MONTHS_ES[viewDate.getMonth()]}` : undefined}
+                      aria-pressed={sel}
+                    >
+                      {day}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Leyenda */}
+              <div className="mt-6 flex items-center gap-2 text-[11px] text-white/50">
+                <span className="h-2 w-2 rounded-full bg-green-400 inline-block" />
+                Fechas disponibles
+              </div>
             </div>
 
-            {/* Errores */}
-            {state.status === "error" && (
-              <p className="text-red-400 text-xs font-roboto">
-                {state.message ?? Object.values(state.errors ?? {}).find(Boolean)}
-              </p>
-            )}
+            {/* ─── HORARIOS + RESUMEN ──── */}
+            <div className="p-6 lg:p-8 space-y-6">
+              {/* Horarios */}
+              <div>
+                <p className="text-sm font-bold text-white mb-4 font-poppins">2. Horarios disponibles</p>
+                <div className="grid grid-cols-3 gap-2.5">
+                  {TIME_SLOTS.map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setSelectedTime(t)}
+                      className="py-3.5 rounded-lg text-xs font-semibold transition-all font-roboto"
+                      style={
+                        selectedTime === t
+                          ? { backgroundColor: ORANGE, color: "#fff", boxShadow: "0 0 25px rgba(255,122,0,0.45)", transform: "translateY(-1px)" }
+                          : { backgroundColor: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.65)", border: "1px solid rgba(255,255,255,0.08)" }
+                      }
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={isPending || !selectedDate || !selectedTime}
-              className="w-full flex items-center justify-center gap-2.5 rounded-xl py-3.5 text-sm font-bold text-white font-poppins transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{ backgroundColor: ORANGE, boxShadow: "0 4px 20px rgba(255,107,0,0.3)" }}
-            >
-              {isPending ? (
-                <>
-                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z" />
-                  </svg>
-                  Enviando...
-                </>
-              ) : (
-                <>
-                  Confirmar clase
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
-                    <path d="M8 2v4M16 2v4M4 10h16M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" />
-                  </svg>
-                </>
+              {/* Resumen */}
+              <div>
+                <p className="text-sm font-bold text-white mb-4 font-poppins">3. Resumen de tu reserva</p>
+
+                <div className="rounded-xl border border-white/[0.1] bg-white/[0.03] backdrop-blur-sm p-5 space-y-4">
+                  {selectedDate && selectedTime ? (
+                    <>
+                      {/* Mini ficha con foto del instructor */}
+                      <div className="flex items-center gap-3 pb-4 border-b border-white/[0.06]">
+                        <div className="h-12 w-12 rounded-full overflow-hidden shrink-0 ring-2 ring-[#ff7a00]/20">
+                          <Image
+                            src="/images/instructors/Perfil.png"
+                            alt="Andrés Ospina"
+                            width={48}
+                            height={48}
+                            className="object-cover w-full h-full"
+                          />
+                        </div>
+                        <div>
+                          <p className="text-white/45 text-[10px] font-roboto">Instructor</p>
+                          <p className="text-white font-semibold text-sm font-poppins">Andrés Ospina</p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3 text-xs font-roboto">
+                        <div className="flex justify-between items-center">
+                          <span className="text-white/40 flex items-center gap-2">
+                            <svg className="h-3.5 w-3.5 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
+                              <rect x="3" y="4" width="18" height="18" rx="2" />
+                              <line x1="16" y1="2" x2="16" y2="6" />
+                              <line x1="8" y1="2" x2="8" y2="6" />
+                              <line x1="3" y1="10" x2="21" y2="10" />
+                            </svg>
+                            Fecha
+                          </span>
+                          <span className="text-white/80 font-medium">{formattedDate}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-white/40 flex items-center gap-2">
+                            <svg className="h-3.5 w-3.5 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
+                              <circle cx="12" cy="12" r="10" />
+                              <polyline points="12 6 12 12 16 14" />
+                            </svg>
+                            Hora
+                          </span>
+                          <span className="text-white/80 font-medium">{selectedTime}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-white/40 flex items-center gap-2">
+                            <svg className="h-3.5 w-3.5 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
+                              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                              <circle cx="12" cy="10" r="3" />
+                            </svg>
+                            Modalidad
+                          </span>
+                          <span className="text-white/80 font-medium">Presencial</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-white/40 flex items-center gap-2">
+                            <svg className="h-3.5 w-3.5 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
+                              <rect x="2" y="3" width="20" height="14" rx="2" />
+                              <line x1="8" y1="21" x2="16" y2="21" />
+                              <line x1="12" y1="17" x2="12" y2="21" />
+                            </svg>
+                            Sede
+                          </span>
+                          <span className="text-white/80 font-medium">4U Studio Center</span>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center gap-3 py-3">
+                      <div className="h-14 w-14 rounded-full border border-dashed border-white/[0.12] flex items-center justify-center">
+                        <svg className="h-6 w-6 text-white/20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
+                          <rect x="3" y="4" width="18" height="18" rx="2" />
+                          <line x1="16" y1="2" x2="16" y2="6" />
+                          <line x1="8" y1="2" x2="8" y2="6" />
+                          <line x1="3" y1="10" x2="21" y2="10" />
+                        </svg>
+                      </div>
+                      <p className="text-white/30 text-xs font-roboto text-center leading-relaxed">
+                        Selecciona una fecha y un horario<br />
+                        para ver el resumen de tu reserva.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Campos de contacto */}
+                <div className="space-y-3 mt-4">
+                  <input
+                    type="text"
+                    name="name"
+                    required
+                    placeholder="Nombre completo *"
+                    autoComplete="name"
+                    disabled={isPending}
+                    className="w-full rounded-xl border border-white/10 bg-white/[0.06] px-4 py-2.5 text-white text-sm placeholder:text-white/30 font-roboto focus:outline-none focus:ring-2 focus:ring-[#ff7a00]/40 transition-all disabled:opacity-50"
+                  />
+                  <input
+                    type="tel"
+                    name="phone"
+                    required
+                    placeholder="WhatsApp * Ej: 3001234567"
+                    autoComplete="tel"
+                    disabled={isPending}
+                    className="w-full rounded-xl border border-white/10 bg-white/[0.06] px-4 py-2.5 text-white text-sm placeholder:text-white/30 font-roboto focus:outline-none focus:ring-2 focus:ring-[#ff7a00]/40 transition-all disabled:opacity-50"
+                  />
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="Email (opcional)"
+                    autoComplete="email"
+                    disabled={isPending}
+                    className="w-full rounded-xl border border-white/10 bg-white/[0.06] px-4 py-2.5 text-white text-sm placeholder:text-white/30 font-roboto focus:outline-none focus:ring-2 focus:ring-[#ff7a00]/40 transition-all disabled:opacity-50"
+                  />
+                </div>
+              </div>
+
+              {/* Errores */}
+              {state.status === "error" && (
+                <p className="text-red-400 text-xs font-roboto">
+                  {state.message ?? Object.values(state.errors ?? {}).find(Boolean)}
+                </p>
               )}
-            </button>
 
-            {/* Nota seguridad */}
-            <p className="text-center text-white/25 text-[10px] font-roboto flex items-center justify-center gap-1.5">
-              <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                <rect x="3" y="11" width="18" height="11" rx="2" />
-                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
-              Tu información está segura con nosotros.
-            </p>
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={isPending || !selectedDate || !selectedTime}
+                className="w-full flex items-center justify-center gap-2.5 rounded-xl py-4 text-sm font-bold text-white font-poppins transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:brightness-110 h-16"
+                style={{ backgroundColor: ORANGE, boxShadow: "0 0 35px rgba(255,122,0,0.35), 0 4px 20px rgba(255,122,0,0.25)" }}
+              >
+                {isPending ? (
+                  <>
+                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z" />
+                    </svg>
+                    Enviando...
+                  </>
+                ) : (
+                  <>
+                    Confirmar clase
+                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+                      <path d="M8 2v4M16 2v4M4 10h16M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" />
+                    </svg>
+                  </>
+                )}
+              </button>
+
+              {/* Nota seguridad */}
+              <p className="text-center text-white/25 text-[10px] font-roboto flex items-center justify-center gap-1.5">
+                <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                  <rect x="3" y="11" width="18" height="11" rx="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                Tu información está segura con nosotros.
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -452,7 +577,7 @@ export default function BookingCalendar() {
         {[
           {
             icon: (
-              <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+              <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
                 <circle cx="9" cy="7" r="4" />
                 <path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" />
                 <path d="M16 3.13a4 4 0 0 1 0 7.75" />
@@ -464,7 +589,7 @@ export default function BookingCalendar() {
           },
           {
             icon: (
-              <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+              <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
                 <rect x="3" y="4" width="18" height="18" rx="2" />
                 <line x1="16" y1="2" x2="16" y2="6" />
                 <line x1="8" y1="2" x2="8" y2="6" />
@@ -477,21 +602,21 @@ export default function BookingCalendar() {
           },
           {
             icon: (
-              <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+              <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
                 <rect x="2" y="3" width="20" height="14" rx="2" />
                 <line x1="8" y1="21" x2="16" y2="21" />
                 <line x1="12" y1="17" x2="12" y2="21" />
               </svg>
             ),
-            label: "Clases presenciales y virtuales",
-            sub: "Aprende desde donde estés, sin límites.",
+            label: "Clases presenciales personalizadas",
+            sub: "Aprende directamente en nuestro estudio con todo el equipo a tu disposición.",
           },
         ].map((f) => (
-          <div key={f.label} className="flex items-center gap-4 px-6 py-5">
-            <span style={{ color: ORANGE }}>{f.icon}</span>
+          <div key={f.label} className="flex items-center gap-4 px-6 py-6">
+            <span className="shrink-0" style={{ color: ORANGE }}>{f.icon}</span>
             <div>
               <p className="text-sm font-bold text-white font-poppins">{f.label}</p>
-              <p className="text-xs text-white/45 mt-0.5 font-roboto">{f.sub}</p>
+              <p className="text-xs text-white/40 mt-0.5 font-roboto">{f.sub}</p>
             </div>
           </div>
         ))}

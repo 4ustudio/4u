@@ -7,7 +7,7 @@ import Image from 'next/image'
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { navLinks } from '@/data/navigation'
 
-export default function StudentNav({ userEmail }: { userEmail: string }) {
+export default function StudentNav({ userEmail }: { userEmail?: string }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -71,13 +71,24 @@ export default function StudentNav({ userEmail }: { userEmail: string }) {
 
         {/* Acciones — desktop */}
         <div className="hidden lg:flex items-center gap-3">
-          <span className="text-xs text-white/40 font-roboto">{userEmail}</span>
-          <button
-            onClick={handleLogout}
-            className="text-[13px] font-medium text-white/60 hover:text-white transition-colors border border-white/15 hover:border-white/30 rounded-xl px-4 py-2 font-roboto"
-          >
-            Cerrar sesión
-          </button>
+          {userEmail ? (
+            <>
+              <span className="text-xs text-white/40 font-roboto">{userEmail}</span>
+              <button
+                onClick={handleLogout}
+                className="text-[13px] font-medium text-white/60 hover:text-white transition-colors border border-white/15 hover:border-white/30 rounded-xl px-4 py-2 font-roboto"
+              >
+                Cerrar sesión
+              </button>
+            </>
+          ) : (
+            <Link
+              href="/mi-cuenta/login"
+              className="text-[13px] font-medium text-white/60 hover:text-white transition-colors border border-white/15 hover:border-white/30 rounded-xl px-4 py-2 font-roboto"
+            >
+              Iniciar sesión
+            </Link>
+          )}
         </div>
 
         {/* Hamburger — móvil */}
@@ -115,13 +126,25 @@ export default function StudentNav({ userEmail }: { userEmail: string }) {
               </Link>
             ))}
             <div className="border-t border-white/10 pt-3 mt-1 space-y-2">
-              <p className="text-xs text-white/30 font-roboto">{userEmail}</p>
-              <button
-                onClick={() => { setOpen(false); handleLogout() }}
-                className="w-full text-sm font-medium text-white/60 hover:text-white border border-white/15 rounded-xl py-2.5 font-roboto transition-colors"
-              >
-                Cerrar sesión
-              </button>
+              {userEmail ? (
+                <>
+                  <p className="text-xs text-white/30 font-roboto">{userEmail}</p>
+                  <button
+                    onClick={() => { setOpen(false); handleLogout() }}
+                    className="w-full text-sm font-medium text-white/60 hover:text-white border border-white/15 rounded-xl py-2.5 font-roboto transition-colors"
+                  >
+                    Cerrar sesión
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href="/mi-cuenta/login"
+                  onClick={() => setOpen(false)}
+                  className="block w-full text-center text-sm font-medium text-white/60 hover:text-white border border-white/15 rounded-xl py-2.5 font-roboto transition-colors"
+                >
+                  Iniciar sesión
+                </Link>
+              )}
             </div>
           </div>
         </div>

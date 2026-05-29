@@ -1,8 +1,8 @@
 'use client'
 
 import { useActionState } from 'react'
-import Image from 'next/image'
 import { registerAction } from '../../_actions/student'
+import StudentNav from '../../_components/StudentNav'
 
 const inputClass =
   'w-full bg-white/[0.06] border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-white/30 font-roboto focus:outline-none focus:ring-2 focus:ring-[#ff7a00]/50 transition-all disabled:opacity-50'
@@ -11,18 +11,11 @@ export default function RegistroPage() {
   const [state, action, isPending] = useActionState(registerAction, {})
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-4">
+    <div className="min-h-screen bg-black text-white">
+      <StudentNav />
+      <div className="flex items-center justify-center px-4 pt-24 pb-12">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="flex justify-center mb-5">
-            <Image
-              src="/images/icons/Recurso 1.png"
-              alt="4U Studio Academy"
-              width={120}
-              height={42}
-              className="object-contain"
-            />
-          </div>
           <h1 className="text-2xl font-bold text-white font-poppins">Crear cuenta</h1>
           <p className="text-sm text-white/40 mt-1 font-roboto">Accede a tus clases y reservas</p>
         </div>
@@ -99,6 +92,7 @@ export default function RegistroPage() {
             </a>
           </div>
         </form>
+      </div>
       </div>
     </div>
   )

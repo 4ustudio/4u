@@ -72,18 +72,6 @@ body {
   margin-top: -98px;
 }
 
-.hero-visual-layer {
-  position: absolute;
-  right: max(-32px, -3vw);
-  bottom: 96px;
-  width: min(680px, 52vw);
-  height: 390px;
-  pointer-events: none;
-  opacity: 0.86;
-  -webkit-mask-image: radial-gradient(ellipse at 70% 60%, #000 0 48%, rgba(0, 0, 0, 0.9) 56%, transparent 74%);
-  mask-image: radial-gradient(ellipse at 70% 60%, #000 0 48%, rgba(0, 0, 0, 0.9) 56%, transparent 74%);
-}
-
 .hero-stats {
   position: absolute;
   right: 0;
@@ -129,7 +117,6 @@ body {
     margin-top: -60px;
   }
 
-  .hero-visual-layer,
   .hero-stats {
     display: none;
   }

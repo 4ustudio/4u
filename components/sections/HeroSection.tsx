@@ -51,14 +51,13 @@ export default function HeroSection() {
           alt="4uStudio Academy — estudio de música profesional"
           fill
           priority
-          className="object-cover object-center"
+          className="object-cover object-[60%_50%]"
           sizes="100vw"
         />
       </div>
 
       <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/45 to-black/15" />
       <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/30" />
-      <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 55% 47%, transparent 0 18%, rgba(255, 122, 0, 0.5) 18.15% 18.85%, transparent 19.2% 100%)" }} />
 
       <div className="home-frame relative z-10">
         <div className="hero-home-inner relative">
@@ -98,18 +97,6 @@ export default function HeroSection() {
                 </span>
               </a>
             </div>
-          </div>
-
-          <div className="hero-visual-layer hidden lg:block">
-            <OptimizedImage
-              src="/images/hero/banner-principal.jpg"
-              alt="Estudiantes de 4U Studio cantando"
-              fill
-              priority
-              className="object-cover object-[78%_60%]"
-              sizes="52vw"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/25 via-transparent to-black/10" />
           </div>
 
           <div className="hero-stats hidden lg:block">

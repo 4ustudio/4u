@@ -50,9 +50,10 @@ export async function createAppointment(
     }
   } catch (err) {
     console.error('Unexpected error:', err)
-    return {
-      status: 'error',
-      message: 'Error de conexión. Intenta de nuevo en un momento.',
-    }
+    const message =
+      err instanceof Error && err.message.includes('variables de entorno')
+        ? 'Error de configuración del servidor. Contacta al administrador.'
+        : 'Error de conexión. Intenta de nuevo en un momento.'
+    return { status: 'error', message }
   }
 }

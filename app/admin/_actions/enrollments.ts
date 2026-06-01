@@ -1,9 +1,12 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
+import { createAuthServerClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type { EnrollmentEvent, EnrollmentEventType } from '@/types/enrollment'
 
+// Para lecturas usa el cliente autenticado (JWT del admin + política RLS authenticated)
+// Para escrituras usa el cliente admin (service_role)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function db(): any { return createAdminClient() }
 
@@ -19,13 +22,24 @@ const STATUS_NAMES: Record<string, string> = {
 
 export async function getEnrollments(): Promise<{ data: any[]; error: string | null }> {
   try {
-    const { data, error } = await db()
+    // Usar cliente autenticado para lectura — más robusto en producción
+    const supabase = await createAuthServerClient()
+    const { data, error } = await supabase
       .from('enrollments')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(200)
 
-    if (error) return { data: [], error: error.message }
+    if (error) {
+      // Fallback a admin client si el cliente auth falla
+      const { data: d2, error: e2 } = await db()
+        .from('enrollments')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(200)
+      if (e2) return { data: [], error: e2.message }
+      return { data: d2 ?? [], error: null }
+    }
     return { data: data ?? [], error: null }
   } catch (e) {
     return { data: [], error: e instanceof Error ? e.message : 'Error desconocido' }
@@ -44,14 +58,19 @@ export async function getEnrollment(id: string) {
 }
 
 export async function getEnrollmentEvents(enrollmentId: string): Promise<EnrollmentEvent[]> {
-  const { data, error } = await db()
-    .from('enrollment_events')
-    .select('*')
-    .eq('enrollment_id', enrollmentId)
-    .order('created_at', { ascending: true })
+  try {
+    const supabase = await createAuthServerClient()
+    const { data, error } = await supabase
+      .from('enrollment_events')
+      .select('*')
+      .eq('enrollment_id', enrollmentId)
+      .order('created_at', { ascending: true })
 
-  if (error) return []
-  return data ?? []
+    if (error) return []
+    return data ?? []
+  } catch {
+    return []
+  }
 }
 
 // ── Escritura ────────────────────────────────────────────────

@@ -1,11 +1,6 @@
 import type { Metadata } from "next"
 import PageLayout from "@/components/layout/PageLayout"
 import BookingCalendar from "@/components/sections/BookingCalendar"
-import { createAuthServerClient } from "@/lib/supabase/server"
-import { createAdminClient } from "@/lib/supabase/admin"
-import { studentBookAction } from "@/app/(student)/_actions/student"
-
-export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
   title: "Agendar Clase",
@@ -13,15 +8,7 @@ export const metadata: Metadata = {
     "Agenda tu primera clase de música en 4U Studio Academy. Selecciona fecha, horario e instructor — Guitarra, Piano, Canto, Batería, Bajo y Producción Musical.",
 }
 
-export default async function AgendarPage() {
-  const adminClient = createAdminClient()
-  const [{ data: { user } }, { data: instructorsRaw }] = await Promise.all([
-    createAuthServerClient().then(s => s.auth.getUser()),
-    adminClient.from('instructors').select('id, name').eq('status', 'active').order('name'),
-  ])
-  const isLoggedIn  = !!user
-  const instructors = (instructorsRaw ?? []) as { id: string; name: string }[]
-
+export default function AgendarPage() {
   return (
     <PageLayout>
       <section className="relative w-full min-h-screen overflow-hidden">
@@ -30,12 +17,7 @@ export default async function AgendarPage() {
         <div className="pointer-events-none absolute top-0 -right-40 w-96 h-96 bg-orange-500/4 blur-3xl rounded-full" aria-hidden="true" />
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 md:py-20">
-          <BookingCalendar
-            serverAction={isLoggedIn ? studentBookAction : undefined}
-            mode={isLoggedIn ? "student" : "public"}
-            isLoggedIn={isLoggedIn}
-            instructors={instructors}
-          />
+          <BookingCalendar />
         </div>
       </section>
     </PageLayout>

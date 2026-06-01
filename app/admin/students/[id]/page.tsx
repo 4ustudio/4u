@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 import StudentEditForm from './_form'
 import ScheduleSection from './_components/ScheduleSection'
 import GenerateClassesButton from './_components/GenerateClassesButton'
-import InviteStudentButton from './_components/InviteStudentButton'
+import DeleteStudentButton from './_components/DeleteStudentButton'
 import StudentSessionsPanel from './_components/StudentSessionsPanel'
 import type { Student, MonthlyUsage, StudentSchedule } from '@/types/admin'
 
@@ -119,12 +119,8 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
         {/* Aside: sticky en desktop */}
         <aside className="space-y-4 xl:sticky xl:top-6 xl:self-start">
           <div className="bg-gray-900 border border-white/10 rounded-xl p-5 space-y-3">
-            <h2 className="text-sm font-semibold text-white">Acceso al portal</h2>
-            <InviteStudentButton
-              studentId={id}
-              email={student.email}
-              hasAccount={!!student.user_id}
-            />
+            <h2 className="text-sm font-semibold text-white">Acciones</h2>
+            <DeleteStudentButton studentId={id} studentName={student.name} />
           </div>
 
           <div className="bg-gray-900 border border-white/10 rounded-xl p-5">

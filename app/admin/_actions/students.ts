@@ -340,6 +340,41 @@ export async function inviteStudentAction(
   return { success: true, resent: alreadyInvited }
 }
 
+export async function deleteStudentAction(
+  _prev: { error?: string; success?: boolean },
+  formData: FormData
+): Promise<{ error?: string; success?: boolean }> {
+  const id = formData.get('id') as string
+  if (!id) return { error: 'ID de estudiante requerido.' }
+
+  const client = db()
+
+  // Obtener user_id para eliminar también la cuenta de auth si existe
+  const { data: student } = await client
+    .from('students')
+    .select('user_id')
+    .eq('id', id)
+    .single()
+
+  // Eliminar registros dependientes primero (evita errores de FK)
+  await client.from('class_history').delete().eq('student_id', id)
+  await client.from('class_sessions').delete().eq('student_id', id)
+  await client.from('student_schedules').delete().eq('student_id', id)
+  await client.from('monthly_quotas').delete().eq('student_id', id)
+  await client.from('credit_adjustments').delete().eq('student_id', id)
+
+  const { error } = await client.from('students').delete().eq('id', id)
+  if (error) return { error: error.message }
+
+  // Eliminar la cuenta de auth vinculada (si tiene portal)
+  if (student?.user_id) {
+    try { await client.auth.admin.deleteUser(student.user_id) } catch { /* ignorar */ }
+  }
+
+  revalidatePath('/admin/students')
+  return { success: true }
+}
+
 export async function updateStudentAction(
   _prev: { error?: string; success?: boolean },
   formData: FormData

@@ -1,8 +1,5 @@
 import type { PlanCardProps } from "@/types";
 
-// ─── Fuente única de datos para todos los planes adultos ──────────────────────
-// Usar en: /planes, /planes/jovenes-adultos, cards de resumen, CTAs
-
 export interface PlanDetail {
   id: number;
   slug: string;
@@ -11,16 +8,16 @@ export interface PlanDetail {
   subtitle: string;
   price: string;
   priceNote?: string;
-  priceAlt?: string;          // precio alternativo (ej. opción sin grabación)
+  priceAlt?: string;
   description: string;
   features: string[];
   instruments?: string[];
   highlighted?: boolean;
   image: string;
   imagePosition?: string;
-  tag?: string;               // etiqueta corta para filtros
+  tag?: string;
   limitedOffer?: boolean;
-  priceOnRequest?: boolean;   // precio según cotización/artista
+  priceOnRequest?: boolean;
 }
 
 export const PLANES_ADULTOS: PlanDetail[] = [
@@ -38,6 +35,9 @@ export const PLANES_ADULTOS: PlanDetail[] = [
       "8 clases al mes",
       "4 clases grabadas y entregadas en MP3",
       "Metodología de estudio en casa",
+      "Tiempo por clase y sesión: 50 min",
+      "Presentación en vivo (tarima) Marzo, Junio, Septiembre y Diciembre",
+      "Grabación de canción profesional cada 3 meses",
     ],
     instruments: ["Canto", "Guitarra", "Batería", "Teclado", "Bajo"],
     highlighted: false,
@@ -59,7 +59,10 @@ export const PLANES_ADULTOS: PlanDetail[] = [
       "8 clases al mes",
       "4 clases grabadas y entregadas en MP3",
       "Metodología de estudio en casa",
-      "Entrega final de una canción acústica mezclada e instrumentalizada",
+      "Tiempo por clase y sesión: 50 min",
+      "Presentación en vivo (tarima) Marzo, Junio, Septiembre y Diciembre",
+      "Grabación de canción profesional cada 3 meses",
+      "Entrega final de una canción acústica mezclada y masterizada",
     ],
     instruments: ["Canto", "Guitarra", "Batería", "Teclado", "Bajo"],
     highlighted: true,
@@ -70,19 +73,23 @@ export const PLANES_ADULTOS: PlanDetail[] = [
   },
   {
     id: 3,
-    slug: "artist",
-    name: "Plan 3 – Artist",
-    subtitle: "Tengo mi canción completa",
-    price: "$3.500.000",
+    slug: "bandas",
+    name: "Plan 3 – Bandas",
+    subtitle: "Garage Days",
+    price: "$2.500.000",
     priceNote: "/ mes",
+    priceAlt: "Con director de ensamble: $3.500.000  ·  Persona adicional: $600.000",
     description:
-      "Ideal para quienes quieren una canción profesional como obra artística real, con sonido profesional y acompañamiento creativo.",
+      "Para grupos y bandas que quieren ensayar, grabar y presentarse en vivo como artistas profesionales.",
     features: [
-      "Instrumentos en grabación: guitarra, bajo, batería y voz",
-      "Teclado opcional como adicional",
-      "8 clases mensuales del instrumento elegido",
+      "8 sesiones de 50 min cada una",
+      "Máximo 4 personas por banda",
+      "Persona adicional: $600.000",
+      "Grabación de canción profesional cada 3 meses",
+      "Presentación en vivo (tarima) Marzo, Junio, Septiembre y Diciembre",
+      "Sin director de ensamble: $2.500.000",
+      "Con director de ensamble: $3.500.000",
     ],
-    instruments: ["Canto", "Guitarra", "Batería", "Bajo", "Teclado"],
     highlighted: false,
     image: "/images/courses/planes-tipos/Plan 2.png",
     imagePosition: "object-[72%_45%]",
@@ -90,15 +97,16 @@ export const PLANES_ADULTOS: PlanDetail[] = [
   },
   {
     id: 4,
-    slug: "professional",
-    name: "Plan 4 – Professional",
+    slug: "artist",
+    name: "Plan 4 – Artist",
     subtitle: "Tengo mi proyecto artístico",
     price: "$4.500.000",
     priceNote: "/ mes",
-    priceAlt: "Sin grabación, mezcla y masterización: $3.000.000",
     description:
       "Pensado para artistas que quieren identidad visual, respaldo legal y presencia formal en plataformas.",
     features: [
+      "8 sesiones de producción musical",
+      "Tiempo por clase y sesión: 50 min",
       "Producción musical profesional",
       "Diseño de portada y fotografía artística",
       "Construcción de imagen del proyecto",
@@ -112,8 +120,8 @@ export const PLANES_ADULTOS: PlanDetail[] = [
   },
   {
     id: 5,
-    slug: "famous",
-    name: "Plan 5 – Famous",
+    slug: "professional",
+    name: "Plan 5 – Professional",
     subtitle: "Construyo mi carrera musical",
     price: "Según artista y necesidad",
     description:
@@ -153,7 +161,6 @@ export const PLANES_ADULTOS: PlanDetail[] = [
   },
 ];
 
-// Compatibilidad con PlanCardProps para componentes existentes
 export const PLANES: PlanCardProps[] = PLANES_ADULTOS.map((p) => ({
   badge: p.badge,
   name: p.name,

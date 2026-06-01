@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import PageLayout from "@/components/layout/PageLayout";
 import OptimizedImage from "@/components/ui/OptimizedImage";
+import ProcesoSection from "./_components/ProcesoSection";
 
 export const metadata: Metadata = {
   title: "Nosotros | 4U Studio Academy",
@@ -73,36 +74,74 @@ export default function NosotrosPage() {
   return (
     <PageLayout>
       {/* ──────── 1. Hero institucional ──────── */}
-      <section className="relative w-full min-h-[600px] lg:min-h-[650px] bg-black overflow-hidden flex items-stretch">
+      <section className="relative w-full min-h-[580px] sm:min-h-[620px] lg:min-h-[650px] bg-black overflow-hidden flex items-stretch">
+
+        {/* Imagen de fondo — posición ajustada por breakpoint */}
         <div className="absolute inset-0">
           <OptimizedImage
-            src="/images/hero/Banner-contactanos.jpg.jpeg"
+            src="/images/hero/Banner.png"
             alt="4U Studio Academy"
             fill
             priority
-            className="object-cover object-center scale-105"
+            className="object-cover object-[55%_35%] sm:object-[60%_35%] lg:object-[center_35%] [transform:scaleX(-1)]"
             sizes="100vw"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/70 to-black/40" />
-          <div className="absolute inset-0 bg-black/50 lg:hidden" />
         </div>
 
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-8 py-24 lg:py-28 flex items-center">
+        {/* ── Overlays cinematográficos ── */}
+
+        {/* 1a. Degradado desktop: negro intenso izq → transparente der */}
+        <div
+          className="absolute inset-0 z-[1] hidden lg:block"
+          style={{
+            background:
+              'linear-gradient(to right, rgba(0,0,0,0.90) 0%, rgba(0,0,0,0.72) 30%, rgba(20,8,0,0.38) 55%, rgba(255,122,0,0.08) 72%, transparent 100%)',
+          }}
+        />
+
+        {/* 1b. Degradado móvil: negro abajo → semitransparente arriba (legibilidad sobre los artistas) */}
+        <div
+          className="absolute inset-0 z-[1] lg:hidden"
+          style={{
+            background:
+              'linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.60) 40%, rgba(0,0,0,0.85) 100%)',
+          }}
+        />
+
+        {/* 2. Viñeta perimetral (ambos breakpoints) */}
+        <div
+          className="absolute inset-0 z-[2]"
+          style={{
+            boxShadow: 'inset 0 0 120px 40px rgba(0,0,0,0.55)',
+          }}
+        />
+
+        {/* Contenido */}
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-8 py-28 sm:py-32 lg:py-28 flex items-end lg:items-center">
           <div className="max-w-[580px]">
             <div className="flex items-center gap-3 mb-6">
               <span className="h-px w-8 bg-[#ff7a00]" />
-              <span className="text-[#ff7a00] text-xs font-bold uppercase tracking-[0.2em] font-poppins">
+              <span className="text-[#ff7a00] text-xs font-bold uppercase tracking-[0.2em] font-poppins drop-shadow-md">
                 4U Studio Academy
               </span>
             </div>
-            <h1 className="text-4xl md:text-5xl lg:text-7xl font-extrabold leading-[1.05] text-white mb-5 font-poppins">
+            <h1
+              className="text-4xl md:text-5xl lg:text-7xl font-extrabold leading-[1.05] text-white mb-5 font-poppins"
+              style={{ textShadow: '0 4px 20px rgba(0,0,0,0.55), 0 1px 4px rgba(0,0,0,0.40)' }}
+            >
               ¿Quiénes{" "}
               <span className="text-[#ff7a00]">somos</span>?
             </h1>
-            <p className="text-base md:text-lg text-white/50 max-w-[520px] mb-3 font-roboto font-semibold tracking-wide uppercase">
+            <p
+              className="text-base md:text-lg text-white/60 max-w-[520px] mb-3 font-roboto font-semibold tracking-wide uppercase"
+              style={{ textShadow: '0 2px 10px rgba(0,0,0,0.50)' }}
+            >
               Academia + Producción + Desarrollo Artístico
             </p>
-            <p className="text-base md:text-lg text-white/70 max-w-[500px] mb-8 leading-relaxed font-roboto">
+            <p
+              className="text-base md:text-lg text-white/80 max-w-[500px] mb-8 leading-relaxed font-roboto"
+              style={{ textShadow: '0 2px 12px rgba(0,0,0,0.45)' }}
+            >
               En 4U Studio Academy transformamos la pasión por la música en experiencias reales de aprendizaje, creación y crecimiento artístico.
             </p>
             <Link
@@ -164,7 +203,7 @@ export default function NosotrosPage() {
       <section className="relative w-full min-h-[380px] lg:min-h-[420px] bg-black overflow-hidden flex items-center">
         <div className="absolute inset-0">
           <OptimizedImage
-            src="/images/hero/banner-principal.jpg"
+            src="/images/hero/Banner.png"
             alt=""
             fill
             className="object-cover object-[50%_30%]"
@@ -272,55 +311,7 @@ export default function NosotrosPage() {
       </section>
 
       {/* ──────── 5. Nuestro proceso ──────── */}
-      <section className="relative w-full bg-zinc-950 py-20 md:py-28 overflow-hidden">
-        <div className="absolute inset-0 opacity-[0.03]">
-          <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-[#ff7a00] blur-[100px]" />
-        </div>
-        <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <span className="text-[#ff7a00] text-xs font-bold uppercase tracking-[0.2em] font-poppins">
-              Nuestro proceso
-            </span>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white mt-4 font-poppins leading-tight">
-              Nuestro objetivo es que cada alumno<br className="hidden md:block" />
-              viva este{" "}
-              <span className="text-[#ff7a00]">proceso</span>
-            </h2>
-          </div>
-
-          <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 lg:gap-x-14">
-            {processSteps.map((step, i) => (
-              <div key={step} className="flex items-center gap-3 lg:gap-4">
-                <div className="relative flex flex-col items-center">
-                  <div
-                    className="flex h-14 w-14 md:h-16 md:w-16 items-center justify-center rounded-full border-2 text-sm md:text-base font-bold font-poppins transition-all duration-300 hover:scale-110 hover:shadow-lg"
-                    style={{
-                      borderColor: i === processSteps.length - 1 ? "#ff7a00" : "rgba(255,255,255,0.15)",
-                      color: i === processSteps.length - 1 ? "#ff7a00" : "rgba(255,255,255,0.7)",
-                      backgroundColor: i === processSteps.length - 1 ? "rgba(255,122,0,0.1)" : "rgba(255,255,255,0.04)",
-                    }}
-                  >
-                    {i + 1}
-                  </div>
-                  <span
-                    className="mt-2 text-xs font-semibold text-center leading-tight font-poppins whitespace-nowrap"
-                    style={{
-                      color: i === processSteps.length - 1 ? "#ff7a00" : "rgba(255,255,255,0.6)",
-                    }}
-                  >
-                    {step}
-                  </span>
-                </div>
-                {i < processSteps.length - 1 && (
-                  <svg className="hidden lg:block w-6 h-6 text-white/20 shrink-0 -mb-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <path d="M5 12h14m-6-6 6 6-6 6" />
-                  </svg>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <ProcesoSection />
 
       {/* ──────── 6. Valores ──────── */}
       <section className="relative w-full bg-black py-20 md:py-28">

@@ -1,6 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getAvailableSlots } from '../_actions/sessions'
-import WeekCalendar from './_components/WeekCalendar'
+import HybridView from './_components/HybridView'
 import type { ClassSession, AvailableSlot } from '@/types/admin'
 
 export const dynamic = 'force-dynamic'
@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 function getWeekStart(query?: string): string {
   if (query) return query
   const now  = new Date()
-  const dow  = now.getDay() || 7        // 1=Lun … 7=Dom
+  const dow  = now.getDay() || 7
   const mon  = new Date(now)
   mon.setDate(now.getDate() - (dow - 1))
   return mon.toISOString().split('T')[0]
@@ -16,7 +16,6 @@ function getWeekStart(query?: string): string {
 
 async function getPageData(weekStart: string) {
   const supabase = createAdminClient()
-  const start    = weekStart
   const endDate  = new Date(weekStart)
   endDate.setDate(endDate.getDate() + 6)
   const end = endDate.toISOString().split('T')[0]
@@ -32,23 +31,26 @@ async function getPageData(weekStart: string) {
     supabase
       .from('class_sessions')
       .select('*, student:students(name,phone), course:courses(name), classroom:classrooms(name), instructor:instructors(name)')
-      .gte('scheduled_date', start)
+      .gte('scheduled_date', weekStart)
       .lte('scheduled_date', end)
       .order('start_time'),
 
     supabase
       .from('blocked_dates')
       .select('*')
-      .gte('blocked_date', start)
+      .gte('blocked_date', weekStart)
       .lte('blocked_date', end),
 
-    supabase.from('students').select('id, name, phone').eq('status', 'active').order('name'),
+    supabase
+      .from('students')
+      .select('id, name, phone, email, status, student_type')
+      .order('name'),
+
     supabase.from('courses').select('id, name').eq('is_active', true),
     supabase.from('classrooms').select('id, name').eq('is_active', true),
     supabase.from('instructors').select('id, name').eq('status', 'active'),
   ])
 
-  // Fetch disponibilidad real por día (fn_available_slots)
   const days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(weekStart + 'T12:00:00')
     d.setDate(d.getDate() + i)
@@ -86,9 +88,6 @@ export default async function AgendaPage({
   const data      = await getPageData(weekStart)
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-bold text-white">Agenda</h1>
-      <WeekCalendar weekStart={weekStart} {...data} />
-    </div>
+    <HybridView weekStart={weekStart} {...data} />
   )
 }

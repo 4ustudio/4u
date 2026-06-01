@@ -130,8 +130,8 @@ export default function ProduccionPage() {
             </p>
 
             {/* CTA */}
-            <Button href="/agendar" size="md">
-              Agenda tu Plan
+            <Button href="/mi-cuenta/login" size="md">
+              Inscríbete con nosotros
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
                 <path d="M5 12h14m-6-6 6 6-6 6" />
               </svg>
@@ -229,8 +229,8 @@ export default function ProduccionPage() {
             </p>
 
             {/* CTA */}
-            <Button href="/agendar" size="md">
-              Agenda tu Plan
+            <Button href="/mi-cuenta/login" size="md">
+              Inscríbete con nosotros
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
                 <path d="M5 12h14m-6-6 6 6-6 6" />
               </svg>

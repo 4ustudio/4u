@@ -674,9 +674,8 @@ CREATE OR REPLACE FUNCTION fn_validate_schedule_rules(
 )
 RETURNS TEXT LANGUAGE plpgsql STABLE AS $$
 DECLARE
-  v_dow          SMALLINT := EXTRACT(ISODOW FROM p_date)::SMALLINT;
+  v_dow SMALLINT := EXTRACT(ISODOW FROM p_date)::SMALLINT;
   -- ISODOW: 1=Lun, 2=Mar, 3=Mié, 4=Jue, 5=Vie, 6=Sáb, 7=Dom
-  v_student_type student_type_t;
 BEGIN
   -- Domingo: cerrado
   IF v_dow = 7 THEN
@@ -691,17 +690,10 @@ BEGIN
     RETURN NULL;
   END IF;
 
-  -- Lunes–Viernes: 10:00 AM – 10:00 PM (última clase empieza 9:00 PM, termina 10:00 PM)
-  IF p_start_time < '10:00'::TIME OR p_start_time > '21:00'::TIME THEN
-    RETURN 'El horario de lunes a viernes es 10:00 AM – 10:00 PM (última clase a las 9:00 PM).';
-  END IF;
-
-  -- Restricción para estudiantes nuevos: solo desde 5:00 PM (L-V)
-  SELECT student_type INTO v_student_type
-  FROM students WHERE id = p_student_id;
-
-  IF v_student_type = 'new' AND p_start_time < '17:00'::TIME THEN
-    RETURN 'Los estudiantes nuevos solo pueden agendar clases de 5:00 PM a 10:00 PM de lunes a viernes.';
+  -- Lunes–Viernes: solo reservas después de 5:00 PM
+  -- Las clases antes de las 5:00 PM son para horarios fijos ya agendados
+  IF p_start_time < '17:00'::TIME OR p_start_time > '21:00'::TIME THEN
+    RETURN 'Las clases se agendan de 5:00 PM a 10:00 PM de lunes a viernes.';
   END IF;
 
   RETURN NULL;  -- Válido
@@ -1168,7 +1160,7 @@ RETURNS TABLE (
       CASE
         WHEN EXTRACT(ISODOW FROM p_date)::INT = 6
           THEN (p_date::TEXT || ' 08:00')::TIMESTAMP   -- Sáb: desde 8AM
-        ELSE   (p_date::TEXT || ' 10:00')::TIMESTAMP   -- L-V: desde 10AM
+        ELSE   (p_date::TEXT || ' 17:00')::TIMESTAMP   -- L-V: desde 5PM
       END,
       CASE
         WHEN EXTRACT(ISODOW FROM p_date)::INT = 6

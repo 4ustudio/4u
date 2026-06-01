@@ -30,17 +30,9 @@ export async function middleware(request: NextRequest) {
 
   // ── Rutas /admin ──────────────────────────────────────────────────
   if (pathname.startsWith('/admin')) {
-    const isLoginPage = pathname === '/admin/login'
-
-    if (!user && !isLoginPage) {
+    if (!user) {
       const url = request.nextUrl.clone()
-      url.pathname = '/admin/login'
-      return NextResponse.redirect(url)
-    }
-
-    if (user && isLoginPage) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/admin'
+      url.pathname = '/mi-cuenta/login'
       return NextResponse.redirect(url)
     }
   }

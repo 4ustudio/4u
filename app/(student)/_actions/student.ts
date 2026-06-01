@@ -106,9 +106,10 @@ export async function studentBookAction(
     return { status: 'error', message: 'Sesión expirada. Por favor inicia sesión nuevamente.' }
   }
 
-  const selectedDateIso = (formData.get('selected_date_iso') as string)?.trim()
-  const selectedTime24h = (formData.get('selected_time_24h') as string)?.trim()
-  const courseName      = (formData.get('course') as string)?.trim()
+  const selectedDateIso  = (formData.get('selected_date_iso')      as string)?.trim()
+  const selectedTime24h  = (formData.get('selected_time_24h')      as string)?.trim()
+  const courseName       = (formData.get('course')                 as string)?.trim()
+  const instructorId     = (formData.get('selected_instructor_id') as string)?.trim() || null
 
   if (!selectedDateIso || !selectedTime24h) {
     return { status: 'error', message: 'Selecciona una fecha y un horario para continuar.' }
@@ -118,11 +119,11 @@ export async function studentBookAction(
     return { status: 'error', message: 'Selecciona el instrumento o curso.' }
   }
 
-  // Usar cliente autenticado para todos los reads (courses, slots)
-  // Las policies RLS de courses/classrooms/instructors permiten acceso authenticated
-  const authClient = await createAuthServerClient()
+  // Catálogos: usar admin client (service_role) — bypasses RLS para tablas públicas
+  const adminClient = admin()
+  const authClient  = await createAuthServerClient()
 
-  const { data: course } = await authClient
+  const { data: course } = await adminClient
     .from('courses')
     .select('id, name')
     .ilike('name', courseName)
@@ -135,8 +136,8 @@ export async function studentBookAction(
 
   const startTime = `${selectedTime24h}:00`
 
-  // fn_available_slots es SECURITY DEFINER — funciona con cliente autenticado
-  const { data: slots, error: slotsError } = await authClient.rpc('fn_available_slots', {
+  // fn_available_slots es SECURITY DEFINER — funciona con admin client
+  const { data: slots, error: slotsError } = await adminClient.rpc('fn_available_slots', {
     p_date: selectedDateIso,
     p_student_id: student.id,
   })
@@ -153,13 +154,14 @@ export async function studentBookAction(
     return { status: 'error', message: 'El horario seleccionado no está disponible. Elige otro horario.' }
   }
 
-  // fn_book_session es SECURITY DEFINER — funciona con cliente autenticado
-  const { data: bookResult, error: bookError } = await authClient.rpc('fn_book_session', {
-    p_student_id:   student.id,
-    p_classroom_id: availableSlot.classroom_id,
-    p_course_id:    course.id,
-    p_date:         selectedDateIso,
-    p_start_time:   startTime,
+  // fn_book_session es SECURITY DEFINER — usar admin client para garantizar ejecución
+  const { data: bookResult, error: bookError } = await adminClient.rpc('fn_book_session', {
+    p_student_id:    student.id,
+    p_classroom_id:  availableSlot.classroom_id,
+    p_course_id:     course.id,
+    p_date:          selectedDateIso,
+    p_start_time:    startTime,
+    p_instructor_id: instructorId ?? undefined,
   })
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -196,7 +198,23 @@ export async function loginAction(
     return { error: error.message }
   }
 
-  redirect('/mi-cuenta')
+  // Verificar si el usuario tiene un perfil de estudiante.
+  // Si no, redirigir al panel admin (caso de usuarios administradores).
+  const { data: { user: loggedUser } } = await supabase.auth.getUser()
+  if (loggedUser) {
+    const { data: studentRecord } = await supabase
+      .from('students')
+      .select('id')
+      .eq('user_id', loggedUser.id)
+      .maybeSingle()
+    if (!studentRecord) {
+      redirect('/admin')
+    }
+  }
+
+  const next = (formData.get('next') as string | null)?.trim()
+  const safePath = next && next.startsWith('/') && !next.startsWith('//') ? next : '/mi-cuenta'
+  redirect(safePath)
 }
 
 export async function resetPasswordAction(
@@ -282,4 +300,86 @@ export async function logoutAction() {
   const supabase = await createAuthServerClient()
   await supabase.auth.signOut()
   redirect('/mi-cuenta/login')
+}
+
+// ─── Perfil ──────────────────────────────────────────────────────────
+
+export async function updateProfileAction(
+  _prev: { error?: string; success?: boolean },
+  formData: FormData
+): Promise<{ error?: string; success?: boolean }> {
+  const supabase = await createAuthServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Sesión expirada.' }
+
+  const firstName = (formData.get('first_name') as string)?.trim()
+  const lastName  = (formData.get('last_name')  as string)?.trim()
+  const avatarUrl = (formData.get('avatar_url') as string)?.trim() || undefined
+
+  if (!firstName) return { error: 'El nombre es requerido.' }
+
+  const adminClient = createAdminClient()
+
+  // Actualizar nombre en tabla students
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: studentErr } = await (adminClient as any)
+    .from('students')
+    .update({
+      first_name: firstName,
+      last_name:  lastName || null,
+      name:       [firstName, lastName].filter(Boolean).join(' '),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('user_id', user.id)
+
+  if (studentErr) return { error: 'No se pudo actualizar el perfil.' }
+
+  // Si viene avatar, guardarlo en user_metadata (no requiere columna nueva)
+  if (avatarUrl) {
+    await adminClient.auth.admin.updateUserById(user.id, {
+      user_metadata: { ...user.user_metadata, avatar_url: avatarUrl },
+    })
+  }
+
+  revalidatePath('/mi-cuenta')
+  return { success: true }
+}
+
+// ─── Upload avatar (server-side, bypassa RLS con admin client) ────────
+
+export async function uploadAvatarAction(
+  formData: FormData
+): Promise<{ url?: string; error?: string }> {
+  const supabase = await createAuthServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Sesión expirada.' }
+
+  const file = formData.get('file') as File | null
+  if (!file || file.size === 0) return { error: 'Archivo inválido.' }
+  if (file.size > 2 * 1024 * 1024) return { error: 'La imagen no puede superar 2MB.' }
+
+  const ext  = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
+  const path = `${user.id}/avatar.${ext}`
+
+  const arrayBuffer = await file.arrayBuffer()
+  const buffer      = Buffer.from(arrayBuffer)
+
+  const adminClient = createAdminClient()
+  const { error: uploadErr } = await (adminClient as any)
+    .storage.from('avatars')
+    .upload(path, buffer, { contentType: file.type, upsert: true })
+
+  if (uploadErr) return { error: uploadErr.message ?? 'No se pudo subir la imagen.' }
+
+  const { data: { publicUrl } } = (adminClient as any)
+    .storage.from('avatars')
+    .getPublicUrl(path)
+
+  // Persistir en user_metadata para que persista entre sesiones
+  await adminClient.auth.admin.updateUserById(user.id, {
+    user_metadata: { ...user.user_metadata, avatar_url: publicUrl },
+  })
+
+  revalidatePath('/mi-cuenta')
+  return { url: publicUrl }
 }

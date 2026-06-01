@@ -118,7 +118,7 @@ export default function CursosPage() {
             alt="Cursos de música 4U Studio Academy"
             fill
             priority
-            className="object-cover object-center scale-105"
+            className="object-cover object-center scale-105 [transform:scale(1.05)_scaleX(-1)]"
             sizes="100vw"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/70 to-black/40" />

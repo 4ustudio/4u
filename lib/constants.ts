@@ -7,5 +7,6 @@ export const ACADEMY = {
     return `https://api.whatsapp.com/send/?phone=${this.phone}&text=${this.waMessage}`
   },
   email: 'info@4ustudioacademy.com',
-  address: 'Bogotá D.C., Colombia',
+  address: 'Calle 93 #46-44, 111211 Bogotá, Colombia',
+  mapsUrl: 'https://www.google.com/maps/search/Calle+93+%2346-44+Bogot%C3%A1+Colombia',
 } as const

@@ -58,17 +58,18 @@ function getSlotStatus(
 }
 
 interface Props {
-  weekStart:   string
-  sessions:    ClassSession[]
-  blocked:     any[]
-  students:    { id: string; name: string; phone: string }[]
-  courses:     { id: string; name: string }[]
-  classrooms:  { id: string; name: string }[]
-  instructors: { id: string; name: string }[]
+  weekStart:         string
+  sessions:          ClassSession[]
+  blocked:           any[]
+  students:          { id: string; name: string; phone: string }[]
+  courses:           { id: string; name: string }[]
+  classrooms:        { id: string; name: string }[]
+  instructors:       { id: string; name: string }[]
   availabilityByDay: Record<string, AvailableSlot[]>
+  defaultStudentId?: string
 }
 
-export default function WeekCalendar({ weekStart, sessions, blocked, students, courses, classrooms, instructors, availabilityByDay }: Props) {
+export default function WeekCalendar({ weekStart, sessions, blocked, students, courses, classrooms, instructors, availabilityByDay, defaultStudentId }: Props) {
   const router = useRouter()
   const [bookSlot, setBookSlot] = useState<{ date: string; time: string } | null>(null)
   const [viewSession, setViewSession] = useState<ClassSession | null>(null)
@@ -272,6 +273,7 @@ export default function WeekCalendar({ weekStart, sessions, blocked, students, c
           courses={courses}
           classrooms={classrooms}
           instructors={instructors}
+          defaultStudentId={defaultStudentId}
           onClose={() => setBookSlot(null)}
         />
       )}
@@ -281,6 +283,7 @@ export default function WeekCalendar({ weekStart, sessions, blocked, students, c
         <SessionDetailModal
           session={viewSession}
           classrooms={classrooms}
+          instructors={instructors}
           onClose={() => setViewSession(null)}
         />
       )}

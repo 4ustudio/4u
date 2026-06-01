@@ -116,8 +116,8 @@ function PlanPathCard({
   plans: string[];
 }) {
   return (
-    <article className="overflow-hidden rounded-2xl bg-white shadow-2xl shadow-gray-950/10 ring-1 ring-gray-200">
-      <div className="relative h-[315px]">
+    <article className="overflow-hidden rounded-2xl bg-white shadow-2xl shadow-gray-950/10 ring-1 ring-gray-200 flex flex-col h-full">
+      <div className="relative h-[315px] shrink-0">
         <OptimizedImage
           src={imageSrc}
           alt={title}
@@ -127,7 +127,7 @@ function PlanPathCard({
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent" />
       </div>
-      <div className="relative px-8 pb-8 pt-7 text-center">
+      <div className="relative px-8 pb-8 pt-7 text-center flex flex-col flex-1">
         <span className="absolute -top-16 left-8 flex h-24 w-24 items-center justify-center rounded-full bg-white text-[#ff7a00] shadow-xl">
           <PathIcon type={icon} />
         </span>
@@ -143,15 +143,12 @@ function PlanPathCard({
             </div>
           ))}
         </div>
-        <div className="divide-y divide-gray-200 py-3 text-left">
+        <div className="divide-y divide-gray-200 py-3 text-left flex-1">
           {plans.map((plan) => (
-            <Link key={plan} href={href} className="flex items-center justify-between rounded-lg px-4 py-3 font-medium text-gray-950 transition-colors hover:bg-orange-50 font-poppins">
-              <span className="flex items-center gap-4">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-50 text-[#ff7a00]">♫</span>
-                {plan}
-              </span>
-              <span aria-hidden="true">›</span>
-            </Link>
+            <div key={plan} className="flex items-center gap-4 rounded-lg px-4 py-3 font-medium text-gray-950 font-poppins">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-50 text-[#ff7a00]">♫</span>
+              {plan}
+            </div>
           ))}
         </div>
         <Link href={href} className="mt-3 flex w-full items-center justify-center gap-3 rounded-lg bg-[#ff6b00] px-6 py-4 text-base font-bold text-white shadow-lg shadow-orange-500/20 font-poppins">

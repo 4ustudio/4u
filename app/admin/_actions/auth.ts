@@ -27,5 +27,5 @@ export async function signInAction(
 export async function signOutAction() {
   const supabase = await createAuthServerClient()
   await supabase.auth.signOut()
-  redirect('/admin/login')
+  redirect('/mi-cuenta/login')
 }

@@ -142,6 +142,80 @@ export async function rescheduleSessionAction(
   return { success: true }
 }
 
+// ─── Acciones exclusivas del admin (sin restricciones de horario) ────────────
+
+export async function adminUpdateStatusAction(
+  _prev: { error?: string; success?: boolean },
+  formData: FormData
+): Promise<{ error?: string; success?: boolean }> {
+  const session_id = formData.get('session_id') as string
+  const new_status = formData.get('new_status') as string
+  const notes      = (formData.get('notes') as string | null)?.trim() || undefined
+
+  if (!session_id || !new_status) return { error: 'Faltan datos.' }
+
+  const update: Record<string, unknown> = { status: new_status }
+  if (notes !== undefined) update.notes = notes
+
+  const { error } = await db()
+    .from('class_sessions')
+    .update(update)
+    .eq('id', session_id)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/admin/agenda')
+  revalidatePath('/admin')
+  return { success: true }
+}
+
+export async function adminRescheduleAction(
+  _prev: { error?: string; success?: boolean },
+  formData: FormData
+): Promise<{ error?: string; success?: boolean }> {
+  const session_id      = formData.get('session_id')      as string
+  const new_date        = formData.get('new_date')        as string
+  const new_start_time  = formData.get('new_start_time')  as string
+  const new_classroom_id = formData.get('new_classroom_id') as string
+  const new_instructor_id = (formData.get('new_instructor_id') as string | null) || null
+
+  if (!session_id || !new_date || !new_start_time || !new_classroom_id) {
+    return { error: 'Completa todos los campos obligatorios.' }
+  }
+
+  // Verificar que el salón esté libre en esa fecha/hora (excluyendo la sesión actual)
+  const { data: conflict } = await db()
+    .from('class_sessions')
+    .select('id')
+    .eq('classroom_id', new_classroom_id)
+    .eq('scheduled_date', new_date)
+    .eq('start_time', new_start_time + ':00')
+    .not('status', 'in', '(cancelled,rescheduled)')
+    .neq('id', session_id)
+    .limit(1)
+
+  if (conflict && conflict.length > 0) {
+    return { error: 'El salón ya está ocupado en esa fecha y hora.' }
+  }
+
+  const { error } = await db()
+    .from('class_sessions')
+    .update({
+      scheduled_date: new_date,
+      start_time:     new_start_time + ':00',
+      classroom_id:   new_classroom_id,
+      instructor_id:  new_instructor_id,
+      status:         'confirmed',
+    })
+    .eq('id', session_id)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/admin/agenda')
+  revalidatePath('/admin')
+  return { success: true }
+}
+
 export async function restoreCreditAction(
   _prev: { error?: string; success?: boolean },
   formData: FormData

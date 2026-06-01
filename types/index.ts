@@ -1,6 +1,7 @@
 export interface NavLink {
   href: string;
   label: string;
+  children?: { href: string; label: string; description?: string }[];
 }
 
 export interface Course {

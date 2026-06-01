@@ -9,16 +9,17 @@ const initial = { error: undefined as string | undefined, success: undefined as 
 const inputClass = 'w-full bg-gray-800 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500/30 disabled:opacity-50'
 
 interface Props {
-  date:        string
-  time:        string
-  students:    { id: string; name: string; phone: string }[]
-  courses:     { id: string; name: string }[]
-  classrooms:  { id: string; name: string }[]
-  instructors: { id: string; name: string }[]
-  onClose:     () => void
+  date:               string
+  time:               string
+  students:           { id: string; name: string; phone: string }[]
+  courses:            { id: string; name: string }[]
+  classrooms:         { id: string; name: string }[]
+  instructors:        { id: string; name: string }[]
+  defaultStudentId?:  string
+  onClose:            () => void
 }
 
-export default function BookSessionModal({ date, time, students, courses, classrooms, instructors, onClose }: Props) {
+export default function BookSessionModal({ date, time, students, courses, classrooms, instructors, defaultStudentId, onClose }: Props) {
   const router = useRouter()
   const [state, action, isPending] = useActionState(bookSessionAction, initial)
 
@@ -57,7 +58,7 @@ export default function BookSessionModal({ date, time, students, courses, classr
 
           <div>
             <label className="block text-xs text-white/50 mb-1.5">Estudiante *</label>
-            <select name="student_id" required disabled={isPending} className={inputClass + ' appearance-none'} defaultValue="">
+            <select name="student_id" required disabled={isPending} className={inputClass + ' appearance-none'} defaultValue={defaultStudentId ?? ''}>
               <option value="" disabled>Selecciona un estudiante</option>
               {students.map((s) => (
                 <option key={s.id} value={s.id}>{s.name} · {s.phone}</option>

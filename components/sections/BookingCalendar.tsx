@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useActionState } from "react";
+import { useState, useActionState, useMemo, type ReactNode } from "react";
 import Image from "next/image";
 import { createAppointment } from "@/app/agendar/actions";
 import type { BookingFormState } from "@/types/booking";
@@ -11,6 +11,8 @@ type BookingAction = (prev: BookingFormState, data: FormData) => Promise<Booking
 type BookingCalendarProps = {
   serverAction?: BookingAction
   mode?: 'public' | 'student'
+  isLoggedIn?: boolean
+  instructors?: { id: string; name: string }[]
 }
 
 // Convierte "6:00 PM" → "18:00" para el campo hidden en modo estudiante
@@ -24,14 +26,12 @@ function to24h(t: string): string {
 const WA_PHONE = ACADEMY.phone;
 const ORANGE = "#ff7a00";
 
-const COURSES = ["Canto", "Guitarra", "Piano", "Batería", "Bajo", "Producción Musical"];
+const COURSES = ["Canto", "Guitarra", "Piano", "Teclado", "Batería", "Bajo", "Producción Musical"];
 const MONTHS_ES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 const DAYS_ES = ["DOM","LUN","MAR","MIÉ","JUE","VIE","SÁB"];
 
 const TIME_SLOTS = [
-  "10:00 AM", "11:00 AM", "12:00 PM",
-  "2:00 PM",  "3:00 PM",  "4:00 PM",
-  "5:00 PM",  "6:00 PM",  "7:00 PM",
+  "5:00 PM", "6:00 PM", "7:00 PM", "8:00 PM", "9:00 PM",
 ];
 
 const initialState: BookingFormState = { status: "idle" };
@@ -70,7 +70,33 @@ function calendarDays(year: number, month: number) {
   return cells;
 }
 
-export default function BookingCalendar({ serverAction, mode = 'public' }: BookingCalendarProps = {}) {
+// ─── Shared WhatsApp icon ──────────────────────────────────────
+function WaIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 448 512" aria-hidden="true">
+      <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6z" />
+    </svg>
+  );
+}
+
+// ─── Step indicator helper ─────────────────────────────────────
+function StepHeader({ step, title, isComplete, note }: { step: number; title: string; isComplete: boolean; note?: ReactNode }) {
+  return (
+    <div className="flex items-center gap-2 mb-3">
+      <span
+        className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold shrink-0"
+        style={{ backgroundColor: isComplete ? ORANGE : 'rgba(255,255,255,0.1)', color: '#fff' }}
+      >
+        {isComplete ? '✓' : step}
+      </span>
+      <p className="text-sm font-bold text-white font-poppins">
+        {title}{note && <span className="text-white/30 text-xs font-normal ml-1">{note}</span>}
+      </p>
+    </div>
+  );
+}
+
+export default function BookingCalendar({ serverAction, mode = 'public', isLoggedIn = false, instructors = [] }: BookingCalendarProps = {}) {
   const [state, formAction, isPending] = useActionState(serverAction ?? createAppointment, initialState);
 
   const today = new Date();
@@ -82,7 +108,12 @@ export default function BookingCalendar({ serverAction, mode = 'public' }: Booki
   const prevMonth = () => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
   const nextMonth = () => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1));
 
-  const cells = calendarDays(viewDate.getFullYear(), viewDate.getMonth());
+  const todayMidnight = useMemo(() => { const d = new Date(); d.setHours(0,0,0,0); return d; }, []);
+
+  const cells = useMemo(
+    () => calendarDays(viewDate.getFullYear(), viewDate.getMonth()),
+    [viewDate]
+  );
 
   const isToday = (d: number, cur: boolean) =>
     cur &&
@@ -100,8 +131,7 @@ export default function BookingCalendar({ serverAction, mode = 'public' }: Booki
     if (!cur) return false;
     const dt = new Date(viewDate.getFullYear(), viewDate.getMonth(), d);
     dt.setHours(0, 0, 0, 0);
-    const t = new Date(); t.setHours(0, 0, 0, 0);
-    return dt < t;
+    return dt < todayMidnight;
   };
 
   const isSelected = (d: number, cur: boolean) =>
@@ -118,12 +148,12 @@ export default function BookingCalendar({ serverAction, mode = 'public' }: Booki
 
   // Notes value packed into hidden field
   const notesValue = selectedDate && selectedTime
-    ? `Fecha: ${selectedDate.toLocaleDateString("es-CO", { weekday: "long", year: "numeric", month: "long", day: "numeric" })} | Horario: ${selectedTime} | Instructor preferido: Andrés Ospina`
+    ? `Fecha: ${selectedDate.toLocaleDateString("es-CO", { weekday: "long", year: "numeric", month: "long", day: "numeric" })} | Horario: ${selectedTime}`
     : "";
 
-  const formattedDate = selectedDate
-    ? selectedDate.toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
-    : null;
+  // Step completion states
+  const step1Complete = !!selectedDate;
+  const step2Complete = !!selectedTime;
 
   // ─── SUCCESS STATE (modo estudiante) ────────────────────────
   if (state.status === "success" && mode === 'student') {
@@ -175,9 +205,7 @@ export default function BookingCalendar({ serverAction, mode = 'public' }: Booki
           className="inline-flex items-center gap-3 rounded-full px-8 py-4 text-sm font-bold text-white shadow-lg transition-all hover:-translate-y-0.5 font-poppins"
           style={{ backgroundColor: "#25D366", boxShadow: "0 8px 24px rgba(37,211,102,0.25)" }}
         >
-          <svg className="h-5 w-5 fill-white shrink-0" viewBox="0 0 448 512" aria-hidden="true">
-            <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6z" />
-          </svg>
+          <WaIcon className="h-5 w-5 fill-white shrink-0" />
           Continuar por WhatsApp
         </a>
       </div>
@@ -192,19 +220,14 @@ export default function BookingCalendar({ serverAction, mode = 'public' }: Booki
       <input type="hidden" name="notes"    value={notesValue} />
       <input type="hidden" name="modality" value="presencial" />
       <input type="hidden" name="source"   value="agendar" />
-      {/* Campos estructurados para el modo estudiante (ignorados en flujo público) */}
-      <input type="hidden" name="selected_date_iso" value={selectedDate ? selectedDate.toISOString().split('T')[0] : ''} />
-      <input type="hidden" name="selected_time_24h" value={selectedTime ? to24h(selectedTime) : ''} />
+      <input type="hidden" name="selected_date_iso"    value={selectedDate ? selectedDate.toISOString().split('T')[0] : ''} />
+      <input type="hidden" name="selected_time_24h"    value={selectedTime ? to24h(selectedTime) : ''} />
+      <input type="hidden" name="selected_instructor_id" value="" />
 
       <div className="grid lg:grid-cols-[1fr_2fr] gap-5 items-start">
 
         {/* ─── COLUMNA IZQUIERDA: Instructor + info ──── */}
         <div className="space-y-4">
-          {/* Badge */}
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/40 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-white/75 font-poppins backdrop-blur-md">
-            <span style={{ color: ORANGE }}>♫</span> Primera clase sin compromiso
-          </span>
-
           {/* Heading */}
           <div>
             <h1 className="text-4xl md:text-5xl font-extrabold text-white leading-[1.08] font-poppins">
@@ -212,20 +235,20 @@ export default function BookingCalendar({ serverAction, mode = 'public' }: Booki
               curso <span style={{ color: ORANGE }}>ideal</span>
             </h1>
             <p className="text-white/55 text-sm mt-3 leading-relaxed font-roboto">
-              Elige a tu instructor, selecciona la fecha y horario que mejor se adapten a ti y comienza tu camino musical con nosotros.
+              Selecciona la fecha y el horario que mejor se adapten a ti. Un instructor especializado será asignado automáticamente.
             </p>
           </div>
 
-          {/* Instructor card */}
-          <div className="rounded-2xl border border-white/10 bg-white/[0.05] backdrop-blur-md p-7 space-y-5">
+          {/* Instructor card — compact */}
+          <div className="rounded-2xl border border-white/10 bg-white/[0.05] backdrop-blur-md p-5 space-y-3">
             {/* Avatar + nombre */}
-            <div className="flex items-center gap-5">
-              <div className="h-[170px] w-[170px] rounded-xl overflow-hidden shrink-0 shadow-xl shadow-black/40">
+            <div className="flex items-center gap-4">
+              <div className="h-[110px] w-[110px] rounded-xl overflow-hidden shrink-0 shadow-xl shadow-black/40">
                 <Image
                   src="/images/instructors/Perfil.png"
                   alt="Andrés Ospina"
-                  width={170}
-                  height={170}
+                  width={110}
+                  height={110}
                   className="object-cover w-full h-full"
                 />
               </div>
@@ -248,8 +271,8 @@ export default function BookingCalendar({ serverAction, mode = 'public' }: Booki
             </div>
 
             {/* Especialidades */}
-            <div className="mt-4">
-              <p className="text-white/40 text-[10px] uppercase tracking-wider mb-2.5 font-roboto">Especialidades:</p>
+            <div>
+              <p className="text-white/40 text-[10px] uppercase tracking-wider mb-2 font-roboto">Especialidades:</p>
               <div className="flex flex-wrap gap-1.5">
                 {COURSES.map((c) => (
                   <button
@@ -270,31 +293,68 @@ export default function BookingCalendar({ serverAction, mode = 'public' }: Booki
             </div>
 
             {/* Bio */}
-            <p className="text-white/45 text-xs leading-relaxed font-roboto">
+            <p className="text-white/40 text-xs leading-relaxed font-roboto">
               Más de 10 años de experiencia ayudando a estudiantes a descubrir y potenciar su talento. Enfoque personalizado y resultados reales.
             </p>
 
             {/* Disponibilidad */}
-            <div className="flex flex-wrap gap-2 mt-4">
+            <div className="flex flex-wrap gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-orange-500/30 bg-orange-500/10 px-3 py-1 text-[10px] font-semibold text-orange-400 font-roboto"><span className="h-2 w-2 rounded-full bg-orange-400 inline-block" />Presencial</span>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-[10px] font-semibold text-green-400 font-roboto"><span className="h-2 w-2 rounded-full bg-green-400 inline-block" />Disponible hoy</span>
             </div>
           </div>
 
-          {/* Info strip — grid 4 columnas iguales */}
+          {/* Info strip — grid 4 columnas iguales with SVG icons */}
           <div className="grid grid-cols-4 rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-md overflow-hidden">
             {[
-              { icon: "⏱", label: "Duración", value: "60 min" },
-              { icon: "📍", label: "Modalidad", value: "Presencial" },
-              { icon: "📍", label: "Sede", value: "4U Studio" },
-              { icon: "🎵", label: "Incluye", value: "Material" },
+              {
+                icon: (
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M12 6v6l4 2" />
+                  </svg>
+                ),
+                label: "Duración",
+                value: "60 min",
+              },
+              {
+                icon: (
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                    <circle cx="12" cy="10" r="3" />
+                  </svg>
+                ),
+                label: "Modalidad",
+                value: "Presencial",
+              },
+              {
+                icon: (
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                    <polyline points="9 22 9 12 15 12 15 22" />
+                  </svg>
+                ),
+                label: "Sede",
+                value: "4U Studio",
+              },
+              {
+                icon: (
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                    <path d="M9 18V5l12-2v13" />
+                    <circle cx="6" cy="18" r="3" />
+                    <circle cx="18" cy="16" r="3" />
+                  </svg>
+                ),
+                label: "Incluye",
+                value: "Material",
+              },
             ].map((item, i) => (
               <div
                 key={item.label}
                 className="flex flex-col items-center justify-center py-4 px-1 text-center min-w-0"
                 style={i < 3 ? { borderRight: "1px solid rgba(255,255,255,0.1)" } : undefined}
               >
-                <span className="text-lg mb-1.5 block leading-none">{item.icon}</span>
+                <span className="mb-1.5 block leading-none" style={{ color: ORANGE }}>{item.icon}</span>
                 <p className="text-[10px] text-white/40 font-roboto truncate w-full">{item.label}</p>
                 <p className="text-[11px] text-white/75 font-semibold font-roboto truncate w-full">{item.value}</p>
               </div>
@@ -302,7 +362,6 @@ export default function BookingCalendar({ serverAction, mode = 'public' }: Booki
           </div>
 
           <p className="text-xs text-white/40 font-roboto">
-            <span style={{ color: ORANGE }} className="font-semibold">🎁 Primera clase sin compromiso.</span>{" "}
             Conócenos y descubre tu potencial.
           </p>
         </div>
@@ -314,11 +373,11 @@ export default function BookingCalendar({ serverAction, mode = 'public' }: Booki
 
           <div className="relative lg:grid lg:grid-cols-[1fr_1fr]">
             {/* ─── CALENDARIO ──── */}
-            <div className="p-6 lg:p-8 lg:border-r border-white/[0.08]">
-              <p className="text-sm font-bold text-white mb-6 font-poppins">1. Selecciona una fecha</p>
+            <div className="p-4 lg:p-6 lg:border-r border-white/[0.08]">
+              <StepHeader step={1} title="Selecciona una fecha" isComplete={step1Complete} />
 
               {/* Header mes */}
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-4">
                 <button
                   type="button"
                   onClick={prevMonth}
@@ -345,7 +404,7 @@ export default function BookingCalendar({ serverAction, mode = 'public' }: Booki
               </div>
 
               {/* Días de la semana */}
-              <div className="grid grid-cols-7 mb-3">
+              <div className="grid grid-cols-7 mb-2">
                 {DAYS_ES.map((d) => (
                   <div key={d} className="text-center text-[11px] font-bold text-white/35 py-1 font-roboto">
                     {d}
@@ -354,7 +413,7 @@ export default function BookingCalendar({ serverAction, mode = 'public' }: Booki
               </div>
 
               {/* Celdas */}
-              <div className="grid grid-cols-7 gap-2">
+              <div className="grid grid-cols-7 gap-1.5">
                 {cells.map(({ day, current }, idx) => {
                   const sun  = isSunday(day, current);
                   const past = isPast(day, current);
@@ -369,7 +428,7 @@ export default function BookingCalendar({ serverAction, mode = 'public' }: Booki
                       disabled={disabled}
                       onClick={() => handleDay(day, current)}
                       className={[
-                        "h-10 w-10 mx-auto rounded-full text-sm font-semibold transition-all font-roboto flex items-center justify-center",
+                        "h-9 w-9 mx-auto rounded-full text-sm font-semibold transition-all font-roboto flex items-center justify-center",
                         !current       ? "text-white/15 cursor-default"                          : "",
                         current && sun  ? "text-red-400/40 cursor-not-allowed"                   : "",
                         current && past && !sun ? "text-white/20 cursor-not-allowed"             : "",
@@ -388,28 +447,28 @@ export default function BookingCalendar({ serverAction, mode = 'public' }: Booki
               </div>
 
               {/* Leyenda */}
-              <div className="mt-6 flex items-center gap-2 text-[11px] text-white/50">
+              <div className="mt-4 flex items-center gap-2 text-[11px] text-white/50">
                 <span className="h-2 w-2 rounded-full bg-green-400 inline-block" />
                 Fechas disponibles
               </div>
             </div>
 
             {/* ─── HORARIOS + RESUMEN ──── */}
-            <div className="p-6 lg:p-8 space-y-6">
+            <div className="p-4 lg:p-6 space-y-6">
               {/* Horarios */}
               <div>
-                <p className="text-sm font-bold text-white mb-4 font-poppins">2. Horarios disponibles</p>
+                <StepHeader step={2} title="Horarios disponibles" isComplete={step2Complete} />
                 <div className="grid grid-cols-3 gap-2.5">
                   {TIME_SLOTS.map((t) => (
                     <button
                       key={t}
                       type="button"
                       onClick={() => setSelectedTime(t)}
-                      className="py-3.5 rounded-lg text-xs font-semibold transition-all font-roboto"
+                      className="py-3.5 min-h-[44px] rounded-lg text-xs font-semibold font-roboto"
                       style={
                         selectedTime === t
-                          ? { backgroundColor: ORANGE, color: "#fff", boxShadow: "0 0 25px rgba(255,122,0,0.45)", transform: "translateY(-1px)" }
-                          : { backgroundColor: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.65)", border: "1px solid rgba(255,255,255,0.08)" }
+                          ? { backgroundColor: ORANGE, color: "#fff", boxShadow: "0 0 20px rgba(255,122,0,0.5)", transform: "scale(1.05)", transition: "all 0.15s ease" }
+                          : { backgroundColor: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.1)" }
                       }
                     >
                       {t}
@@ -418,19 +477,128 @@ export default function BookingCalendar({ serverAction, mode = 'public' }: Booki
                 </div>
               </div>
 
-              {/* WhatsApp */}
-              <a
-                href={buildWALinkDirect(selectedCourse, selectedDate, selectedTime)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full flex items-center justify-center gap-2.5 rounded-xl py-4 text-sm font-bold text-white font-poppins transition-all hover:brightness-110 h-14"
-                style={{ backgroundColor: "#25D366", boxShadow: "0 0 25px rgba(37,211,102,0.2)" }}
-              >
-                <svg className="h-5 w-5 fill-white shrink-0" viewBox="0 0 448 512" aria-hidden="true">
-                  <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6z" />
-                </svg>
-                Agendar por WhatsApp
-              </a>
+              {/* ── Paso 3: Tipo de clase ── */}
+              <div>
+                <StepHeader step={3} title="Tipo de clase" isComplete={true} />
+                <div className="flex flex-wrap gap-2">
+                  {COURSES.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setSelectedCourse(c)}
+                      className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all font-roboto"
+                      style={
+                        selectedCourse === c
+                          ? { backgroundColor: ORANGE, color: '#fff', boxShadow: '0 0 14px rgba(255,122,0,0.35)' }
+                          : { backgroundColor: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,255,255,0.08)' }
+                      }
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+
+              {/* ── Acciones CTA ── */}
+              <div className="space-y-3">
+
+                {isLoggedIn ? (
+                  /* Estudiante logueado: botón de reserva en sistema */
+                  <>
+                    {state.status === 'error' && (
+                      <p className="text-red-400 text-xs text-center font-roboto bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+                        {state.message}
+                      </p>
+                    )}
+
+                    {/* Trust strip */}
+                    <div className="flex flex-wrap gap-3 text-[10px] text-white/40 font-roboto">
+                      <span className="flex items-center gap-1">
+                        <svg className="h-3 w-3 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                          <path d="M20 6 9 17l-5-5"/>
+                        </svg>
+                        Confirmación inmediata
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <svg className="h-3 w-3 text-[#ff7a00]" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>
+                        </svg>
+                        Instructor verificado
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <svg className="h-3 w-3 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        </svg>
+                        Reserva segura
+                      </span>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isPending || !selectedDate || !selectedTime}
+                      className="w-full flex items-center justify-center gap-2.5 rounded-xl py-4 text-sm font-bold text-white font-poppins transition-all duration-300 h-14 disabled:opacity-40 disabled:cursor-not-allowed hover:brightness-110"
+                      style={{
+                        backgroundColor: selectedDate && selectedTime ? '#ff8800' : ORANGE,
+                        boxShadow: selectedDate && selectedTime ? "0 0 32px rgba(255,122,0,0.5), 0 4px 16px rgba(255,122,0,0.3)" : "none",
+                      }}
+                    >
+                      {isPending ? (
+                        <>
+                          <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z" />
+                          </svg>
+                          Agendando...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
+                            <path d="M8 2v4M16 2v4M4 10h16M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" />
+                          </svg>
+                          {!selectedDate || !selectedTime ? "Selecciona fecha y horario" : "Agendar Clase"}
+                        </>
+                      )}
+                    </button>
+
+                    {/* WhatsApp secundario — más visible */}
+                    <a
+                      href={buildWALinkDirect(selectedCourse, selectedDate, selectedTime)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full flex items-center justify-center gap-2 rounded-xl py-3 text-xs font-semibold text-green-400/70 hover:text-green-400 font-roboto transition-all border border-white/10 hover:border-green-400/30 hover:bg-green-400/5"
+                    >
+                      <WaIcon className="h-3.5 w-3.5 fill-current shrink-0 text-green-400/70" />
+                      También puedes agendar por WhatsApp
+                    </a>
+                  </>
+                ) : (
+                  /* Usuario no logueado: WhatsApp principal + login secundario */
+                  <>
+                    <a
+                      href={buildWALinkDirect(selectedCourse, selectedDate, selectedTime)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full flex items-center justify-center gap-2.5 rounded-xl py-4 text-sm font-bold text-white font-poppins transition-all hover:brightness-110 h-14"
+                      style={{ backgroundColor: "#25D366", boxShadow: "0 0 25px rgba(37,211,102,0.2)" }}
+                    >
+                      <WaIcon className="h-5 w-5 fill-white shrink-0" />
+                      Agendar por WhatsApp
+                    </a>
+
+                    <a
+                      href="/mi-cuenta/login?next=/agendar"
+                      className="w-full flex items-center justify-center gap-2 rounded-xl py-3 text-xs font-semibold text-white/60 hover:text-white font-roboto transition-all border border-white/10 hover:border-[#ff7a00]/40 hover:text-[#ff7a00]"
+                    >
+                      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3" />
+                      </svg>
+                      Iniciar sesión para agendar en el sistema
+                    </a>
+                  </>
+                )}
+
+              </div>
 
               {/* Nota seguridad */}
               <p className="text-center text-white/25 text-[10px] font-roboto flex items-center justify-center gap-1.5">
@@ -494,6 +662,20 @@ export default function BookingCalendar({ serverAction, mode = 'public' }: Booki
           </div>
         ))}
       </div>
+
+      {/* ─── STICKY MOBILE CTA ───────────────────────── */}
+      {isLoggedIn && selectedDate && selectedTime && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-gradient-to-t from-black via-black/95 to-transparent lg:hidden">
+          <button
+            type="submit"
+            disabled={isPending}
+            className="w-full rounded-xl py-4 text-sm font-bold text-white font-poppins"
+            style={{ backgroundColor: '#ff7a00', boxShadow: '0 0 24px rgba(255,122,0,0.4)' }}
+          >
+            {isPending ? 'Agendando...' : `Agendar — ${selectedDate.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' })} ${selectedTime}`}
+          </button>
+        </div>
+      )}
     </form>
   );
 }

@@ -51,7 +51,7 @@ export default function StudentNav({ userEmail }: { userEmail?: string }) {
             priority
           />
           <span className="text-[11px] text-white/30 border-l border-white/10 pl-3 font-roboto hidden sm:block">
-            Portal Estudiante
+            Mi Cuenta
           </span>
         </Link>
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import PageLayout from "@/components/layout/PageLayout";
 import OptimizedImage from "@/components/ui/OptimizedImage";
 import Button from "@/components/ui/Button";
+import Reveal from "@/components/ui/Reveal";
 
 export const metadata: Metadata = {
   title: "Producción Musical",
@@ -103,15 +104,15 @@ export default function ProduccionPage() {
             className="object-cover object-center"
             sizes="(max-width: 1024px) 100vw, 52vw"
           />
-          {/* Degradado izquierdo que cubre el texto */}
-          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/85 to-black/20" />
+          {/* Degradado izquierdo que cubre el texto (más suave/claro) */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/55 to-transparent" />
           {/* Degradado base en móvil */}
-          <div className="absolute inset-0 bg-black/50 lg:hidden" />
+          <div className="absolute inset-0 bg-black/35 lg:hidden" />
         </div>
 
         {/* Contenido izquierdo */}
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-8 py-20 lg:py-24 flex items-center">
-          <div className="max-w-[480px]">
+          <Reveal className="max-w-[480px]">
             {/* Eyebrow */}
             <p className="text-[#ff7a00] text-xs font-bold uppercase tracking-[0.15em] mb-5 font-poppins">
               Plan 4 – Plan Artista Profesional
@@ -130,13 +131,13 @@ export default function ProduccionPage() {
             </p>
 
             {/* CTA */}
-            <Button href="/mi-cuenta/login" size="md">
+            <Button href="/inscripcion" size="md">
               Inscríbete con nosotros
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
                 <path d="M5 12h14m-6-6 6 6-6 6" />
               </svg>
             </Button>
-          </div>
+          </Reveal>
         </div>
       </section>
 
@@ -144,7 +145,7 @@ export default function ProduccionPage() {
       <section className="bg-white py-14 lg:py-16">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           {/* Título */}
-          <div className="text-center mb-10">
+          <Reveal className="text-center mb-10">
             <div className="inline-flex items-center gap-3 mb-2">
               <span className="h-px w-10 bg-[#ff7a00]" />
               <span className="h-1 w-1 rounded-full bg-[#ff7a00]" />
@@ -153,14 +154,15 @@ export default function ProduccionPage() {
             <h2 className="text-3xl font-black text-gray-950 uppercase tracking-wide font-poppins">
               Incluye:
             </h2>
-          </div>
+          </Reveal>
 
           {/* Grid de 4 cards */}
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {INCLUDES.map((card, i) => (
-              <div
+              <Reveal
                 key={i}
-                className="border border-gray-200 rounded-xl p-6 flex flex-col items-center text-center shadow-sm hover:shadow-md transition-shadow"
+                delay={i * 120}
+                className="border border-gray-200 rounded-xl p-6 flex flex-col items-center text-center shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1.5"
               >
                 {/* Línea naranja superior */}
                 <div className="w-12 h-1 bg-[#ff7a00] rounded-full mb-5" />
@@ -192,7 +194,7 @@ export default function ProduccionPage() {
 
                 {/* Línea naranja inferior */}
                 <div className="w-full h-px bg-[#ff7a00]/20 mt-5" />
-              </div>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -215,7 +217,7 @@ export default function ProduccionPage() {
 
         {/* Contenido centrado / derecha */}
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-8 py-16">
-          <div className="lg:ml-auto lg:max-w-lg text-center lg:text-left">
+          <Reveal className="lg:ml-auto lg:max-w-lg text-center lg:text-left">
             {/* Título */}
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-white uppercase leading-tight mb-4 font-poppins">
               Aquí Studio 4U<br />
@@ -229,13 +231,13 @@ export default function ProduccionPage() {
             </p>
 
             {/* CTA */}
-            <Button href="/mi-cuenta/login" size="md">
+            <Button href="/inscripcion" size="md">
               Inscríbete con nosotros
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
                 <path d="M5 12h14m-6-6 6 6-6 6" />
               </svg>
             </Button>
-          </div>
+          </Reveal>
         </div>
       </section>
     </PageLayout>

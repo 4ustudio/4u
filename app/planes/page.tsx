@@ -64,9 +64,10 @@ export default function PlanesPage() {
           <div className="mt-10 grid items-center gap-6 rounded-2xl bg-[#fff6ef] px-8 py-8 shadow-sm md:grid-cols-[1fr_auto_1fr]">
             <div className="flex items-center gap-5">
               <span className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-white text-[#ff7a00] shadow-lg">
-                <svg className="h-12 w-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="m8 18 8-8M9 7l8 8M14 4l6 6M4 14l6 6" />
-                  <path d="M7 7c-1.8 1.8-1.8 4.7 0 6.5s4.7 1.8 6.5 0" />
+                <svg className="h-11 w-11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M9 18V5l12-2v13" />
+                  <circle cx="6" cy="18" r="3" />
+                  <circle cx="18" cy="16" r="3" />
                 </svg>
               </span>
               <h2 className="text-3xl font-extrabold leading-tight font-poppins">

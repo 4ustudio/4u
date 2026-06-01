@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import ScrollReveal from "@/components/ui/ScrollReveal";
 
 export default function PageLayout({ children }: { children: ReactNode }) {
   return (
@@ -8,6 +9,7 @@ export default function PageLayout({ children }: { children: ReactNode }) {
       <Header />
       <main className="flex-1 pt-16">{children}</main>
       <Footer />
+      <ScrollReveal />
     </div>
   );
 }

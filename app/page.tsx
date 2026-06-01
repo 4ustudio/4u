@@ -6,6 +6,7 @@ import MethodologySection from "@/components/sections/MethodologySection";
 import TestimonialStrip from "@/components/sections/TestimonialStrip";
 import CTASection from "@/components/sections/CTASection";
 import Footer from "@/components/layout/Footer";
+import ScrollReveal from "@/components/ui/ScrollReveal";
 
 export default function Home() {
   return (
@@ -18,6 +19,7 @@ export default function Home() {
       <TestimonialStrip />
       <CTASection />
       <Footer />
+      <ScrollReveal />
     </>
   );
 }

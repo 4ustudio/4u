@@ -47,14 +47,27 @@ export async function getEnrollments(): Promise<{ data: any[]; error: string | n
 }
 
 export async function getEnrollment(id: string) {
-  const { data, error } = await db()
-    .from('enrollments')
-    .select('*')
-    .eq('id', id)
-    .single()
+  try {
+    const supabase = await createAuthServerClient()
+    const { data, error } = await supabase
+      .from('enrollments')
+      .select('*')
+      .eq('id', id)
+      .single()
 
-  if (error) return null
-  return data
+    if (error) {
+      const { data: d2, error: e2 } = await db()
+        .from('enrollments')
+        .select('*')
+        .eq('id', id)
+        .single()
+      if (e2) return null
+      return d2
+    }
+    return data
+  } catch {
+    return null
+  }
 }
 
 export async function getEnrollmentEvents(enrollmentId: string): Promise<EnrollmentEvent[]> {

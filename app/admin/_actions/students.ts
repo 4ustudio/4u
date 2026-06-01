@@ -1,6 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
+import { createAuthServerClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type { Student, StudentStatus, StudentType, StudentSchedule, Frequency } from '@/types/admin'
 
@@ -35,13 +36,25 @@ async function validateKidsAge(studentId: string): Promise<string | null> {
 // ─── Lectura ────────────────────────────────────────────────
 
 export async function getStudents(): Promise<Student[]> {
-  const { data, error } = await db()
-    .from('students')
-    .select('*')
-    .order('created_at', { ascending: false })
+  try {
+    const supabase = await createAuthServerClient()
+    const { data, error } = await supabase
+      .from('students')
+      .select('*')
+      .order('created_at', { ascending: false })
 
-  if (error) throw new Error(error.message)
-  return data ?? []
+    if (error) {
+      const { data: d2, error: e2 } = await db()
+        .from('students')
+        .select('*')
+        .order('created_at', { ascending: false })
+      if (e2) throw new Error(e2.message)
+      return d2 ?? []
+    }
+    return data ?? []
+  } catch (e) {
+    throw new Error(e instanceof Error ? e.message : 'Error cargando estudiantes')
+  }
 }
 
 export async function getStudent(id: string) {

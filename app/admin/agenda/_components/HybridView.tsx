@@ -69,16 +69,41 @@ export default function HybridView({
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
 
-    const channel = sb
-      .channel('admin-agenda-sessions')
-      .on('postgres_changes', {
-        event:  '*',
-        schema: 'public',
-        table:  'class_sessions',
-      }, () => doRefresh())
-      .subscribe()
+    let retry: ReturnType<typeof setTimeout> | undefined
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let channel: any
 
-    return () => { sb.removeChannel(channel) }
+    const subscribe = () => {
+      channel = sb
+        .channel('admin-agenda-sessions')
+        .on('postgres_changes', {
+          event:  '*',
+          schema: 'public',
+          table:  'class_sessions',
+        }, () => doRefresh())
+        .on('postgres_changes', {
+          event:  '*',
+          schema: 'public',
+          table:  'blocked_dates',
+        }, () => doRefresh())
+        .subscribe((status) => {
+          // Re-suscribir si la conexión falla o expira
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+            clearTimeout(retry)
+            retry = setTimeout(() => {
+              sb.removeChannel(channel)
+              subscribe()
+            }, 3000)
+          }
+        })
+    }
+
+    subscribe()
+
+    return () => {
+      clearTimeout(retry)
+      if (channel) sb.removeChannel(channel)
+    }
   }, [doRefresh])
 
   // ── Polling cada 30s como fallback ──────────────────────────────

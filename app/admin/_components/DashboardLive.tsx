@@ -1,44 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { createBrowserClient } from '@supabase/ssr'
 import { useRealtime, type AdminNotif } from '@/components/admin/RealtimeProvider'
-
-// ── DashboardRefresher ────────────────────────────────────────
-// Escucha cambios en tablas clave y dispara router.refresh()
-// para que el Server Component padre obtenga datos frescos.
-
-export function DashboardRefresher() {
-  const router = useRouter()
-
-  useEffect(() => {
-    const sb = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-    let timer: ReturnType<typeof setTimeout>
-
-    function scheduleRefresh() {
-      clearTimeout(timer)
-      timer = setTimeout(() => router.refresh(), 800)
-    }
-
-    const ch = sb
-      .channel('dashboard-data-refresh')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'enrollments' }, scheduleRefresh)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'class_sessions' }, scheduleRefresh)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'students' }, scheduleRefresh)
-      .subscribe()
-
-    return () => {
-      clearTimeout(timer)
-      sb.removeChannel(ch)
-    }
-  }, [router])
-
-  return null
-}
 
 // ── Utilidades ────────────────────────────────────────────────
 

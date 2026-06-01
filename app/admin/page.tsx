@@ -1,7 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import Link from 'next/link'
 import type { ClassSession } from '@/types/admin'
-import { DashboardRefresher, ActivityFeed } from './_components/DashboardLive'
+import { ActivityFeed } from './_components/DashboardLive'
 
 export const dynamic = 'force-dynamic'
 
@@ -95,9 +95,6 @@ export default async function AdminDashboard() {
 
   return (
     <div className="space-y-6 w-full">
-      {/* Refresher invisible: escucha Realtime y llama router.refresh() */}
-      <DashboardRefresher />
-
       {/* Bienvenida */}
       <div className="flex items-start justify-between">
         <div>

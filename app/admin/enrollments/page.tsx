@@ -418,6 +418,7 @@ function Badge({ children, color }: { children: React.ReactNode; color: string }
 export default function AdminEnrollmentsPage() {
   const [enrollments, setEnrollments] = useState<EnrollmentRow[] | null>(null)
   const [loading, setLoading]         = useState(true)
+  const [loadError, setLoadError]     = useState<string | null>(null)
   const [selected, setSelected]       = useState<EnrollmentRow | null>(null)
   const [drawerOpen, setDrawerOpen]   = useState(false)
   const [newIds, setNewIds]           = useState<Set<string>>(new Set())
@@ -435,7 +436,10 @@ export default function AdminEnrollmentsPage() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    try { setEnrollments(await getEnrollments()) } catch { setEnrollments([]) }
+    setLoadError(null)
+    const { data, error } = await getEnrollments()
+    if (error) setLoadError(error)
+    setEnrollments(data as EnrollmentRow[])
     setLoading(false)
   }, [])
 
@@ -596,6 +600,12 @@ export default function AdminEnrollmentsPage() {
 
       {flash && (
         <div className="px-4 py-2 rounded-lg bg-green-900/30 text-green-400 text-sm border border-green-500/20">{flash}</div>
+      )}
+
+      {loadError && (
+        <div className="px-4 py-2 rounded-lg bg-red-900/30 text-red-400 text-sm border border-red-500/20">
+          Error cargando inscripciones: {loadError}
+        </div>
       )}
 
       <SummaryCards enrollments={enrollments} />

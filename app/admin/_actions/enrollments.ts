@@ -17,15 +17,19 @@ const STATUS_NAMES: Record<string, string> = {
 
 // ── Lectura ──────────────────────────────────────────────────
 
-export async function getEnrollments() {
-  const { data, error } = await db()
-    .from('enrollments')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(200)
+export async function getEnrollments(): Promise<{ data: any[]; error: string | null }> {
+  try {
+    const { data, error } = await db()
+      .from('enrollments')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(200)
 
-  if (error) throw new Error(error.message)
-  return data ?? []
+    if (error) return { data: [], error: error.message }
+    return { data: data ?? [], error: null }
+  } catch (e) {
+    return { data: [], error: e instanceof Error ? e.message : 'Error desconocido' }
+  }
 }
 
 export async function getEnrollment(id: string) {

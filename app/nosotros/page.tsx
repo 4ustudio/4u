@@ -95,7 +95,7 @@ export default function NosotrosPage() {
             alt="4U Studio Academy"
             fill
             priority
-            className="object-cover object-[55%_35%] sm:object-[60%_35%] lg:object-[center_35%] [transform:scaleX(-1)]"
+            className="object-cover object-center"
             sizes="100vw"
           />
         </div>

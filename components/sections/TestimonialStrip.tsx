@@ -4,22 +4,37 @@ export default function TestimonialStrip() {
   return (
     <section className="w-full bg-white py-3">
       <div className="home-frame">
-        <div className="grid grid-cols-1 overflow-hidden rounded-md bg-zinc-900 md:grid-cols-[1fr_38%]">
-          <div className="px-6 py-5">
-            <p className="max-w-xl text-[15px] font-semibold italic leading-snug text-gray-100 font-roboto">
-              <span className="text-[#ff7a00] font-black text-4xl not-italic leading-none mr-1">"</span>La música no solo cambia tu sonido, cambia tu vida.<br />
-              Atrévete a comenzar tu historia musical hoy.
-            </p>
-          </div>
-          <div className="relative hidden min-h-[150px] md:block">
+        <div className="relative grid min-h-[260px] grid-cols-1 overflow-hidden rounded-xl bg-zinc-900 md:min-h-[300px] md:grid-cols-[60%_40%]">
+          {/* Imagen del pianista — protagonista, lado derecho */}
+          <div className="absolute inset-0 md:relative md:col-start-2">
             <OptimizedImage
               src="/images/hero/Banner-principal-3.jpg.jpeg"
-              alt="Pianista en 4U Studio Academy"
+              alt="Pianista interpretando en 4U Studio Academy"
               fill
-              className="object-cover object-[center_42%]"
-              sizes="40vw"
+              className="scale-[1.35] object-cover object-[58%_46%] md:scale-[1.15]"
+              sizes="(max-width: 768px) 100vw, 40vw"
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-zinc-900 via-zinc-900/10 to-transparent" />
+            {/* Degradado que funde la imagen con el texto (móvil: vertical / desktop: horizontal) */}
+            <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/70 to-zinc-900/30 md:bg-gradient-to-r md:from-zinc-900 md:via-zinc-900/35 md:to-transparent" />
+          </div>
+
+          {/* Iluminación cálida naranja detrás del artista (identidad de marca) */}
+          <div
+            className="pointer-events-none absolute inset-0 z-[1]"
+            style={{ background: "radial-gradient(ellipse 45% 75% at 78% 50%, rgba(255,122,0,0.18), transparent 65%)" }}
+            aria-hidden="true"
+          />
+
+          {/* Texto — 60% izquierda, centrado verticalmente */}
+          <div className="relative z-10 flex flex-col justify-center px-7 py-9 md:col-start-1 md:row-start-1 md:px-10 md:py-12">
+            <span className="mb-2 font-poppins text-5xl font-black leading-none text-[#ff7a00] md:text-6xl">&ldquo;</span>
+            <p className="max-w-xl font-poppins text-xl font-extrabold italic leading-[1.2] text-white md:text-[26px] lg:text-[30px]">
+              La música no solo cambia tu sonido,{" "}
+              <span className="text-[#ff7a00]">cambia tu vida.</span>
+            </p>
+            <p className="mt-3 max-w-md font-roboto text-sm italic leading-relaxed text-white/65 md:text-base">
+              Atrévete a comenzar tu historia musical hoy.
+            </p>
           </div>
         </div>
       </div>

@@ -222,15 +222,15 @@ function PlanModal({ plan, onClose }: { plan: PlanDetail; onClose: () => void })
         onClick={(e) => e.stopPropagation()}
       >
         {/* Hero imagen */}
-        <div className="relative h-[200px] shrink-0">
+        <div className="relative h-[300px] shrink-0">
           <OptimizedImage
             src={plan.image}
             alt={plan.name}
             fill
-            className="object-cover object-[center_20%]"
+            className="object-cover object-[center_25%]"
             sizes="672px"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/10 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/5 to-transparent" />
           <button
             onClick={onClose}
             className="absolute top-4 right-4 h-8 w-8 rounded-full bg-black/60 backdrop-blur flex items-center justify-center text-white/70 hover:text-white transition-colors z-10"

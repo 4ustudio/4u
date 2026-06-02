@@ -47,7 +47,11 @@ export default function PlanesPage() {
               icon="single"
               imagePosition="object-[45%_50%]"
               imageSrc="/images/courses/plan-adultos/Hombre-plan adultos.png"
-              bullets={["Desarrolla tu estilo único", "Aprende con mentores expertos", "Lleva tu proyecto al siguiente nivel"]}
+              bullets={[
+                { text: "Desarrolla tu estilo único", icon: "spark" },
+                { text: "Aprende con mentores expertos", icon: "mentor" },
+                { text: "Lleva tu proyecto al siguiente nivel", icon: "growth" },
+              ]}
               plans={adultPlans}
             />
             <PlanPathCard
@@ -58,7 +62,11 @@ export default function PlanesPage() {
               icon="group"
               imagePosition="object-[70%_50%]"
               imageSrc="/images/courses/plan-kids/nina-plan-kids.png"
-              bullets={["Aprende de forma divertida y práctica", "Clases dinámicas y motivadoras", "Aumenta tu confianza y creatividad"]}
+              bullets={[
+                { text: "Aprende de forma divertida y práctica", icon: "fun" },
+                { text: "Clases dinámicas y motivadoras", icon: "energy" },
+                { text: "Aumenta tu confianza y creatividad", icon: "idea" },
+              ]}
               plans={kidsPlans}
             />
           </div>
@@ -115,12 +123,12 @@ function PlanPathCard({
   icon: "single" | "group";
   imagePosition: string;
   imageSrc: string;
-  bullets: string[];
+  bullets: { text: string; icon: string }[];
   plans: string[];
 }) {
   return (
-    <article className="overflow-hidden rounded-2xl bg-white shadow-2xl shadow-gray-950/10 ring-1 ring-gray-200 flex flex-col h-full">
-      <div className="relative h-[315px] shrink-0">
+    <article className="rounded-2xl bg-white shadow-2xl shadow-gray-950/10 ring-1 ring-gray-200 flex flex-col h-full">
+      <div className="relative h-[315px] shrink-0 overflow-hidden rounded-t-2xl">
         <OptimizedImage
           src={imageSrc}
           alt={title}
@@ -131,18 +139,18 @@ function PlanPathCard({
         <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent" />
       </div>
       <div className="relative px-8 pb-8 pt-7 text-center flex flex-col flex-1">
-        <span className="absolute -top-16 left-8 flex h-24 w-24 items-center justify-center rounded-full bg-white text-[#ff7a00] shadow-xl">
+        <span className="absolute -top-16 left-8 flex h-24 w-24 items-center justify-center rounded-full bg-white text-[#ff7a00] shadow-xl ring-4 ring-white">
           <PathIcon type={icon} />
         </span>
         <h2 className="text-3xl font-extrabold font-poppins">{title}</h2>
         <p className="mx-auto mt-3 max-w-md text-lg leading-relaxed text-gray-500 font-roboto">{description}</p>
         <div className="mt-7 grid gap-4 border-b border-gray-200 pb-7 md:grid-cols-3">
           {bullets.map((item) => (
-            <div key={item} className="flex items-center gap-3 text-left text-sm font-bold text-gray-900 font-roboto">
-              <span className="text-[#ff7a00]">
-                <StarIcon />
+            <div key={item.text} className="flex items-center gap-3 text-left text-sm font-bold text-gray-900 font-roboto">
+              <span className="shrink-0 text-[#ff7a00]">
+                <BulletIcon name={item.icon} />
               </span>
-              {item}
+              {item.text}
             </div>
           ))}
         </div>
@@ -182,10 +190,44 @@ function PathIcon({ type }: { type: "single" | "group" }) {
   );
 }
 
-function StarIcon() {
+function BulletIcon({ name }: { name: string }) {
+  const paths: Record<string, React.ReactNode> = {
+    spark: ( // estilo único
+      <>
+        <path d="M12 3v3M12 18v3M5 12H2M22 12h-3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2" />
+        <circle cx="12" cy="12" r="3" />
+      </>
+    ),
+    mentor: ( // mentores expertos
+      <>
+        <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+        <path d="M6 12v5c0 1 2 3 6 3s6-2 6-3v-5" />
+      </>
+    ),
+    growth: ( // siguiente nivel
+      <>
+        <path d="M3 17l6-6 4 4 8-8" />
+        <path d="M17 7h4v4" />
+      </>
+    ),
+    fun: ( // divertida y práctica
+      <>
+        <circle cx="12" cy="12" r="10" />
+        <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+        <path d="M9 9h.01M15 9h.01" />
+      </>
+    ),
+    energy: ( // dinámicas y motivadoras
+      <path d="M13 2L3 14h9l-1 8 10-12h-9z" />
+    ),
+    idea: ( // confianza y creatividad
+      <path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1V18h6v-1.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2Z" />
+    ),
+  };
+
   return (
-    <svg className="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.8 1-6.1-4.4-4.3 6.1-.9L12 3Z" />
+    <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {paths[name] ?? <path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.8 1-6.1-4.4-4.3 6.1-.9L12 3Z" />}
     </svg>
   );
 }

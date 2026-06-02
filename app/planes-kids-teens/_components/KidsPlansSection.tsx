@@ -106,7 +106,7 @@ export default function KidsPlansSection() {
 }
 
 function KidsPlanCard({ plan, onDetails }: { plan: KidsPlan; onDetails: () => void }) {
-  const { color, image, imagePosition, label, title, accent, price, highlights, shortDesc } = plan
+  const { color, image, title, accent, price, highlights, shortDesc } = plan
 
   return (
     <article
@@ -125,10 +125,7 @@ function KidsPlanCard({ plan, onDetails }: { plan: KidsPlan; onDetails: () => vo
       </div>
 
       <div className="flex flex-col p-6">
-        <span className="inline-flex self-start rounded-lg px-4 py-2 text-sm font-extrabold uppercase text-white font-poppins" style={{ backgroundColor: color }}>
-          {label}
-        </span>
-        <h2 className="mt-4 text-2xl font-extrabold uppercase leading-tight font-poppins">
+        <h2 className="text-2xl font-extrabold uppercase leading-tight font-poppins">
           {title}
           <br />
           <span className="normal-case" style={{ color }}>{accent}</span>
@@ -160,7 +157,7 @@ function KidsPlanCard({ plan, onDetails }: { plan: KidsPlan; onDetails: () => vo
 }
 
 function KidsModal({ plan, onClose }: { plan: KidsPlan; onClose: () => void }) {
-  const { color, image, imagePosition, label, title, accent, price, features, objective } = plan
+  const { color, image, title, accent, price, features, objective } = plan
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'
@@ -183,15 +180,15 @@ function KidsModal({ plan, onClose }: { plan: KidsPlan; onClose: () => void }) {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Hero imagen */}
-        <div className="relative h-[200px]">
+        <div className="relative h-[300px]">
           <OptimizedImage
             src={image}
             alt={accent}
             fill
-            className="object-cover object-[center_40%]"
+            className="object-cover object-[center_35%]"
             sizes="672px"
           />
-          <div className="absolute inset-0" style={{ background: `linear-gradient(to top, rgba(255,255,255,1) 0%, rgba(255,255,255,0.05) 40%, transparent 65%)` }} />
+          <div className="absolute inset-0" style={{ background: `linear-gradient(to top, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 45%, transparent 70%)` }} />
           <button
             onClick={onClose}
             className="absolute top-4 right-4 h-8 w-8 rounded-full bg-black/50 backdrop-blur flex items-center justify-center text-white hover:bg-black/70 transition-colors z-10"
@@ -205,10 +202,7 @@ function KidsModal({ plan, onClose }: { plan: KidsPlan; onClose: () => void }) {
 
         <div className="px-6 pb-6 -mt-2 space-y-5">
           <div>
-            <span className="inline-flex rounded-lg px-3 py-1.5 text-sm font-extrabold uppercase text-white font-poppins" style={{ backgroundColor: color }}>
-              {label}
-            </span>
-            <h2 className="mt-3 text-2xl font-extrabold uppercase leading-tight font-poppins text-gray-950">
+            <h2 className="text-2xl font-extrabold uppercase leading-tight font-poppins text-gray-950">
               {title} <span className="normal-case" style={{ color }}>{accent}</span>
             </h2>
           </div>

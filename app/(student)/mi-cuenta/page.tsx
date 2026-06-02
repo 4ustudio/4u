@@ -239,6 +239,37 @@ export default async function MiCuentaPage() {
           </section>
         )}
 
+        {/* ── CLASES DEL MES ─────────────────────────────────────────── */}
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <SectionLabel>{`Clases de ${monthLabel}`}</SectionLabel>
+            <Link
+              href="/mi-cuenta/clases-mes"
+              className="no-print inline-flex items-center gap-1.5 text-[11px] font-semibold text-white/50 hover:text-[#ff7a00] transition-colors font-roboto"
+            >
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                <path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/>
+              </svg>
+              Ver reporte PDF
+            </Link>
+          </div>
+          {(() => {
+            const now = new Date()
+            const ms = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const monthSessions = [...upcoming, ...past].filter((s: any) => s.scheduled_date?.startsWith(ms))
+              .sort((a: any, b: any) => a.scheduled_date.localeCompare(b.scheduled_date) || a.start_time.localeCompare(b.start_time))
+            return monthSessions.length === 0 ? (
+              <EmptyState>No hay clases registradas para este mes.</EmptyState>
+            ) : (
+              <div className="rounded-2xl border border-white/10 bg-white/[0.02] overflow-hidden divide-y divide-white/[0.06]">
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                {monthSessions.map((s: any) => <SessionRow key={s.id} session={s} />)}
+              </div>
+            )
+          })()}
+        </section>
+
         {/* ── PRÓXIMAS CLASES ────────────────────────────────────────── */}
         <section>
           <SectionLabel>Próximas clases</SectionLabel>

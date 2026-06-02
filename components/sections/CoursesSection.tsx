@@ -6,7 +6,7 @@ export default function CoursesSection() {
   return (
     <section id="cursos" className="relative w-full bg-white py-16 md:py-20">
       <div className="home-frame">
-        <div className="home-course-grid grid gap-8 lg:items-start">
+        <div className="home-course-grid grid gap-8 lg:items-center">
           <div>
             <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.08em] text-[#ff7a00] font-poppins">
               Explora tu talento

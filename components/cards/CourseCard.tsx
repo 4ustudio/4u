@@ -7,7 +7,7 @@ type CourseCardProps = {
 
 export default function CourseCard({ course }: CourseCardProps) {
   return (
-    <div className="group relative h-[390px] overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+    <div className="group relative flex h-[390px] flex-col overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
       <div className="relative h-[175px] shrink-0 overflow-hidden">
         <OptimizedImage
           src={course.image || "/images/hero/banner-principal.jpg"}
@@ -19,7 +19,7 @@ export default function CourseCard({ course }: CourseCardProps) {
         <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent" />
       </div>
 
-      <div className="flex flex-col gap-2.5 px-5 pb-5 pt-4">
+      <div className="flex flex-1 flex-col gap-2.5 px-5 pb-5 pt-4">
         <div className="flex items-center gap-3">
           <div
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white shadow-sm"

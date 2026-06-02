@@ -16,7 +16,7 @@ export default function TestimonialStrip() {
               src="/images/hero/Banner-principal-3.jpg.jpeg"
               alt="Pianista en 4U Studio Academy"
               fill
-              className="object-cover object-[center_15%]"
+              className="object-cover object-[center_42%]"
               sizes="40vw"
             />
             <div className="absolute inset-0 bg-gradient-to-r from-zinc-900 via-zinc-900/10 to-transparent" />

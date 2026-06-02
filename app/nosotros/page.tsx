@@ -354,8 +354,8 @@ export default function NosotrosPage() {
         </div>
         <div className="relative z-10 max-w-4xl mx-auto px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white font-poppins leading-tight mb-4">
-            Ven a 4U Studio Academy y convierte<br className="hidden md:block" />
-            tu pasión musical en{" "}
+            Convierte tu pasión musical<br className="hidden md:block" />{" "}
+            en{" "}
             <span className="text-[#ff7a00]">realidad</span>
           </h2>
 

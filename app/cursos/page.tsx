@@ -114,7 +114,7 @@ export default function CursosPage() {
             alt="Cursos de música 4U Studio Academy"
             fill
             priority
-            className="object-cover object-center scale-105 [transform:scale(1.05)_scaleX(-1)]"
+            className="object-cover object-[center_60%] scale-105 [transform:scale(1.05)_scaleX(-1)]"
             sizes="100vw"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/70 to-black/40" />
@@ -155,7 +155,7 @@ export default function CursosPage() {
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
                 </svg>
-                Agendar clase de prueba
+                Agendar clase
               </a>
             </div>
           </div>

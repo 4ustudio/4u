@@ -95,7 +95,7 @@ export const courses: Course[] = [
     highlights: ["DAW", "Mezcla", "Grabación", "Masterización"],
     duration: "8 sesiones/mes",
     level: "Básico a Avanzado",
-    image: "/images/courses/planes-tipos/Plan 6.png",
+    image: "/images/courses/planes-tipos/Produccion musical.png",
     instructorId: "carlos-mendoza",
     icon: (
       <svg className="w-16 h-16" viewBox="0 0 512 512" fill="white" opacity="0.3">

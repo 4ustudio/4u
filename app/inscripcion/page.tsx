@@ -81,10 +81,21 @@ export default function InscripcionPage() {
   return (
     <PageLayout>
       <section className="relative w-full min-h-screen overflow-hidden">
-        <div className="pointer-events-none fixed inset-0" style={{ background: "radial-gradient(ellipse 80% 60% at 50% 30%, rgba(255,122,0,0.08), transparent 70%), radial-gradient(ellipse 60% 50% at 80% 70%, rgba(255,122,0,0.05), transparent 60%)" }} aria-hidden="true" />
-        <div className="pointer-events-none absolute top-1/3 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-orange-500/6 blur-3xl rounded-full" aria-hidden="true" />
+        {/* Imagen de fondo */}
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="/images/Fondo inscribete.png"
+            alt=""
+            fill
+            className="object-cover object-center"
+            sizes="100vw"
+            priority
+          />
+          <div className="absolute inset-0 bg-black/70" />
+        </div>
+        <div className="pointer-events-none absolute inset-0 z-[1]" style={{ background: "radial-gradient(ellipse 80% 60% at 50% 30%, rgba(255,122,0,0.07), transparent 70%)" }} aria-hidden="true" />
 
-        <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-14 md:py-20">
+        <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-14 md:py-20 [&_*]:relative [&_*]:z-auto" style={{ isolation: 'isolate' }}>
           {/* Encabezado */}
           <div className="text-center mb-10">
             <h1 className="text-3xl md:text-4xl font-extrabold text-white font-poppins leading-tight">

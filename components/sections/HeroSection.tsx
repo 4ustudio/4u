@@ -1,5 +1,13 @@
+'use client'
+
+import { useState, useEffect } from "react";
 import Button from "@/components/ui/Button";
 import OptimizedImage from "@/components/ui/OptimizedImage";
+
+const SLIDES = [
+  "/images/hero/banner-principal.jpg",
+  "/images/hero/Banner-principal-2.jpg.jpeg",
+];
 
 const stats = [
   {
@@ -28,10 +36,7 @@ const stats = [
 const statsRow = (
   <div className="grid grid-cols-3 divide-x divide-white/10 overflow-hidden rounded-2xl border border-white/15 bg-black/45 shadow-2xl backdrop-blur-md">
     {stats.map((stat) => (
-      <div
-        key={stat.label}
-        className="min-w-[92px] px-5 py-3.5 text-center"
-      >
+      <div key={stat.label} className="min-w-[92px] px-5 py-3.5 text-center">
         <svg className="mx-auto mb-2 h-5 w-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           {stat.icon}
         </svg>
@@ -43,21 +48,52 @@ const statsRow = (
 );
 
 export default function HeroSection() {
+  const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setCurrent((c) => (c + 1) % SLIDES.length);
+    }, 5000);
+    return () => clearInterval(id);
+  }, []);
+
   return (
     <section className="hero-home relative w-full overflow-hidden bg-black">
-      <div className="absolute inset-0 animate-fade-in-slow">
-        <OptimizedImage
-          src="/images/hero/banner-principal.jpg"
-          alt="4uStudio Academy — estudio de música profesional"
-          fill
-          priority
-          className="object-cover object-[60%_50%]"
-          sizes="100vw"
-        />
-      </div>
+      {/* Carousel de imágenes */}
+      {SLIDES.map((src, i) => (
+        <div
+          key={src}
+          className="absolute inset-0 transition-opacity duration-1000 ease-in-out"
+          style={{ opacity: i === current ? 1 : 0 }}
+          aria-hidden={i !== current}
+        >
+          <OptimizedImage
+            src={src}
+            alt="4uStudio Academy — estudio de música profesional"
+            fill
+            priority={i === 0}
+            className="object-cover object-[60%_50%]"
+            sizes="100vw"
+          />
+        </div>
+      ))}
 
-      <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/45 to-black/15 animate-fade-in-slow" />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/30 animate-fade-in-slow" />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/45 to-black/15" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/30" />
+
+      {/* Dots de navegación */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+        {SLIDES.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setCurrent(i)}
+            aria-label={`Slide ${i + 1}`}
+            className={`h-1.5 rounded-full transition-all duration-300 ${
+              i === current ? "w-6 bg-[#ff7a00]" : "w-1.5 bg-white/30 hover:bg-white/60"
+            }`}
+          />
+        ))}
+      </div>
 
       <div className="home-frame relative z-10">
         <div className="hero-home-inner relative">

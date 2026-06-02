@@ -18,7 +18,7 @@ export default function CoursesSection() {
               Descubre nuestra variedad de cursos diseñados para cada pasión musical.
             </p>
             <Link
-              href="/planes"
+              href="/cursos"
               className="mt-5 inline-flex items-center gap-2 rounded-full border border-[#ff7a00]/35 px-4 py-2 text-[12px] font-semibold text-[#ff7a00] transition-colors hover:bg-[#ff7a00] hover:text-white font-poppins"
             >
               Ver todos los cursos

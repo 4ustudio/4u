@@ -13,7 +13,7 @@ interface Props {
 }
 
 const inputClass =
-  'w-full bg-white/[0.06] border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-white/30 font-roboto focus:outline-none focus:ring-2 focus:ring-[#ff7a00]/50 transition-all disabled:opacity-50'
+  'w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white text-sm placeholder:text-white/40 font-roboto focus:outline-none focus:ring-2 focus:ring-[#ff7a00]/60 focus:border-[#ff7a00]/40 transition-all disabled:opacity-50'
 
 export default function ProfileModal({ firstName, lastName, email, avatarUrl }: Props) {
   const [open, setOpen] = useState(false)
@@ -74,7 +74,7 @@ export default function ProfileModal({ firstName, lastName, email, avatarUrl }: 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setOpen(false)}>
       <div
-        className="w-full max-w-md bg-zinc-950 border border-white/10 rounded-2xl p-6 shadow-2xl space-y-5"
+        className="w-full max-w-md bg-zinc-900 border border-zinc-700 rounded-2xl p-6 shadow-2xl space-y-5"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -141,17 +141,17 @@ export default function ProfileModal({ firstName, lastName, email, avatarUrl }: 
         >
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[10px] text-white/40 mb-1.5 font-roboto uppercase tracking-wider">Nombre *</label>
+              <label className="block text-[10px] text-white/60 mb-1.5 font-roboto uppercase tracking-wider">Nombre *</label>
               <input name="first_name" defaultValue={firstName} required disabled={isPending} className={inputClass} placeholder="Nombre" />
             </div>
             <div>
-              <label className="block text-[10px] text-white/40 mb-1.5 font-roboto uppercase tracking-wider">Apellido</label>
+              <label className="block text-[10px] text-white/60 mb-1.5 font-roboto uppercase tracking-wider">Apellido</label>
               <input name="last_name" defaultValue={lastName} disabled={isPending} className={inputClass} placeholder="Apellido" />
             </div>
           </div>
 
           <div>
-            <label className="block text-[10px] text-white/40 mb-1.5 font-roboto uppercase tracking-wider">Email</label>
+            <label className="block text-[10px] text-white/60 mb-1.5 font-roboto uppercase tracking-wider">Email</label>
             <input value={email} disabled className={inputClass + ' opacity-40 cursor-not-allowed'} />
           </div>
 
@@ -166,7 +166,7 @@ export default function ProfileModal({ firstName, lastName, email, avatarUrl }: 
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="flex-1 border border-white/15 text-white/60 hover:text-white rounded-xl py-2.5 text-sm font-poppins transition-all"
+              className="flex-1 border border-zinc-600 text-white/70 hover:text-white hover:border-zinc-500 bg-zinc-800 rounded-xl py-2.5 text-sm font-poppins transition-all"
             >
               Cancelar
             </button>

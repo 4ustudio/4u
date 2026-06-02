@@ -66,7 +66,7 @@ export default function ContactoPage() {
                 {/* Imagen de fondo */}
                 <div className="absolute inset-0">
                   <OptimizedImage
-                    src="/images/Servicio al cliente.png"
+                    src="/images/hero/Servicio al cliente.png"
                     alt="Servicio al cliente 4U Studio Academy"
                     fill
                     className="object-cover object-center"

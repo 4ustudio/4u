@@ -62,23 +62,23 @@ export default function HeroSection() {
       <div className="home-frame relative z-10">
         <div className="hero-home-inner relative">
           <div className="hero-copy w-full">
-            <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/35 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-white/80 font-poppins backdrop-blur-md">
+            <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/35 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-white/80 font-poppins backdrop-blur-md animate-fade-in-up">
               <span className="text-[#ff7a00]">♫</span> LA MÚSICA TE TRANSFORMA
             </p>
-            <h1 className="hero-heading mb-4 font-extrabold text-white font-poppins">
+            <h1 className="hero-heading mb-4 font-extrabold text-white font-poppins animate-fade-in-up anim-d2">
               Cumple tus{" "}
               <span className="text-[#ff7a00]">sueños</span>{" "}
               musicales
             </h1>
-            <p className="text-base md:text-lg text-white/80 max-w-[430px] mb-7 leading-snug font-roboto">
+            <p className="text-base md:text-lg text-white/80 max-w-[430px] mb-7 leading-snug font-roboto animate-fade-in-up anim-d4">
               Aprende, crea y conecta con tu pasión. Nuestros cursos están diseñados para niños, adolescentes y adultos de todos los niveles.
             </p>
 
-            <div className="flex lg:hidden mb-6">
+            <div className="flex lg:hidden mb-6 animate-fade-in-up anim-d5">
               {statsRow}
             </div>
 
-            <div className="flex flex-wrap items-center gap-4">
+            <div className="flex flex-wrap items-center gap-4 animate-fade-in-up anim-d6">
               <Button href="/planes" size="md" className="px-7 py-3.5">
                 Ver Cursos
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -88,7 +88,7 @@ export default function HeroSection() {
             </div>
           </div>
 
-          <div className="hero-stats hidden lg:block">
+          <div className="hero-stats hidden lg:block animate-scale-in anim-d5">
             {statsRow}
           </div>
         </div>

@@ -75,10 +75,12 @@ export default function Header() {
   const [isLoggedIn, setIsLoggedIn]   = useState(false);
   const [userEmail, setUserEmail]     = useState<string | null>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [hidden, setHidden]           = useState(false);
 
   const menuRef     = useRef<HTMLDivElement>(null);
   const toggleRef   = useRef<HTMLButtonElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const lastScrollY = useRef(0);
 
   const supabaseRef = useRef(
     createBrowserClient(
@@ -98,6 +100,22 @@ export default function Header() {
     supabase.auth.getSession().then(({ data: { session } }) => checkAuth(session));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => checkAuth(session));
     return () => subscription.unsubscribe();
+  }, []);
+
+  // Auto-hide navbar on scroll
+  useEffect(() => {
+    const onScroll = () => {
+      const current = window.scrollY;
+      // Mostrar siempre en los primeros 60px (zona del hero)
+      if (current < 60) {
+        setHidden(false);
+      } else {
+        setHidden(current > lastScrollY.current);
+      }
+      lastScrollY.current = current;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   // Cerrar menú usuario al hacer clic fuera
@@ -151,7 +169,10 @@ export default function Header() {
   const dashboardHref = isAdmin ? "/admin" : "/mi-cuenta";
 
   return (
-    <header className="fixed w-full top-0 z-50 bg-black/25 backdrop-blur-md border-b border-white/10">
+    <header
+      className="fixed w-full top-0 z-50 bg-black/25 backdrop-blur-md border-b border-white/10 transition-transform duration-300 ease-in-out"
+      style={{ transform: hidden ? 'translateY(-100%)' : 'translateY(0)' }}
+    >
       <div className="home-frame h-[58px] flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 shrink-0">

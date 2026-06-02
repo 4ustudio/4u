@@ -84,7 +84,7 @@ export default function InscripcionPage() {
         {/* Imagen de fondo */}
         <div className="absolute inset-0 z-0">
           <Image
-            src="/images/Fondo inscribete.png"
+            src="/images/hero/Fondo inscribete.png"
             alt=""
             fill
             className="object-cover object-center"

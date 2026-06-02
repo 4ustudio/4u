@@ -73,18 +73,6 @@ const processSteps = [
 export default function NosotrosPage() {
   return (
     <PageLayout>
-      {/* Intro institucional */}
-      <section className="relative w-full bg-black border-b border-white/5 px-6 py-10 lg:px-8">
-        <div className="max-w-7xl mx-auto max-w-3xl">
-          <p className="text-white/70 leading-relaxed font-roboto mb-4">
-            Somos una academia y estudio musical creado para personas que aman la música y desean desarrollar su talento de forma profesional.
-          </p>
-          <p className="text-white/70 leading-relaxed font-roboto">
-            Acompañamos a niños, adolescentes y adultos en su proceso artístico mediante clases personalizadas, producción musical y experiencias creativas reales.
-          </p>
-        </div>
-      </section>
-
       {/* ──────── 1. Hero institucional ──────── */}
       <section className="relative w-full min-h-[580px] sm:min-h-[620px] lg:min-h-[650px] bg-black overflow-hidden flex items-stretch">
 
@@ -151,10 +139,16 @@ export default function NosotrosPage() {
               Academia + Producción + Desarrollo Artístico
             </p>
             <p
+              className="text-base md:text-lg text-white/80 max-w-[500px] mb-4 leading-relaxed font-roboto"
+              style={{ textShadow: '0 2px 12px rgba(0,0,0,0.45)' }}
+            >
+              Somos una academia y estudio musical creado para personas que aman la música y desean desarrollar su talento de forma profesional.
+            </p>
+            <p
               className="text-base md:text-lg text-white/80 max-w-[500px] mb-8 leading-relaxed font-roboto"
               style={{ textShadow: '0 2px 12px rgba(0,0,0,0.45)' }}
             >
-              En 4U Studio Academy transformamos la pasión por la música en experiencias reales de aprendizaje, creación y crecimiento artístico.
+              Acompañamos a niños, adolescentes y adultos en su proceso artístico mediante clases personalizadas, producción musical y experiencias creativas reales.
             </p>
             <Link
               href="/planes"

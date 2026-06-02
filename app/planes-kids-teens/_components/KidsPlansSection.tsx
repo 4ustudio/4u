@@ -191,7 +191,7 @@ function KidsModal({ plan, onClose }: { plan: KidsPlan; onClose: () => void }) {
             className="object-cover object-[center_40%]"
             sizes="672px"
           />
-          <div className="absolute inset-0" style={{ background: `linear-gradient(to top, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.1) 50%, transparent 100%)` }} />
+          <div className="absolute inset-0" style={{ background: `linear-gradient(to top, rgba(255,255,255,1) 0%, rgba(255,255,255,0.05) 40%, transparent 65%)` }} />
           <button
             onClick={onClose}
             className="absolute top-4 right-4 h-8 w-8 rounded-full bg-black/50 backdrop-blur flex items-center justify-center text-white hover:bg-black/70 transition-colors z-10"

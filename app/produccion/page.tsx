@@ -183,7 +183,7 @@ export default function ProduccionPage() {
                 </h3>
 
                 {/* Lista */}
-                <ul className="text-left w-full space-y-2">
+                <ul className="text-left w-full space-y-2 mb-5">
                   {card.items.map((item, j) => (
                     <li key={j} className="flex items-start gap-2 text-xs text-gray-700 font-roboto">
                       <span className="text-[#ff7a00] font-bold mt-0.5 shrink-0">›</span>
@@ -193,7 +193,7 @@ export default function ProduccionPage() {
                 </ul>
 
                 {/* Línea naranja inferior */}
-                <div className="w-full h-px bg-[#ff7a00]/20 mt-5" />
+                <div className="w-full h-px bg-[#ff7a00]/20 mt-auto" />
               </Reveal>
             ))}
           </div>

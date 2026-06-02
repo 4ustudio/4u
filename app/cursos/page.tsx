@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 const audiences = [
   {
     title: "Niños",
-    description: "Aprendizaje divertido y adaptado a cada edad.",
+    description: "Aprendizaje divertido y adaptado\na cada edad.",
     icon: (
       <svg className="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="8" r="4" />
@@ -31,7 +31,7 @@ const audiences = [
   },
   {
     title: "Adolescentes",
-    description: "Desarrollo artístico y acompañamiento profesional.",
+    description: "Desarrollo artístico y\nacompañamiento profesional.",
     icon: (
       <svg className="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="7" r="4" />
@@ -114,7 +114,7 @@ export default function CursosPage() {
             alt="Cursos de música 4U Studio Academy"
             fill
             priority
-            className="object-cover object-[center_75%] scale-105 [transform:scale(1.05)_scaleX(-1)]"
+            className="object-cover object-[center_30%] scale-105 [transform:scale(1.05)_scaleX(-1)]"
             sizes="100vw"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/70 to-black/40" />

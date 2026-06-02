@@ -1,10 +1,11 @@
 "use client";
 
 export default function WATracker({
-  href, className, children, source,
+  href, className, style, children, source,
 }: {
   href: string;
   className?: string;
+  style?: React.CSSProperties;
   children: React.ReactNode;
   source?: string;
 }) {
@@ -14,6 +15,7 @@ export default function WATracker({
       target="_blank"
       rel="noopener noreferrer"
       className={className}
+      style={style}
       onClick={() => {
         try { (window as any).dataLayer?.push({ event: "whatsapp_click", source: source || "web" }); } catch {}
       }}

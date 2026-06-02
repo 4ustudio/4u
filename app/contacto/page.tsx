@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import PageLayout from "@/components/layout/PageLayout";
 import ContactForm from "@/components/sections/ContactForm";
 import WATracker from "@/components/ui/WATracker";
+import OptimizedImage from "@/components/ui/OptimizedImage";
 import { ACADEMY } from "@/lib/constants";
 
 export const metadata: Metadata = {
@@ -61,28 +62,38 @@ export default function ContactoPage() {
                 <ContactForm />
               </div>
 
-              <div className="bg-white/[0.04] backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl flex flex-col items-center justify-center text-center">
-                <div className="w-16 h-16 rounded-full bg-[#25D366]/15 flex items-center justify-center mb-5">
-                  <svg className="w-8 h-8 fill-[#25D366]" viewBox="0 0 448 512" aria-hidden="true" focusable="false">
-                    <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6z" />
-                  </svg>
+              <div className="relative bg-white/[0.04] backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col items-center justify-end text-center min-h-[360px]">
+                {/* Imagen de fondo */}
+                <div className="absolute inset-0">
+                  <OptimizedImage
+                    src="/images/Servicio al cliente.png"
+                    alt="Servicio al cliente 4U Studio Academy"
+                    fill
+                    className="object-cover object-center"
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10" />
                 </div>
-                <h2 className="text-white font-semibold text-lg mb-2 font-poppins">
-                  Respuesta inmediata
-                </h2>
-                <p className="text-white/60 text-sm leading-relaxed mb-6 font-roboto">
-                  Escríbenos por WhatsApp y te atenderemos de inmediato. Es la forma más rápida.
-                </p>
-                <WATracker
-                  href={WA_LINK}
-                  source="contacto"
-                  className="inline-flex items-center gap-2.5 text-white font-semibold px-8 py-3.5 rounded-full text-sm transition-all duration-300 shadow-xl shadow-[#25D366]/20 hover:shadow-2xl hover:shadow-[#25D366]/40 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366]/50"
-                >
-                  <svg className="w-5 h-5 fill-white flex-shrink-0" viewBox="0 0 448 512" aria-hidden="true" focusable="false">
-                    <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6z" />
-                  </svg>
-                  <span>Agendar por WhatsApp</span>
-                </WATracker>
+                {/* Contenido sobre la imagen */}
+                <div className="relative z-10 p-8 w-full">
+                  <h2 className="text-white font-semibold text-lg mb-2 font-poppins">
+                    Respuesta inmediata
+                  </h2>
+                  <p className="text-white/70 text-sm leading-relaxed mb-6 font-roboto">
+                    Escríbenos por WhatsApp y te atenderemos de inmediato. Es la forma más rápida.
+                  </p>
+                  <WATracker
+                    href={WA_LINK}
+                    source="contacto"
+                    className="inline-flex items-center justify-center gap-2.5 w-full text-white font-semibold px-8 py-3.5 rounded-full text-sm transition-all duration-300 shadow-xl shadow-[#25D366]/30 hover:shadow-2xl hover:shadow-[#25D366]/50 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366]/50"
+                    style={{ backgroundColor: '#25D366' }}
+                  >
+                    <svg className="w-5 h-5 fill-white flex-shrink-0" viewBox="0 0 448 512" aria-hidden="true" focusable="false">
+                      <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6z" />
+                    </svg>
+                    <span>Agendar por WhatsApp</span>
+                  </WATracker>
+                </div>
               </div>
             </div>
 

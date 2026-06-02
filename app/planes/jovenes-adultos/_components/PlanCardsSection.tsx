@@ -141,7 +141,7 @@ function PlanCard({
           src={plan.image}
           alt={plan.name}
           fill
-          className={`object-cover transition-transform duration-300 group-hover:scale-105 ${plan.imagePosition ?? ''}`}
+          className="object-cover object-[center_25%] transition-transform duration-300 group-hover:scale-105"
           sizes="(max-width: 1024px) 100vw, 33vw"
         />
         <div
@@ -189,22 +189,12 @@ function PlanCard({
               <span className="text-xs font-normal text-gray-400 group-hover:text-white/35 ml-1 [transition:color_.3s_ease]">{plan.priceNote}</span>
             )}
           </p>
-          <div className="flex gap-2">
-            <button
-              onClick={onDetails}
-              className="flex-1 rounded-lg border border-gray-200 group-hover:border-white/20 py-2.5 text-xs font-bold text-gray-700 group-hover:text-white/75 font-poppins [transition:all_.3s_ease] hover:!border-[#ff6b00] hover:!text-[#ff6b00]"
-            >
-              Ver detalles
-            </button>
-            <Link
-              href="/inscripcion"
-              onClick={(e) => e.stopPropagation()}
-              className="flex-1 rounded-lg py-2.5 text-xs font-bold text-white font-poppins text-center transition-all hover:brightness-110"
-              style={{ backgroundColor: '#ff6b00' }}
-            >
-              Inscribirme
-            </Link>
-          </div>
+          <button
+            onClick={onDetails}
+            className="w-full rounded-lg border border-gray-200 group-hover:border-white/20 py-2.5 text-sm font-bold text-gray-700 group-hover:text-white/75 font-poppins [transition:all_.3s_ease] hover:!border-[#ff6b00] hover:!text-[#ff6b00]"
+          >
+            Ver detalles
+          </button>
         </div>
       </div>
     </article>
@@ -237,7 +227,7 @@ function PlanModal({ plan, onClose }: { plan: PlanDetail; onClose: () => void })
             src={plan.image}
             alt={plan.name}
             fill
-            className={`object-cover ${plan.imagePosition ?? ''}`}
+            className="object-cover object-[center_20%]"
             sizes="672px"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/50 to-transparent" />

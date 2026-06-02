@@ -113,13 +113,13 @@ function KidsPlanCard({ plan, onDetails }: { plan: KidsPlan; onDetails: () => vo
       className="grid overflow-hidden rounded-2xl bg-white shadow-xl shadow-gray-950/10 ring-1 lg:grid-cols-[45%_55%]"
       style={{ borderColor: `${color}55` }}
     >
-      {/* Imagen lateral — object-top siempre muestra rostros */}
+      {/* Imagen lateral — object-[center_35%] prioriza caras en fotos grupales */}
       <div className="relative min-h-[340px] lg:min-h-0">
         <OptimizedImage
           src={image}
           alt={accent}
           fill
-          className={`object-cover ${imagePosition}`}
+          className="object-cover object-[center_35%]"
           sizes="(max-width: 1024px) 100vw, 45vw"
         />
       </div>
@@ -144,24 +144,15 @@ function KidsPlanCard({ plan, onDetails }: { plan: KidsPlan; onDetails: () => vo
           ))}
         </ul>
 
-        <div className="mt-auto pt-5 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-2xl font-extrabold font-poppins">{price}</p>
-          <div className="flex gap-2">
-            <button
-              onClick={onDetails}
-              className="rounded-lg border px-4 py-2 text-xs font-bold font-poppins transition-all hover:opacity-80"
-              style={{ borderColor: color, color }}
-            >
-              Ver detalles
-            </button>
-            <Link
-              href="/inscripcion"
-              className="rounded-lg px-4 py-2 text-xs font-bold text-white font-poppins transition-all hover:brightness-110"
-              style={{ backgroundColor: color }}
-            >
-              Inscribirme ↗
-            </Link>
-          </div>
+        <div className="mt-auto pt-5">
+          <p className="text-2xl font-extrabold font-poppins mb-3">{price}</p>
+          <button
+            onClick={onDetails}
+            className="w-full rounded-lg border py-2.5 text-sm font-bold font-poppins transition-all hover:opacity-80"
+            style={{ borderColor: color, color }}
+          >
+            Ver detalles
+          </button>
         </div>
       </div>
     </article>
@@ -197,7 +188,7 @@ function KidsModal({ plan, onClose }: { plan: KidsPlan; onClose: () => void }) {
             src={image}
             alt={accent}
             fill
-            className={`object-cover ${imagePosition}`}
+            className="object-cover object-[center_40%]"
             sizes="672px"
           />
           <div className="absolute inset-0" style={{ background: `linear-gradient(to top, rgba(255,255,255,1) 0%, rgba(255,255,255,0.2) 60%, transparent 100%)` }} />

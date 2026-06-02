@@ -74,6 +74,7 @@ export default function Header() {
   const [isAdmin, setIsAdmin]         = useState(false);
   const [isLoggedIn, setIsLoggedIn]   = useState(false);
   const [userEmail, setUserEmail]     = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl]     = useState<string | null>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [hidden, setHidden]           = useState(false);
 
@@ -96,6 +97,7 @@ export default function Header() {
       setIsAdmin(!!session && role !== "student");
       setIsLoggedIn(!!session);
       setUserEmail(session?.user?.email ?? null);
+      setAvatarUrl(session?.user?.user_metadata?.avatar_url ?? null);
     };
     supabase.auth.getSession().then(({ data: { session } }) => checkAuth(session));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => checkAuth(session));
@@ -164,7 +166,6 @@ export default function Header() {
     window.location.href = "/";
   };
 
-  // Inicial del email para el avatar
   const avatarLetter = userEmail ? userEmail[0].toUpperCase() : "U";
   const dashboardHref = isAdmin ? "/admin" : "/mi-cuenta";
 
@@ -222,12 +223,20 @@ export default function Header() {
                 aria-expanded={userMenuOpen}
               >
                 {/* Avatar */}
-                <span
-                  className="h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold text-white font-poppins"
-                  style={{ backgroundColor: "#ff7a00" }}
-                >
-                  {avatarLetter}
-                </span>
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="Avatar"
+                    className="h-7 w-7 rounded-full object-cover shrink-0"
+                  />
+                ) : (
+                  <span
+                    className="h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold text-white font-poppins shrink-0"
+                    style={{ backgroundColor: "#ff7a00" }}
+                  >
+                    {avatarLetter}
+                  </span>
+                )}
                 <span className="text-[12px] text-white/70 group-hover:text-white transition-colors font-roboto max-w-[120px] truncate">
                   {isAdmin ? "Admin" : userEmail?.split("@")[0]}
                 </span>

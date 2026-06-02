@@ -2,63 +2,17 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import PageLayout from "@/components/layout/PageLayout";
 import OptimizedImage from "@/components/ui/OptimizedImage";
+import KidsPlansSection from "./_components/KidsPlansSection";
 
 export const metadata: Metadata = {
   title: "Planes Kids & Teens",
   description: "Planes de música para niños y adolescentes: descubre la música, graba tu canción.",
 };
 
-const INSTRUMENTOS = "Técnica vocal · Guitarra · Bajo · Teclado · Batería · Otros instrumentos según disponibilidad."
-const MUSICALIDAD  = "Entrenamiento auditivo · Sentido rítmico · Interpretación y expresión artística."
-const MP3_FEATURE  = "4 de las 8 clases son grabadas y entregadas al estudiante en formato MP3 (audio original sin edición), como herramienta de análisis, seguimiento y aprendizaje."
-const PRESENTACIONES = "Presentaciones en vivo en tarima durante los eventos de la academia realizados en marzo, junio, septiembre y diciembre.*"
-
-const kidsPlans = [
-  {
-    label: "Plan Kids & Teens",
-    title: "Plan",
-    accent: "Kids & Teens",
-    price: "$1.100.000",
-    color: "#ff6b00",
-    imagePosition: "object-[25%_55%]",
-    image: "/images/courses/plan-kids/Plan 1 Kids.png",
-    description: "",
-    features: [
-      "Cada 3 meses se entrega una canción acústica grabada profesionalmente, mezclada y masterizada, lista para compartir con familiares, amigos o publicar en plataformas digitales.",
-      "8 clases mensuales.",
-      PRESENTACIONES,
-      `Clases con profesores especializados en: ${INSTRUMENTOS}`,
-      "Metodología lúdica, dinámica y creativa.",
-      `Desarrollo de la musicalidad integral: ${MUSICALIDAD}`,
-      MP3_FEATURE,
-    ],
-    objective: "Que el niño o adolescente aprenda, cree y se exprese musicalmente en un ambiente divertido e inspirador, culminando con una grabación profesional que queda como recuerdo.",
-  },
-  {
-    label: "Plan Premium Kids & Teens",
-    title: "Plan Premium",
-    accent: "Kids & Teens",
-    price: "$1.600.000",
-    color: "#1397a5",
-    imagePosition: "object-[70%_55%]",
-    image: "/images/courses/plan-kids/Plan 2 Teens.png",
-    description: "",
-    features: [
-      "Cada mes se entrega una canción acústica grabada profesionalmente, mezclada y masterizada, lista para compartir con familiares, amigos o publicar en plataformas digitales.",
-      "8 clases mensuales.",
-      PRESENTACIONES,
-      `Clases con profesores especializados en: ${INSTRUMENTOS}`,
-      "Metodología lúdica, dinámica y creativa.",
-      `Desarrollo de la musicalidad integral: ${MUSICALIDAD}`,
-      MP3_FEATURE,
-    ],
-    objective: "Vivir la emoción de grabar una canción profesional cada mes, construyendo confianza, autoestima y un portafolio musical propio.",
-  },
-];
-
 export default function PlanesKidsTeensPage() {
   return (
     <PageLayout>
+      {/* Hero */}
       <section className="relative -mt-16 overflow-hidden bg-black px-6 pb-7 pt-20 lg:px-8">
         <OptimizedImage
           src="/images/hero/Banner.png"
@@ -88,12 +42,9 @@ export default function PlanesKidsTeensPage() {
         </div>
       </section>
 
+      {/* Cards */}
       <section className="relative bg-white px-6 py-9 text-gray-950 lg:px-8">
-        <div className="plans-frame grid gap-8">
-          {kidsPlans.map((plan) => (
-            <KidsPlanCard key={plan.label} {...plan} />
-          ))}
-        </div>
+        <KidsPlansSection />
 
         <p className="plans-frame mt-4 text-xs text-gray-400 font-roboto">
           *Aplica para estudiantes activos al momento de cada presentación.
@@ -110,88 +61,6 @@ export default function PlanesKidsTeensPage() {
         </div>
       </section>
     </PageLayout>
-  );
-}
-
-function KidsPlanCard({
-  label,
-  title,
-  accent,
-  price,
-  color,
-  image,
-  description,
-  features,
-  objective,
-}: {
-  label: string;
-  title: string;
-  accent: string;
-  price: string;
-  color: string;
-  imagePosition: string;
-  image: string;
-  description: string;
-  features: string[];
-  objective: string;
-}) {
-  return (
-    <article
-      className="grid overflow-hidden rounded-2xl bg-white shadow-xl shadow-gray-950/10 ring-1 lg:grid-cols-[45%_55%]"
-      style={{ borderColor: `${color}55` }}
-    >
-      {/* Imagen lateral — altura fija para que siempre muestre rostros */}
-      <div className="relative min-h-[420px] lg:min-h-0">
-        <OptimizedImage
-          src={image}
-          alt={accent}
-          fill
-          className="object-cover object-top"
-          sizes="(max-width: 1024px) 100vw, 45vw"
-        />
-        {/* Gradiente sutil abajo para separar del contenido */}
-        <div
-          className="absolute inset-x-0 bottom-0 h-24 lg:hidden"
-          style={{ background: 'linear-gradient(to top, rgba(255,255,255,0.55), transparent)' }}
-          aria-hidden="true"
-        />
-      </div>
-
-      <div className="p-6 lg:p-8">
-        <span className="inline-flex rounded-lg px-4 py-2 text-sm font-extrabold uppercase text-white font-poppins" style={{ backgroundColor: color }}>
-          {label}
-        </span>
-        <h2 className="mt-4 text-2xl font-extrabold uppercase leading-tight font-poppins">
-          {title}
-          <br />
-          <span className="normal-case" style={{ color }}>{accent}</span>
-        </h2>
-        {description && <p className="mt-3 text-[13px] leading-relaxed text-gray-700 font-roboto">{description}</p>}
-        <ul className="mt-4 space-y-2">
-          {features.map((feature) => (
-            <li key={feature} className="flex items-start gap-3 text-[13px] text-gray-800 font-roboto">
-              <span className="mt-0.5 shrink-0" style={{ color }}>◎</span>
-              {feature}
-            </li>
-          ))}
-        </ul>
-        <div className="mt-5 rounded-xl p-4" style={{ backgroundColor: `${color}12` }}>
-          <p className="font-extrabold font-poppins" style={{ color }}>Objetivo</p>
-          <p className="mt-1 text-[13px] leading-relaxed text-gray-700 font-roboto">{objective}</p>
-        </div>
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
-          <p className="text-2xl font-extrabold font-poppins">{price}</p>
-          <Link
-            href="/mi-cuenta/login"
-            className="inline-flex items-center gap-3 rounded-lg px-6 py-3 text-sm font-bold text-white shadow-lg font-poppins"
-            style={{ backgroundColor: color }}
-          >
-            Inscríbete
-            <span aria-hidden="true">↗</span>
-          </Link>
-        </div>
-      </div>
-    </article>
   );
 }
 

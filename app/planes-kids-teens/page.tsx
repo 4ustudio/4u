@@ -138,12 +138,12 @@ function KidsPlanCard({
 }) {
   return (
     <article className="grid overflow-hidden rounded-2xl bg-white shadow-xl shadow-gray-950/10 ring-1 lg:grid-cols-[47%_53%]" style={{ borderColor: `${color}55` }}>
-      <div className="relative min-h-[370px]">
+      <div className="relative min-h-[310px]">
         <OptimizedImage
           src={image}
           alt={accent}
           fill
-          className="object-cover object-[center_18%]"
+          className="object-cover object-[center_10%]"
           sizes="(max-width: 1024px) 100vw, 47vw"
         />
       </div>

@@ -52,9 +52,9 @@ export default function ProcesoSection() {
           <span className="text-[#ff7a00] text-xs font-bold uppercase tracking-[0.2em] font-poppins">
             Nuestro proceso
           </span>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#ff7a00] mt-4 font-poppins leading-tight">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white mt-4 font-poppins leading-tight">
             Nuestro objetivo es que cada alumno<br className="hidden md:block" />
-            viva este proceso
+            <span className="text-[#ff7a00]">viva este proceso</span>
           </h2>
         </div>
 
@@ -146,7 +146,7 @@ export default function ProcesoSection() {
                       style={{
                         borderColor:     isActive ? '#ff7a00' : 'rgba(255,255,255,0.15)',
                         color:           isActive ? '#ff7a00' : 'rgba(255,255,255,0.70)',
-                        backgroundColor: isActive ? 'rgba(255,122,0,0.12)' : 'rgba(255,255,255,0.04)',
+                        backgroundColor: isActive ? '#241608' : '#0d0d10',
                         transform:       isHovered ? 'translateY(-8px) scale(1.08)' : isLast ? 'scale(1.05)' : 'translateY(0) scale(1)',
                         boxShadow:       isHovered
                           ? '0 0 24px rgba(255,122,0,0.55), 0 14px 32px rgba(255,122,0,0.22)'

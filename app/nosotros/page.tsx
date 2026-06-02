@@ -211,7 +211,7 @@ export default function NosotrosPage() {
             <article className="group rounded-2xl border border-white/5 bg-white/[0.03] overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:border-[#ff7a00]/20 hover:shadow-2xl hover:shadow-[#ff7a00]/5">
               <div className="relative h-[200px] overflow-hidden">
                 <OptimizedImage
-                  src="/images/courses/planes-tipos/Plan 1.png"
+                  src="/images/hero/Nuestra historia.png"
                   alt="Nuestra Historia"
                   fill
                   className="object-cover transition-transform duration-700 group-hover:scale-105"
@@ -233,7 +233,7 @@ export default function NosotrosPage() {
             <article className="group rounded-2xl border border-white/5 bg-white/[0.03] overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:border-[#ff7a00]/20 hover:shadow-2xl hover:shadow-[#ff7a00]/5">
               <div className="relative h-[200px] overflow-hidden">
                 <OptimizedImage
-                  src="/images/courses/planes-tipos/Plan 2.png"
+                  src="/images/hero/Nuestra mision.png"
                   alt="Nuestra Misión"
                   fill
                   className="object-cover transition-transform duration-700 group-hover:scale-105"
@@ -255,7 +255,7 @@ export default function NosotrosPage() {
             <article className="group rounded-2xl border border-white/5 bg-white/[0.03] overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:border-[#ff7a00]/20 hover:shadow-2xl hover:shadow-[#ff7a00]/5">
               <div className="relative h-[200px] overflow-hidden">
                 <OptimizedImage
-                  src="/images/courses/planes-tipos/Plan 3.png"
+                  src="/images/hero/Nuestra filosofia 2.png"
                   alt="Nuestra Filosofía"
                   fill
                   className="object-cover transition-transform duration-700 group-hover:scale-105"

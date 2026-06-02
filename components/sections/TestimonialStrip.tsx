@@ -25,7 +25,7 @@ export default function TestimonialStrip() {
           </div>
           <div className="relative hidden min-h-[150px] md:block">
             <OptimizedImage
-              src="/images/hero/banner-principal.jpg"
+              src="/images/hero/Banner-principal-3.jpg.jpeg"
               alt="Estudiante de canto en 4U Studio"
               fill
               className="object-cover object-[82%_48%]"

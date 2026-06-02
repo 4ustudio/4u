@@ -10,7 +10,7 @@ export const courses: Course[] = [
     highlights: ["Técnica", "Ritmo", "Acordes", "Improvisación"],
     duration: "8 sesiones/mes",
     level: "Básico a Avanzado",
-    image: "/images/courses/planes-tipos/Plan 1.png",
+    image: "/images/courses/planes-tipos/Guitarra.png",
     instructorId: "andres-ospina",
     icon: (
       <svg className="w-16 h-16" viewBox="0 0 512 512" fill="white" opacity="0.3">
@@ -27,7 +27,7 @@ export const courses: Course[] = [
     highlights: ["Técnica", "Armonía", "Lectura", "Repertorio"],
     duration: "8 sesiones/mes",
     level: "Básico a Avanzado",
-    image: "/images/courses/planes-tipos/Plan 2.png",
+    image: "/images/courses/planes-tipos/Piano.png",
     instructorId: "valentina-rios",
     icon: (
       <svg className="w-16 h-16" viewBox="0 0 512 512" fill="white" opacity="0.3">
@@ -44,7 +44,7 @@ export const courses: Course[] = [
     highlights: ["Respiración", "Afinación", "Interpretación", "Proyección vocal"],
     duration: "8 sesiones/mes",
     level: "Básico a Avanzado",
-    image: "/images/courses/planes-tipos/Plan 3.png",
+    image: "/images/courses/planes-tipos/Canto.png",
     instructorId: "valentina-rios",
     icon: (
       <svg className="w-16 h-16" viewBox="0 0 512 512" fill="white" opacity="0.3">
@@ -61,7 +61,7 @@ export const courses: Course[] = [
     highlights: ["Groove", "Técnica", "Lectura", "Performance"],
     duration: "8 sesiones/mes",
     level: "Básico a Avanzado",
-    image: "/images/courses/planes-tipos/Plan 4.png",
+    image: "/images/courses/planes-tipos/Bateria.png",
     instructorId: "diego-martinez",
     icon: (
       <svg className="w-16 h-16" viewBox="0 0 512 512" fill="white" opacity="0.3">
@@ -78,7 +78,7 @@ export const courses: Course[] = [
     highlights: ["Ritmo", "Técnica", "Armonía", "Improvisación"],
     duration: "8 sesiones/mes",
     level: "Básico a Avanzado",
-    image: "/images/courses/planes-tipos/Plan 5.png",
+    image: "/images/courses/planes-tipos/Bajo.png",
     instructorId: "andres-ospina",
     icon: (
       <svg className="w-16 h-16" viewBox="0 0 512 512" fill="white" opacity="0.3">

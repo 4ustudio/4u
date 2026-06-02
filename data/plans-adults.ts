@@ -20,6 +20,13 @@ export interface PlanDetail {
   footerNote?: string;
 }
 
+// ── Constantes compartidas ────────────────────────────────────────────
+const INSTRUMENTOS_ADULTOS = "Técnica vocal · Guitarra · Bajo · Teclado · Batería · Otros instrumentos según disponibilidad."
+const MUSICALIDAD_ADULTOS  = "Entrenamiento auditivo · Sentido rítmico · Interpretación y expresión artística."
+const MP3_ADULTOS          = "4 de las 8 clases son grabadas y entregadas al estudiante en formato MP3 (audio original sin edición), como herramienta de análisis, seguimiento y aprendizaje."
+const PRESENTACIONES_ADULTOS = "Presentaciones en vivo en tarima durante los eventos de la academia realizados en marzo, junio, septiembre y diciembre.*"
+const FOOTER_ESTUDIANTES   = "*Aplica para estudiantes activos al momento de cada presentación."
+
 export const PLANES_ADULTOS: PlanDetail[] = [
   {
     id: 1,
@@ -32,20 +39,20 @@ export const PLANES_ADULTOS: PlanDetail[] = [
     description:
       "Para quienes desean vivir la experiencia de grabar su primera canción en estudio y desarrollar su talento musical.",
     features: [
-      "8 clases mensuales",
-      "Canción acústica grabada profesionalmente cada 3 meses, mezclada y masterizada, lista para compartir o publicar en plataformas digitales",
-      "Presentaciones en vivo en tarima (marzo, junio, septiembre y diciembre)*",
-      "Clases con profesores especializados en: Técnica vocal · Guitarra · Bajo · Teclado · Batería · Otros instrumentos según disponibilidad",
-      "Metodología dinámica y práctica orientada al desarrollo artístico",
-      "Desarrollo de la musicalidad integral: Entrenamiento auditivo · Sentido rítmico · Interpretación y expresión artística",
-      "4 de las 8 clases grabadas y entregadas en formato MP3 (audio original sin edición)",
+      "Cada 3 meses se entrega una canción acústica grabada profesionalmente, mezclada y masterizada, lista para compartir con familiares, amigos o publicar en plataformas digitales.",
+      "8 clases mensuales.",
+      PRESENTACIONES_ADULTOS,
+      `Clases con profesores especializados en: ${INSTRUMENTOS_ADULTOS}`,
+      "Metodología dinámica y práctica orientada al desarrollo artístico.",
+      `Desarrollo de la musicalidad integral: ${MUSICALIDAD_ADULTOS}`,
+      MP3_ADULTOS,
     ],
     instruments: ["Canto", "Guitarra", "Batería", "Teclado", "Bajo"],
     highlighted: false,
     image: "/images/courses/planes-tipos/Plan 1.png",
     imagePosition: "object-[35%_45%]",
     tag: "Inicial",
-    footerNote: "*Aplica para estudiantes activos al momento de cada presentación.",
+    footerNote: FOOTER_ESTUDIANTES,
   },
   {
     id: 2,
@@ -58,20 +65,20 @@ export const PLANES_ADULTOS: PlanDetail[] = [
     description:
       "Para quienes desean acelerar su proceso musical con grabación profesional mensual y resultados visibles en menos tiempo.",
     features: [
-      "8 clases mensuales",
-      "Canción acústica grabada profesionalmente cada mes, mezclada y masterizada, lista para compartir o publicar en plataformas digitales",
-      "Presentaciones en vivo en tarima (marzo, junio, septiembre y diciembre)*",
-      "Clases con profesores especializados en: Técnica vocal · Guitarra · Bajo · Teclado · Batería · Otros instrumentos según disponibilidad",
-      "Metodología dinámica y práctica orientada al desarrollo artístico",
-      "Desarrollo de la musicalidad integral: Entrenamiento auditivo · Sentido rítmico · Interpretación y expresión artística",
-      "4 de las 8 clases grabadas y entregadas en formato MP3 (audio original sin edición)",
+      "Cada mes se entrega una canción acústica grabada profesionalmente, mezclada y masterizada, lista para compartir con familiares, amigos o publicar en plataformas digitales.",
+      "8 clases mensuales.",
+      PRESENTACIONES_ADULTOS,
+      `Clases con profesores especializados en: ${INSTRUMENTOS_ADULTOS}`,
+      "Metodología dinámica y práctica orientada al desarrollo artístico.",
+      `Desarrollo de la musicalidad integral: ${MUSICALIDAD_ADULTOS}`,
+      MP3_ADULTOS,
     ],
     instruments: ["Canto", "Guitarra", "Batería", "Teclado", "Bajo"],
     highlighted: true,
     image: "/images/courses/planes-tipos/Plan 1B.png",
     imagePosition: "object-[55%_52%]",
     tag: "Inicial",
-    footerNote: "*Aplica para estudiantes activos al momento de cada presentación.",
+    footerNote: FOOTER_ESTUDIANTES,
   },
   {
     id: 3,
@@ -80,18 +87,16 @@ export const PLANES_ADULTOS: PlanDetail[] = [
     subtitle: "Garage Days",
     price: "$2.500.000",
     priceNote: "/ mes",
-    priceAlt: "Con Director de Ensamble: $3.500.000  ·  Integrante adicional: $600.000/mes",
+    priceAlt: "Modalidades: Sin Director de Ensamble: $2.500.000 mensuales  ·  Con Director de Ensamble: $3.500.000 mensuales",
     description:
       "Diseñado para bandas que desean ensayar, fortalecer su ensamble musical y prepararse para presentaciones en vivo, grabaciones y proyectos artísticos.",
     features: [
-      "8 sesiones mensuales de ensayo y trabajo de ensamble",
-      "Canción grabada profesionalmente con todos los integrantes cada 3 meses, mezclada y masterizada, lista para compartir o publicar en plataformas digitales",
-      "Presentaciones en vivo en tarima (marzo, junio, septiembre y diciembre)*",
-      "4 de las 8 sesiones grabadas y entregadas en formato MP3 como herramienta de análisis, seguimiento y mejora del desempeño grupal",
-      "Máximo 4 integrantes por banda",
-      "Valor adicional por integrante extra: $600.000 mensuales",
-      "Sin Director de Ensamble: $2.500.000 mensuales",
-      "Con Director de Ensamble: $3.500.000 mensuales",
+      "Cada 3 meses se entrega una canción grabada profesionalmente con la participación de todos los integrantes de la banda, mezclada y masterizada, lista para compartir o publicar en plataformas digitales.",
+      "8 sesiones mensuales de ensayo y trabajo de ensamble.",
+      "Presentaciones en vivo en tarima durante los eventos de la academia realizados en marzo, junio, septiembre y diciembre.*",
+      "4 de las 8 sesiones son grabadas y entregadas en formato MP3 como herramienta de análisis, seguimiento y mejora del desempeño grupal.",
+      "Máximo 4 integrantes por banda.",
+      "Valor adicional por integrante extra: $600.000 mensuales.",
     ],
     highlighted: false,
     image: "/images/courses/planes-tipos/Plan 2.png",

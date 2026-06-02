@@ -80,7 +80,7 @@ export default async function MiCuentaPage() {
   return (
     <>
       <AutoRefresh studentId={student.id} />
-      <StudentNav userEmail={user.email ?? ''} />
+      <StudentNav userEmail={user.email ?? ''} avatarUrl={avatarUrl} firstName={firstName} />
 
       <main className="max-w-5xl mx-auto px-4 pt-[82px] pb-12 space-y-8 page-animate">
 

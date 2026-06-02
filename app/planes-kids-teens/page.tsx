@@ -22,7 +22,7 @@ const kidsPlans = [
     color: "#ff6b00",
     imagePosition: "object-[25%_55%]",
     image: "/images/courses/plan-kids/Plan 1 Kids.png",
-    description: "Plan completo para niños y adolescentes: clases especializadas, grabación profesional trimestral y presentaciones en tarima ante el público.",
+    description: "",
     features: [
       "Cada 3 meses se entrega una canción acústica grabada profesionalmente, mezclada y masterizada, lista para compartir con familiares, amigos o publicar en plataformas digitales.",
       "8 clases mensuales.",
@@ -42,7 +42,7 @@ const kidsPlans = [
     color: "#1397a5",
     imagePosition: "object-[70%_55%]",
     image: "/images/courses/plan-kids/Plan 2 Teens.png",
-    description: "La experiencia más completa: grabación profesional mensual, presentaciones en vivo y acompañamiento artístico integral.",
+    description: "",
     features: [
       "Cada mes se entrega una canción acústica grabada profesionalmente, mezclada y masterizada, lista para compartir con familiares, amigos o publicar en plataformas digitales.",
       "8 clases mensuales.",
@@ -156,7 +156,7 @@ function KidsPlanCard({
           <br />
           <span className="normal-case" style={{ color }}>{accent}</span>
         </h2>
-        <p className="mt-3 text-[13px] leading-relaxed text-gray-700 font-roboto">{description}</p>
+        {description && <p className="mt-3 text-[13px] leading-relaxed text-gray-700 font-roboto">{description}</p>}
         <ul className="mt-4 space-y-1.5">
           {features.map((feature) => (
             <li key={feature} className="flex items-start gap-3 text-[13px] text-gray-800 font-roboto">

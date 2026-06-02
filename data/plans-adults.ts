@@ -36,8 +36,7 @@ export const PLANES_ADULTOS: PlanDetail[] = [
     subtitle: "Cumplo mi sueño",
     price: "$1.100.000",
     priceNote: "/ mes",
-    description:
-      "Para quienes desean vivir la experiencia de grabar su primera canción en estudio y desarrollar su talento musical.",
+    description: "",
     features: [
       "Cada 3 meses se entrega una canción acústica grabada profesionalmente, mezclada y masterizada, lista para compartir con familiares, amigos o publicar en plataformas digitales.",
       "8 clases mensuales.",
@@ -62,8 +61,7 @@ export const PLANES_ADULTOS: PlanDetail[] = [
     subtitle: "Cumplo mi sueño",
     price: "$1.900.000",
     priceNote: "/ mes",
-    description:
-      "Para quienes desean acelerar su proceso musical con grabación profesional mensual y resultados visibles en menos tiempo.",
+    description: "",
     features: [
       "Cada mes se entrega una canción acústica grabada profesionalmente, mezclada y masterizada, lista para compartir con familiares, amigos o publicar en plataformas digitales.",
       "8 clases mensuales.",

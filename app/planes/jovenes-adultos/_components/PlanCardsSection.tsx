@@ -85,9 +85,11 @@ export default function PlanCardsSection() {
                 {plan.name}
               </h2>
 
-              <p className="mt-2 text-sm font-roboto text-gray-600 group-hover:text-white/70 [transition:color_.3s_ease]">
-                {plan.description}
-              </p>
+              {plan.description && (
+                <p className="mt-2 text-sm font-roboto text-gray-600 group-hover:text-white/70 [transition:color_.3s_ease]">
+                  {plan.description}
+                </p>
+              )}
 
               <ul className="mt-4 space-y-1.5">
                 {plan.features.map((f) => (

@@ -375,6 +375,54 @@ export async function deleteStudentAction(
   return { success: true }
 }
 
+export async function setStudentPasswordAction(
+  _prev: { error?: string; success?: boolean },
+  formData: FormData
+): Promise<{ error?: string; success?: boolean }> {
+  const student_id = formData.get('student_id') as string
+  const password   = (formData.get('password') as string)?.trim()
+  const confirm    = (formData.get('confirm')   as string)?.trim()
+
+  if (!student_id || !password) return { error: 'Completa todos los campos.' }
+  if (password.length < 6) return { error: 'La contraseña debe tener al menos 6 caracteres.' }
+  if (password !== confirm) return { error: 'Las contraseñas no coinciden.' }
+
+  const { data: student, error: fetchErr } = await db()
+    .from('students')
+    .select('id, email, user_id')
+    .eq('id', student_id)
+    .single()
+
+  if (fetchErr || !student) return { error: 'Estudiante no encontrado.' }
+  if (!student.email) return { error: 'El estudiante no tiene email. Agrégalo primero.' }
+
+  if (student.user_id) {
+    const { error } = await db().auth.admin.updateUserById(student.user_id, { password })
+    if (error) return { error: error.message }
+  } else {
+    const { data: newUser, error } = await db().auth.admin.createUser({
+      email: student.email,
+      password,
+      email_confirm: true,
+      user_metadata: { role: 'student' },
+    })
+    if (error) {
+      if (error.message?.includes('already registered')) {
+        return { error: 'Ya existe una cuenta con ese email. Usa "Invitar" para vincularla.' }
+      }
+      return { error: error.message }
+    }
+    const { error: linkErr } = await db()
+      .from('students')
+      .update({ user_id: newUser.user.id })
+      .eq('id', student_id)
+    if (linkErr) return { error: 'No se pudo vincular la cuenta al estudiante.' }
+  }
+
+  revalidatePath(`/admin/students/${student_id}`)
+  return { success: true }
+}
+
 export async function updateStudentAction(
   _prev: { error?: string; success?: boolean },
   formData: FormData

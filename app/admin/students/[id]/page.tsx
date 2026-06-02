@@ -6,6 +6,7 @@ import ScheduleSection from './_components/ScheduleSection'
 import GenerateClassesButton from './_components/GenerateClassesButton'
 import DeleteStudentButton from './_components/DeleteStudentButton'
 import StudentSessionsPanel from './_components/StudentSessionsPanel'
+import PasswordSection from './_components/PasswordSection'
 import type { Student, MonthlyUsage, StudentSchedule } from '@/types/admin'
 
 export const dynamic = 'force-dynamic'
@@ -93,6 +94,8 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-5 items-start">
         <div className="space-y-5 min-w-0">
           <StudentEditForm student={student} />
+
+          <PasswordSection studentId={id} hasAccount={!!student.user_id} email={student.email} />
 
           <ScheduleSection
             schedules={schedules}

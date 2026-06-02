@@ -103,15 +103,15 @@ export default function PlanCardsSection() {
                 </p>
               )}
 
-              {plan.limitedOffer && (
-                <p className="mt-2 text-[11px] text-[#ff6b00] font-roboto font-semibold">
-                  ⏳ Oferta por tiempo limitado · Proceso cada 3 meses
-                </p>
-              )}
-
               {plan.priceAlt && (
                 <p className="mt-2 text-[11px] font-roboto text-gray-400 group-hover:text-white/40 [transition:color_.3s_ease]">
                   {plan.priceAlt}
+                </p>
+              )}
+
+              {plan.footerNote && (
+                <p className="mt-3 text-[10px] font-roboto text-gray-400/70 group-hover:text-white/30 [transition:color_.3s_ease] italic">
+                  {plan.footerNote}
                 </p>
               )}
 

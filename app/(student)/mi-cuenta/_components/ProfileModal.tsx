@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useRef, useActionState, useTransition } from 'react'
+import { useState, useRef, useActionState, useTransition, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import { updateProfileAction, uploadAvatarAction } from '../../_actions/student'
 
@@ -17,6 +18,7 @@ const inputClass =
 
 export default function ProfileModal({ firstName, lastName, email, avatarUrl }: Props) {
   const [open, setOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const [preview, setPreview] = useState<string | null>(avatarUrl ?? null)
   const [uploading, setUploading] = useState(false)
   const [uploadedUrl, setUploadedUrl] = useState<string | null>(avatarUrl ?? null)
@@ -24,6 +26,8 @@ export default function ProfileModal({ firstName, lastName, email, avatarUrl }: 
   const fileRef = useRef<HTMLInputElement>(null)
   const [isPending, startTransition] = useTransition()
   const [state, action] = useActionState(updateProfileAction, {})
+
+  useEffect(() => { setMounted(true) }, [])
 
   const initials = `${firstName?.[0] ?? ''}${lastName?.[0] ?? ''}`.toUpperCase() || email?.[0]?.toUpperCase() || 'U'
 
@@ -71,8 +75,8 @@ export default function ProfileModal({ firstName, lastName, email, avatarUrl }: 
     )
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setOpen(false)}>
+  const overlay = (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setOpen(false)}>
       <div
         className="w-full max-w-md bg-zinc-900 border border-zinc-700 rounded-2xl p-6 shadow-2xl space-y-5"
         onClick={(e) => e.stopPropagation()}
@@ -183,4 +187,6 @@ export default function ProfileModal({ firstName, lastName, email, avatarUrl }: 
       </div>
     </div>
   )
+
+  return mounted ? createPortal(overlay, document.body) : null
 }

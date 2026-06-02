@@ -419,6 +419,12 @@ export async function setStudentPasswordAction(
     if (linkErr) return { error: 'No se pudo vincular la cuenta al estudiante.' }
   }
 
+  // Persistir contraseña en plain_password para consulta del admin
+  await db()
+    .from('students')
+    .update({ plain_password: password })
+    .eq('id', student_id)
+
   revalidatePath(`/admin/students/${student_id}`)
   return { success: true }
 }

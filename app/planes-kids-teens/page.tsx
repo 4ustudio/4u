@@ -8,6 +8,11 @@ export const metadata: Metadata = {
   description: "Planes de música para niños y adolescentes: descubre la música, graba tu canción.",
 };
 
+const INSTRUMENTOS = "Técnica vocal · Guitarra · Bajo · Teclado · Batería · Otros instrumentos según disponibilidad."
+const MUSICALIDAD  = "Entrenamiento auditivo · Sentido rítmico · Interpretación y expresión artística."
+const MP3_FEATURE  = "4 de las 8 clases son grabadas y entregadas al estudiante en formato MP3 (audio original sin edición), como herramienta de análisis, seguimiento y aprendizaje."
+const PRESENTACIONES = "Presentaciones en vivo en tarima durante los eventos de la academia realizados en marzo, junio, septiembre y diciembre.*"
+
 const kidsPlans = [
   {
     label: "Plan Kids & Teens",
@@ -19,33 +24,33 @@ const kidsPlans = [
     image: "/images/courses/plan-kids/Plan 1 Kids.png",
     description: "Plan completo para niños y adolescentes: clases especializadas, grabación profesional trimestral y presentaciones en tarima ante el público.",
     features: [
-      "8 clases mensuales",
-      "Canción acústica grabada profesionalmente cada 3 meses, mezclada y masterizada, lista para compartir con familiares, amigos o publicar en plataformas digitales",
-      "Presentaciones en vivo en tarima durante los eventos de la academia (marzo, junio, septiembre y diciembre)*",
-      "Clases con profesores especializados en: Técnica vocal · Guitarra · Bajo · Teclado · Batería · Otros instrumentos según disponibilidad",
-      "Metodología lúdica, dinámica y creativa",
-      "Desarrollo de la musicalidad integral: Entrenamiento auditivo · Sentido rítmico · Interpretación y expresión artística",
-      "4 de las 8 clases grabadas y entregadas en formato MP3 (audio original sin edición), como herramienta de análisis, seguimiento y aprendizaje",
+      "Cada 3 meses se entrega una canción acústica grabada profesionalmente, mezclada y masterizada, lista para compartir con familiares, amigos o publicar en plataformas digitales.",
+      "8 clases mensuales.",
+      PRESENTACIONES,
+      `Clases con profesores especializados en: ${INSTRUMENTOS}`,
+      "Metodología lúdica, dinámica y creativa.",
+      `Desarrollo de la musicalidad integral: ${MUSICALIDAD}`,
+      MP3_FEATURE,
     ],
     objective: "Que el niño o adolescente aprenda, cree y se exprese musicalmente en un ambiente divertido e inspirador, culminando con una grabación profesional que queda como recuerdo.",
   },
   {
-    label: "Plan Premium",
+    label: "Plan Premium Kids & Teens",
     title: "Plan Premium",
     accent: "Kids & Teens",
     price: "$1.600.000",
     color: "#1397a5",
     imagePosition: "object-[70%_55%]",
     image: "/images/courses/plan-kids/Plan 2 Teens.png",
-    description: "La experiencia más completa: grabación profesional todos los meses, presentaciones en vivo y acompañamiento artístico integral mes a mes.",
+    description: "La experiencia más completa: grabación profesional mensual, presentaciones en vivo y acompañamiento artístico integral.",
     features: [
-      "8 clases mensuales",
-      "Canción acústica grabada profesionalmente cada mes, mezclada y masterizada, lista para compartir con familiares, amigos o publicar en plataformas digitales",
-      "Presentaciones en vivo en tarima durante los eventos de la academia (marzo, junio, septiembre y diciembre)*",
-      "Clases con profesores especializados en: Técnica vocal · Guitarra · Bajo · Teclado · Batería · Otros instrumentos según disponibilidad",
-      "Metodología lúdica, dinámica y creativa",
-      "Desarrollo de la musicalidad integral: Entrenamiento auditivo · Sentido rítmico · Interpretación y expresión artística",
-      "4 de las 8 clases grabadas y entregadas en formato MP3 (audio original sin edición), como herramienta de análisis, seguimiento y aprendizaje",
+      "Cada mes se entrega una canción acústica grabada profesionalmente, mezclada y masterizada, lista para compartir con familiares, amigos o publicar en plataformas digitales.",
+      "8 clases mensuales.",
+      PRESENTACIONES,
+      `Clases con profesores especializados en: ${INSTRUMENTOS}`,
+      "Metodología lúdica, dinámica y creativa.",
+      `Desarrollo de la musicalidad integral: ${MUSICALIDAD}`,
+      MP3_FEATURE,
     ],
     objective: "Vivir la emoción de grabar una canción profesional cada mes, construyendo confianza, autoestima y un portafolio musical propio.",
   },

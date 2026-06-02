@@ -2,9 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import PageLayout from "@/components/layout/PageLayout";
 import OptimizedImage from "@/components/ui/OptimizedImage";
-import CourseCardFull from "@/components/cards/CourseCardFull";
-import { ACADEMY } from "@/lib/constants";
-import { courses } from "@/data/courses";
+import CoursesGrid from "@/components/sections/CoursesGrid";
 
 export const metadata: Metadata = {
   title: "Cursos de Música | 4U Studio Academy",
@@ -16,8 +14,6 @@ export const metadata: Metadata = {
       "Clases de guitarra, piano, canto, batería, bajo y producción musical en Bogotá.",
   },
 };
-
-const waLink = `https://api.whatsapp.com/send/?phone=${ACADEMY.phone}&text=Hola%2C%20quiero%20informaci%C3%B3n%20sobre%20los%20cursos%20de%204U%20Studio%20Academy`;
 
 const audiences = [
   {
@@ -187,11 +183,7 @@ export default function CursosPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-            {courses.map((course) => (
-              <CourseCardFull key={course.title} course={course} />
-            ))}
-          </div>
+          <CoursesGrid />
         </div>
       </section>
 
@@ -282,7 +274,7 @@ export default function CursosPage() {
           </p>
           <div className="mt-10 flex flex-wrap justify-center gap-4">
             <a
-              href={waLink}
+              href={`https://api.whatsapp.com/send/?phone=573170192639&text=Hola%2C%20quiero%20informaci%C3%B3n%20sobre%20los%20cursos%20de%204U%20Studio%20Academy`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2.5 bg-[#25D366] text-white font-semibold px-8 py-4 rounded-full text-base transition-all duration-300 hover:bg-[#20bd5a] hover:-translate-y-0.5 shadow-xl shadow-[#25D366]/20 hover:shadow-2xl hover:shadow-[#25D366]/40 font-poppins"

@@ -89,7 +89,7 @@ export default function PlanesKidsTeensPage() {
       </section>
 
       <section className="relative bg-white px-6 py-9 text-gray-950 lg:px-8">
-        <div className="plans-frame grid gap-8 lg:grid-cols-2">
+        <div className="plans-frame grid gap-8">
           {kidsPlans.map((plan) => (
             <KidsPlanCard key={plan.label} {...plan} />
           ))}
@@ -119,7 +119,6 @@ function KidsPlanCard({
   accent,
   price,
   color,
-  imagePosition,
   image,
   description,
   features,
@@ -137,41 +136,56 @@ function KidsPlanCard({
   objective: string;
 }) {
   return (
-    <article className="grid overflow-hidden rounded-2xl bg-white shadow-xl shadow-gray-950/10 ring-1 lg:grid-cols-[47%_53%]" style={{ borderColor: `${color}55` }}>
-      <div className="relative min-h-[310px]">
+    <article
+      className="grid overflow-hidden rounded-2xl bg-white shadow-xl shadow-gray-950/10 ring-1 lg:grid-cols-[45%_55%]"
+      style={{ borderColor: `${color}55` }}
+    >
+      {/* Imagen lateral — altura fija para que siempre muestre rostros */}
+      <div className="relative min-h-[420px] lg:min-h-0">
         <OptimizedImage
           src={image}
           alt={accent}
           fill
-          className="object-cover object-[center_10%]"
-          sizes="(max-width: 1024px) 100vw, 47vw"
+          className="object-cover object-top"
+          sizes="(max-width: 1024px) 100vw, 45vw"
+        />
+        {/* Gradiente sutil abajo para separar del contenido */}
+        <div
+          className="absolute inset-x-0 bottom-0 h-24 lg:hidden"
+          style={{ background: 'linear-gradient(to top, rgba(255,255,255,0.55), transparent)' }}
+          aria-hidden="true"
         />
       </div>
-      <div className="p-5">
+
+      <div className="p-6 lg:p-8">
         <span className="inline-flex rounded-lg px-4 py-2 text-sm font-extrabold uppercase text-white font-poppins" style={{ backgroundColor: color }}>
           {label}
         </span>
-        <h2 className="mt-4 text-xl font-extrabold uppercase leading-tight font-poppins">
+        <h2 className="mt-4 text-2xl font-extrabold uppercase leading-tight font-poppins">
           {title}
           <br />
           <span className="normal-case" style={{ color }}>{accent}</span>
         </h2>
         {description && <p className="mt-3 text-[13px] leading-relaxed text-gray-700 font-roboto">{description}</p>}
-        <ul className="mt-4 space-y-1.5">
+        <ul className="mt-4 space-y-2">
           {features.map((feature) => (
             <li key={feature} className="flex items-start gap-3 text-[13px] text-gray-800 font-roboto">
-              <span className="mt-0.5" style={{ color }}>◎</span>
+              <span className="mt-0.5 shrink-0" style={{ color }}>◎</span>
               {feature}
             </li>
           ))}
         </ul>
-        <div className="mt-4 rounded-xl p-3.5" style={{ backgroundColor: `${color}12` }}>
+        <div className="mt-5 rounded-xl p-4" style={{ backgroundColor: `${color}12` }}>
           <p className="font-extrabold font-poppins" style={{ color }}>Objetivo</p>
           <p className="mt-1 text-[13px] leading-relaxed text-gray-700 font-roboto">{objective}</p>
         </div>
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
           <p className="text-2xl font-extrabold font-poppins">{price}</p>
-          <Link href="/mi-cuenta/login" className="inline-flex items-center gap-3 rounded-lg px-6 py-3 text-sm font-bold text-white shadow-lg font-poppins" style={{ backgroundColor: color }}>
+          <Link
+            href="/mi-cuenta/login"
+            className="inline-flex items-center gap-3 rounded-lg px-6 py-3 text-sm font-bold text-white shadow-lg font-poppins"
+            style={{ backgroundColor: color }}
+          >
             Inscríbete
             <span aria-hidden="true">↗</span>
           </Link>

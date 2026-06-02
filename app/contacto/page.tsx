@@ -62,26 +62,27 @@ export default function ContactoPage() {
                 <ContactForm />
               </div>
 
-              <div className="relative bg-white/[0.04] backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col items-center justify-end text-center min-h-[360px]">
-                {/* Imagen de fondo */}
-                <div className="absolute inset-0">
+              <div className="bg-white/[0.04] backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+                {/* Imagen superior — altura fija */}
+                <div className="relative h-[220px] shrink-0">
                   <OptimizedImage
                     src="/images/hero/Servicio al cliente.png"
                     alt="Servicio al cliente 4U Studio Academy"
                     fill
-                    className="object-cover object-center"
+                    className="object-cover object-[center_20%]"
                     sizes="(max-width: 1024px) 100vw, 50vw"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10" />
                 </div>
-                {/* Contenido sobre la imagen */}
-                <div className="relative z-10 p-8 w-full">
-                  <h2 className="text-white font-semibold text-lg mb-2 font-poppins">
-                    Respuesta inmediata
-                  </h2>
-                  <p className="text-white/70 text-sm leading-relaxed mb-6 font-roboto">
-                    Escríbenos por WhatsApp y te atenderemos de inmediato. Es la forma más rápida.
-                  </p>
+                {/* Contenido debajo */}
+                <div className="flex flex-col items-center text-center p-7 gap-4">
+                  <div>
+                    <h2 className="text-white font-semibold text-lg mb-2 font-poppins">
+                      Respuesta inmediata
+                    </h2>
+                    <p className="text-white/60 text-sm leading-relaxed font-roboto">
+                      Escríbenos por WhatsApp y te atenderemos de inmediato. Es la forma más rápida.
+                    </p>
+                  </div>
                   <WATracker
                     href={WA_LINK}
                     source="contacto"

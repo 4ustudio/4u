@@ -25,10 +25,14 @@ const stats = [
     ),
   },
   {
-    number: "4.9/5",
-    label: "Valoración",
+    number: "+20",
+    label: "Instructores",
     icon: (
-      <path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3l-5.6 2.9 1.1-6.2L3 9.6l6.2-.9L12 3Z" />
+      <>
+        <circle cx="12" cy="7" r="4" />
+        <path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" />
+        <path d="M18 10l2 2 4-4" />
+      </>
     ),
   },
 ];
@@ -104,10 +108,12 @@ export default function HeroSection() {
             <h1 className="hero-heading mb-4 font-extrabold text-white font-poppins animate-fade-in-up anim-d2">
               Cumple tus{" "}
               <span className="text-[#ff7a00]">sueños</span>{" "}
-              musicales
+              <span className="text-[#ff7a00]">musicales</span>
             </h1>
             <p className="text-base md:text-lg text-white/80 max-w-[430px] mb-7 leading-snug font-roboto animate-fade-in-up anim-d4">
-              Aprende, crea y conecta con tu pasión. Nuestros cursos están diseñados para niños, adolescentes y adultos de todos los niveles.
+              Aprende, crea y conecta con tu pasión.<br />
+              Nuestros cursos están diseñados para niños, adolescentes<br />
+              y adultos de todos los niveles.
             </p>
 
             <div className="flex lg:hidden mb-6 animate-fade-in-up anim-d5">

@@ -32,11 +32,12 @@ export default function PlanesKidsTeensPage() {
           </div>
           <div className="border-l-4 border-[#ff6b00] pl-8">
             <h1 className="text-5xl font-extrabold leading-tight tracking-normal text-white md:text-6xl font-poppins">
-              Nuestros <br />
-              Planes <span className="text-[#ff6b00]">Kids & Teens</span>
+              Nuestros Planes<br />
+              <span className="text-[#ff6b00]">Kids & Teens</span>
             </h1>
             <p className="mt-5 max-w-3xl text-xl leading-relaxed text-white font-roboto">
-              Planes diseñados para niños y adolescentes que quieren aprender, crear y vivir la música en un ambiente divertido, seguro e inspirador.
+              Planes diseñados para niños y adolescentes que quieren aprender, crear y vivir<br />
+              la música en un ambiente divertido, seguro e inspirador.
             </p>
           </div>
         </div>
@@ -73,8 +74,8 @@ function FooterInfo({ title, text }: { title: string; text: string }) {
         </svg>
       </span>
       <span>
-        <strong className="block text-lg font-extrabold font-poppins">{title}</strong>
-        <span className="text-gray-500 font-roboto">{text}</span>
+        <strong className="block text-lg font-extrabold font-poppins text-balance">{title}</strong>
+        <span className="text-gray-500 font-roboto text-balance">{text}</span>
       </span>
     </div>
   );

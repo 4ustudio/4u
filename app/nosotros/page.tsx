@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 const values = [
   {
     title: "Pasión",
-    description: "Amamos la música y la enseñanza.",
+    description: "Amamos la música\ny la enseñanza.",
     icon: (
       <svg className="w-9 h-9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
@@ -27,7 +27,7 @@ const values = [
   },
   {
     title: "Disciplina",
-    description: "El crecimiento artístico requiere constancia.",
+    description: "El crecimiento artístico\nrequiere constancia.",
     icon: (
       <svg className="w-9 h-9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 20h9" />
@@ -37,7 +37,7 @@ const values = [
   },
   {
     title: "Creatividad",
-    description: "Cada estudiante desarrolla su propia identidad.",
+    description: "Cada estudiante desarrolla\nsu propia identidad.",
     icon: (
       <svg className="w-9 h-9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
@@ -47,7 +47,7 @@ const values = [
   },
   {
     title: "Comunidad",
-    description: "Creamos espacios donde la música conecta personas.",
+    description: "Creamos espacios donde\nla música conecta personas.",
     icon: (
       <svg className="w-9 h-9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -73,13 +73,25 @@ const processSteps = [
 export default function NosotrosPage() {
   return (
     <PageLayout>
+      {/* Intro institucional */}
+      <section className="relative w-full bg-black border-b border-white/5 px-6 py-10 lg:px-8">
+        <div className="max-w-7xl mx-auto max-w-3xl">
+          <p className="text-white/70 leading-relaxed font-roboto mb-4">
+            Somos una academia y estudio musical creado para personas que aman la música y desean desarrollar su talento de forma profesional.
+          </p>
+          <p className="text-white/70 leading-relaxed font-roboto">
+            Acompañamos a niños, adolescentes y adultos en su proceso artístico mediante clases personalizadas, producción musical y experiencias creativas reales.
+          </p>
+        </div>
+      </section>
+
       {/* ──────── 1. Hero institucional ──────── */}
       <section className="relative w-full min-h-[580px] sm:min-h-[620px] lg:min-h-[650px] bg-black overflow-hidden flex items-stretch">
 
         {/* Imagen de fondo — posición ajustada por breakpoint */}
         <div className="absolute inset-0">
           <OptimizedImage
-            src="/images/hero/Banner.png"
+            src="/images/hero/Banner-Nosotros.jpg.jpeg"
             alt="4U Studio Academy"
             fill
             priority
@@ -157,73 +169,33 @@ export default function NosotrosPage() {
         </div>
       </section>
 
-      {/* ──────── 2. Studio 4U Academy ──────── */}
-      <section className="relative w-full bg-black py-20 md:py-28 overflow-hidden">
-        <div className="absolute inset-0 opacity-[0.02]">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full bg-[#ff7a00] blur-[120px]" />
-        </div>
-        <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+      {/* ──────── 3. Frase institucional ──────── */}
+      <section className="relative w-full bg-black overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 min-h-[380px] lg:min-h-[420px] items-center gap-8 py-16 lg:py-20">
+            {/* Text left */}
             <div>
-              <div className="flex items-center gap-3 mb-6">
-                <span className="h-px w-8 bg-[#ff7a00]" />
-                <span className="text-[#ff7a00] text-xs font-bold uppercase tracking-[0.2em] font-poppins">
-                  Quiénes somos
-                </span>
-              </div>
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white font-poppins leading-tight mb-6">
-                STUDIO 4U<br />
-                <span className="text-[#ff7a00]">ACADEMY</span>
+              <span className="block text-6xl text-[#ff7a00]/30 mb-4 font-poppins leading-none">&ldquo;</span>
+              <h2 className="text-2xl md:text-3xl lg:text-4xl font-extrabold text-white font-poppins leading-tight mb-4">
+                En 4U Studio Academy no enseñamos<br />
+                música como una materia.
               </h2>
-              <p className="text-white/65 leading-relaxed font-roboto mb-5">
-                Somos una academia y estudio musical creado para personas que aman la música y desean desarrollar su talento de forma profesional.
-              </p>
-              <p className="text-white/65 leading-relaxed font-roboto">
-                Acompañamos a niños, adolescentes y adultos en su proceso artístico mediante clases personalizadas, producción musical y experiencias creativas reales.
+              <p className="text-lg md:text-xl text-[#ff7a00] font-bold font-poppins">
+                La enseñamos como un sueño que se construye.
               </p>
             </div>
-
-            <div className="flex items-center justify-center">
-              <div className="w-full max-w-[400px] aspect-square rounded-2xl border border-white/10 bg-white/[0.03] flex items-center justify-center p-10 shadow-2xl">
-                <OptimizedImage
-                  src="/images/icons/Recurso 1.png"
-                  alt="4U Studio Academy"
-                  width={320}
-                  height={120}
-                  className="w-full h-auto object-contain"
-                  priority
-                />
-              </div>
+            {/* Photo right */}
+            <div className="relative hidden lg:block h-[380px] lg:h-[420px] rounded-2xl overflow-hidden">
+              <OptimizedImage
+                src="/images/hero/Banner.png"
+                alt=""
+                fill
+                className="object-cover object-[50%_30%]"
+                sizes="50vw"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-black via-black/30 to-transparent" />
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* ──────── 3. Frase institucional ──────── */}
-      <section className="relative w-full min-h-[380px] lg:min-h-[420px] bg-black overflow-hidden flex items-center">
-        <div className="absolute inset-0">
-          <OptimizedImage
-            src="/images/hero/Banner.png"
-            alt=""
-            fill
-            className="object-cover object-[50%_30%]"
-            sizes="100vw"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/60 to-black/75" />
-          <div className="absolute inset-0 bg-black/40" />
-        </div>
-
-        <div className="relative z-10 w-full max-w-4xl mx-auto px-6 lg:px-8 py-16 text-center">
-          <span className="block text-5xl md:text-6xl lg:text-7xl text-[#ff7a00]/20 mb-6 font-poppins leading-none">
-            &ldquo;
-          </span>
-          <h2 className="text-2xl md:text-3xl lg:text-4xl font-extrabold text-white font-poppins leading-tight mb-4">
-            En STUDIO 4U Academy no enseñamos<br />
-            música como una materia.
-          </h2>
-          <p className="text-lg md:text-xl text-[#ff7a00] font-bold font-poppins">
-            La enseñamos como un sueño que se construye.
-          </p>
         </div>
       </section>
 
@@ -338,7 +310,7 @@ export default function NosotrosPage() {
                 <h3 className="text-lg font-bold text-white mb-2 font-poppins">
                   {value.title}
                 </h3>
-                <p className="text-white/55 leading-relaxed font-roboto text-sm">
+                <p className="text-white/55 leading-relaxed font-roboto text-sm whitespace-pre-line">
                   {value.description}
                 </p>
               </div>

@@ -12,10 +12,12 @@ export default function CoursesSection() {
               Explora tu talento
             </p>
             <h2 className="mb-4 text-[38px] font-extrabold leading-[1] tracking-normal text-gray-900 font-poppins">
-              Encuentra tu <span className="text-[#ff7a00]">curso ideal</span>
+              Encuentra <span className="text-[#ff7a00]">tu</span> <span className="text-[#ff7a00]">curso ideal</span>
             </h2>
             <p className="text-sm leading-relaxed text-gray-500 font-roboto">
-              Descubre nuestra variedad de cursos diseñados para cada pasión musical.
+              Descubre nuestra variedad<br />
+              de cursos diseñados para cada<br />
+              pasión musical.
             </p>
             <Link
               href="/cursos"

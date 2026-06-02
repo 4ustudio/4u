@@ -43,7 +43,7 @@ const audiences = [
   },
   {
     title: "Adultos",
-    description: "Aprende a tu ritmo sin importar tu experiencia previa.",
+    description: "Aprende a tu ritmo sin importar\ntu experiencia previa.",
     icon: (
       <svg className="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="8" r="4" />
@@ -114,7 +114,7 @@ export default function CursosPage() {
             alt="Cursos de música 4U Studio Academy"
             fill
             priority
-            className="object-cover object-[center_60%] scale-105 [transform:scale(1.05)_scaleX(-1)]"
+            className="object-cover object-[center_75%] scale-105 [transform:scale(1.05)_scaleX(-1)]"
             sizes="100vw"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/70 to-black/40" />
@@ -179,7 +179,8 @@ export default function CursosPage() {
               <span className="text-[#ff7a00]">cursos</span>
             </h2>
             <p className="mt-4 text-white/50 max-w-2xl mx-auto font-roboto text-sm md:text-base">
-              Elige el instrumento o disciplina que más te apasione y comienza tu viaje musical con nosotros.
+              Elige el instrumento o disciplina que más te apasione<br />
+              y comienza tu viaje musical con nosotros.
             </p>
           </div>
 
@@ -195,8 +196,8 @@ export default function CursosPage() {
               Para todos
             </span>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white mt-4 font-poppins leading-tight">
-              ¿Para quién son nuestros{" "}
-              <span className="text-[#ff7a00]">cursos</span>?
+              Un espacio para cada{" "}
+              <span className="text-[#ff7a00]">etapa de aprendizaje</span>
             </h2>
           </div>
 
@@ -212,7 +213,7 @@ export default function CursosPage() {
                 <h3 className="text-2xl font-bold text-white mb-3 font-poppins">
                   {item.title}
                 </h3>
-                <p className="text-white/55 leading-relaxed font-roboto text-sm">
+                <p className="text-white/55 leading-relaxed font-roboto text-sm whitespace-pre-line">
                   {item.description}
                 </p>
               </div>
@@ -267,6 +268,7 @@ export default function CursosPage() {
         <div className="relative z-10 max-w-3xl mx-auto px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white font-poppins leading-tight">
             ¿Listo para comenzar tu{" "}
+            <br className="hidden md:block" />
             <span className="text-[#ff7a00]">camino musical</span>?
           </h2>
           <p className="mt-6 text-white/60 max-w-2xl mx-auto font-roboto text-base md:text-lg leading-relaxed">

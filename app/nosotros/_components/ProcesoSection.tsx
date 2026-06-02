@@ -52,9 +52,9 @@ export default function ProcesoSection() {
           <span className="text-[#ff7a00] text-xs font-bold uppercase tracking-[0.2em] font-poppins">
             Nuestro proceso
           </span>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white mt-4 font-poppins leading-tight">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#ff7a00] mt-4 font-poppins leading-tight">
             Nuestro objetivo es que cada alumno<br className="hidden md:block" />
-            viva este <span className="text-[#ff7a00]">proceso</span>
+            viva este proceso
           </h2>
         </div>
 
@@ -64,7 +64,7 @@ export default function ProcesoSection() {
           {/* Línea de fondo */}
           <div
             className="absolute h-px bg-white/10 pointer-events-none"
-            style={{ top: 32, left: `${halfColPct}%`, width: `${trackPct}%` }}
+            style={{ top: 32, left: `${halfColPct}%`, width: `${trackPct}%`, zIndex: 0 }}
           />
 
           {/* Línea naranja de progreso */}
@@ -77,6 +77,7 @@ export default function ProcesoSection() {
               background: 'linear-gradient(to right, #ff7a00, #ff9933)',
               boxShadow: fillPct > 0 ? '0 0 10px rgba(255,122,0,0.65)' : 'none',
               transition: 'width 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.3s ease',
+              zIndex: 0,
             }}
           />
 
@@ -132,7 +133,7 @@ export default function ProcesoSection() {
                   </div>
 
                   {/* Círculo */}
-                  <div className="relative">
+                  <div className="relative z-10">
                     {/* Ring pulsante solo en último paso */}
                     {isLast && (
                       <div

@@ -29,7 +29,9 @@ export default function PlanesPage() {
               <span className="h-px w-12 bg-[#ff7a00]" />
             </p>
             <h1 className="text-4xl font-extrabold leading-tight tracking-normal md:text-6xl font-poppins">
-              Elige el plan ideal para <span className="text-[#ff7a00]">tu camino musical</span>
+              Elige el plan ideal para{" "}
+              <br className="hidden sm:block" />
+              <span className="text-[#ff7a00]">tu camino musical</span>
             </h1>
             <p className="mt-4 text-lg text-gray-500 font-roboto">
               Programas diseñados para cada etapa de tu aprendizaje. Aprende, crea y vive la música.

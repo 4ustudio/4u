@@ -122,7 +122,7 @@ export default function ProduccionPage() {
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-black uppercase text-white leading-[0.95] tracking-tight mb-6 font-poppins">
               Construyo<br />
               mi carrera<br />
-              musical
+              <span className="text-[#ff7a00]">musical</span>
             </h1>
 
             {/* Descripción */}
@@ -220,14 +220,13 @@ export default function ProduccionPage() {
           <Reveal className="lg:ml-auto lg:max-w-lg text-center lg:text-left">
             {/* Título */}
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-white uppercase leading-tight mb-4 font-poppins">
-              Aquí Studio 4U<br />
-              Academy actúa como:
+              Más que una<br />
+              academia de música
             </h2>
 
-            {/* Subtítulo naranja */}
-            <p className="text-[#ff7a00] text-lg md:text-xl font-bold mb-8 font-poppins">
-              Academia + Productora +<br />
-              Casa de desarrollo artístico.
+            {/* Subtítulo */}
+            <p className="text-white/75 text-base md:text-lg font-roboto mb-8 leading-relaxed">
+              4U Studio es un espacio para aprender, crear y desarrollar tu talento artístico.
             </p>
 
             {/* CTA */}

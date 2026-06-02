@@ -102,7 +102,8 @@ export default function InscripcionPage() {
               Comienza tu<span style={{ color: ORANGE }}> viaje musical</span>
             </h1>
             <p className="text-white/50 text-sm mt-3 font-roboto max-w-md mx-auto">
-              Completa el formulario y nuestro equipo te contactará para darte la bienvenida y coordinar tu primera clase.
+              Completa el formulario y nuestro equipo te contactará<br />
+              para darte la bienvenida y coordinar tu primera clase.
             </p>
           </div>
 
@@ -330,28 +331,6 @@ export default function InscripcionPage() {
                 )}
               </button>
 
-              {/* Trust strip */}
-              <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-[11px] text-white/30 font-roboto">
-                <span className="flex items-center gap-1.5">
-                  <svg className="h-3 w-3 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                    <path d="M20 6 9 17l-5-5" />
-                  </svg>
-                  Sin compromiso
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <svg className="h-3 w-3" style={{ color: ORANGE }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                    <rect x="3" y="11" width="18" height="11" rx="2" />
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                  </svg>
-                  Tus datos están seguros
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <svg className="h-3 w-3 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                  </svg>
-                  Respuesta rápida
-                </span>
-              </div>
             </form>
           </div>
 

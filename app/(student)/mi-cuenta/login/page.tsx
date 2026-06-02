@@ -7,7 +7,7 @@ import { loginAction } from '../../_actions/student'
 import StudentNav from '../../_components/StudentNav'
 
 const inputClass =
-  'w-full bg-white/[0.06] border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-white/30 font-roboto focus:outline-none focus:ring-2 focus:ring-[#ff7a00]/50 transition-all disabled:opacity-50'
+  'w-full bg-white/[0.06] border border-white/10 rounded-xl px-5 py-4 text-white text-sm placeholder:text-white/30 font-roboto focus:outline-none focus:ring-2 focus:ring-[#ff7a00]/50 transition-all disabled:opacity-50'
 
 function LoginForm() {
   const [state, action, isPending] = useActionState(loginAction, {})
@@ -20,9 +20,9 @@ function LoginForm() {
     <div className="min-h-screen bg-black text-white">
       <StudentNav />
       <div className="flex items-center justify-center px-4 pt-24 pb-12">
-        <div className="w-full max-w-sm">
+        <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-white font-poppins">Iniciar sesión</h1>
+            <h1 className="text-3xl font-bold text-white font-poppins">Iniciar sesión</h1>
             <p className="text-sm text-white/40 mt-1 font-roboto">Accede a tu cuenta en 4U Studio Academy</p>
           </div>
 
@@ -73,7 +73,7 @@ function LoginForm() {
             <button
               type="submit"
               disabled={isPending}
-              className="w-full flex items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-bold text-white transition-all disabled:opacity-60 font-poppins hover:brightness-110"
+              className="w-full flex items-center justify-center gap-2 rounded-xl py-4 text-sm font-bold text-white transition-all disabled:opacity-60 font-poppins hover:brightness-110"
               style={{ backgroundColor: '#ff7a00' }}
             >
               {isPending ? 'Ingresando...' : 'Ingresar'}

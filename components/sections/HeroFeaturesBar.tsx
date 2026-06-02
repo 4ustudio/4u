@@ -17,7 +17,7 @@ export default function HeroFeaturesBar() {
                   <FeatureIcon name={b.icon} />
                 </div>
                 <div>
-                  <p className="text-base font-bold text-white font-poppins">{b.title}</p>
+                  <p className="text-[13px] font-bold text-white font-poppins whitespace-nowrap">{b.title}</p>
                   <p className="text-sm text-white/65 font-roboto">{b.label}</p>
                 </div>
               </div>

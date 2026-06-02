@@ -83,7 +83,7 @@ export default function NosotrosPage() {
             alt="4U Studio Academy"
             fill
             priority
-            className="object-cover object-center"
+            className="object-cover object-[70%_50%]"
             sizes="100vw"
           />
         </div>
@@ -214,7 +214,7 @@ export default function NosotrosPage() {
                   src="/images/hero/Nuestra historia.png"
                   alt="Nuestra Historia"
                   fill
-                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                  className="object-cover object-[50%_70%] transition-transform duration-700 group-hover:scale-105"
                   sizes="(max-width: 768px) 100vw, 33vw"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
@@ -236,7 +236,7 @@ export default function NosotrosPage() {
                   src="/images/hero/Nuestra mision.png"
                   alt="Nuestra Misión"
                   fill
-                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                  className="object-cover object-[50%_70%] transition-transform duration-700 group-hover:scale-105"
                   sizes="(max-width: 768px) 100vw, 33vw"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />

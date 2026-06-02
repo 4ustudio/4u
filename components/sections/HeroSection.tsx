@@ -7,7 +7,6 @@ import OptimizedImage from "@/components/ui/OptimizedImage";
 const SLIDES: Array<{ src: string; type: 'image' | 'video' }> = [
   { src: "/images/hero/banner-principal.jpg", type: 'image' },
   { src: "/images/hero/magnific_anima-esta-imagen_5xefFSwKxe.mp4", type: 'video' },
-  { src: "/images/hero/Banner-principal-2.jpg.jpeg", type: 'image' },
 ];
 
 const stats = [

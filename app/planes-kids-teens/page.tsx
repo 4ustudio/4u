@@ -10,42 +10,44 @@ export const metadata: Metadata = {
 
 const kidsPlans = [
   {
-    label: "Plan 1",
-    title: "Plan Kids & Teens 1 -",
-    accent: "Descubro la Música",
+    label: "Plan Kids & Teens",
+    title: "Plan Kids & Teens",
+    accent: "",
     price: "$1.100.000",
     color: "#ff6b00",
     imagePosition: "object-[25%_55%]",
     image: "/images/courses/plan-kids/Plan 1 Kids.png",
-    description: "El primer paso para que los más jóvenes exploren la música, desarrollen su talento y aprendan jugando.",
+    description: "Plan completo para niños y adolescentes: aprenden con profesores especializados, graban su canción y se presentan en tarima ante el público.",
     features: [
-      "Clases con profesores especializados",
-      "Clases de instrumento o canto adaptadas a su edad",
+      "8 clases mensuales",
+      "Grabación profesional de canción acústica cada 3 meses, mezclada y masterizada, lista para compartir o publicar en plataformas digitales",
+      "Presentaciones en vivo en tarima (marzo, junio, septiembre y diciembre)*",
+      "Clases con profesores especializados: Técnica vocal · Guitarra · Bajo · Teclado · Batería · Otros instrumentos según disponibilidad",
       "Metodología lúdica, dinámica y creativa",
-      "Desarrollo oído musical, ritmo y expresión",
-      "Introducción a ensambles musicales sencillos",
-      "Clases grabadas y entregadas en MP3",
+      "Entrenamiento auditivo, sentido rítmico e interpretación artística",
+      "4 de las 8 clases grabadas y entregadas en formato MP3 (audio original sin edición)",
     ],
-    objective: "Que el niño o adolescente descubra su talento natural mientras aprende y se divierte.",
+    objective: "Que el niño o adolescente aprenda, cree y se exprese musicalmente en un ambiente divertido e inspirador, culminando con una grabación profesional que queda como recuerdo.",
   },
   {
-    label: "Plan 2",
-    title: "Plan Kids & Teens 2 -",
-    accent: "Grabo Mi Canción",
+    label: "Plan Premium Kids & Teens",
+    title: "Plan Premium",
+    accent: "Kids & Teens",
     price: "$1.600.000",
     color: "#1397a5",
     imagePosition: "object-[70%_55%]",
     image: "/images/courses/plan-kids/Plan 2 Teens.png",
-    description: "Vive la experiencia de crear tu propia canción y grabarla como un verdadero artista.",
+    description: "La experiencia más completa: grabación profesional todos los meses, presentaciones en vivo y acompañamiento artístico integral mes a mes.",
     features: [
-      "Estudio de grabación y uso de micrófono",
-      "Grabación profesional cada 3 meses",
-      "Mezcla básica profesional",
-      "Entrega de tu canción como recuerdo",
-      "Clases grabadas y entregadas en MP3",
-      "Aprendizaje guiado por profesionales",
+      "8 clases mensuales",
+      "Grabación profesional de canción acústica cada mes, mezclada y masterizada, lista para compartir o publicar en plataformas digitales",
+      "Presentaciones en vivo en tarima (marzo, junio, septiembre y diciembre)*",
+      "Clases con profesores especializados: Técnica vocal · Guitarra · Bajo · Teclado · Batería · Otros instrumentos según disponibilidad",
+      "Metodología lúdica, dinámica y creativa",
+      "Entrenamiento auditivo, sentido rítmico e interpretación artística",
+      "4 de las 8 clases grabadas y entregadas en formato MP3 (audio original sin edición)",
     ],
-    objective: "Vivir la emoción de crear y grabar tu canción, fortaleciendo la autoestima y la confianza.",
+    objective: "Vivir la emoción de grabar una canción profesional cada mes, construyendo confianza, autoestima y un portafolio musical propio.",
   },
 ];
 
@@ -88,7 +90,11 @@ export default function PlanesKidsTeensPage() {
           ))}
         </div>
 
-        <div className="plans-frame mt-10 grid items-center gap-6 rounded-2xl bg-white p-7 shadow-xl shadow-gray-950/10 ring-1 ring-gray-200 md:grid-cols-[1.2fr_1fr_1fr_auto]">
+        <p className="plans-frame mt-4 text-xs text-gray-400 font-roboto">
+          *Aplica para estudiantes activos al momento de cada presentación.
+        </p>
+
+        <div className="plans-frame mt-8 grid items-center gap-6 rounded-2xl bg-white p-7 shadow-xl shadow-gray-950/10 ring-1 ring-gray-200 md:grid-cols-[1.2fr_1fr_1fr_auto]">
           <FooterInfo title="¿No sabes qué plan elegir?" text="Te ayudamos a encontrar el plan ideal para el talento y los sueños de tu hijo." />
           <FooterInfo title="Agenda una clase" text="Conoce nuestras instalaciones y vive la experiencia 4U." />
           <FooterInfo title="Hablemos de tu proyecto" text="Cuéntanos sus intereses y objetivos y te guiamos en el camino." />

@@ -45,7 +45,7 @@ const statsRow = (
 export default function HeroSection() {
   return (
     <section className="hero-home relative w-full overflow-hidden bg-black">
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 animate-fade-in-slow">
         <OptimizedImage
           src="/images/hero/banner-principal.jpg"
           alt="4uStudio Academy — estudio de música profesional"
@@ -56,8 +56,8 @@ export default function HeroSection() {
         />
       </div>
 
-      <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/45 to-black/15" />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/30" />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/45 to-black/15 animate-fade-in-slow" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/30 animate-fade-in-slow" />
 
       <div className="home-frame relative z-10">
         <div className="hero-home-inner relative">

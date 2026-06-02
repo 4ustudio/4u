@@ -137,14 +137,14 @@ function KidsPlanCard({
   objective: string;
 }) {
   return (
-    <article className="grid overflow-hidden rounded-2xl bg-white shadow-xl shadow-gray-950/10 ring-1 lg:grid-cols-[42%_58%]" style={{ borderColor: `${color}55` }}>
+    <article className="grid overflow-hidden rounded-2xl bg-white shadow-xl shadow-gray-950/10 ring-1 lg:grid-cols-[47%_53%]" style={{ borderColor: `${color}55` }}>
       <div className="relative min-h-[370px]">
         <OptimizedImage
           src={image}
           alt={accent}
           fill
-          className={`object-cover ${imagePosition}`}
-          sizes="(max-width: 1024px) 100vw, 40vw"
+          className="object-cover object-[center_18%]"
+          sizes="(max-width: 1024px) 100vw, 47vw"
         />
       </div>
       <div className="p-5">

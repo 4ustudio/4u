@@ -13,21 +13,28 @@ interface Props {
 
 export default function PasswordSection({ studentId, hasAccount, email }: Props) {
   const [state, action, isPending] = useActionState(setStudentPasswordAction, {})
-  const [showPwd, setShowPwd]           = useState(false)
-  const [pwdValue, setPwdValue]         = useState('')
+  const [showPwd, setShowPwd]       = useState(false)
+  const [pwdValue, setPwdValue]     = useState('')
   const [confirmValue, setConfirmValue] = useState('')
-  const [lastSetPwd, setLastSetPwd]     = useState<string | null>(null)
+  const [lastSetPwd, setLastSetPwd] = useState<string | null>(null)
+  // Ref evita stale-closure: siempre tiene el valor más reciente
+  const capturedPwd = useRef('')
   const prevSuccess = useRef(false)
 
-  // Capturar contraseña cuando la acción reporta éxito
+  const handlePwdChange = (v: string) => {
+    setPwdValue(v)
+    capturedPwd.current = v
+  }
+
   useEffect(() => {
     if (state.success && !prevSuccess.current) {
-      setLastSetPwd(pwdValue)
+      setLastSetPwd(capturedPwd.current)
       setPwdValue('')
       setConfirmValue('')
+      capturedPwd.current = ''
     }
     prevSuccess.current = !!state.success
-  }, [state.success]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [state.success])
 
   const EyeIcon = ({ open }: { open: boolean }) => open ? (
     <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
@@ -125,7 +132,7 @@ export default function PasswordSection({ studentId, hasAccount, email }: Props)
               type={showPwd ? 'text' : 'password'}
               name="password"
               value={pwdValue}
-              onChange={e => setPwdValue(e.target.value)}
+              onChange={e => handlePwdChange(e.target.value)}
               required
               minLength={6}
               disabled={isPending || !email}

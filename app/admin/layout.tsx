@@ -4,6 +4,7 @@ import AdminSidebar, { MobileBottomNav } from './_components/AdminSidebar'
 import { signOutAction } from './_actions/auth'
 import { RealtimeProvider } from '@/components/admin/RealtimeProvider'
 import NotificationBell from '@/components/admin/NotificationBell'
+import PageWrapper from './_components/PageWrapper'
 
 export const metadata = { title: 'Panel Admin — 4U Studio Academy' }
 
@@ -49,7 +50,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
           {/* Contenido principal */}
           <main className="flex-1 p-4 lg:p-6 overflow-auto pb-20 lg:pb-6">
-            {children}
+            <PageWrapper>{children}</PageWrapper>
           </main>
         </div>
 

@@ -341,7 +341,7 @@ export default function HybridView({
   )
 
   return (
-    <>
+    <div className="animate-fade-in-up">
       {/* ── MÓVIL: tabs + contenido ───────────────────────────── */}
       <div className="lg:hidden -m-4">
         {/* Tabs móvil */}
@@ -381,6 +381,6 @@ export default function HybridView({
           {CalendarPanel}
         </div>
       </div>
-    </>
+    </div>
   )
 }

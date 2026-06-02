@@ -585,7 +585,7 @@ export default function AdminEnrollmentsPage() {
   }
 
   return (
-    <div className="space-y-5 w-full">
+    <div className="space-y-5 w-full page-animate">
 
       {/* Header */}
       <div className="flex items-center justify-between">

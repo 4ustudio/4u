@@ -83,7 +83,7 @@ export default async function ClasesMesPage() {
         @page { margin: 1.5cm; }
       `}</style>
 
-      <div className="print-page min-h-screen bg-black text-white max-w-3xl mx-auto px-4 py-8 space-y-6">
+      <div className="print-page min-h-screen bg-black text-white max-w-3xl mx-auto px-4 py-8 space-y-6 page-animate">
 
         {/* Header */}
         <div className="no-print flex items-center justify-between gap-4 flex-wrap">

@@ -70,7 +70,7 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
   ])
 
   return (
-    <div className="space-y-5 w-full">
+    <div className="space-y-5 w-full page-animate">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">

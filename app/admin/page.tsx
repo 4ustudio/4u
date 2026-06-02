@@ -94,7 +94,7 @@ export default async function AdminDashboard() {
   const today = new Date().toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
 
   return (
-    <div className="space-y-6 w-full">
+    <div className="space-y-6 w-full page-animate">
       {/* Bienvenida */}
       <div className="flex items-start justify-between">
         <div>

@@ -82,7 +82,7 @@ export default async function MiCuentaPage() {
       <AutoRefresh studentId={student.id} />
       <StudentNav userEmail={user.email ?? ''} />
 
-      <main className="max-w-5xl mx-auto px-4 pt-[82px] pb-12 space-y-8">
+      <main className="max-w-5xl mx-auto px-4 pt-[82px] pb-12 space-y-8 page-animate">
 
         {/* ── HERO HEADER ────────────────────────────────────────────── */}
         <section className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black p-6 sm:p-8">

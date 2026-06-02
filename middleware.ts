@@ -46,6 +46,16 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // ── Ruta /agendar — requiere sesión ───────────────────────────────
+  if (pathname === '/agendar') {
+    if (!user) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/mi-cuenta/login'
+      url.searchParams.set('next', '/agendar')
+      return NextResponse.redirect(url)
+    }
+  }
+
   // Redirigir al dashboard si ya tiene sesión y entra al login del portal
   if (pathname === '/mi-cuenta/login' && user) {
     const url = request.nextUrl.clone()
@@ -57,5 +67,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/mi-cuenta', '/mi-cuenta/login'],
+  matcher: ['/admin/:path*', '/mi-cuenta', '/mi-cuenta/login', '/agendar'],
 }

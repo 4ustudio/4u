@@ -119,7 +119,7 @@ export default function ProduccionPage() {
             </p>
 
             {/* Heading */}
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-black uppercase text-white leading-[0.95] tracking-tight mb-6 font-poppins">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-white leading-[0.95] tracking-tight mb-6 font-poppins">
               Construyo<br />
               mi carrera<br />
               <span className="text-[#ff7a00]">musical</span>

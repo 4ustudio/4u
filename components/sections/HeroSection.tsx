@@ -4,9 +4,10 @@ import { useState, useEffect } from "react";
 import Button from "@/components/ui/Button";
 import OptimizedImage from "@/components/ui/OptimizedImage";
 
-const SLIDES = [
-  "/images/hero/banner-principal.jpg",
-  "/images/hero/Banner-principal-2.jpg.jpeg",
+const SLIDES: Array<{ src: string; type: 'image' | 'video' }> = [
+  { src: "/images/hero/banner-principal.jpg", type: 'image' },
+  { src: "/images/hero/magnific_anima-esta-imagen_5xefFSwKxe.mp4", type: 'video' },
+  { src: "/images/hero/Banner-principal-2.jpg.jpeg", type: 'image' },
 ];
 
 const stats = [
@@ -24,21 +25,10 @@ const stats = [
       <path d="M9 18V5l10-2v13M9 18a3 3 0 1 1-2-2.83M19 16a3 3 0 1 1-2-2.83" />
     ),
   },
-  {
-    number: "+20",
-    label: "Instructores",
-    icon: (
-      <>
-        <circle cx="12" cy="7" r="4" />
-        <path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" />
-        <path d="M18 10l2 2 4-4" />
-      </>
-    ),
-  },
 ];
 
 const statsRow = (
-  <div className="grid grid-cols-3 divide-x divide-white/10 overflow-hidden rounded-2xl border border-white/15 bg-black/45 shadow-2xl backdrop-blur-md">
+  <div className="grid grid-cols-2 divide-x divide-white/10 overflow-hidden rounded-2xl border border-white/15 bg-black/45 shadow-2xl backdrop-blur-md">
     {stats.map((stat) => (
       <div key={stat.label} className="min-w-[92px] px-5 py-3.5 text-center">
         <svg className="mx-auto mb-2 h-5 w-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -63,22 +53,33 @@ export default function HeroSection() {
 
   return (
     <section className="hero-home relative w-full overflow-hidden bg-black">
-      {/* Carousel de imágenes */}
-      {SLIDES.map((src, i) => (
+      {/* Carousel de imágenes/video */}
+      {SLIDES.map((slide, i) => (
         <div
-          key={src}
+          key={slide.src}
           className="absolute inset-0 transition-opacity duration-1000 ease-in-out"
           style={{ opacity: i === current ? 1 : 0 }}
           aria-hidden={i !== current}
         >
-          <OptimizedImage
-            src={src}
-            alt="4uStudio Academy — estudio de música profesional"
-            fill
-            priority={i === 0}
-            className="object-cover object-[60%_50%]"
-            sizes="100vw"
-          />
+          {slide.type === 'video' ? (
+            <video
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="absolute inset-0 h-full w-full object-cover object-[60%_50%]"
+              src={slide.src}
+            />
+          ) : (
+            <OptimizedImage
+              src={slide.src}
+              alt="4uStudio Academy — estudio de música profesional"
+              fill
+              priority={i === 0}
+              className="object-cover object-[60%_50%]"
+              sizes="100vw"
+            />
+          )}
         </div>
       ))}
 

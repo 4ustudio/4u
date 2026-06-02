@@ -31,6 +31,7 @@ export default function TestimonialStrip() {
             <p className="max-w-xl font-poppins text-xl font-extrabold italic leading-[1.2] text-white md:text-[26px] lg:text-[30px]">
               La música no solo cambia tu sonido,{" "}
               <span className="text-[#ff7a00]">cambia tu vida.</span>
+              <span className="font-poppins text-5xl font-black leading-none text-[#ff7a00] md:text-6xl">&rdquo;</span>
             </p>
             <p className="mt-3 max-w-md font-roboto text-sm italic leading-relaxed text-white/65 md:text-base">
               Atrévete a comenzar tu historia musical hoy.

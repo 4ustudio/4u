@@ -4,7 +4,7 @@ export default function TestimonialStrip() {
   return (
     <section className="w-full bg-white py-3">
       <div className="home-frame">
-        <div className="relative grid min-h-[260px] grid-cols-1 overflow-hidden rounded-xl bg-zinc-900 md:min-h-[300px] md:grid-cols-[60%_40%]">
+        <div className="relative grid min-h-[230px] grid-cols-1 overflow-hidden rounded-xl bg-zinc-900 md:min-h-[250px] md:grid-cols-[70%_30%]">
           {/* Imagen del pianista — protagonista, lado derecho */}
           <div className="absolute inset-0 md:relative md:col-start-2">
             <OptimizedImage
@@ -26,14 +26,14 @@ export default function TestimonialStrip() {
           />
 
           {/* Texto — 60% izquierda, centrado verticalmente */}
-          <div className="relative z-10 flex flex-col justify-center px-7 py-9 md:col-start-1 md:row-start-1 md:px-10 md:py-12">
-            <span className="mb-2 font-poppins text-5xl font-black leading-none text-[#ff7a00] md:text-6xl">&ldquo;</span>
-            <p className="max-w-xl font-poppins text-xl font-extrabold italic leading-[1.2] text-white md:text-[26px] lg:text-[30px]">
-              La música no solo cambia tu sonido,{" "}
+          <div className="relative z-10 flex flex-col justify-center px-7 py-8 md:col-start-1 md:row-start-1 md:px-10 md:py-10">
+            <span className="mb-1 font-poppins text-5xl font-black leading-none text-[#ff7a00]">&ldquo;</span>
+            <p className="max-w-3xl font-poppins text-xl font-extrabold italic leading-[1.2] text-white md:text-[26px] lg:text-[30px]">
+              La música no solo cambia tu sonido,<br />
               <span className="text-[#ff7a00]">cambia tu vida.</span>
-              <span className="font-poppins text-5xl font-black leading-none text-[#ff7a00] md:text-6xl">&rdquo;</span>
+              <span className="ml-2 font-poppins text-5xl font-black leading-none text-[#ff7a00]">&rdquo;</span>
             </p>
-            <p className="mt-3 max-w-md font-roboto text-sm italic leading-relaxed text-white/65 md:text-base">
+            <p className="mt-3 max-w-md font-roboto text-sm italic leading-relaxed text-white/65">
               Atrévete a comenzar tu historia musical hoy.
             </p>
           </div>

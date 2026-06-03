@@ -7,7 +7,7 @@ import { loginAction } from '../../_actions/student'
 import StudentNav from '../../_components/StudentNav'
 
 const inputClass =
-  'w-full bg-white/[0.06] border border-white/10 rounded-xl px-5 py-4 text-white text-sm placeholder:text-white/30 font-roboto focus:outline-none focus:ring-2 focus:ring-[#ff7a00]/50 transition-all disabled:opacity-50'
+  'w-full bg-black/45 border border-white/15 rounded-xl px-5 py-4 text-white text-sm placeholder:text-white/45 font-roboto focus:outline-none focus:ring-2 focus:ring-[#ff7a00]/60 focus:border-[#ff7a00]/60 transition-all disabled:opacity-50'
 
 function LoginForm() {
   const [state, action, isPending] = useActionState(loginAction, {})
@@ -17,13 +17,28 @@ function LoginForm() {
   const nextPath  = searchParams.get('next') ?? ''
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div
+      className="relative min-h-screen overflow-hidden bg-black text-white"
+      style={{
+        backgroundImage: "url('/images/hero/Banner-contactanos.jpg.jpeg')",
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
+    >
+      <div className="absolute inset-0 bg-gradient-to-r from-black via-black/78 to-black/45" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-black/80" />
+      <div className="absolute left-1/2 top-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#ff7a00]/15 blur-3xl" />
       <StudentNav />
-      <div className="flex items-center justify-center px-4 py-12 min-h-[calc(100vh-80px)]">
-        <div className="w-full max-w-md">
+      <div className="relative z-10 flex items-center justify-center px-4 py-12 min-h-[calc(100vh-80px)]">
+        <div className="w-full max-w-md rounded-3xl border border-white/12 bg-black/55 p-8 shadow-2xl shadow-black/60 backdrop-blur-xl">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-white font-poppins">Iniciar sesión</h1>
-            <p className="text-sm text-white/40 mt-1 font-roboto">Accede a tu cuenta en 4U Studio Academy</p>
+            <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full border border-[#ff7a00]/40 bg-[#ff7a00]/15 text-[#ff7a00]">
+              <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M12 15v2m-6 4h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2Zm10-10V7a4 4 0 0 0-8 0v4" />
+              </svg>
+            </div>
+            <h1 className="text-4xl font-bold text-white font-poppins">Iniciar sesión</h1>
+            <p className="text-sm text-white/65 mt-2 font-roboto">Accede a tu cuenta en 4U Studio Academy</p>
           </div>
 
           {linkError && (
@@ -73,14 +88,14 @@ function LoginForm() {
             <button
               type="submit"
               disabled={isPending}
-              className="w-full flex items-center justify-center gap-2 rounded-xl py-4 text-sm font-bold text-white transition-all disabled:opacity-60 font-poppins hover:brightness-110"
+              className="w-full flex items-center justify-center gap-2 rounded-xl py-4 text-sm font-bold text-white shadow-xl shadow-[#ff7a00]/25 transition-all disabled:opacity-60 font-poppins hover:-translate-y-0.5 hover:brightness-110"
               style={{ backgroundColor: '#ff7a00' }}
             >
               {isPending ? 'Ingresando...' : 'Ingresar'}
             </button>
 
             <div className="text-center pt-2">
-              <a href="/mi-cuenta/recuperar-contrasena" className="block text-xs text-white/30 hover:text-white/60 transition-colors font-roboto">
+              <a href="/mi-cuenta/recuperar-contrasena" className="block text-xs text-white/55 hover:text-white transition-colors font-roboto">
                 Olvidé mi contraseña
               </a>
             </div>

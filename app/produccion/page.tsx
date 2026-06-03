@@ -219,14 +219,15 @@ export default function ProduccionPage() {
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-8 py-16">
           <Reveal className="lg:ml-auto lg:max-w-lg text-center lg:text-left">
             {/* Título */}
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-white uppercase leading-tight mb-4 font-poppins">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-white leading-tight mb-4 font-poppins">
               Más que una<br />
               academia de música
             </h2>
 
             {/* Subtítulo */}
-            <p className="text-white/75 text-base md:text-lg font-roboto mb-8 leading-relaxed">
-              4U Studio es un espacio para aprender, crear y desarrollar tu talento artístico.
+            <p className="max-w-[520px] text-white/75 text-base md:text-lg font-roboto mb-8 leading-relaxed">
+              4U Studio es un espacio para aprender, crear y desarrollar<br className="hidden md:block" />
+              tu talento artístico.
             </p>
 
             {/* CTA */}

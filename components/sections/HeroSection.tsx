@@ -5,7 +5,7 @@ import Button from "@/components/ui/Button";
 import OptimizedImage from "@/components/ui/OptimizedImage";
 
 const SLIDES: Array<{ src: string; type: 'image' | 'video' }> = [
-  { src: "/images/hero/banner-principal.jpg", type: 'image' },
+  { src: "/images/hero/magnific_anima-esta-imagen-sin-hac_SOf98hOUb8.mp4", type: 'video' },
   { src: "/images/hero/magnific_anima-esta-imagen_5xefFSwKxe.mp4", type: 'video' },
 ];
 
@@ -110,9 +110,9 @@ export default function HeroSection() {
               <span className="text-[#ff7a00]">sueños</span>{" "}
               <span className="text-[#ff7a00]">musicales</span>
             </h1>
-            <p className="text-base md:text-lg text-white/80 max-w-[430px] mb-7 leading-snug font-roboto animate-fade-in-up anim-d4">
+            <p className="text-base md:text-lg text-white/80 max-w-[470px] mb-7 leading-snug font-roboto animate-fade-in-up anim-d4">
               Aprende, crea y conecta con tu pasión.<br />
-              Nuestros cursos están diseñados para niños, adolescentes<br />
+              Cursos para niños, adolescentes<br />
               y adultos de todos los niveles.
             </p>
 

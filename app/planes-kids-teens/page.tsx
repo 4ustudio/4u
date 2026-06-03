@@ -51,10 +51,10 @@ export default function PlanesKidsTeensPage() {
           *Aplica para estudiantes activos al momento de cada presentación.
         </p>
 
-        <div className="plans-frame mt-8 grid items-center gap-6 rounded-2xl bg-white p-7 shadow-xl shadow-gray-950/10 ring-1 ring-gray-200 md:grid-cols-[1.2fr_1fr_1fr_auto]">
+        <div className="plans-frame mt-8 grid items-center gap-7 rounded-2xl bg-white p-7 shadow-xl shadow-gray-950/10 ring-1 ring-gray-200 lg:grid-cols-[1.25fr_1.2fr_1.35fr_auto]">
           <FooterInfo
             title="¿No sabes qué plan elegir?"
-            text="Te ayudamos a encontrar el plan ideal para el talento y los sueños de tu hijo."
+            text="Te ayudamos a encontrar el plan ideal para tu hijo."
             icon={
               <svg className="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <circle cx="12" cy="12" r="10" />
@@ -65,7 +65,7 @@ export default function PlanesKidsTeensPage() {
           />
           <FooterInfo
             title="Agenda una clase"
-            text="Conoce nuestras instalaciones y vive la experiencia 4U."
+            text="Conoce las instalaciones y vive la experiencia 4U."
             icon={
               <svg className="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M8 2v4M16 2v4M4 10h16M6 4h12a2 2 0 0 1 2 2v14H4V6a2 2 0 0 1 2-2Z" />
@@ -75,7 +75,7 @@ export default function PlanesKidsTeensPage() {
           />
           <FooterInfo
             title="Hablemos de tu proyecto"
-            text="Cuéntanos sus intereses y objetivos y te guiamos en el camino."
+            text="Cuéntanos sus intereses y objetivos para guiarte en el camino."
             icon={
               <svg className="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z" />
@@ -94,13 +94,13 @@ export default function PlanesKidsTeensPage() {
 
 function FooterInfo({ title, text, icon }: { title: string; text: string; icon: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-5 md:border-r md:border-gray-200 md:pr-6">
+    <div className="flex items-center gap-5 lg:border-r lg:border-gray-200 lg:pr-7">
       <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-orange-50 text-[#ff6b00]">
         {icon}
       </span>
       <span>
-        <strong className="block text-lg font-extrabold font-poppins text-balance">{title}</strong>
-        <span className="text-gray-500 font-roboto text-balance">{text}</span>
+        <strong className="block text-lg font-extrabold leading-snug font-poppins text-balance">{title}</strong>
+        <span className="block text-gray-500 leading-relaxed font-roboto">{text}</span>
       </span>
     </div>
   );

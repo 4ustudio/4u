@@ -172,7 +172,7 @@ export default function NosotrosPage() {
               <span className="block text-6xl text-[#ff7a00]/30 mb-4 font-poppins leading-none">&ldquo;</span>
               <h2 className="text-2xl md:text-3xl lg:text-4xl font-extrabold text-white font-poppins leading-tight mb-4">
                 En 4U Studio Academy no enseñamos<br />
-                música como una materia.
+                música como una materia.&rdquo;
               </h2>
               <p className="text-lg md:text-xl text-[#ff7a00] font-bold font-poppins">
                 La enseñamos como un sueño que se construye.

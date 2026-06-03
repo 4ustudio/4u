@@ -2,34 +2,19 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createAuthServerClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { getMyDashboardData } from '../_actions/student'
+import { getMyDashboardData, getMonthSessions } from '../_actions/student'
 import StudentNav from '../_components/StudentNav'
 import BookingCalendar from '@/components/sections/BookingCalendar'
 import { studentBookAction } from '../_actions/student'
 import AutoRefresh from './_components/AutoRefresh'
 import ProfileModal from './_components/ProfileModal'
+import ClassesCalendar from './_components/ClassesCalendar'
+import HistoryDrawer from './_components/HistoryDrawer'
+import { InstrumentIcon } from './_components/instruments'
+import { statusMeta } from './_components/statusMeta'
 import type { MonthlyUsage } from '@/types/admin'
 
 export const dynamic = 'force-dynamic'
-
-const DAY_NAME: Record<number, string> = {
-  1: 'Lunes', 2: 'Martes', 3: 'Miércoles',
-  4: 'Jueves', 5: 'Viernes', 6: 'Sábado',
-}
-
-const STATUS_COLOR: Record<string, string> = {
-  pending:     'bg-yellow-900/40 text-yellow-400 border-yellow-500/20',
-  confirmed:   'bg-green-900/40 text-green-400 border-green-500/20',
-  completed:   'bg-blue-900/40 text-blue-400 border-blue-500/20',
-  cancelled:   'bg-red-900/40 text-red-400 border-red-500/20',
-  rescheduled: 'bg-purple-900/40 text-purple-400 border-purple-500/20',
-  no_show:     'bg-gray-800 text-gray-400 border-gray-700',
-}
-
-const STATUS_LABEL: Record<string, string> = {
-  pending: 'Pendiente', confirmed: 'Confirmada', completed: 'Completada',
-  cancelled: 'Cancelada', rescheduled: 'Reagendada', no_show: 'No asistió',
-}
 
 export default async function MiCuentaPage() {
   const supabase = await createAuthServerClient()
@@ -62,6 +47,11 @@ export default async function MiCuentaPage() {
   // Next upcoming class
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const nextClass    = upcoming[0] as any | undefined
+
+  // Sesiones completas del mes actual para el calendario
+  const currentYear  = now.getFullYear()
+  const currentMonth = now.getMonth() + 1
+  const monthSessions = await getMonthSessions(currentYear, currentMonth)
 
   // Primary instructor from schedules or upcoming
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -188,61 +178,41 @@ export default async function MiCuentaPage() {
           </div>
         </section>
 
-        {/* ── CUOTA DEL MES ──────────────────────────────────────────── */}
+        {/* ── RESUMEN DEL MES ────────────────────────────────────────── */}
         <section>
-          <SectionLabel>{`Cuota — ${monthLabel}`}</SectionLabel>
+          <SectionLabel>{`Resumen — ${monthLabel}`}</SectionLabel>
           {usageTyped ? (
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-              <QuotaCard label="Disponibles" value={usageTyped.classes_available}
-                color={usageTyped.classes_available > 0 ? 'orange' : 'red'} large />
-              <QuotaCard label="Total del mes"    value={usageTyped.quota_total} />
-              <QuotaCard label="Agendadas"         value={usageTyped.classes_scheduled} />
-              <QuotaCard label="Completadas"       value={usageTyped.classes_completed} />
-              <QuotaCard label="Cancelac. tardías" value={usageTyped.late_cancellations}
-                color={usageTyped.late_cancellations > 0 ? 'red' : undefined} />
-            </div>
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <QuotaCard label="Disponibles" value={usageTyped.classes_available}
+                  color={usageTyped.classes_available > 0 ? 'orange' : 'red'} />
+                <QuotaCard label="Agendadas"   value={usageTyped.classes_scheduled} />
+                <QuotaCard label="Completadas" value={usageTyped.classes_completed} />
+                <QuotaCard label="Para reprogramar" value={usageTyped.late_cancellations}
+                  color={usageTyped.late_cancellations > 0 ? 'red' : undefined} />
+              </div>
+              <p className="mt-3 text-xs text-white/35 font-roboto leading-relaxed">
+                Las clases no asistidas y no canceladas con mínimo 24 horas de anticipación se
+                consideran utilizadas. Si existe autorización de reposición aparecerán aquí para reprogramar.
+              </p>
+            </>
           ) : (
             <EmptyState>Sin actividad registrada este mes.</EmptyState>
           )}
         </section>
 
-        {/* ── HORARIOS FIJOS ─────────────────────────────────────────── */}
-        {schedules?.length > 0 && (
+        {/* ── PRÓXIMA CLASE DESTACADA ────────────────────────────────── */}
+        {nextClass && (
           <section>
-            <SectionLabel>Horarios fijos</SectionLabel>
-            <div className="rounded-2xl border border-white/10 bg-white/[0.02] overflow-hidden divide-y divide-white/[0.06]">
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-              {schedules.map((s: any) => (
-                <div key={s.id} className="flex items-center gap-4 px-5 py-4 hover:bg-white/[0.03] transition-colors">
-                  <div className="h-9 w-9 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ background: 'rgba(255,122,0,0.12)' }}>
-                    <svg className="h-4 w-4 text-[#ff7a00]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                      <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>
-                    </svg>
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm text-white font-poppins font-medium">
-                      {DAY_NAME[s.day_of_week] ?? `Día ${s.day_of_week}`} · {s.start_time?.slice(0, 5)}
-                      {s.frequency === 'biweekly' && <span className="text-white/30 text-xs ml-1">(quincenal)</span>}
-                    </p>
-                    <p className="text-xs text-white/40 font-roboto mt-0.5">
-                      {s.course?.name ?? '—'} · {s.classroom?.name ?? '—'}
-                      {s.instructor?.name ? ` · ${s.instructor.name}` : ''}
-                    </p>
-                  </div>
-                  <span className="text-[10px] px-2.5 py-1 rounded-full shrink-0 border font-roboto font-semibold bg-green-900/40 text-green-400 border-green-500/20">
-                    Activo
-                  </span>
-                </div>
-              ))}
-            </div>
+            <SectionLabel>Tu próxima clase</SectionLabel>
+            <NextClassCard session={nextClass} />
           </section>
         )}
 
-        {/* ── CLASES DEL MES ─────────────────────────────────────────── */}
+        {/* ── CALENDARIO ─────────────────────────────────────────────── */}
         <section>
           <div className="flex items-center justify-between mb-3">
-            <SectionLabel>{`Clases de ${monthLabel}`}</SectionLabel>
+            <SectionLabel>Calendario de clases</SectionLabel>
             <Link
               href="/mi-cuenta/clases-mes"
               className="no-print inline-flex items-center gap-1.5 text-[11px] font-semibold text-white/50 hover:text-[#ff7a00] transition-colors font-roboto"
@@ -253,48 +223,18 @@ export default async function MiCuentaPage() {
               Ver reporte PDF
             </Link>
           </div>
-          {(() => {
-            const now = new Date()
-            const ms = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const monthSessions = [...upcoming, ...past].filter((s: any) => s.scheduled_date?.startsWith(ms))
-              .sort((a: any, b: any) => a.scheduled_date.localeCompare(b.scheduled_date) || a.start_time.localeCompare(b.start_time))
-            return monthSessions.length === 0 ? (
-              <EmptyState>No hay clases registradas para este mes.</EmptyState>
-            ) : (
-              <div className="rounded-2xl border border-white/10 bg-white/[0.02] overflow-hidden divide-y divide-white/[0.06]">
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                {monthSessions.map((s: any) => <SessionRow key={s.id} session={s} />)}
-              </div>
-            )
-          })()}
+          <ClassesCalendar
+            initialSessions={monthSessions}
+            schedules={schedules ?? []}
+            initialYear={currentYear}
+            initialMonth={currentMonth}
+          />
         </section>
 
-        {/* ── PRÓXIMAS CLASES ────────────────────────────────────────── */}
-        <section>
-          <SectionLabel>Próximas clases</SectionLabel>
-          {upcoming.length === 0 ? (
-            <EmptyState>No tienes clases agendadas próximamente.</EmptyState>
-          ) : (
-            <div className="rounded-2xl border border-white/10 bg-white/[0.02] overflow-hidden divide-y divide-white/[0.06]">
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-              {upcoming.map((s: any) => (
-                <SessionRow key={s.id} session={s} />
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* ── HISTORIAL ──────────────────────────────────────────────── */}
+        {/* ── HISTORIAL (drawer) ─────────────────────────────────────── */}
         {past.length > 0 && (
           <section>
-            <SectionLabel>Historial de clases</SectionLabel>
-            <div className="rounded-2xl border border-white/10 bg-white/[0.02] overflow-hidden divide-y divide-white/[0.06]">
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-              {past.map((s: any) => (
-                <SessionRow key={s.id} session={s} />
-              ))}
-            </div>
+            <HistoryDrawer past={past} />
           </section>
         )}
 
@@ -389,28 +329,43 @@ function QuotaCard({
   )
 }
 
-function SessionRow({ session: s }: { session: any }) { // eslint-disable-line @typescript-eslint/no-explicit-any
-  const color = STATUS_COLOR[s.status] ?? 'bg-gray-800 text-gray-400 border-gray-700'
-  const label = STATUS_LABEL[s.status] ?? s.status
+function NextClassCard({ session: s }: { session: any }) { // eslint-disable-line @typescript-eslint/no-explicit-any
+  const meta = statusMeta(s.status)
+  const dateLong = new Date(s.scheduled_date + 'T12:00:00').toLocaleDateString('es-CO', {
+    weekday: 'long', day: 'numeric', month: 'long',
+  })
 
   return (
-    <div className="flex items-center gap-4 px-5 py-4 hover:bg-white/[0.03] transition-colors">
-      <div className="h-9 w-9 rounded-xl flex items-center justify-center shrink-0 bg-white/[0.04] border border-white/[0.06]">
-        <svg className="h-4 w-4 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-          <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
-        </svg>
+    <div className="relative overflow-hidden rounded-2xl border border-[#ff7a00]/25 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black p-6 sm:p-7">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-20 -right-16 h-56 w-56 rounded-full opacity-20 blur-3xl"
+        style={{ background: 'radial-gradient(circle, #ff7a00 0%, transparent 70%)' }}
+      />
+      <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-5">
+        {/* Icono instrumento */}
+        <div
+          className="h-16 w-16 rounded-2xl flex items-center justify-center shrink-0"
+          style={{ background: 'rgba(255,122,0,0.14)', boxShadow: '0 0 24px rgba(255,122,0,0.12)' }}
+        >
+          <span className="text-[#ff7a00]"><InstrumentIcon courseName={s.course?.name} className="h-8 w-8" /></span>
+        </div>
+
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <h3 className="text-2xl font-bold text-white font-poppins leading-tight">{s.course?.name ?? 'Clase'}</h3>
+          <p className="text-sm text-white/55 font-roboto mt-1 capitalize">{dateLong} · {s.start_time?.slice(0, 5)}</p>
+          <div className="flex flex-wrap gap-x-5 gap-y-1 mt-3 text-xs font-roboto">
+            <span className="text-white/50">Instructor: <span className="text-white/80">{s.instructor?.name ?? 'Sin asignar'}</span></span>
+            <span className="text-white/50">Salón: <span className="text-white/80">{s.classroom?.name ?? '—'}</span></span>
+          </div>
+        </div>
+
+        {/* Estado */}
+        <div className="shrink-0">
+          <span className={`inline-block text-[11px] px-3 py-1.5 rounded-full border font-semibold ${meta.badgeClass}`}>{meta.label}</span>
+        </div>
       </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm text-white font-poppins font-medium">
-          {formatDate(s.scheduled_date)} · {s.start_time?.slice(0, 5)}
-        </p>
-        <p className="text-xs text-white/40 font-roboto mt-0.5">
-          {s.course?.name ?? '—'} · {s.classroom?.name ?? '—'} · {s.instructor?.name ?? 'Sin instructor'}
-        </p>
-      </div>
-      <span className={`text-[10px] px-2.5 py-1 rounded-full shrink-0 border font-roboto font-semibold ${color}`}>
-        {label}
-      </span>
     </div>
   )
 }

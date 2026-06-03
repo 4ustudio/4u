@@ -95,6 +95,33 @@ export async function getMyDashboardData(userId?: string) {
   }
 }
 
+// ─── Sesiones de un mes (solo lectura, para el calendario) ───────────
+
+export async function getMonthSessions(year: number, month: number) {
+  // Lectura del mes solicitado para navegación del calendario.
+  // No modifica lógica de negocio; equivalente a la query de clases-mes.
+  const student = await getAuthenticatedStudent()
+  if (!student) return []
+
+  const mm = String(month).padStart(2, '0')
+  const monthStart = `${year}-${mm}-01`
+  // Primer día del mes siguiente (evita fechas inválidas tipo "06-31")
+  const nextYear  = month === 12 ? year + 1 : year
+  const nextMonth = month === 12 ? 1 : month + 1
+  const nextStart = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`
+
+  const { data: sessions } = await admin()
+    .from('class_sessions')
+    .select('*, course:courses(name), classroom:classrooms(name), instructor:instructors(name)')
+    .eq('student_id', student.id)
+    .gte('scheduled_date', monthStart)
+    .lt('scheduled_date', nextStart)
+    .order('scheduled_date', { ascending: true })
+    .order('start_time',     { ascending: true })
+
+  return (sessions ?? []) as any[] // eslint-disable-line @typescript-eslint/no-explicit-any
+}
+
 // ─── Agendar clase ───────────────────────────────────────────────────
 
 export async function studentBookAction(

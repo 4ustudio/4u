@@ -3,24 +3,24 @@ export default function TestimonialStrip() {
     <section className="w-full bg-white py-3">
       <div className="home-frame">
         <div className="relative grid min-h-[230px] grid-cols-1 overflow-hidden rounded-xl bg-zinc-900 md:min-h-[250px] md:grid-cols-[70%_30%]">
-          {/* Video del pianista — protagonista, lado derecho */}
-          <div className="absolute inset-0 md:relative md:col-start-2">
+          {/* Video — cubre todo el banner */}
+          <div className="absolute inset-0">
             <video
               src="/images/hero/hf_20260603_135817_bc2bc082-82e4-46f3-bc75-4747aa356fee.mp4"
               autoPlay
               muted
               loop
               playsInline
-              className="absolute inset-0 h-full w-full scale-[1.35] object-cover object-[58%_46%] md:scale-[1.15]"
+              className="h-full w-full object-cover object-center"
             />
-            {/* Degradado que funde el video con el texto (móvil: vertical / desktop: horizontal) */}
-            <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/70 to-zinc-900/30 md:bg-gradient-to-r md:from-zinc-900 md:via-zinc-900/35 md:to-transparent" />
           </div>
 
-          {/* Iluminación cálida naranja detrás del artista (identidad de marca) */}
+          {/* Overlay gradiente suave de izquierda a derecha sobre todo el ancho */}
           <div
             className="pointer-events-none absolute inset-0 z-[1]"
-            style={{ background: "radial-gradient(ellipse 45% 75% at 78% 50%, rgba(255,122,0,0.18), transparent 65%)" }}
+            style={{
+              background: "linear-gradient(90deg, rgba(0,0,0,.75) 0%, rgba(0,0,0,.45) 25%, rgba(0,0,0,.15) 50%, rgba(0,0,0,0) 100%)",
+            }}
             aria-hidden="true"
           />
 

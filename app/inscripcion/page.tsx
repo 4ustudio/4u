@@ -28,7 +28,7 @@ const inputClass =
 const labelClass = 'block text-xs font-semibold text-white/50 uppercase tracking-wider mb-1.5 font-roboto'
 const errorClass = 'text-red-400 text-xs mt-1 font-roboto'
 const radioCardClass =
-  'flex-1 flex items-center justify-center gap-2 rounded-xl border px-4 py-3.5 text-sm font-semibold font-roboto transition-all cursor-pointer'
+  'flex-1 flex items-center justify-center gap-2 rounded-xl border px-4 py-3.5 text-sm font-semibold font-roboto transition-colors cursor-pointer'
 
 const initialState: EnrollmentFormState = { status: 'idle' }
 
@@ -82,7 +82,9 @@ export default function InscripcionPage() {
     <PageLayout>
       <section className="relative w-full min-h-screen overflow-hidden">
         {/* Imagen de fondo */}
-        <div className="absolute inset-0 z-0">
+        {/* will-change:transform aisla la imagen en su propia capa GPU —
+            los cambios de layout del formulario no la afectan */}
+        <div className="absolute inset-0 z-0" style={{ willChange: 'transform', transform: 'translateZ(0)' }}>
           <Image
             src="/images/hero/Fondo inscribete.png"
             alt=""
@@ -184,14 +186,32 @@ export default function InscripcionPage() {
                 )}
               </div>
 
-              {/* ── 4. Acudiente ── */}
-              {studentType === 'child' && (
+              {/* ── 4. Acudiente — siempre en DOM, visibilidad por CSS para evitar
+                  layout shift que mueve la imagen de fondo */}
+              <div
+                className="overflow-hidden"
+                style={{
+                  maxHeight: studentType === 'child' ? '120px' : '0px',
+                  opacity:   studentType === 'child' ? 1 : 0,
+                  transition: 'max-height 0.25s ease, opacity 0.2s ease',
+                }}
+                aria-hidden={studentType !== 'child'}
+              >
                 <div>
                   <label htmlFor="guardian_name" className={labelClass}>Nombre del acudiente</label>
-                  <input id="guardian_name" name="guardian_name" type="text" placeholder="Ej: María García" required disabled={isPending} className={inputClass} />
+                  <input
+                    id="guardian_name"
+                    name="guardian_name"
+                    type="text"
+                    placeholder="Ej: María García"
+                    required={studentType === 'child'}
+                    disabled={isPending || studentType !== 'child'}
+                    tabIndex={studentType === 'child' ? 0 : -1}
+                    className={inputClass}
+                  />
                   {state.errors?.guardian_name && <p className={errorClass}>{state.errors.guardian_name}</p>}
                 </div>
-              )}
+              </div>
 
               {/* ── 5. WhatsApp ── */}
               <div>

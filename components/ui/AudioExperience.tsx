@@ -1,159 +1,165 @@
 'use client'
 
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 const AUDIO_SRC   = '/audio/audio-home.mpeg'
-const START_SEC   = 12    // empezar en el segundo 12 (parte interesante)
-const DURATION    = 15    // reproducir 15 segundos
-const MAX_VOL     = 0.18  // 18% — volumen máximo
-const FADE_IN_MS  = 1400  // duración del fade in
-const FADE_OUT_MS = 2000  // duración del fade out (empieza 2s antes del fin)
+const START_SEC   = 12       // segundo más interesante
+const DURATION    = 15       // 15 segundos
+const MAX_VOL     = 0.18     // 18%
+const FADE_IN_MS  = 1600
+const FADE_OUT_MS = 2200
 
-type State = 'idle' | 'loading' | 'playing' | 'done'
+type State = 'idle' | 'playing' | 'done'
 
 export default function AudioExperience() {
   const [state, setState] = useState<State>('idle')
-  const audioRef  = useRef<HTMLAudioElement | null>(null)
-  const timersRef = useRef<number[]>([])
-  const frameRef  = useRef<number>(0)
+  const [visible, setVisible] = useState(false)
+  const audioRef   = useRef<HTMLAudioElement | null>(null)
+  const timersRef  = useRef<number[]>([])
+  const playedRef  = useRef(false)
 
-  // Limpieza al desmontar
-  useEffect(() => () => {
-    clearAll()
-    audioRef.current?.pause()
-  }, [])
-
-  function clearAll() {
-    timersRef.current.forEach(t => clearTimeout(t))
-    timersRef.current = []
-    cancelAnimationFrame(frameRef.current)
-  }
-
+  /* ── helpers ──────────────────────────────────────────────────────── */
   function addTimer(fn: () => void, ms: number) {
     const id = window.setTimeout(fn, ms)
     timersRef.current.push(id)
-    return id
   }
 
-  // Fade volume suave usando rAF-like con setInterval
-  function fadeVolume(audio: HTMLAudioElement, from: number, to: number, durationMs: number, onDone?: () => void) {
-    const steps = 30
-    const dt = durationMs / steps
-    const delta = (to - from) / steps
+  function clearAll() {
+    timersRef.current.forEach(clearTimeout)
+    timersRef.current = []
+  }
+
+  function fadeVolume(audio: HTMLAudioElement, from: number, to: number, ms: number, done?: () => void) {
+    const steps = 32
+    const dt = ms / steps
+    const dv = (to - from) / steps
     let i = 0
     const tick = () => {
       i++
-      const vol = Math.max(0, Math.min(1, from + delta * i))
-      if (audioRef.current) audioRef.current.volume = vol
-      if (i < steps) {
-        addTimer(tick, dt)
-      } else {
-        onDone?.()
-      }
+      audio.volume = Math.max(0, Math.min(1, from + dv * i))
+      if (i < steps) addTimer(tick, dt)
+      else done?.()
     }
     addTimer(tick, dt)
   }
 
-  const toggle = useCallback(() => {
-    if (state === 'playing' || state === 'loading') {
-      // Detener
-      clearAll()
-      if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = START_SEC }
-      setState('idle')
-      return
-    }
+  /* ── iniciar reproducción ─────────────────────────────────────────── */
+  function startAudio() {
+    if (playedRef.current) return
+    playedRef.current = true
 
-    setState('loading')
+    // Usar <source> con type explícito para forzar MIME audio/mpeg
+    // El archivo tiene extensión .mpeg pero es MP3 — Next.js lo sirve como video/mpeg
+    const audio = document.createElement('audio')
+    audio.preload = 'auto'
+    const src = document.createElement('source')
+    src.src  = AUDIO_SRC
+    src.type = 'audio/mpeg'        // fuerza el MIME correcto
+    audio.appendChild(src)
+    audioRef.current = audio
 
-    if (!audioRef.current) {
-      audioRef.current = new Audio(AUDIO_SRC)
-    }
-
-    const audio = audioRef.current
     audio.volume = 0
     audio.currentTime = START_SEC
 
-    const startPlayback = () => {
-      setState('playing')
+    const onReady = () => {
+      audio.currentTime = START_SEC
+      audio.play().then(() => {
+        setState('playing')
+        setVisible(true)
 
-      // Fade in: 0 → MAX_VOL
-      fadeVolume(audio, 0, MAX_VOL, FADE_IN_MS)
+        // Fade in
+        fadeVolume(audio, 0, MAX_VOL, FADE_IN_MS)
 
-      // Fade out: empieza 2s antes del fin
-      addTimer(() => {
-        fadeVolume(audio, MAX_VOL, 0, FADE_OUT_MS, () => {
-          audio.pause()
-          setState('done')
-          addTimer(() => setState('idle'), 1500)
-        })
-      }, (DURATION - FADE_OUT_MS / 1000) * 1000)
+        // Fade out antes de terminar
+        addTimer(() => {
+          fadeVolume(audio, MAX_VOL, 0, FADE_OUT_MS, () => {
+            audio.pause()
+            setState('done')
+            addTimer(() => setVisible(false), 1800)
+          })
+        }, (DURATION - FADE_OUT_MS / 1000) * 1000)
+
+      }).catch(() => {
+        playedRef.current = false
+      })
     }
 
-    audio.play()
-      .then(startPlayback)
-      .catch(() => setState('idle'))
-  }, [state]) // eslint-disable-line react-hooks/exhaustive-deps
+    // canplaythrough garantiza que el archivo está listo
+    if (audio.readyState >= 3) {
+      onReady()
+    } else {
+      audio.addEventListener('canplaythrough', onReady, { once: true })
+      audio.load()
+    }
+  }
 
-  const isActive = state === 'playing' || state === 'loading'
+  /* ── detener manualmente ──────────────────────────────────────────── */
+  function stop() {
+    clearAll()
+    if (audioRef.current) audioRef.current.pause()
+    setState('done')
+    addTimer(() => setVisible(false), 1000)
+  }
+
+  /* ── trigger en primera interacción del usuario ───────────────────── */
+  useEffect(() => {
+    const events = ['scroll', 'click', 'touchstart', 'mousemove', 'keydown'] as const
+    const handler = () => {
+      startAudio()
+      events.forEach(e => window.removeEventListener(e, handler))
+    }
+    // Escuchar con once:true para que se dispare solo una vez
+    events.forEach(e => window.addEventListener(e, handler, { passive: true, once: true }))
+
+    return () => {
+      events.forEach(e => window.removeEventListener(e, handler))
+      clearAll()
+      audioRef.current?.pause()
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ── UI: badge flotante, aparece solo al reproducir ──────────────── */
+  if (!visible) return null
 
   return (
-    <button
-      onClick={toggle}
-      aria-label={isActive ? 'Detener audio' : 'Escucha la experiencia 4U Studio'}
-      className={`group relative flex items-center gap-2.5 rounded-full border px-5 py-3 text-sm font-semibold font-poppins transition-all duration-300 select-none ${
-        isActive
-          ? 'border-[#ff7a00]/60 bg-[#ff7a00]/15 text-white backdrop-blur-md shadow-lg shadow-orange-500/20'
-          : state === 'done'
-            ? 'border-white/30 bg-white/10 text-white/70 backdrop-blur-md'
-            : 'border-white/20 bg-black/35 text-white/85 hover:border-[#ff7a00]/50 hover:bg-black/50 hover:text-white backdrop-blur-md'
+    <div
+      className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold font-poppins backdrop-blur-md transition-all duration-500 ${
+        state === 'playing'
+          ? 'border-[#ff7a00]/45 bg-black/50 text-white shadow-lg shadow-orange-500/10'
+          : 'border-white/15 bg-black/30 text-white/50'
       }`}
     >
-      {/* Anillo pulsante cuando está reproduciendo */}
-      {state === 'playing' && (
-        <span className="absolute inset-0 rounded-full border border-[#ff7a00]/40 animate-ping pointer-events-none"/>
-      )}
-
-      {/* Ícono */}
-      <span className="flex-shrink-0 relative">
-        {state === 'loading' ? (
-          <svg className="h-4 w-4 animate-spin text-[#ff7a00]" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity=".25" strokeWidth="3"/>
-            <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-          </svg>
-        ) : state === 'playing' ? (
-          /* Ecualizador animado */
-          <span className="flex items-end gap-[2px] h-4 w-5">
+      {state === 'playing' ? (
+        <>
+          {/* Ecualizador */}
+          <span className="flex items-end gap-[2px] h-3.5 w-4 shrink-0">
             {[0, 1, 2, 3].map(i => (
               <span
                 key={i}
                 className="w-[3px] rounded-full bg-[#ff7a00]"
                 style={{
                   height: '100%',
-                  animation: `eq-bar 0.7s ease-in-out infinite alternate`,
-                  animationDelay: `${i * 0.15}s`,
+                  animation: 'eq-bar 0.65s ease-in-out infinite alternate',
+                  animationDelay: `${i * 0.14}s`,
                   transformOrigin: 'bottom',
                 }}
               />
             ))}
           </span>
-        ) : state === 'done' ? (
-          <svg className="h-4 w-4 text-white/50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="9"/>
-          </svg>
-        ) : (
-          <svg className="h-4 w-4 text-[#ff7a00]" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M8 5.14v14l11-7-11-7z"/>
-          </svg>
-        )}
-      </span>
-
-      {/* Texto */}
-      <span className="whitespace-nowrap">
-        {state === 'loading' && 'Cargando...'}
-        {state === 'playing' && 'Reproduciendo · click para detener'}
-        {state === 'done'    && '✓ Gracias por escuchar'}
-        {state === 'idle'    && 'Escucha la experiencia 4U'}
-      </span>
-    </button>
+          <span className="tracking-wide text-[11px]">4U Studio</span>
+          <button
+            onClick={stop}
+            aria-label="Detener audio"
+            className="ml-0.5 text-white/35 hover:text-white/70 transition-colors"
+          >
+            <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M18 6 6 18M6 6l12 12"/>
+            </svg>
+          </button>
+        </>
+      ) : (
+        <span className="text-[11px] text-white/40">♪</span>
+      )}
+    </div>
   )
 }

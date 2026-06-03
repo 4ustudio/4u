@@ -36,7 +36,7 @@ export default function TestimonialStrip() {
           />
 
           {/* Texto superpuesto — 30-35% izquierdo */}
-          <div className="relative z-10 flex h-full flex-col justify-end px-8 pb-10 md:w-[38%] md:px-12 md:pb-14">
+          <div className="absolute inset-0 z-10 flex flex-col justify-center pt-16 px-8 md:w-[38%] md:px-12">
             <p className="font-poppins text-xl font-extrabold italic leading-[1.2] text-white md:text-[26px] lg:text-[30px]">
               La música no solo cambia tu sonido,<br />
               <span className="text-[#ff7a00]">cambia tu vida.</span>

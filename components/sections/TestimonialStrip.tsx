@@ -27,7 +27,7 @@ export default function TestimonialStrip() {
           {/* Mitad derecha — video */}
           <div className="w-1/2 overflow-hidden">
             <video
-              src="/images/hero/magnific_anima-esta-imagen_5xefFSwKxe.mp4"
+              src="/images/hero/hf_20260603_135817_bc2bc082-82e4-46f3-bc75-4747aa356fee.mp4"
               autoPlay
               muted
               loop

@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createAuthServerClient } from '@/lib/supabase/server'
 import { getMyDashboardData, getMonthSessions } from '../../_actions/student'
-import StudentPortalHeader from '../_components/StudentPortalHeader'
+import Header from '@/components/layout/Header'
 import AutoRefresh from '../_components/AutoRefresh'
 import ClassesCalendar from '../_components/ClassesCalendar'
 
@@ -26,11 +26,13 @@ export default async function MisClasesPage() {
   return (
     <>
       <AutoRefresh studentId={student.id} />
-      <StudentPortalHeader userEmail={user.email ?? ''} avatarUrl={avatarUrl} firstName={firstName} />
-      <main className="max-w-5xl mx-auto px-4 pt-[68px] pb-12 space-y-6 min-h-screen"
-        style={{ backgroundColor: '#0a0a0a' }}>
+      <Header />
+      <main className="max-w-5xl mx-auto px-4 pt-[80px] pb-12 space-y-6 min-h-screen bg-gray-50">
         <div className="flex items-center justify-between mb-2">
-          <h1 className="text-lg font-bold text-white font-poppins">Mis Clases</h1>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 font-poppins">Mis Clases</h1>
+            <p className="text-sm text-gray-500 font-roboto mt-0.5">Historial y calendario de tus clases.</p>
+          </div>
         </div>
         <ClassesCalendar
           initialSessions={monthSessions}

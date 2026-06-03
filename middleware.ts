@@ -27,12 +27,18 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   const pathname = request.nextUrl.pathname
+  const role = user?.user_metadata?.role
 
   // ── Rutas /admin ──────────────────────────────────────────────────
   if (pathname.startsWith('/admin')) {
     if (!user) {
       const url = request.nextUrl.clone()
       url.pathname = '/mi-cuenta/login'
+      return NextResponse.redirect(url)
+    }
+    if (role !== 'admin') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/mi-cuenta'
       return NextResponse.redirect(url)
     }
   }

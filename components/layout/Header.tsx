@@ -72,6 +72,7 @@ export default function Header() {
   const [open, setOpen]               = useState(false);
   const [planesOpen, setPlanesOpen]   = useState(false);
   const [isAdmin, setIsAdmin]         = useState(false);
+  const [userRole, setUserRole]       = useState<"student" | "instructor" | "admin">("student");
   const [isLoggedIn, setIsLoggedIn]   = useState(false);
   const [userEmail, setUserEmail]     = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl]     = useState<string | null>(null);
@@ -93,8 +94,14 @@ export default function Header() {
   useEffect(() => {
     const supabase = supabaseRef.current;
     const checkAuth = (session: ReturnType<typeof Object.create> | null) => {
-      const role = session?.user?.user_metadata?.role;
-      setIsAdmin(!!session && role !== "student");
+      const rawRole = session?.user?.user_metadata?.role;
+      const role = rawRole === "admin"
+        ? "admin"
+        : rawRole === "instructor" || rawRole === "teacher" || rawRole === "maestro"
+          ? "instructor"
+          : "student";
+      setUserRole(role);
+      setIsAdmin(!!session && role === "admin");
       setIsLoggedIn(!!session);
       setUserEmail(session?.user?.email ?? null);
       setAvatarUrl(session?.user?.user_metadata?.avatar_url ?? null);
@@ -161,13 +168,16 @@ export default function Header() {
     await supabaseRef.current.auth.signOut();
     setIsLoggedIn(false);
     setIsAdmin(false);
+    setUserRole("student");
     setUserEmail(null);
     setUserMenuOpen(false);
     window.location.href = "/";
   };
 
   const avatarLetter = userEmail ? userEmail[0].toUpperCase() : "U";
-  const dashboardHref = isAdmin ? "/admin" : "/mi-cuenta";
+  const dashboardHref = userRole === "admin" ? "/admin" : "/mi-cuenta";
+  const dashboardLabel = userRole === "admin" ? "Panel Admin" : "Mi Cuenta";
+  const userChip = userRole === "admin" ? "Admin" : userRole === "instructor" ? "Instructor" : userEmail?.split("@")[0];
 
   return (
     <header
@@ -238,7 +248,7 @@ export default function Header() {
                   </span>
                 )}
                 <span className="text-[12px] text-white/70 group-hover:text-white transition-colors font-roboto max-w-[120px] truncate">
-                  {isAdmin ? "Admin" : userEmail?.split("@")[0]}
+                  {userChip}
                 </span>
                 <svg
                   className={`h-3 w-3 text-white/40 transition-transform ${userMenuOpen ? "rotate-180" : ""}`}
@@ -264,7 +274,7 @@ export default function Header() {
                         <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
                         <rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" />
                       </svg>
-                      {isAdmin ? "Panel Admin" : "Mi Cuenta"}
+                      {dashboardLabel}
                     </Link>
                     <button
                       onClick={handleSignOut}
@@ -399,7 +409,7 @@ export default function Header() {
                     className="flex items-center justify-center gap-2 border border-white/15 text-white/70 font-semibold px-6 py-2.5 rounded-full text-sm"
                     style={{ fontFamily: "'Poppins', sans-serif" }}
                   >
-                    {isAdmin ? "Panel Admin" : "Mi Cuenta"}
+                    {dashboardLabel}
                   </Link>
                   <button
                     onClick={() => { closeMobile(); handleSignOut(); }}

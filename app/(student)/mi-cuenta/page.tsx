@@ -1,359 +1,602 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import type { ReactNode } from 'react'
 import { createAuthServerClient } from '@/lib/supabase/server'
-import { getMyDashboardData, getMonthSessions } from '../_actions/student'
+import { getInstructorDashboardData, getMonthSessions, getMyDashboardData } from '../_actions/student'
 import Header from '@/components/layout/Header'
 import AutoRefresh from './_components/AutoRefresh'
 import ProfileModal from './_components/ProfileModal'
+import SchedulePdfButton from './_components/SchedulePdfButton'
 import { InstrumentIcon } from './_components/instruments'
 import { statusMeta } from './_components/statusMeta'
-import ClassesCalendar from './_components/ClassesCalendar'
 import { ACADEMY } from '@/lib/constants'
 import type { MonthlyUsage } from '@/types/admin'
 
 export const dynamic = 'force-dynamic'
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+const MONTHS_ES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+const DOW_HEAD = ['DOM', 'LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB']
+const WEEK_DAYS = ['LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB', 'DOM']
+const HOURS = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00']
+
+function normalizeRole(role: unknown) {
+  if (role === 'admin') return 'admin'
+  if (role === 'instructor' || role === 'teacher' || role === 'maestro') return 'instructor'
+  return 'student'
+}
 
 export default async function MiCuentaPage() {
   const supabase = await createAuthServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/mi-cuenta/login')
 
+  const role = normalizeRole(user.user_metadata?.role)
+  if (role === 'admin') redirect('/admin')
+
   const now = new Date()
+  const monthLabel = `${MONTHS_ES[now.getMonth()]} ${now.getFullYear()}`
+
+  if (role === 'instructor') {
+    const data = await getInstructorDashboardData(user.id, user.email) ?? {
+      instructor: {
+        name: user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email?.split('@')[0] ?? 'Instructor 4U',
+        email: user.email,
+        created_at: null,
+      },
+      sessions: [],
+      availability: [],
+      upcoming: [],
+      cancelled: [],
+      stats: { weekScheduled: 0, completed: 0, cancelled: 0, activeStudents: 0, todayUpcoming: 0 },
+    }
+    return <InstructorDashboard data={data} user={user} monthLabel={monthLabel} now={now} />
+  }
+
   const [data, monthSessions] = await Promise.all([
     getMyDashboardData(user.id),
     getMonthSessions(now.getFullYear(), now.getMonth() + 1),
   ])
 
-  if (!data) redirect('/admin')
+  if (!data) redirect('/planes')
+  return <StudentDashboard data={data} monthSessions={monthSessions} user={user} monthLabel={monthLabel} now={now} />
+}
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { student, usage, upcoming, schedules } = data as any
+function StudentDashboard({ data, monthSessions, user, monthLabel, now }: any) {
+  const { student, usage, upcoming, schedules } = data
   const usageTyped = usage as MonthlyUsage | null
   const avatarUrl = (user.user_metadata?.avatar_url as string | undefined) ?? null
-
   const firstName = student.first_name ?? student.name?.split(' ')[0] ?? 'Estudiante'
-  const fullName = [student.first_name, student.last_name].filter(Boolean).join(' ') || student.name
+  const fullName = [student.first_name, student.last_name].filter(Boolean).join(' ') || student.name || 'Estudiante 4U'
   const initials = (firstName[0] ?? 'E').toUpperCase()
+  const nextClass = upcoming?.[0]
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const nextClass = upcoming[0] as any | undefined
-
-  const classesCompleted = usageTyped?.classes_completed ?? 0
-  const classesScheduled = usageTyped?.classes_scheduled ?? 0
-  const lateCancellations = usageTyped?.late_cancellations ?? 0
-  const classesAvailable = usageTyped?.classes_available ?? 0
-  const planTotal = usageTyped?.quota_total ?? 0
-  const progressPct = planTotal > 0 ? Math.round((classesCompleted / planTotal) * 100) : 0
-
+  const completed = usageTyped?.classes_completed ?? monthSessions.filter((s: any) => s.status === 'completed').length
+  const scheduled = usageTyped?.classes_scheduled ?? monthSessions.filter((s: any) => ['pending', 'confirmed'].includes(s.status)).length
+  const cancelled = usageTyped?.late_cancellations ?? monthSessions.filter((s: any) => ['cancelled', 'no_show'].includes(s.status)).length
+  const remaining = usageTyped?.classes_available ?? 0
+  const total = usageTyped?.quota_total ?? Math.max(completed + remaining, 8)
+  const progress = total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0
   const memberSince = student.enrolled_at
     ? new Date(student.enrolled_at + 'T12:00:00').toLocaleDateString('es-CO', { month: 'long', year: 'numeric' })
-    : null
-
-  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
-  const monthName = now.toLocaleDateString('es-CO', { month: 'long' })
-  const planExpiry = `${lastDay} de ${monthName} ${now.getFullYear()}`
-
-  const circumference = 2 * Math.PI * 20
-  const dashOffset = circumference - (progressPct / 100) * circumference
+    : 'mayo 2026'
 
   return (
     <>
       <AutoRefresh studentId={student.id} />
       <Header />
+      <main className="min-h-screen bg-[#fafafa] px-4 pt-[92px] pb-12">
+        <div className="mx-auto max-w-[1180px] space-y-6">
+          <PageTitle subtitle="Aqui puedes ver tu informacion y gestionar tus clases." />
 
-      <div className="min-h-screen bg-gray-50">
-        <main className="max-w-5xl mx-auto px-4 pt-[80px] pb-16 space-y-6">
+          <ProfileHero
+            avatarUrl={avatarUrl}
+            initials={initials}
+            name={fullName}
+            email={student.email ?? user.email}
+            badge="Estudiante"
+            memberSince={memberSince}
+            action={<ProfileModal firstName={student.first_name ?? student.name ?? ''} lastName={student.last_name ?? ''} email={user.email ?? ''} avatarUrl={avatarUrl} userId={user.id} />}
+            right={
+              <PlanCard
+                title="Plan Estudiante"
+                subtitle={`${total} clases al mes`}
+                meta={`Vence el ${new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()} de ${monthLabel.toLowerCase()}`}
+                progress={progress}
+              />
+            }
+          />
 
-          {/* ── TÍTULO ──────────────────────────────────────────────── */}
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 font-poppins">Mi Perfil</h1>
-            <p className="text-sm text-gray-500 font-roboto mt-0.5">Aquí puedes ver tu información y gestionar tus clases.</p>
-          </div>
-
-          {/* ── HERO ──────────────────────────────────────────────────── */}
-          <section className="relative overflow-hidden rounded-2xl bg-[#1a1a1a] p-5 sm:p-6">
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -top-20 -right-20 h-64 w-64 rounded-full opacity-15 blur-3xl"
-              style={{ background: 'radial-gradient(circle, #ff7a00 0%, transparent 70%)' }}
-            />
-            <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-5">
-
-              {/* Avatar + info personal */}
-              <div className="flex items-center gap-4 flex-1 min-w-0">
-                <div className="relative shrink-0">
-                  {avatarUrl ? (
-                    <img
-                      src={avatarUrl}
-                      alt="Avatar"
-                      className="h-16 w-16 rounded-full object-cover border-2 border-[#ff7a00]/60"
-                      style={{ boxShadow: '0 0 18px rgba(255,122,0,0.25)' }}
-                    />
-                  ) : (
-                    <div
-                      className="h-16 w-16 rounded-full flex items-center justify-center text-xl font-bold text-white border-2 border-[#ff7a00]/60"
-                      style={{ backgroundColor: '#ff7a00', boxShadow: '0 0 18px rgba(255,122,0,0.25)' }}
-                    >
-                      {initials}
-                    </div>
-                  )}
-                  <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-green-400 border-2 border-[#1a1a1a]" />
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h2 className="text-lg font-bold text-white font-poppins truncate">{fullName}</h2>
-                    <ProfileModal
-                      firstName={student.first_name ?? student.name ?? ''}
-                      lastName={student.last_name ?? ''}
-                      email={user.email ?? ''}
-                      avatarUrl={avatarUrl}
-                      userId={user.id}
-                    />
-                  </div>
-                  <p className="text-xs text-white/50 font-roboto mt-0.5 truncate">{student.email ?? user.email}</p>
-                  <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                    <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#ff7a00] text-white font-roboto">
-                      Estudiante
-                    </span>
-                    {memberSince && (
-                      <span className="inline-flex items-center gap-1 text-[11px] text-white/35 font-roboto">
-                        <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                          <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
-                        </svg>
-                        Miembro desde {memberSince}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Plan actual */}
-              {planTotal > 0 && (
-                <div className="flex items-center gap-4 shrink-0">
-                  <div className="flex flex-col gap-1">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-white/35 font-roboto">Mi plan actual</p>
-                    <div className="flex items-center gap-1.5">
-                      <svg className="h-4 w-4 text-[#ff7a00]" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M2 8c0-.55.45-1 1-1h2l1.5-3.5a1 1 0 0 1 1.83 0L10 7h4l1.67-3.5a1 1 0 0 1 1.83 0L19 7h2a1 1 0 0 1 .95 1.32l-3 9A1 1 0 0 1 18 18H6a1 1 0 0 1-.95-.68l-3-9A1 1 0 0 1 2 8z"/>
-                      </svg>
-                      <span className="text-base font-bold text-white font-poppins">Plan Estudiante</span>
-                    </div>
-                    <p className="text-xs text-white/50 font-roboto">{planTotal} clases al mes</p>
-                    <p className="text-[11px] text-white/30 font-roboto">Vence el {planExpiry}</p>
-                    <Link href="/mi-cuenta/mis-clases" className="text-[11px] font-semibold text-[#ff7a00] hover:text-[#ff7a00]/80 transition-colors font-roboto mt-0.5">
-                      Ver detalles →
-                    </Link>
-                  </div>
-
-                  {/* Circular progress */}
-                  <div className="relative h-[70px] w-[70px] shrink-0">
-                    <svg className="h-full w-full -rotate-90" viewBox="0 0 48 48">
-                      <circle cx="24" cy="24" r="20" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="4" />
-                      <circle
-                        cx="24" cy="24" r="20"
-                        fill="none"
-                        stroke="#ff7a00"
-                        strokeWidth="4"
-                        strokeLinecap="round"
-                        strokeDasharray={circumference}
-                        strokeDashoffset={dashOffset}
-                        className="transition-all duration-700"
-                      />
-                    </svg>
-                    <span className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-sm font-bold text-white font-poppins leading-none">{progressPct}%</span>
-                      <span className="text-[8px] text-white/35 font-roboto leading-none mt-0.5">completado</span>
-                    </span>
-                  </div>
-                </div>
-              )}
+          <section>
+            <SectionTitle title="Resumen de clases" subtitle="Asi va tu progreso este mes." />
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+              <MetricCard icon="calendar-check" value={completed} label="Clases completadas" hint={`de ${total}`} color="green" progress={progress} />
+              <MetricCard icon="calendar" value={scheduled} label="Clases agendadas" hint="proximas" color="blue" />
+              <MetricCard icon="check" value={completed} label="Clases tomadas" hint="este mes" color="orange" />
+              <MetricCard icon="x" value={cancelled} label="Clases canceladas" hint="este mes" color="red" />
+              <MetricCard icon="hourglass" value={remaining} label="Clases restantes" hint="para este mes" color="purple" />
             </div>
           </section>
 
-          {/* ── RESUMEN DE CLASES ─────────────────────────────────────── */}
-          <section>
-            <h2 className="text-base font-bold text-gray-900 font-poppins mb-0.5">Resumen de clases</h2>
-            <p className="text-xs text-gray-500 font-roboto mb-3">Así va tu progreso este mes.</p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-              {/* Completadas */}
-              <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase tracking-wider text-gray-400 font-roboto">Completadas</span>
-                  <span className="text-green-500">
-                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                      <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="m9 16 2 2 4-4"/>
-                    </svg>
-                  </span>
-                </div>
-                <span className="text-2xl font-bold font-poppins text-gray-900">{classesCompleted}</span>
-                <p className="text-[10px] text-gray-400 font-roboto">de {planTotal}</p>
-                <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-green-400 rounded-full transition-all duration-700" style={{ width: `${Math.min(progressPct, 100)}%` }} />
-                </div>
-              </div>
+          {nextClass ? <NextClassCard session={nextClass} /> : <EmptyNextClass />}
 
-              {/* Agendadas */}
-              <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase tracking-wider text-gray-400 font-roboto">Agendadas</span>
-                  <span className="text-blue-400">
-                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                      <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>
-                    </svg>
-                  </span>
-                </div>
-                <span className="text-2xl font-bold font-poppins text-gray-900">{classesScheduled}</span>
-                <p className="text-[10px] text-blue-400 font-roboto font-semibold">próximas</p>
-              </div>
-
-              {/* Tomadas */}
-              <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase tracking-wider text-gray-400 font-roboto">Tomadas</span>
-                  <span className="text-green-500">
-                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                      <circle cx="12" cy="12" r="9"/><path d="m9 12 2 2 4-4"/>
-                    </svg>
-                  </span>
-                </div>
-                <span className="text-2xl font-bold font-poppins text-gray-900">{classesCompleted}</span>
-                <p className="text-[10px] text-gray-400 font-roboto">este mes</p>
-              </div>
-
-              {/* Canceladas */}
-              <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase tracking-wider text-gray-400 font-roboto">Canceladas</span>
-                  <span className="text-red-400">
-                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                      <circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/>
-                    </svg>
-                  </span>
-                </div>
-                <span className="text-2xl font-bold font-poppins text-gray-900">{lateCancellations}</span>
-                <p className="text-[10px] text-gray-400 font-roboto">este mes</p>
-              </div>
-
-              {/* Restantes */}
-              <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase tracking-wider text-gray-400 font-roboto">Restantes</span>
-                  <span className="text-[#ff7a00]">
-                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                      <path d="M5 3h14M5 21h14M12 3v5M12 21v-5"/><path d="M5 8h4l3 4-3 4H5M19 8h-4l-3 4 3 4h4"/>
-                    </svg>
-                  </span>
-                </div>
-                <span className="text-2xl font-bold font-poppins text-gray-900">{classesAvailable}</span>
-                <p className="text-[10px] text-[#ff7a00] font-roboto font-semibold">para este mes</p>
-              </div>
+          <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+            <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <SectionTitle title="Agenda tu clase" subtitle="Selecciona una fecha y horario disponible." />
+              <SchedulePdfButton name={fullName} roleLabel="Estudiante" monthLabel={monthLabel} sessions={monthSessions} />
+            </div>
+            <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+              <MonthCalendar sessions={monthSessions} year={now.getFullYear()} month={now.getMonth()} />
+              <StudentSidePanel sessions={monthSessions} schedules={schedules ?? []} />
             </div>
           </section>
 
-          {/* ── PRÓXIMA CLASE ─────────────────────────────────────────── */}
-          {nextClass ? (
-            <section>
-              <div className="rounded-2xl bg-[#1a1a1a] overflow-hidden">
-                <div className="flex items-center gap-2 px-5 py-3 border-b border-white/5">
-                  <svg className="h-4 w-4 text-[#ff7a00]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>
-                  </svg>
-                  <span className="text-sm font-bold text-white font-poppins">Próxima clase</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-5">
-                  <div
-                    className="h-12 w-12 rounded-2xl flex items-center justify-center shrink-0"
-                    style={{ background: 'rgba(255,122,0,0.15)' }}
-                  >
-                    <span className="text-[#ff7a00]">
-                      <InstrumentIcon courseName={nextClass.course?.name} className="h-6 w-6" />
-                    </span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="text-base font-bold text-white font-poppins">{nextClass.course?.name ?? 'Clase'}</h3>
-                      <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full border shrink-0 ${statusMeta(nextClass.status).badgeClass}`}>
-                        {statusMeta(nextClass.status).label}
-                      </span>
-                    </div>
-                    <p className="text-sm text-white/50 font-roboto mt-1 capitalize">
-                      {formatDateLong(nextClass.scheduled_date)} · {nextClass.start_time?.slice(0, 5)}
-                    </p>
-                    <div className="flex flex-wrap gap-x-5 gap-y-1 mt-1.5 text-xs font-roboto">
-                      <span className="text-white/30">Instructor: <span className="text-white/55 font-medium">{nextClass.instructor?.name ?? 'Sin asignar'}</span></span>
-                      <span className="text-white/30">Salón: <span className="text-white/55 font-medium">{nextClass.classroom?.name ?? '—'}</span></span>
-                    </div>
-                  </div>
-                  <Link
-                    href="/mi-cuenta/mis-clases"
-                    className="shrink-0 inline-flex items-center gap-1.5 rounded-xl px-5 py-2.5 text-sm font-semibold font-roboto text-white transition-all hover:brightness-110 active:scale-95"
-                    style={{ backgroundColor: '#ff7a00' }}
-                  >
-                    Ver detalles
-                  </Link>
-                </div>
-              </div>
-            </section>
-          ) : (
-            <section>
-              <div className="bg-white rounded-2xl border border-gray-100 p-5 text-center shadow-sm">
-                <p className="text-sm text-gray-400 font-roboto">No tienes clases agendadas próximamente.</p>
-                <Link href="/agendar" className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#ff7a00] hover:text-[#ff7a00]/80 mt-2 transition-colors font-roboto">
-                  Agendar una clase →
-                </Link>
-              </div>
-            </section>
-          )}
-
-          {/* ── CALENDARIO DE CLASES ──────────────────────────────────── */}
-          <section>
-            <h2 className="text-base font-bold text-gray-900 font-poppins mb-0.5">Agenda tu clase</h2>
-            <p className="text-xs text-gray-500 font-roboto mb-4">Selecciona una fecha y horario disponible.</p>
-            <ClassesCalendar
-              initialSessions={monthSessions}
-              schedules={schedules ?? []}
-              initialYear={now.getFullYear()}
-              initialMonth={now.getMonth() + 1}
-            />
-          </section>
-
-          {/* ── ¿NECESITAS AYUDA? ─────────────────────────────────────── */}
-          <section>
-            <div className="rounded-2xl bg-white border border-gray-100 shadow-sm px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-[#ff7a00]/10 flex items-center justify-center shrink-0">
-                  <svg className="h-5 w-5 text-[#ff7a00]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-gray-900 font-poppins">¿Necesitas ayuda?</p>
-                  <p className="text-xs text-gray-400 font-roboto">Si tienes dudas sobre tus clases o agendamiento, estamos aquí para ayudarte.</p>
-                </div>
-              </div>
-              <a
-                href={`https://wa.me/${ACADEMY.phone}?text=Hola, necesito ayuda con mi cuenta de 4U Studio Academy.`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold font-roboto text-white transition-all hover:brightness-110 active:scale-95 shrink-0"
-                style={{ backgroundColor: '#ff7a00' }}
-              >
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                </svg>
-                Contacto de soporte
-              </a>
-            </div>
-          </section>
-
-        </main>
-      </div>
+          <SupportBar />
+        </div>
+      </main>
     </>
   )
 }
 
+function InstructorDashboard({ data, user, monthLabel, now }: any) {
+  const { instructor, sessions, availability, upcoming, cancelled, stats } = data
+  const avatarUrl = (user.user_metadata?.avatar_url as string | undefined) ?? null
+  const name = instructor.name ?? user.user_metadata?.name ?? 'Instructor 4U'
+  const initials = (name[0] ?? 'I').toUpperCase()
+  const memberSince = instructor.created_at
+    ? new Date(instructor.created_at).toLocaleDateString('es-CO', { month: 'long', year: 'numeric' })
+    : 'marzo 2024'
+
+  return (
+    <>
+      <Header />
+      <main className="min-h-screen bg-[#fafafa] px-4 pt-[92px] pb-12">
+        <div className="mx-auto max-w-[1180px] space-y-6">
+          <PageTitle subtitle="Administra tus clases, horarios y alumnos." />
+
+          <ProfileHero
+            avatarUrl={avatarUrl}
+            initials={initials}
+            name={name}
+            email={instructor.email ?? user.email}
+            badge="Maestro"
+            memberSince={memberSince}
+            action={<span className="text-[#ff7a00]">✎</span>}
+            right={<InstructorSummary stats={stats} />}
+          />
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <ActionCard icon="calendar" title="Ver horarios" text="Tu disponibilidad" />
+            <ActionCard icon="briefcase" title="Gestionar clases" text="Crear, editar o cancelar" />
+            <ActionCard icon="users" title="Mis alumnos" text="Ver y gestionar" />
+            <ActionCard icon="report" title="Reportes" text="Tu actividad y estadisticas" />
+          </div>
+
+          <section>
+            <SectionTitle title="Resumen de clases" subtitle="Asi va tu actividad." />
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <MetricCard icon="calendar" value={stats.weekScheduled} label="Programadas" hint="Esta semana" color="blue" />
+              <MetricCard icon="check" value={stats.completed} label="Completadas" hint="Este mes" color="green" />
+              <MetricCard icon="clock" value={stats.todayUpcoming} label="Proximas hoy" hint="Siguiente clase" color="orange" />
+              <MetricCard icon="x" value={stats.cancelled} label="Canceladas" hint="Este mes" color="red" />
+            </div>
+          </section>
+
+          <section className="grid gap-5 lg:grid-cols-[1fr_300px]">
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+              <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <SectionTitle title="Tu calendario" subtitle="Vista de tus clases programadas." />
+                <SchedulePdfButton name={name} roleLabel="Instructor" monthLabel={monthLabel} sessions={sessions} />
+              </div>
+              <InstructorWeekCalendar sessions={sessions} now={now} />
+              <AvailabilityStrip availability={availability} />
+            </div>
+            <InstructorSidePanel upcoming={upcoming} cancelled={cancelled} />
+          </section>
+
+          <SupportBar />
+        </div>
+      </main>
+    </>
+  )
+}
+
+function PageTitle({ subtitle }: { subtitle: string }) {
+  return (
+    <div>
+      <h1 className="font-poppins text-3xl font-extrabold text-gray-950">Mi Perfil</h1>
+      <p className="mt-1 text-sm text-gray-600">{subtitle}</p>
+    </div>
+  )
+}
+
+function SectionTitle({ title, subtitle }: { title: string; subtitle: string }) {
+  return (
+    <div>
+      <h2 className="font-poppins text-xl font-extrabold text-gray-950">{title}</h2>
+      <p className="mt-1 text-sm text-gray-600">{subtitle}</p>
+    </div>
+  )
+}
+
+function ProfileHero({ avatarUrl, initials, name, email, badge, memberSince, action, right }: any) {
+  return (
+    <section className="overflow-hidden rounded-xl bg-[#090909] p-7 text-white shadow-xl">
+      <div className="grid gap-7 lg:grid-cols-[1fr_560px] lg:items-center">
+        <div className="flex items-center gap-6">
+          <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-full bg-[#ff7a00]">
+            {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" /> : <span className="flex h-full w-full items-center justify-center font-poppins text-4xl font-black">{initials}</span>}
+            <span className="absolute bottom-2 right-2 h-4 w-4 rounded-full border-2 border-black bg-green-500" />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-3">
+              <h2 className="truncate font-poppins text-3xl font-extrabold">{name}</h2>
+              {action}
+            </div>
+            <p className="mt-2 text-white/70">{email}</p>
+            <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-white/65">
+              <span className="rounded-full bg-[#ff7a00]/20 px-2 py-1 text-xs font-bold text-[#ff7a00]">{badge}</span>
+              <span className="inline-flex items-center gap-2">
+                <Icon name="calendar" className="h-4 w-4" />
+                Miembro desde {memberSince}
+              </span>
+            </div>
+          </div>
+        </div>
+        {right}
+      </div>
+    </section>
+  )
+}
+
+function PlanCard({ title, subtitle, meta, progress }: { title: string; subtitle: string; meta: string; progress: number }) {
+  const circumference = 2 * Math.PI * 42
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-6">
+      <div className="flex items-center justify-between gap-6">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-wider text-white/45">Mi plan actual</p>
+          <h3 className="mt-3 flex items-center gap-3 font-poppins text-2xl font-extrabold">
+            <Icon name="crown" className="h-6 w-6 text-[#ff7a00]" />
+            {title}
+          </h3>
+          <p className="mt-2 font-bold text-white">{subtitle}</p>
+          <div className="mt-5 flex gap-8 text-sm">
+            <span className="text-white/55">{meta}</span>
+            <Link href="/mi-cuenta/mis-clases" className="font-bold text-[#ff7a00]">Ver detalles</Link>
+          </div>
+        </div>
+        <div className="relative h-32 w-32 shrink-0">
+          <svg className="-rotate-90" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,.12)" strokeWidth="8" />
+            <circle cx="50" cy="50" r="42" fill="none" stroke="#ff7a00" strokeWidth="8" strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={circumference - (progress / 100) * circumference} />
+          </svg>
+          <span className="absolute inset-0 flex flex-col items-center justify-center">
+            <strong className="font-poppins text-2xl">{progress}%</strong>
+            <small className="text-white/55">completado</small>
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function InstructorSummary({ stats }: any) {
+  const items = [
+    ['Clases esta semana', stats.weekScheduled, 'calendar'],
+    ['Clases completadas', stats.completed, 'check'],
+    ['Clases canceladas', stats.cancelled, 'x'],
+    ['Alumnos activos', stats.activeStudents, 'users'],
+  ]
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-5">
+      <p className="mb-4 text-xs font-bold text-white/75">Resumen general</p>
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {items.map(([label, value, icon]) => (
+          <div key={label as string} className="border-white/10 lg:border-l lg:pl-5 first:border-l-0 first:pl-0">
+            <Icon name={icon as string} className="mb-2 h-5 w-5 text-[#ff7a00]" />
+            <p className="text-xs text-white/55">{label}</p>
+            <strong className="font-poppins text-3xl">{value as number}</strong>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function MetricCard({ icon, value, label, hint, color, progress }: any) {
+  const colors: Record<string, string> = {
+    green: 'bg-green-100 text-green-600',
+    blue: 'bg-blue-100 text-blue-600',
+    orange: 'bg-orange-100 text-[#ff7a00]',
+    red: 'bg-red-100 text-red-600',
+    purple: 'bg-purple-100 text-purple-600',
+  }
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+      <span className={`mb-5 flex h-11 w-11 items-center justify-center rounded-full ${colors[color]}`}>
+        <Icon name={icon} className="h-5 w-5" />
+      </span>
+      <strong className="font-poppins text-3xl font-extrabold text-gray-950">{value}</strong>
+      <p className="mt-2 font-semibold text-gray-900">{label}</p>
+      <p className={`mt-1 text-sm font-bold ${color === 'red' ? 'text-red-600' : color === 'blue' ? 'text-blue-600' : color === 'purple' ? 'text-purple-600' : 'text-[#ff7a00]'}`}>{hint}</p>
+      {typeof progress === 'number' && <div className="mt-5 h-2 rounded-full bg-gray-100"><div className="h-full rounded-full bg-green-500" style={{ width: `${progress}%` }} /></div>}
+    </div>
+  )
+}
+
+function NextClassCard({ session }: { session: any }) {
+  return (
+    <section className="rounded-xl bg-[#090909] p-6 text-white shadow-lg">
+      <h2 className="mb-5 flex items-center gap-2 font-poppins text-xl font-extrabold text-[#ff7a00]">
+        <Icon name="headphones" className="h-5 w-5" />
+        Proxima clase
+      </h2>
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+        <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#ff7a00]/20 text-[#ff7a00]">
+          <InstrumentIcon courseName={session.course?.name} className="h-8 w-8" />
+        </span>
+        <div className="flex-1">
+          <div className="flex flex-wrap items-center gap-3">
+            <h3 className="font-poppins text-xl font-bold">{session.course?.name ?? 'Clase'}</h3>
+            <span className={`rounded-full border px-2 py-1 text-xs font-bold ${statusMeta(session.status).badgeClass}`}>{statusMeta(session.status).label}</span>
+          </div>
+          <p className="mt-2 text-white/70">{formatDateLong(session.scheduled_date)} · {session.start_time?.slice(0, 5)}</p>
+          <p className="mt-2 text-sm text-white/45">Instructor: {session.instructor?.name ?? 'Sin asignar'} <span className="mx-4">Salon: {session.classroom?.name ?? '-'}</span></p>
+        </div>
+        <Link href="/mi-cuenta/mis-clases" className="rounded-lg bg-[#ff7a00] px-8 py-3 font-bold text-white shadow-lg shadow-orange-500/20">Ver detalles</Link>
+      </div>
+    </section>
+  )
+}
+
+function EmptyNextClass() {
+  return (
+    <section className="rounded-xl border border-gray-200 bg-white p-6 text-center shadow-sm">
+      <p className="font-semibold text-gray-700">No tienes clases agendadas proximamente.</p>
+      <Link href="/agendar" className="mt-3 inline-flex font-bold text-[#ff7a00]">Agendar una clase →</Link>
+    </section>
+  )
+}
+
+function MonthCalendar({ sessions, year, month }: { sessions: any[]; year: number; month: number }) {
+  const firstDow = new Date(year, month, 1).getDay()
+  const total = new Date(year, month + 1, 0).getDate()
+  const cells: { day: number; current: boolean }[] = []
+  for (let i = 0; i < firstDow; i++) cells.push({ day: 0, current: false })
+  for (let d = 1; d <= total; d++) cells.push({ day: d, current: true })
+  while (cells.length % 7 !== 0) cells.push({ day: 0, current: false })
+
+  const byDay: Record<string, any[]> = {}
+  sessions.forEach(s => {
+    if (!byDay[s.scheduled_date]) byDay[s.scheduled_date] = []
+    byDay[s.scheduled_date].push(s)
+  })
+
+  return (
+    <div>
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button className="h-10 w-10 rounded-lg border border-gray-200 text-gray-700">‹</button>
+          <h3 className="font-poppins text-xl font-extrabold">{MONTHS_ES[month]} {year}</h3>
+          <button className="h-10 w-10 rounded-lg border border-gray-200 text-gray-700">›</button>
+        </div>
+        <div className="hidden rounded-lg bg-gray-100 p-1 sm:flex">
+          <span className="rounded-md bg-[#ff7a00] px-5 py-2 text-sm font-bold text-white">Mes</span>
+          <span className="px-5 py-2 text-sm font-bold text-gray-600">Semana</span>
+          <span className="px-5 py-2 text-sm font-bold text-gray-600">Hoy</span>
+        </div>
+      </div>
+      <div className="grid grid-cols-7 border-l border-t border-gray-200">
+        {DOW_HEAD.map(d => <div key={d} className="border-b border-r border-gray-200 py-3 text-center text-xs font-bold text-gray-500">{d}</div>)}
+        {cells.map((cell, i) => {
+          const key = cell.current ? `${year}-${String(month + 1).padStart(2, '0')}-${String(cell.day).padStart(2, '0')}` : ''
+          const daySessions = byDay[key] ?? []
+          return (
+            <div key={i} className={`min-h-[104px] border-b border-r border-gray-200 p-2 ${cell.current ? 'bg-white' : 'bg-gray-50'}`}>
+              <span className={`text-sm font-bold ${daySessions.length ? 'text-gray-950' : 'text-gray-400'}`}>{cell.current ? cell.day : ''}</span>
+              <div className="mt-2 space-y-1">
+                {daySessions.slice(0, 3).map(s => <CalendarPill key={s.id} session={s} />)}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+      <Legend />
+    </div>
+  )
+}
+
+function CalendarPill({ session }: { session: any }) {
+  const color = session.status === 'completed' ? 'bg-purple-100 text-purple-700' : session.status === 'cancelled' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+  return <div className={`rounded-md px-2 py-1 text-xs font-bold ${color}`}>{session.course?.name ?? 'Clase'}<br />{session.start_time?.slice(0, 5)}</div>
+}
+
+function StudentSidePanel({ sessions, schedules }: { sessions: any[]; schedules: any[] }) {
+  const today = new Date().toISOString().split('T')[0]
+  const available = sessions.filter(s => s.scheduled_date >= today && ['pending', 'confirmed'].includes(s.status)).slice(0, 2)
+  return (
+    <aside className="space-y-4">
+      <div className="rounded-xl border border-gray-200 p-5">
+        <h3 className="font-poppins text-lg font-extrabold">Clases disponibles</h3>
+        <p className="mt-1 text-sm text-gray-600">{formatDateLong(today)}</p>
+        <div className="mt-4 space-y-3">
+          {(available.length ? available : schedules.slice(0, 2)).map((s: any, i: number) => (
+            <div key={s.id ?? i} className="rounded-lg bg-green-50 p-4">
+              <p className="font-bold">{s.course?.name ?? 'Canto'}</p>
+              <p className="text-sm text-gray-600">{s.start_time?.slice(0, 5) ?? '18:00'}</p>
+              <p className="text-sm text-gray-600">{s.classroom?.name ?? 'Salon 1'}</p>
+            </div>
+          ))}
+          {!available.length && !schedules.length && <p className="text-sm text-gray-500">No hay clases disponibles por ahora.</p>}
+        </div>
+      </div>
+      <div className="rounded-xl border border-gray-200 p-5">
+        <h3 className="font-poppins text-lg font-extrabold">Filtros</h3>
+        <label className="mt-4 block text-sm font-semibold text-gray-600">Materia</label>
+        <select className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-3 text-sm"><option>Todas</option></select>
+        <label className="mt-4 block text-sm font-semibold text-gray-600">Instructor</label>
+        <select className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-3 text-sm"><option>Todos</option></select>
+      </div>
+    </aside>
+  )
+}
+
+function InstructorWeekCalendar({ sessions, now }: { sessions: any[]; now: Date }) {
+  const monday = new Date(now)
+  const day = monday.getDay() || 7
+  monday.setDate(monday.getDate() - (day - 1))
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday)
+    d.setDate(monday.getDate() + i)
+    return d
+  })
+  const bySlot: Record<string, any[]> = {}
+  sessions.forEach(s => {
+    const key = `${s.scheduled_date}-${s.start_time?.slice(0, 5)}`
+    if (!bySlot[key]) bySlot[key] = []
+    bySlot[key].push(s)
+  })
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[760px] border-collapse text-sm">
+        <thead>
+          <tr>
+            <th className="w-16 border border-gray-200 bg-white p-2" />
+            {days.map((d, i) => <th key={i} className="border border-gray-200 bg-white p-2 text-xs text-gray-600">{WEEK_DAYS[i]}<br />{d.getDate()}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {HOURS.map(hour => (
+            <tr key={hour}>
+              <td className="border border-gray-200 p-2 text-xs text-gray-500">{hour}</td>
+              {days.map((d, i) => {
+                const iso = d.toISOString().split('T')[0]
+                const list = bySlot[`${iso}-${hour}`] ?? []
+                return (
+                  <td key={i} className="h-16 border border-gray-200 p-1 align-top">
+                    {list.map(s => <div key={s.id} className="rounded-md bg-green-100 p-2 text-xs text-green-800"><strong>{s.course?.name}</strong><br />{s.student?.name}</div>)}
+                  </td>
+                )
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <Legend />
+    </div>
+  )
+}
+
+function InstructorSidePanel({ upcoming, cancelled }: { upcoming: any[]; cancelled: any[] }) {
+  return (
+    <aside className="space-y-4">
+      <ListPanel title="Proximas clases (hoy)" items={upcoming} tone="green" />
+      <ListPanel title="Clases canceladas" items={cancelled} tone="red" />
+    </aside>
+  )
+}
+
+function ListPanel({ title, items, tone }: { title: string; items: any[]; tone: 'green' | 'red' }) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <h3 className="font-poppins text-lg font-extrabold">{title}</h3>
+      <div className="mt-4 space-y-3">
+        {items.length ? items.slice(0, 4).map(item => (
+          <div key={item.id} className={`rounded-lg p-4 ${tone === 'green' ? 'bg-green-50' : 'bg-red-50'}`}>
+            <p className="font-bold">{item.start_time?.slice(0, 5)} · {item.course?.name ?? 'Clase'}</p>
+            <p className="text-sm text-gray-600">{item.student?.name ?? item.instructor?.name ?? '-'} · {item.classroom?.name ?? '-'}</p>
+          </div>
+        )) : <p className="text-sm text-gray-500">No hay registros.</p>}
+      </div>
+    </div>
+  )
+}
+
+function AvailabilityStrip({ availability }: { availability: any[] }) {
+  const names = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo']
+  return (
+    <div className="mt-6 rounded-xl border border-gray-200 bg-white p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <div>
+          <h3 className="font-poppins text-lg font-extrabold">Tu horario disponible</h3>
+          <p className="text-sm text-gray-600">Define los horarios en los que puedes dar clases.</p>
+        </div>
+        <button className="rounded-lg border border-[#ff7a00]/35 px-4 py-2 text-sm font-bold text-[#ff7a00]">Editar horario</button>
+      </div>
+      <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-7">
+        {names.map((name, i) => {
+          const slot = availability.find(a => a.day_of_week === i + 1)
+          return <div key={name} className="rounded-lg border border-gray-200 p-3 text-xs"><span className="font-bold">{name}</span><br />{slot ? `${slot.start_time?.slice(0, 5)} - ${slot.end_time?.slice(0, 5)}` : 'No disponible'}</div>
+        })}
+      </div>
+    </div>
+  )
+}
+
+function ActionCard({ icon, title, text }: { icon: string; title: string; text: string }) {
+  return (
+    <div className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-orange-100 text-[#ff7a00]"><Icon name={icon} className="h-5 w-5" /></span>
+      <div>
+        <p className="font-poppins font-extrabold text-gray-950">{title}</p>
+        <p className="text-sm text-gray-600">{text}</p>
+      </div>
+    </div>
+  )
+}
+
+function Legend() {
+  return (
+    <div className="mt-4 flex flex-wrap gap-5 text-sm text-gray-600">
+      <span className="flex items-center gap-2"><i className="h-3 w-3 rounded-full bg-green-500" />Disponible</span>
+      <span className="flex items-center gap-2"><i className="h-3 w-3 rounded-full bg-blue-500" />Agendada</span>
+      <span className="flex items-center gap-2"><i className="h-3 w-3 rounded-full bg-purple-500" />Completada</span>
+      <span className="flex items-center gap-2"><i className="h-3 w-3 rounded-full bg-red-500" />Cancelada</span>
+    </div>
+  )
+}
+
+function SupportBar() {
+  return (
+    <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4">
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-orange-100 text-[#ff7a00]"><Icon name="calendar" className="h-6 w-6" /></span>
+          <div>
+            <p className="font-poppins text-lg font-extrabold">¿Necesitas ayuda?</p>
+            <p className="text-sm text-gray-600">Si tienes dudas o necesitas soporte, estamos aqui para ayudarte.</p>
+          </div>
+        </div>
+        <a href={`https://wa.me/${ACADEMY.phone}?text=Hola, necesito ayuda con mi cuenta de 4U Studio Academy.`} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-[#ff7a00]/35 px-7 py-3 text-center font-bold text-[#ff7a00]">Contacto de soporte</a>
+      </div>
+    </section>
+  )
+}
+
+function Icon({ name, className }: { name: string; className?: string }) {
+  const common = { className, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
+  const paths: Record<string, ReactNode> = {
+    calendar: <><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></>,
+    'calendar-check': <><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18M9 16l2 2 4-4" /></>,
+    check: <><circle cx="12" cy="12" r="9" /><path d="m9 12 2 2 4-4" /></>,
+    x: <><circle cx="12" cy="12" r="9" /><path d="m15 9-6 6M9 9l6 6" /></>,
+    hourglass: <><path d="M5 3h14M5 21h14M7 3v5l5 4-5 4v5M17 3v5l-5 4 5 4v5" /></>,
+    headphones: <><path d="M3 18v-6a9 9 0 0 1 18 0v6" /><path d="M21 19a2 2 0 0 1-2 2h-1v-8h3zM3 19a2 2 0 0 0 2 2h1v-8H3z" /></>,
+    crown: <><path d="M2 8l4 10h12l4-10-6 4-4-7-4 7-6-4z" /></>,
+    users: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></>,
+    briefcase: <><rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" /></>,
+    report: <><path d="M8 3h8l4 4v14H4V3z" /><path d="M14 3v5h5M8 13h8M8 17h5" /></>,
+    clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 3" /></>,
+  }
+  return <svg {...common}>{paths[name] ?? paths.calendar}</svg>
+}
+
 function formatDateLong(iso: string) {
   return new Date(iso + 'T12:00:00').toLocaleDateString('es-CO', {
-    weekday: 'long', day: 'numeric', month: 'long',
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
   })
 }

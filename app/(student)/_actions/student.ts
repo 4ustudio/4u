@@ -122,6 +122,82 @@ export async function getMonthSessions(year: number, month: number) {
   return (sessions ?? []) as any[] // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
+export async function getInstructorDashboardData(userId: string, email?: string | null) {
+  const adminClient = admin()
+  const now = new Date()
+  const today = now.toISOString().split('T')[0]
+  const mm = String(now.getMonth() + 1).padStart(2, '0')
+  const monthStart = `${now.getFullYear()}-${mm}-01`
+  const nextYear = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear()
+  const nextMonth = now.getMonth() === 11 ? 1 : now.getMonth() + 2
+  const nextStart = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`
+
+  const lookupEmail = email?.trim()
+  const metadataId = userId
+
+  let instructor = null as any // eslint-disable-line @typescript-eslint/no-explicit-any
+  if (lookupEmail) {
+    const { data } = await adminClient
+      .from('instructors')
+      .select('*')
+      .eq('email', lookupEmail)
+      .maybeSingle()
+    instructor = data ?? null
+  }
+
+  if (!instructor) {
+    const { data } = await adminClient
+      .from('instructors')
+      .select('*')
+      .eq('id', metadataId)
+      .maybeSingle()
+    instructor = data ?? null
+  }
+
+  if (!instructor) return null
+
+  const [{ data: sessions }, { data: availability }] = await Promise.all([
+    adminClient
+      .from('class_sessions')
+      .select('*, student:students(name, phone), course:courses(name), classroom:classrooms(name), instructor:instructors(name)')
+      .eq('instructor_id', instructor.id)
+      .gte('scheduled_date', monthStart)
+      .lt('scheduled_date', nextStart)
+      .order('scheduled_date', { ascending: true })
+      .order('start_time', { ascending: true }),
+    adminClient
+      .from('instructor_availability')
+      .select('*')
+      .eq('instructor_id', instructor.id)
+      .order('day_of_week')
+      .order('start_time'),
+  ])
+
+  const monthSessions = (sessions ?? []) as any[] // eslint-disable-line @typescript-eslint/no-explicit-any
+  const upcoming = monthSessions
+    .filter(s => s.scheduled_date >= today && ['pending', 'confirmed'].includes(s.status))
+    .slice(0, 8)
+  const cancelled = monthSessions
+    .filter(s => s.status === 'cancelled' || s.status === 'no_show')
+    .slice(0, 8)
+  const uniqueStudents = new Set(monthSessions.map(s => s.student_id).filter(Boolean))
+
+  return {
+    instructor,
+    sessions: monthSessions,
+    availability: availability ?? [],
+    upcoming,
+    cancelled,
+    stats: {
+      weekScheduled: upcoming.length,
+      completed: monthSessions.filter(s => s.status === 'completed').length,
+      cancelled: cancelled.length,
+      activeStudents: uniqueStudents.size,
+      todayUpcoming: upcoming.filter(s => s.scheduled_date === today).length,
+    },
+  }
+}
+
 // ─── Agendar clase ───────────────────────────────────────────────────
 
 export async function studentBookAction(
@@ -225,17 +301,20 @@ export async function loginAction(
     return { error: error.message }
   }
 
-  // Verificar si el usuario tiene un perfil de estudiante.
-  // Si no, redirigir al panel admin (caso de usuarios administradores).
+  // Verificar el rol para enviar cada perfil a su espacio.
   const { data: { user: loggedUser } } = await supabase.auth.getUser()
   if (loggedUser) {
+    const role = loggedUser.user_metadata?.role
+    if (role === 'admin') redirect('/admin')
+    if (role === 'instructor') redirect('/mi-cuenta')
+
     const { data: studentRecord } = await supabase
       .from('students')
       .select('id')
       .eq('user_id', loggedUser.id)
       .maybeSingle()
     if (!studentRecord) {
-      redirect('/admin')
+      redirect('/planes')
     }
   }
 

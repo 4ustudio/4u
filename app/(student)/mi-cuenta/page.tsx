@@ -1,15 +1,13 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createAuthServerClient } from '@/lib/supabase/server'
-import { getMyDashboardData } from '../_actions/student'
-import { studentBookAction } from '../_actions/student'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { getMyDashboardData, getMonthSessions } from '../_actions/student'
 import Header from '@/components/layout/Header'
 import AutoRefresh from './_components/AutoRefresh'
 import ProfileModal from './_components/ProfileModal'
 import { InstrumentIcon } from './_components/instruments'
 import { statusMeta } from './_components/statusMeta'
-import BookingCalendar from '@/components/sections/BookingCalendar'
+import ClassesCalendar from './_components/ClassesCalendar'
 import { ACADEMY } from '@/lib/constants'
 import type { MonthlyUsage } from '@/types/admin'
 
@@ -20,19 +18,16 @@ export default async function MiCuentaPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/mi-cuenta/login')
 
-  const [data, instructorsResult] = await Promise.all([
+  const now = new Date()
+  const [data, monthSessions] = await Promise.all([
     getMyDashboardData(user.id),
-    createAdminClient()
-      .from('instructors')
-      .select('id, name')
-      .eq('status', 'active')
-      .order('name'),
+    getMonthSessions(now.getFullYear(), now.getMonth() + 1),
   ])
 
   if (!data) redirect('/admin')
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { student, usage, upcoming } = data as any
+  const { student, usage, upcoming, schedules } = data as any
   const usageTyped = usage as MonthlyUsage | null
   const avatarUrl = (user.user_metadata?.avatar_url as string | undefined) ?? null
 
@@ -54,12 +49,9 @@ export default async function MiCuentaPage() {
     ? new Date(student.enrolled_at + 'T12:00:00').toLocaleDateString('es-CO', { month: 'long', year: 'numeric' })
     : null
 
-  const now = new Date()
   const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
   const monthName = now.toLocaleDateString('es-CO', { month: 'long' })
   const planExpiry = `${lastDay} de ${monthName} ${now.getFullYear()}`
-
-  const instructors = (instructorsResult.data ?? []) as { id: string; name: string }[]
 
   const circumference = 2 * Math.PI * 20
   const dashOffset = circumference - (progressPct / 100) * circumference
@@ -313,15 +305,15 @@ export default async function MiCuentaPage() {
             </section>
           )}
 
-          {/* ── AGENDA TU CLASE ───────────────────────────────────────── */}
+          {/* ── CALENDARIO DE CLASES ──────────────────────────────────── */}
           <section>
             <h2 className="text-base font-bold text-gray-900 font-poppins mb-0.5">Agenda tu clase</h2>
             <p className="text-xs text-gray-500 font-roboto mb-4">Selecciona una fecha y horario disponible.</p>
-            <BookingCalendar
-              serverAction={studentBookAction}
-              mode="student"
-              isLoggedIn={true}
-              instructors={instructors}
+            <ClassesCalendar
+              initialSessions={monthSessions}
+              schedules={schedules ?? []}
+              initialYear={now.getFullYear()}
+              initialMonth={now.getMonth() + 1}
             />
           </section>
 

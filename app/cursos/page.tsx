@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import PageLayout from "@/components/layout/PageLayout";
-import OptimizedImage from "@/components/ui/OptimizedImage";
 import CoursesGrid from "@/components/sections/CoursesGrid";
 
 export const metadata: Metadata = {
@@ -109,16 +108,39 @@ export default function CursosPage() {
       {/* Hero */}
       <section className="relative w-full min-h-[600px] lg:min-h-[650px] bg-black overflow-hidden flex items-stretch">
         <div className="absolute inset-0">
-          <OptimizedImage
-            src="/images/hero/Banner-2.jpg.jpeg"
-            alt="Cursos de música 4U Studio Academy"
-            fill
-            priority
-            className="object-cover object-[center_30%] scale-105 [transform:scale(1.05)_scaleX(-1)]"
-            sizes="100vw"
+          {/* Video — scaleX(-1) para que los sujetos miren hacia el texto */}
+          <video
+            src="/images/hero/hf_20260603_135817_bc2bc082-82e4-46f3-bc75-4747aa356fee.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="absolute inset-0 h-full w-full object-cover"
+            style={{ objectPosition: "18% center", transform: "scaleX(-1)" }}
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/70 to-black/40" />
-          <div className="absolute inset-0 bg-black/50 lg:hidden" />
+          {/* Capa 1 — negro intenso izq → transparencia progresiva (termina antes de los rostros) */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(90deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.78) 22%, rgba(0,0,0,0.38) 40%, rgba(0,0,0,0.08) 54%, rgba(0,0,0,0) 62%)",
+            }}
+          />
+          {/* Capa 2 — glow naranja sutil detrás del texto */}
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(ellipse 35% 65% at 16% 55%, rgba(255,122,0,0.12), transparent 70%)",
+            }}
+          />
+          {/* Capa 3 — viñeta perimetral */}
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{ boxShadow: "inset 0 0 100px 25px rgba(0,0,0,0.50)" }}
+          />
+          {/* Capa móvil — oscurece todo para legibilidad en pantallas chicas */}
+          <div className="absolute inset-0 bg-black/55 lg:hidden" />
         </div>
 
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-8 py-24 lg:py-28 flex items-center">

@@ -2,7 +2,7 @@ export default function TestimonialStrip() {
   return (
     <section className="w-full bg-white py-3">
       <div className="home-frame">
-        <div className="relative overflow-hidden rounded-xl bg-zinc-900 min-h-[280px] md:min-h-[300px]">
+        <div className="relative overflow-hidden rounded-xl bg-zinc-900 min-h-[315px] md:min-h-[340px]">
 
           {/* Video — sujeto principal empujado al tercio derecho */}
           <div className="absolute inset-0">
@@ -13,7 +13,7 @@ export default function TestimonialStrip() {
               loop
               playsInline
               className="h-full w-full object-cover"
-              style={{ objectPosition: "82% center" }}
+              style={{ objectPosition: "80% 35%" }}
             />
           </div>
 
@@ -48,11 +48,9 @@ export default function TestimonialStrip() {
 
           {/* Texto — tercio izquierdo */}
           <div className="relative z-10 flex flex-col justify-center px-8 py-10 md:w-[38%] md:px-12 md:py-12">
-            <span className="mb-1 font-poppins text-5xl font-black leading-none text-[#ff7a00]">&ldquo;</span>
             <p className="max-w-xl font-poppins text-xl font-extrabold italic leading-[1.2] text-white md:text-[26px] lg:text-[30px]">
               La música no solo cambia tu sonido,<br />
               <span className="text-[#ff7a00]">cambia tu vida.</span>
-              <span className="ml-2 font-poppins text-5xl font-black leading-none text-[#ff7a00]">&rdquo;</span>
             </p>
             <p className="mt-3 max-w-sm font-roboto text-sm italic leading-relaxed text-white/65">
               Atrévete a comenzar tu historia musical hoy.

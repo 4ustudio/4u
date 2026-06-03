@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import Image from 'next/image'
 import { createAuthServerClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import PrintButton from './_components/PrintButton'
@@ -88,22 +89,24 @@ export default async function ClasesMesPage() {
       <style>{`
         @media print {
           .no-print { display: none !important; }
-          body { background: white !important; color: black !important; }
+          body { background: white !important; color: #111 !important; }
           .print-page { padding: 24px !important; max-width: 100% !important; }
-          .print-card { border: 1px solid #e5e7eb !important; background: white !important; }
+          .print-card { border: 1px solid #e5e7eb !important; background: white !important; border-radius: 12px !important; }
           .print-table-row { border-bottom: 1px solid #e5e7eb !important; }
           .print-text { color: #111 !important; }
           .print-muted { color: #555 !important; }
           .print-cell { border: 1px solid #e5e7eb !important; background: white !important; }
+          .print-brand { display: flex !important; }
         }
+        .print-brand { display: none; }
         @page { margin: 1.5cm; }
       `}</style>
 
-      <div className="print-page min-h-screen bg-black text-white max-w-3xl mx-auto px-4 py-8 space-y-6 page-animate">
+      <div className="print-page min-h-screen bg-stone-50 text-gray-800 max-w-3xl mx-auto px-4 py-8 space-y-6 page-animate">
 
         {/* Header */}
         <div className="no-print flex items-center justify-between gap-4 flex-wrap">
-          <a href="/mi-cuenta" className="text-sm text-white/40 hover:text-white transition-colors flex items-center gap-1.5">
+          <a href="/mi-cuenta" className="text-sm text-gray-400 hover:text-[#ff7a00] transition-colors flex items-center gap-1.5">
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
               <path d="m15 18-6-6 6-6" />
             </svg>
@@ -112,52 +115,64 @@ export default async function ClasesMesPage() {
           <PrintButton />
         </div>
 
-        {/* Encabezado del reporte */}
-        <div className="print-card rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+        {/* Encabezado del reporte con branding */}
+        <div className="print-card rounded-2xl border border-gray-200 bg-white shadow-sm p-6">
+          {/* Branding — visible solo en impresión */}
+          <div className="print-brand items-center gap-3 mb-4 pb-4 border-b border-gray-200">
+            <Image
+              src="/images/icons/Recurso 1.png"
+              alt="4U Studio Academy"
+              width={100}
+              height={34}
+              className="h-8 w-auto"
+            />
+            <span className="text-[11px] uppercase tracking-widest text-[#ff7a00] font-semibold">Reporte de clases</span>
+          </div>
+
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
               <p className="text-[11px] uppercase tracking-widest text-[#ff7a00] font-semibold mb-1">4U Studio Academy</p>
-              <h1 className="text-2xl font-bold text-white font-poppins print-text">Reporte de clases</h1>
-              <p className="text-white/50 text-sm mt-1 capitalize print-muted">{monthLabel}</p>
+              <h1 className="text-2xl font-bold text-gray-900 font-poppins">Reporte de clases</h1>
+              <p className="text-gray-500 text-sm mt-1 capitalize">{monthLabel}</p>
             </div>
             <div className="text-right">
-              <p className="text-sm font-semibold text-white print-text">{fullName}</p>
-              {student.email && <p className="text-xs text-white/40 mt-0.5 print-muted">{student.email}</p>}
-              <p className="text-xs text-white/30 mt-1 print-muted">
+              <p className="text-sm font-semibold text-gray-900">{fullName}</p>
+              {student.email && <p className="text-xs text-gray-400 mt-0.5">{student.email}</p>}
+              <p className="text-xs text-gray-400 mt-1">
                 Generado el {now.toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })}
               </p>
             </div>
           </div>
 
           {/* Resumen */}
-          <div className="grid grid-cols-4 gap-3 mt-5 pt-5 border-t border-white/10">
+          <div className="grid grid-cols-4 gap-3 mt-5 pt-5 border-t border-gray-200">
             {[
-              { label: 'Disponibles',      value: availableCount },
-              { label: 'Agendadas',        value: scheduledCount },
-              { label: 'Completadas',      value: completedCount },
-              { label: 'Para reprogramar', value: reprogramCount },
-            ].map(({ label, value }) => (
+              { label: 'Disponibles',      value: availableCount, color: '#ff7a00' },
+              { label: 'Agendadas',        value: scheduledCount, color: '#3b82f6' },
+              { label: 'Completadas',      value: completedCount, color: '#16a34a' },
+              { label: 'Para reprogramar', value: reprogramCount, color: '#dc2626' },
+            ].map(({ label, value, color }) => (
               <div key={label} className="text-center">
-                <p className="text-2xl font-bold text-white font-poppins print-text">{value}</p>
-                <p className="text-[11px] text-white/40 mt-0.5 print-muted">{label}</p>
+                <p className="text-2xl font-bold font-poppins" style={{ color }}>{value}</p>
+                <p className="text-[11px] text-gray-400 mt-0.5">{label}</p>
               </div>
             ))}
           </div>
         </div>
 
         {/* Mini-calendario + leyenda */}
-        <div className="print-card rounded-2xl border border-white/10 bg-white/[0.02] p-5">
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-white/40 mb-3 print-muted">Calendario del mes</p>
+        <div className="print-card rounded-2xl border border-gray-200 bg-white shadow-sm p-5">
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-3">Calendario del mes</p>
           <div className="grid grid-cols-7 gap-1">
             {DOW_HEAD.map((d, i) => (
-              <div key={i} className="text-center text-[10px] font-semibold text-white/30 print-muted pb-1">{d}</div>
+              <div key={i} className="text-center text-[10px] font-semibold text-gray-400 pb-1">{d}</div>
             ))}
             {cells.map((cell, i) => {
               if (!cell.current) return <div key={i} className="aspect-square" />
               const dayClasses = byDay[cell.day] ?? []
               return (
-                <div key={i} className="print-cell aspect-square rounded-md border border-white/[0.06] bg-white/[0.015] p-1 flex flex-col">
-                  <span className="text-[10px] text-white/40 print-muted leading-none">{cell.day}</span>
+                <div key={i} className="print-cell aspect-square rounded-md border border-gray-200 bg-white p-1 flex flex-col">
+                  <span className="text-[10px] text-gray-400 leading-none">{cell.day}</span>
                   <div className="flex flex-wrap gap-0.5 mt-auto justify-center">
                     {dayClasses.slice(0, 4).map(s => (
                       <span key={s.id} className="h-1.5 w-1.5 rounded-full" style={{ background: statusMeta(s.status).hex }} />
@@ -169,9 +184,9 @@ export default async function ClasesMesPage() {
           </div>
 
           {/* Leyenda */}
-          <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-4 pt-3 border-t border-white/[0.06]">
+          <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-4 pt-3 border-t border-gray-200">
             {STATUS_LEGEND.map(m => (
-              <span key={m.key} className="inline-flex items-center gap-1.5 text-[11px] text-white/45 print-muted">
+              <span key={m.key} className="inline-flex items-center gap-1.5 text-[11px] text-gray-500">
                 <span className="h-2 w-2 rounded-full" style={{ background: m.hex }} />
                 {m.label}
               </span>
@@ -181,40 +196,40 @@ export default async function ClasesMesPage() {
 
         {/* Tabla de clases */}
         {clases.length === 0 ? (
-          <div className="print-card rounded-2xl border border-white/10 bg-white/[0.02] p-8 text-center">
-            <p className="text-white/30 text-sm print-muted">No hay clases registradas para este mes.</p>
+          <div className="print-card rounded-2xl border border-gray-200 bg-white shadow-sm p-8 text-center">
+            <p className="text-gray-400 text-sm">No hay clases registradas para este mes.</p>
           </div>
         ) : (
-          <div className="print-card rounded-2xl border border-white/10 bg-white/[0.02] overflow-hidden">
+          <div className="print-card rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-white/10">
-                  <th className="text-left text-[11px] font-semibold text-white/40 uppercase tracking-wider px-5 py-3 print-muted">#</th>
-                  <th className="text-left text-[11px] font-semibold text-white/40 uppercase tracking-wider px-4 py-3 print-muted">Fecha y hora</th>
-                  <th className="text-left text-[11px] font-semibold text-white/40 uppercase tracking-wider px-4 py-3 print-muted">Instrumento · Aula</th>
-                  <th className="text-left text-[11px] font-semibold text-white/40 uppercase tracking-wider px-4 py-3 hidden sm:table-cell print-muted">Instructor</th>
-                  <th className="text-left text-[11px] font-semibold text-white/40 uppercase tracking-wider px-4 py-3 print-muted">Estado</th>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider px-5 py-3">#</th>
+                  <th className="text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">Fecha y hora</th>
+                  <th className="text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">Instrumento · Aula</th>
+                  <th className="text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider px-4 py-3 hidden sm:table-cell">Instructor</th>
+                  <th className="text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">Estado</th>
                 </tr>
               </thead>
               <tbody>
                 {clases.map((s, i) => {
                   const meta = statusMeta(s.status)
                   return (
-                    <tr key={s.id} className="print-table-row border-b border-white/[0.06]">
-                      <td className="px-5 py-3.5 text-white/30 text-xs print-muted">{i + 1}</td>
+                    <tr key={s.id} className="print-table-row border-b border-gray-100">
+                      <td className="px-5 py-3.5 text-gray-300 text-xs">{i + 1}</td>
                       <td className="px-4 py-3.5">
-                        <p className="text-white font-medium capitalize text-sm print-text">{formatDateLong(s.scheduled_date)}</p>
-                        <p className="text-white/40 text-xs mt-0.5 print-muted">{s.start_time?.slice(0, 5)}</p>
+                        <p className="text-gray-900 font-medium capitalize text-sm">{formatDateLong(s.scheduled_date)}</p>
+                        <p className="text-gray-400 text-xs mt-0.5">{s.start_time?.slice(0, 5)}</p>
                       </td>
                       <td className="px-4 py-3.5">
-                        <p className="text-white/80 text-sm print-text">
+                        <p className="text-gray-800 text-sm">
                           <span className="mr-1">{instrumentEmoji(s.course?.name)}</span>
                           {s.course?.name ?? '—'}
                         </p>
-                        <p className="text-white/35 text-xs mt-0.5 print-muted">{s.classroom?.name ?? '—'}</p>
+                        <p className="text-gray-400 text-xs mt-0.5">{s.classroom?.name ?? '—'}</p>
                       </td>
                       <td className="px-4 py-3.5 hidden sm:table-cell">
-                        <p className="text-white/60 text-sm print-muted">{s.instructor?.name ?? 'Sin asignar'}</p>
+                        <p className="text-gray-500 text-sm">{s.instructor?.name ?? 'Sin asignar'}</p>
                       </td>
                       <td className="px-4 py-3.5">
                         <span
@@ -232,7 +247,22 @@ export default async function ClasesMesPage() {
           </div>
         )}
 
-        <p className="no-print text-xs text-white/20 text-center pb-4">
+        {/* Footer branding */}
+        <div className="print-brand flex items-center justify-between pt-4 border-t border-gray-200 text-[10px] text-gray-400">
+          <div className="flex items-center gap-2">
+            <Image
+              src="/images/icons/Recurso 1.png"
+              alt="4U Studio Academy"
+              width={80}
+              height={28}
+              className="h-6 w-auto"
+            />
+            <span>4U Studio Academy</span>
+          </div>
+          <span>reporte-generado-{now.toISOString().slice(0, 10)}.pdf</span>
+        </div>
+
+        <p className="no-print text-xs text-gray-300 text-center pb-4">
           Usa &quot;Descargar / Imprimir PDF&quot; para guardar este reporte.
         </p>
       </div>

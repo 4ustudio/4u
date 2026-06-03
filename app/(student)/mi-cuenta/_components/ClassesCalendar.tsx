@@ -112,24 +112,24 @@ export default function ClassesCalendar({ initialSessions, schedules, initialYea
   }, [sessions, schedules])
 
   return (
-    <div className="rounded-2xl border border-white/[0.08] bg-gradient-to-br from-zinc-800/40 via-zinc-900/40 to-zinc-950/60 p-4 sm:p-5">
+    <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-4 sm:p-5">
       {/* Header: navegación + toggle */}
       <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigate(-1)}
-            className="h-8 w-8 rounded-lg border border-white/10 bg-white/[0.03] flex items-center justify-center text-white/60 hover:text-white hover:border-white/20 transition-colors"
+            className="h-8 w-8 rounded-lg border border-gray-200 bg-stone-100 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors"
             aria-label="Mes anterior"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="m15 18-6-6 6-6" /></svg>
           </button>
-          <h3 className="text-base sm:text-lg font-bold text-white font-poppins capitalize min-w-[150px] text-center">
+          <h3 className="text-base sm:text-lg font-bold text-gray-900 font-poppins capitalize min-w-[150px] text-center">
             {MONTHS_ES[month - 1]} {year}
             {isPending && <span className="ml-2 inline-block h-3 w-3 align-middle border-2 border-[#ff7a00]/40 border-t-[#ff7a00] rounded-full animate-spin" />}
           </h3>
           <button
             onClick={() => navigate(1)}
-            className="h-8 w-8 rounded-lg border border-white/10 bg-white/[0.03] flex items-center justify-center text-white/60 hover:text-white hover:border-white/20 transition-colors"
+            className="h-8 w-8 rounded-lg border border-gray-200 bg-stone-100 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors"
             aria-label="Mes siguiente"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="m9 18 6-6-6-6" /></svg>
@@ -137,14 +137,14 @@ export default function ClassesCalendar({ initialSessions, schedules, initialYea
         </div>
 
         {/* Toggle Mes / Semana */}
-        <div className="flex rounded-xl border border-white/10 bg-white/[0.03] p-0.5">
+        <div className="flex rounded-xl border border-gray-200 bg-stone-100 p-0.5">
           {(['mes', 'semana'] as const).map(v => (
             <button
               key={v}
               onClick={() => setView(v)}
-              className={`px-4 py-1.5 rounded-lg text-xs font-semibold font-poppins capitalize transition-all ${
-                view === v ? 'bg-[#ff7a00] text-white' : 'text-white/50 hover:text-white'
-              }`}
+               className={`px-4 py-1.5 rounded-lg text-xs font-semibold font-poppins capitalize transition-all ${
+                  view === v ? 'bg-[#ff7a00] text-white' : 'text-gray-500 hover:text-gray-700'
+                }`}
             >
               {v}
             </button>
@@ -158,12 +158,12 @@ export default function ClassesCalendar({ initialSessions, schedules, initialYea
           <div className="hidden sm:block">
             <div className="grid grid-cols-7 gap-1 mb-1">
               {DOW_HEAD.map(d => (
-                <div key={d} className="text-center text-[10px] font-semibold text-white/30 uppercase tracking-wider py-1">{d}</div>
+                <div key={d} className="text-center text-[10px] font-semibold text-gray-400 uppercase tracking-wider py-1">{d}</div>
               ))}
             </div>
             <div className="grid grid-cols-7 gap-1.5">
               {cells.map((cell, i) => {
-                if (!cell.current) return <div key={i} className="min-h-[76px] lg:min-h-[104px] rounded-lg bg-white/[0.01]" />
+                if (!cell.current) return <div key={i} className="min-h-[76px] lg:min-h-[104px] rounded-lg bg-gray-50" />
                 const dateStr = `${year}-${mm}-${String(cell.day).padStart(2, '0')}`
                 const dayClasses = byDay[dateStr] ?? []
                 const isToday = dateStr === todayIso
@@ -172,13 +172,13 @@ export default function ClassesCalendar({ initialSessions, schedules, initialYea
                     key={i}
                     className={`min-h-[76px] lg:min-h-[104px] rounded-lg border p-1.5 flex flex-col gap-1 transition-colors ${
                       isToday
-                        ? 'border-[#ff7a00]/60 bg-[#ff7a00]/[0.10]'
+                        ? 'border-[#ff7a00]/50 bg-orange-50'
                         : dayClasses.length > 0
-                          ? 'border-white/[0.12] bg-white/[0.06]'
-                          : 'border-white/[0.06] bg-white/[0.025]'
+                          ? 'border-gray-200 bg-orange-50/20'
+                          : 'border-gray-100 bg-white'
                     }`}
                   >
-                    <span className={`text-[11px] font-bold ${isToday ? 'text-[#ff7a00]' : dayClasses.length > 0 ? 'text-white/70' : 'text-white/30'}`}>{cell.day}</span>
+                    <span className={`text-[11px] font-bold ${isToday ? 'text-[#ff7a00]' : dayClasses.length > 0 ? 'text-gray-800' : 'text-gray-400'}`}>{cell.day}</span>
                     <div className="flex flex-col gap-1 overflow-hidden">
                       {dayClasses.map(s => {
                         const meta = statusMeta(s.status)
@@ -194,8 +194,8 @@ export default function ClassesCalendar({ initialSessions, schedules, initialYea
                               <InstrumentIcon courseName={s.course?.name} className="h-3 w-3" />
                             </span>
                             <span className="min-w-0 flex flex-col leading-tight">
-                              <span className="text-[10px] font-semibold text-white/90 truncate">{s.course?.name ?? '—'}</span>
-                              <span className="text-[9px] text-white/55 hidden lg:inline">{fmtTime(s.start_time)}</span>
+                              <span className="text-[10px] font-semibold text-gray-800 truncate">{s.course?.name ?? '—'}</span>
+                              <span className="text-[9px] text-gray-500 hidden lg:inline">{fmtTime(s.start_time)}</span>
                             </span>
                           </button>
                         )
@@ -210,11 +210,11 @@ export default function ClassesCalendar({ initialSessions, schedules, initialYea
           {/* ── Vista agenda (mobile) ── */}
           <div className="sm:hidden space-y-2">
             {Object.keys(byDay).sort().length === 0 ? (
-              <p className="text-sm text-white/35 text-center py-6 font-roboto">No hay clases este mes.</p>
+              <p className="text-sm text-gray-400 text-center py-6 font-roboto">No hay clases este mes.</p>
             ) : (
               Object.keys(byDay).sort().map(dateStr => (
                 <div key={dateStr}>
-                  <p className={`text-[11px] font-semibold uppercase tracking-wider mb-1 ${dateStr === todayIso ? 'text-[#ff7a00]' : 'text-white/35'}`}>
+                  <p className={`text-[11px] font-semibold uppercase tracking-wider mb-1 ${dateStr === todayIso ? 'text-[#ff7a00]' : 'text-gray-500'}`}>
                     {fmtDateLong(dateStr)}
                   </p>
                   <div className="space-y-1.5">
@@ -224,14 +224,14 @@ export default function ClassesCalendar({ initialSessions, schedules, initialYea
                         <button
                           key={s.id}
                           onClick={() => setSelected(s)}
-                          className="w-full flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 text-left hover:bg-white/[0.04] transition-colors"
+                          className="w-full flex items-center gap-3 rounded-xl border border-gray-100 bg-white p-3 text-left shadow-sm hover:bg-gray-50 transition-all"
                         >
                           <span className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: meta.hex + '1f', color: meta.hex }}>
                             <InstrumentIcon courseName={s.course?.name} className="h-4 w-4" />
                           </span>
                           <div className="min-w-0 flex-1">
-                            <p className="text-sm text-white font-poppins font-medium">{s.course?.name ?? '—'} · {fmtTime(s.start_time)}</p>
-                            <p className="text-xs text-white/40 truncate">{s.instructor?.name ?? 'Sin instructor'} · {s.classroom?.name ?? '—'}</p>
+                            <p className="text-sm text-gray-900 font-poppins font-medium">{s.course?.name ?? '—'} · {fmtTime(s.start_time)}</p>
+                            <p className="text-xs text-gray-400 truncate">{s.instructor?.name ?? 'Sin instructor'} · {s.classroom?.name ?? '—'}</p>
                           </div>
                           <span className={`text-[10px] px-2 py-0.5 rounded-full border shrink-0 font-semibold ${meta.badgeClass}`}>{meta.label}</span>
                         </button>
@@ -247,7 +247,7 @@ export default function ClassesCalendar({ initialSessions, schedules, initialYea
         /* ── Vista Semana (horario tipo academia) ── */
         <div className="overflow-x-auto">
           {Object.keys(byWeekday).length === 0 ? (
-            <p className="text-sm text-white/35 text-center py-8 font-roboto">No hay clases este mes.</p>
+            <p className="text-sm text-gray-400 text-center py-8 font-roboto">No hay clases este mes.</p>
           ) : (
             <WeekTimetable byWeekday={byWeekday} onSelect={setSelected} />
           )}
@@ -255,9 +255,9 @@ export default function ClassesCalendar({ initialSessions, schedules, initialYea
       )}
 
       {/* Leyenda */}
-      <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-4 pt-3 border-t border-white/[0.06]">
+      <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-4 pt-3 border-t border-gray-200">
         {STATUS_LEGEND.map(m => (
-          <span key={m.key} className="inline-flex items-center gap-1.5 text-[11px] text-white/45 font-roboto">
+          <span key={m.key} className="inline-flex items-center gap-1.5 text-[11px] text-gray-500 font-roboto">
             <span className={`h-2 w-2 rounded-full ${m.dotClass}`} />
             {m.label}
           </span>
@@ -290,20 +290,20 @@ function WeekTimetable({ byWeekday, onSelect }: { byWeekday: Record<number, any[
         <tr>
           <th className="w-14" />
           {WEEK_HEAD.map(d => (
-            <th key={d} className="text-[11px] font-semibold text-white/40 uppercase tracking-wider pb-1">{d}</th>
+            <th key={d} className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider pb-1">{d}</th>
           ))}
         </tr>
       </thead>
       <tbody>
         {hours.map(h => (
           <tr key={h}>
-            <td className="text-[11px] text-white/35 font-roboto align-top pt-2 pr-1 text-right">{h}</td>
+            <td className="text-[11px] text-gray-400 font-roboto align-top pt-2 pr-1 text-right">{h}</td>
             {WEEK_DAYS.map(dow => {
               const cls = (byWeekday[dow] ?? []).filter(sc => sc._hour === h)
               return (
                 <td key={dow} className="align-top">
                   {cls.length === 0 ? (
-                    <div className="min-h-[44px] rounded-lg border border-white/[0.04] bg-white/[0.01]" />
+                    <div className="min-h-[44px] rounded-lg border border-gray-100 bg-gray-50" />
                   ) : (
                     cls.map(sc => {
                       const meta = statusMeta(sc.status)
@@ -315,7 +315,7 @@ function WeekTimetable({ byWeekday, onSelect }: { byWeekday: Record<number, any[
                           style={{ borderColor: meta.hex + '40', background: meta.hex + '14' }}
                         >
                           <span style={{ color: meta.hex }}><InstrumentIcon courseName={sc.course?.name} className="h-4 w-4" /></span>
-                          <span className="text-[10px] text-white/70 font-medium leading-tight text-center">{sc.course?.name ?? '—'}</span>
+                          <span className="text-[10px] text-gray-700 font-medium leading-tight text-center">{sc.course?.name ?? '—'}</span>
                         </button>
                       )
                     })
@@ -341,7 +341,7 @@ function DetailModal({ session: s, onClose }: { session: any; onClose: () => voi
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in" onClick={onClose}>
       <div
-        className="w-full max-w-sm rounded-2xl border border-zinc-700 bg-zinc-900 p-6 animate-scale-in"
+        className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-6 shadow-xl animate-scale-in"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-start gap-3 mb-5">
@@ -349,10 +349,10 @@ function DetailModal({ session: s, onClose }: { session: any; onClose: () => voi
             <InstrumentIcon courseName={s.course?.name} className="h-6 w-6" />
           </span>
           <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-bold text-white font-poppins">{s.course?.name ?? 'Clase'}</h3>
+            <h3 className="text-lg font-bold text-gray-900 font-poppins">{s.course?.name ?? 'Clase'}</h3>
             <span className={`inline-block mt-1 text-[10px] px-2 py-0.5 rounded-full border font-semibold ${meta.badgeClass}`}>{meta.label}</span>
           </div>
-          <button onClick={onClose} className="text-white/40 hover:text-white transition-colors shrink-0" aria-label="Cerrar">
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors shrink-0" aria-label="Cerrar">
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
           </button>
         </div>
@@ -377,8 +377,8 @@ function DetailModal({ session: s, onClose }: { session: any; onClose: () => voi
 function Row({ label, value, capitalize }: { label: string; value: string; capitalize?: boolean }) {
   return (
     <div className="flex items-start justify-between gap-4">
-      <dt className="text-xs uppercase tracking-wider text-white/35 font-roboto pt-0.5">{label}</dt>
-      <dd className={`text-sm text-white font-roboto text-right ${capitalize ? 'capitalize' : ''}`}>{value}</dd>
+      <dt className="text-xs uppercase tracking-wider text-gray-400 font-roboto pt-0.5">{label}</dt>
+      <dd className={`text-sm text-gray-900 font-roboto text-right ${capitalize ? 'capitalize' : ''}`}>{value}</dd>
     </div>
   )
 }

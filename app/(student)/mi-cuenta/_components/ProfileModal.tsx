@@ -14,7 +14,7 @@ interface Props {
 }
 
 const inputClass =
-  'w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white text-sm placeholder:text-white/40 font-roboto focus:outline-none focus:ring-2 focus:ring-[#ff7a00]/60 focus:border-[#ff7a00]/40 transition-all disabled:opacity-50'
+  'w-full bg-stone-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm placeholder:text-gray-400 font-roboto focus:outline-none focus:ring-2 focus:ring-[#ff7a00]/60 focus:border-[#ff7a00]/40 transition-all disabled:opacity-50'
 
 export default function ProfileModal({ firstName, lastName, email, avatarUrl }: Props) {
   const [open, setOpen] = useState(false)
@@ -65,7 +65,7 @@ export default function ProfileModal({ firstName, lastName, email, avatarUrl }: 
     return (
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2.5 text-xs text-white/40 hover:text-white/70 transition-colors font-roboto border border-white/10 hover:border-white/20 rounded-xl px-3 py-2"
+        className="flex items-center gap-2.5 text-xs text-gray-500 hover:text-gray-700 transition-colors font-roboto border border-gray-200 hover:border-gray-300 bg-white rounded-xl px-3 py-2 shadow-sm"
       >
         <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
@@ -78,13 +78,13 @@ export default function ProfileModal({ firstName, lastName, email, avatarUrl }: 
   const overlay = (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setOpen(false)}>
       <div
-        className="w-full max-w-md bg-zinc-900 border border-zinc-700 rounded-2xl p-6 shadow-2xl space-y-5"
+        className="w-full max-w-md bg-white border border-gray-200 rounded-2xl p-6 shadow-xl space-y-5"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-bold text-white font-poppins">Editar perfil</h2>
-          <button onClick={() => setOpen(false)} className="text-white/30 hover:text-white transition-colors">
+          <h2 className="text-base font-bold text-gray-900 font-poppins">Editar perfil</h2>
+          <button onClick={() => setOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M18 6 6 18M6 6l12 12"/>
             </svg>
@@ -127,7 +127,7 @@ export default function ProfileModal({ firstName, lastName, email, avatarUrl }: 
             >
               {uploading ? 'Subiendo…' : 'Cambiar foto'}
             </button>
-            <p className="text-[10px] text-white/30 font-roboto mt-0.5">JPG, PNG o WebP · máx 2MB</p>
+            <p className="text-[10px] text-gray-400 font-roboto mt-0.5">JPG, PNG o WebP · máx 2MB</p>
             {uploadError && (
               <p className="text-[10px] text-red-400 font-roboto mt-1">{uploadError}</p>
             )}
@@ -145,17 +145,17 @@ export default function ProfileModal({ firstName, lastName, email, avatarUrl }: 
         >
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[10px] text-white/60 mb-1.5 font-roboto uppercase tracking-wider">Nombre *</label>
+              <label className="block text-[10px] text-gray-500 mb-1.5 font-roboto uppercase tracking-wider">Nombre *</label>
               <input name="first_name" defaultValue={firstName} required disabled={isPending} className={inputClass} placeholder="Nombre" />
             </div>
             <div>
-              <label className="block text-[10px] text-white/60 mb-1.5 font-roboto uppercase tracking-wider">Apellido</label>
+              <label className="block text-[10px] text-gray-500 mb-1.5 font-roboto uppercase tracking-wider">Apellido</label>
               <input name="last_name" defaultValue={lastName} disabled={isPending} className={inputClass} placeholder="Apellido" />
             </div>
           </div>
 
           <div>
-            <label className="block text-[10px] text-white/60 mb-1.5 font-roboto uppercase tracking-wider">Email</label>
+            <label className="block text-[10px] text-gray-500 mb-1.5 font-roboto uppercase tracking-wider">Email</label>
             <input value={email} disabled className={inputClass + ' opacity-40 cursor-not-allowed'} />
           </div>
 
@@ -170,7 +170,7 @@ export default function ProfileModal({ firstName, lastName, email, avatarUrl }: 
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="flex-1 border border-zinc-600 text-white/70 hover:text-white hover:border-zinc-500 bg-zinc-800 rounded-xl py-2.5 text-sm font-poppins transition-all"
+              className="flex-1 border border-gray-200 text-gray-600 hover:text-gray-800 hover:border-gray-300 bg-stone-100 rounded-xl py-2.5 text-sm font-poppins transition-all"
             >
               Cancelar
             </button>

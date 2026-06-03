@@ -34,31 +34,31 @@ export default function HistoryDrawer({ past }: { past: any[] }) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="w-full flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-4 text-sm font-semibold text-white/70 font-poppins hover:bg-white/[0.04] hover:text-white transition-colors"
+        className="w-full flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white px-5 py-4 text-sm font-semibold text-gray-600 font-poppins shadow-sm hover:bg-gray-50 hover:text-gray-900 transition-all"
       >
         <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 3v5h5" /><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8" /><path d="M12 7v5l4 2" />
         </svg>
         Ver historial completo
-        <span className="text-white/30 font-normal">({past.length})</span>
+        <span className="text-gray-400 font-normal">({past.length})</span>
       </button>
 
       {mounted && open && createPortal(
         <div className="fixed inset-0 z-[9999] flex justify-end bg-black/70 backdrop-blur-sm animate-fade-in" onClick={() => setOpen(false)}>
           <div
-            className="h-full w-full max-w-md bg-zinc-950 border-l border-white/10 flex flex-col animate-slide-right"
+            className="h-full w-full max-w-md bg-white border-l border-gray-200 flex flex-col animate-slide-right shadow-xl"
             onClick={e => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-white/10 shrink-0">
-              <h3 className="text-lg font-bold text-white font-poppins">Historial de clases</h3>
-              <button onClick={() => setOpen(false)} className="text-white/40 hover:text-white transition-colors" aria-label="Cerrar">
+            <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-gray-200 shrink-0">
+              <h3 className="text-lg font-bold text-gray-900 font-poppins">Historial de clases</h3>
+              <button onClick={() => setOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Cerrar">
                 <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
               </button>
             </div>
 
             {/* Filtros */}
-            <div className="flex flex-wrap gap-2 px-5 py-3 border-b border-white/[0.06] shrink-0">
+            <div className="flex flex-wrap gap-2 px-5 py-3 border-b border-gray-100 shrink-0">
               {HISTORY_FILTERS.map(f => (
                 <button
                   key={f.id}
@@ -66,7 +66,7 @@ export default function HistoryDrawer({ past }: { past: any[] }) {
                   className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${
                     filter === f.id
                       ? 'border-[#ff7a00]/40 text-[#ff7a00] bg-[#ff7a00]/10'
-                      : 'border-white/10 text-white/45 hover:text-white/70'
+                      : 'border-gray-200 text-gray-500 bg-stone-100 hover:bg-gray-100 hover:text-gray-700'
                   }`}
                 >
                   {f.label}
@@ -77,9 +77,9 @@ export default function HistoryDrawer({ past }: { past: any[] }) {
             {/* Lista */}
             <div className="flex-1 overflow-y-auto">
               {filtered.length === 0 ? (
-                <p className="text-sm text-white/35 text-center py-10 font-roboto">No hay clases en esta categoría.</p>
+                <p className="text-sm text-gray-400 text-center py-10 font-roboto">No hay clases en esta categoría.</p>
               ) : (
-                <div className="divide-y divide-white/[0.06]">
+                <div className="divide-y divide-gray-100">
                   {filtered.map(s => {
                     const meta = statusMeta(s.status)
                     return (
@@ -88,10 +88,10 @@ export default function HistoryDrawer({ past }: { past: any[] }) {
                           <InstrumentIcon courseName={s.course?.name} className="h-4 w-4" />
                         </span>
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm text-white font-poppins font-medium">
+                          <p className="text-sm text-gray-900 font-poppins font-medium">
                             {s.course?.name ?? '—'} · {s.start_time?.slice(0, 5)}
                           </p>
-                          <p className="text-xs text-white/40 truncate">
+                          <p className="text-xs text-gray-400 truncate">
                             {fmtDate(s.scheduled_date)} · {s.instructor?.name ?? 'Sin instructor'}
                           </p>
                         </div>

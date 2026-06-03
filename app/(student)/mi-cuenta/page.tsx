@@ -137,6 +137,7 @@ function StudentDashboard({ data, monthSessions, user, monthLabel, now }: any) {
             />
           </section>
 
+          <DisclaimerBar />
           <SupportBar />
         </div>
       </main>
@@ -579,13 +580,33 @@ function SupportBar() {
     <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
-          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-orange-100 text-[#ff7a00]"><Icon name="calendar" className="h-6 w-6" /></span>
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-orange-100 text-[#ff7a00]"><Icon name="calendar" className="h-6 w-6" /></span>
           <div>
-            <p className="font-poppins text-lg font-extrabold">¿Necesitas ayuda?</p>
-            <p className="text-sm text-gray-600">Si tienes dudas o necesitas soporte, estamos aqui para ayudarte.</p>
+            <p className="font-poppins text-lg font-extrabold text-gray-950">¿Necesitas ayuda?</p>
+            <p className="text-sm text-gray-700">Si tienes dudas o necesitas soporte, estamos aqui para ayudarte.</p>
           </div>
         </div>
-        <a href={`https://wa.me/${ACADEMY.phone}?text=Hola, necesito ayuda con mi cuenta de 4U Studio Academy.`} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-[#ff7a00]/35 px-7 py-3 text-center font-bold text-[#ff7a00]">Contacto de soporte</a>
+        <a href={`https://wa.me/${ACADEMY.phone}?text=Hola, necesito ayuda con mi cuenta de 4U Studio Academy.`} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-[#ff7a00]/35 px-7 py-3 text-center font-bold text-[#ff7a00] hover:bg-[#ff7a00] hover:text-white transition-colors">Contacto de soporte</a>
+      </div>
+    </section>
+  )
+}
+
+function DisclaimerBar() {
+  return (
+    <section className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4">
+      <div className="flex items-start gap-3">
+        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </span>
+        <div>
+          <p className="font-poppins text-sm font-bold text-amber-900">Política de asistencia</p>
+          <p className="mt-0.5 text-sm text-amber-800 leading-relaxed">
+            Las clases a las que no asististe y que <strong>no fueron canceladas con al menos 24 horas de anticipación</strong> se contabilizan como clases tomadas y se descuentan de tu plan mensual.
+          </p>
+        </div>
       </div>
     </section>
   )

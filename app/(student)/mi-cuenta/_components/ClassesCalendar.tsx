@@ -112,13 +112,14 @@ export default function ClassesCalendar({ initialSessions, schedules, initialYea
   }, [sessions, schedules])
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-4 sm:p-5">
+    <div className="rounded-2xl border border-[#ff7a00]/20 bg-white shadow-lg p-4 sm:p-5"
+      style={{ boxShadow: '0 4px 32px rgba(255,122,0,0.08), 0 1px 3px rgba(0,0,0,0.05)' }}>
       {/* Header: navegación + toggle */}
       <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigate(-1)}
-            className="h-8 w-8 rounded-lg border border-gray-200 bg-stone-100 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors"
+            className="h-8 w-8 rounded-lg border border-gray-200 bg-stone-100 flex items-center justify-center text-gray-500 hover:text-[#ff7a00] hover:border-[#ff7a00]/30 transition-colors"
             aria-label="Mes anterior"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="m15 18-6-6 6-6" /></svg>
@@ -129,7 +130,7 @@ export default function ClassesCalendar({ initialSessions, schedules, initialYea
           </h3>
           <button
             onClick={() => navigate(1)}
-            className="h-8 w-8 rounded-lg border border-gray-200 bg-stone-100 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors"
+            className="h-8 w-8 rounded-lg border border-gray-200 bg-stone-100 flex items-center justify-center text-gray-500 hover:text-[#ff7a00] hover:border-[#ff7a00]/30 transition-colors"
             aria-label="Mes siguiente"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="m9 18 6-6-6-6" /></svg>
@@ -174,7 +175,7 @@ export default function ClassesCalendar({ initialSessions, schedules, initialYea
                       isToday
                         ? 'border-[#ff7a00]/50 bg-orange-50'
                         : dayClasses.length > 0
-                          ? 'border-gray-200 bg-orange-50/20'
+                          ? 'border-[#ff7a00]/20 bg-orange-50/20'
                           : 'border-gray-100 bg-white'
                     }`}
                   >
@@ -341,7 +342,8 @@ function DetailModal({ session: s, onClose }: { session: any; onClose: () => voi
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in" onClick={onClose}>
       <div
-        className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-6 shadow-xl animate-scale-in"
+        className="w-full max-w-sm rounded-2xl border border-[#ff7a00]/20 bg-white p-6 shadow-xl animate-scale-in"
+        style={{ boxShadow: '0 8px 32px rgba(255,122,0,0.12)' }}
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-start gap-3 mb-5">

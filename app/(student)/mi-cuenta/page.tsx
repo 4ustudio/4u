@@ -65,9 +65,12 @@ export default async function MiCuentaPage() {
   const classesScheduled   = usageTyped?.classes_scheduled ?? 0
   const lateCancellations  = usageTyped?.late_cancellations ?? 0
 
+  // Total del plan = quota_total (o fallback a classesAvailable si no hay)
+  const planTotal = usageTyped?.quota_total ?? classesAvailable
+
   // Progreso: completadas / total del plan.
   // Si aún hay clases agendadas, nunca mostrar 100%.
-  const rawPct = classesAvailable > 0 ? (classesCompleted / classesAvailable) * 100 : 0
+  const rawPct = planTotal > 0 ? (classesCompleted / planTotal) * 100 : 0
   const progressPct = (classesScheduled > 0 && rawPct >= 99)
     ? 95
     : Math.min(Math.round(rawPct), 100)
@@ -228,9 +231,9 @@ export default async function MiCuentaPage() {
         </section>
 
         {/* ── BARRA DE PROGRESO MENSUAL ──────────────────────────────── */}
-        {usageTyped && classesAvailable > 0 && (
+        {usageTyped && planTotal > 0 && (
           <section>
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 sm:p-6">
+            <div className="bg-[#181818] rounded-2xl border border-white/5 p-5 sm:p-6">
               <div className="flex items-center justify-between gap-4 flex-wrap mb-3">
                 <div className="flex items-center gap-3">
                   <div
@@ -242,10 +245,10 @@ export default async function MiCuentaPage() {
                     </svg>
                   </div>
                   <div>
-                    <span className="text-sm font-bold text-gray-900 font-poppins">
-                      {classesCompleted} de {classesAvailable} clases completadas
+                    <span className="text-sm font-bold text-white font-poppins">
+                      {classesCompleted} de {planTotal} clases completadas
                     </span>
-                    <span className="ml-2 text-xs text-gray-400 font-roboto">
+                    <span className="ml-2 text-xs text-white/40 font-roboto">
                       · {monthLabel}
                     </span>
                   </div>
@@ -256,7 +259,7 @@ export default async function MiCuentaPage() {
                   {progressPct}%
                 </span>
               </div>
-              <div className="w-full h-3 bg-stone-100 rounded-full overflow-hidden">
+              <div className="w-full h-3 bg-white/5 rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-700"
                   style={{
@@ -279,13 +282,13 @@ export default async function MiCuentaPage() {
             {CARD_META.map(m => (
               <div
                 key={m.label}
-                className={`rounded-2xl border border-gray-200 bg-white shadow-sm p-4 flex flex-col gap-1 border-l-4 ${m.border} transition-all duration-200 hover:shadow-md`}
+                className={`rounded-2xl border border-white/5 bg-[#181818] p-4 flex flex-col gap-1 border-l-4 ${m.border} transition-all duration-200 hover:bg-white/[0.03]`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase tracking-wider text-gray-400 font-roboto">{m.label}</span>
+                  <span className="text-[10px] uppercase tracking-wider text-white/35 font-roboto">{m.label}</span>
                   <span className="shrink-0" style={{ color: m.color }}>{m.icon}</span>
                 </div>
-                <span className="text-2xl font-bold font-poppins" style={{ color: m.color }}>{m.value}</span>
+                <span className="text-2xl sm:text-3xl font-bold font-poppins" style={{ color: m.color }}>{m.value}</span>
               </div>
             ))}
           </div>
@@ -294,45 +297,46 @@ export default async function MiCuentaPage() {
         {/* ── PRÓXIMA CLASE DESTACADA ────────────────────────────────── */}
         {nextClass && (
           <section>
-            <div className="bg-white rounded-2xl shadow-md border border-[#ff7a00]/20 p-5 sm:p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <span className="h-px flex-1 bg-gradient-to-r from-[#ff7a00] to-transparent" />
+            <div className="bg-[#181818] rounded-2xl border border-[#ff7a00]/15 p-4 sm:p-5">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="h-px flex-1 bg-gradient-to-r from-[#ff7a00]/40 to-transparent" />
                 <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#ff7a00] font-roboto shrink-0">
                   Próxima clase
                 </span>
-                <span className="h-px flex-1 bg-gradient-to-l from-[#ff7a00] to-transparent" />
+                <span className="h-px flex-1 bg-gradient-to-l from-[#ff7a00]/40 to-transparent" />
               </div>
 
-              <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+              <div className="flex items-center gap-3 sm:gap-4">
                 <div
-                  className="h-14 w-14 rounded-2xl flex items-center justify-center shrink-0"
-                  style={{ background: 'rgba(255,122,0,0.12)', boxShadow: '0 0 20px rgba(255,122,0,0.1)' }}
+                  className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0"
+                  style={{ background: 'rgba(255,122,0,0.12)' }}
                 >
                   <span className="text-[#ff7a00]">
-                    <InstrumentIcon courseName={nextClass.course?.name} className="h-7 w-7" />
+                    <InstrumentIcon courseName={nextClass.course?.name} className="h-5 w-5" />
                   </span>
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-bold text-gray-900 font-poppins">
-                    {nextClass.course?.name ?? 'Clase'}
-                  </h3>
-                  <p className="text-sm text-gray-500 font-roboto mt-0.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-sm font-bold text-white font-poppins">
+                      {nextClass.course?.name ?? 'Clase'}
+                    </h3>
+                    <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full border shrink-0 ${statusMeta(nextClass.status).badgeClass}`}>
+                      {statusMeta(nextClass.status).label}
+                    </span>
+                  </div>
+                  <p className="text-xs text-white/50 font-roboto mt-0.5">
                     {formatDateLong(nextClass.scheduled_date)} · {nextClass.start_time?.slice(0, 5)}
                   </p>
-                  <div className="flex flex-wrap gap-x-5 gap-y-1 mt-2 text-xs font-roboto">
-                    <span className="text-gray-400">
-                      Instructor: <span className="text-gray-600 font-medium">{nextClass.instructor?.name ?? 'Sin asignar'}</span>
+                  <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1 text-[11px] font-roboto">
+                    <span className="text-white/35">
+                      Instructor: <span className="text-white/60 font-medium">{nextClass.instructor?.name ?? 'Sin asignar'}</span>
                     </span>
-                    <span className="text-gray-400">
-                      Salón: <span className="text-gray-600 font-medium">{nextClass.classroom?.name ?? '—'}</span>
+                    <span className="text-white/35">
+                      Salón: <span className="text-white/60 font-medium">{nextClass.classroom?.name ?? '—'}</span>
                     </span>
                   </div>
                 </div>
-
-                <span className={`inline-block text-[11px] font-semibold px-3 py-1.5 rounded-full border shrink-0 ${statusMeta(nextClass.status).badgeClass}`}>
-                  {statusMeta(nextClass.status).label}
-                </span>
               </div>
             </div>
           </section>

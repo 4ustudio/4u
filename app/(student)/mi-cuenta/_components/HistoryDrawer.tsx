@@ -34,7 +34,7 @@ export default function HistoryDrawer({ past }: { past: any[] }) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="w-full flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white px-5 py-4 text-sm font-semibold text-gray-600 font-poppins shadow-sm hover:bg-gray-50 hover:text-gray-900 transition-all"
+        className="w-full flex items-center justify-center gap-2 rounded-2xl border border-white/5 bg-[#181818] px-5 py-4 text-sm font-semibold text-white/60 font-poppins hover:bg-white/[0.03] hover:text-white transition-all"
       >
         <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 3v5h5" /><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8" /><path d="M12 7v5l4 2" />
@@ -46,7 +46,7 @@ export default function HistoryDrawer({ past }: { past: any[] }) {
       {mounted && open && createPortal(
         <div className="fixed inset-0 z-[9999] flex justify-end bg-black/70 backdrop-blur-sm animate-fade-in" onClick={() => setOpen(false)}>
           <div
-            className="h-full w-full max-w-md bg-white border-l border-gray-200 flex flex-col animate-slide-right shadow-xl"
+            className="h-full w-full max-w-md bg-white border-l border-[#ff7a00]/10 flex flex-col animate-slide-right shadow-xl"
             onClick={e => e.stopPropagation()}
           >
             {/* Header */}

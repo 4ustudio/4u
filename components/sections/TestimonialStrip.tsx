@@ -6,7 +6,7 @@ export default function TestimonialStrip() {
           {/* Video del pianista — protagonista, lado derecho */}
           <div className="absolute inset-0 md:relative md:col-start-2">
             <video
-              src="/images/hero/hf_20260603_132024_66aa16f3-508a-4fd7-9e4f-a228b9963941.mp4"
+              src="/images/hero/hf_20260603_135817_bc2bc082-82e4-46f3-bc75-4747aa356fee.mp4"
               autoPlay
               muted
               loop

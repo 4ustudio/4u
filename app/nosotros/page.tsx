@@ -178,14 +178,15 @@ export default function NosotrosPage() {
                 La enseñamos como un sueño que se construye.
               </p>
             </div>
-            {/* Photo right */}
+            {/* Video right */}
             <div className="relative hidden lg:block h-[380px] lg:h-[420px] rounded-2xl overflow-hidden">
-              <OptimizedImage
-                src="/images/hero/Banner.png"
-                alt=""
-                fill
-                className="object-cover object-[50%_30%]"
-                sizes="50vw"
+              <video
+                src="/images/hero/hf_20260603_132024_66aa16f3-508a-4fd7-9e4f-a228b9963941.mp4"
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="absolute inset-0 h-full w-full object-cover object-center"
               />
               <div className="absolute inset-0 bg-gradient-to-r from-black via-black/30 to-transparent" />
             </div>

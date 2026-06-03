@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Button from "@/components/ui/Button";
 import OptimizedImage from "@/components/ui/OptimizedImage";
+import AudioExperience from "@/components/ui/AudioExperience";
 
 const SLIDES: Array<{ src: string; type: 'image' | 'video' }> = [
   { src: "/images/hero/magnific_anima-esta-imagen-sin-hac_SOf98hOUb8.mp4", type: 'video' },
@@ -127,6 +128,7 @@ export default function HeroSection() {
                   <path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </Button>
+              <AudioExperience />
             </div>
           </div>
 

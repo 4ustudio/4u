@@ -16,6 +16,12 @@ body {
   overflow-x: hidden;
 }
 
+/* Ecualizador de audio */
+@keyframes eq-bar {
+  0%   { transform: scaleY(0.2); }
+  100% { transform: scaleY(1); }
+}
+
 @keyframes fadeInUp {
   from {
     opacity: 0;

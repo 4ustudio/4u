@@ -7,9 +7,12 @@ import Header from '@/components/layout/Header'
 import AutoRefresh from './_components/AutoRefresh'
 import ProfileModal from './_components/ProfileModal'
 import SchedulePdfButton from './_components/SchedulePdfButton'
+import ClassesCalendar from './_components/ClassesCalendar'
 import { InstrumentIcon } from './_components/instruments'
 import { statusMeta } from './_components/statusMeta'
 import { ACADEMY } from '@/lib/constants'
+import { getHolidayMap } from '@/lib/calendar/colombia-holidays'
+import { EVENT_STYLE } from '@/lib/calendar/types'
 import type { MonthlyUsage } from '@/types/admin'
 
 export const dynamic = 'force-dynamic'
@@ -121,15 +124,17 @@ function StudentDashboard({ data, monthSessions, user, monthLabel, now }: any) {
 
           {nextClass ? <NextClassCard session={nextClass} /> : <EmptyNextClass />}
 
-          <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <section className="space-y-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <SectionTitle title="Agenda tu clase" subtitle="Selecciona una fecha y horario disponible." />
               <SchedulePdfButton name={fullName} roleLabel="Estudiante" monthLabel={monthLabel} sessions={monthSessions} />
             </div>
-            <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-              <MonthCalendar sessions={monthSessions} year={now.getFullYear()} month={now.getMonth()} />
-              <StudentSidePanel sessions={monthSessions} schedules={schedules ?? []} />
-            </div>
+            <ClassesCalendar
+              initialSessions={monthSessions}
+              schedules={schedules ?? []}
+              initialYear={now.getFullYear()}
+              initialMonth={now.getMonth() + 1}
+            />
           </section>
 
           <SupportBar />
@@ -374,29 +379,39 @@ function MonthCalendar({ sessions, year, month }: { sessions: any[]; year: numbe
     byDay[s.scheduled_date].push(s)
   })
 
+  const holidayMap = getHolidayMap(year)
+  const mm = String(month + 1).padStart(2, '0')
+  const todayIso = new Date().toISOString().split('T')[0]
+  const hs = EVENT_STYLE.holiday
+
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button className="h-10 w-10 rounded-lg border border-gray-200 text-gray-700">‹</button>
-          <h3 className="font-poppins text-xl font-extrabold">{MONTHS_ES[month]} {year}</h3>
-          <button className="h-10 w-10 rounded-lg border border-gray-200 text-gray-700">›</button>
-        </div>
-        <div className="hidden rounded-lg bg-gray-100 p-1 sm:flex">
-          <span className="rounded-md bg-[#ff7a00] px-5 py-2 text-sm font-bold text-white">Mes</span>
-          <span className="px-5 py-2 text-sm font-bold text-gray-600">Semana</span>
-          <span className="px-5 py-2 text-sm font-bold text-gray-600">Hoy</span>
-        </div>
-      </div>
       <div className="grid grid-cols-7 border-l border-t border-gray-200">
         {DOW_HEAD.map(d => <div key={d} className="border-b border-r border-gray-200 py-3 text-center text-xs font-bold text-gray-500">{d}</div>)}
         {cells.map((cell, i) => {
-          const key = cell.current ? `${year}-${String(month + 1).padStart(2, '0')}-${String(cell.day).padStart(2, '0')}` : ''
+          const key = cell.current ? `${year}-${mm}-${String(cell.day).padStart(2, '0')}` : ''
           const daySessions = byDay[key] ?? []
+          const isToday = key === todayIso
+          const holiday = key ? holidayMap[key]?.[0] : undefined
           return (
-            <div key={i} className={`min-h-[104px] border-b border-r border-gray-200 p-2 ${cell.current ? 'bg-white' : 'bg-gray-50'}`}>
-              <span className={`text-sm font-bold ${daySessions.length ? 'text-gray-950' : 'text-gray-400'}`}>{cell.current ? cell.day : ''}</span>
-              <div className="mt-2 space-y-1">
+            <div
+              key={i}
+              className={`min-h-[104px] border-b border-r border-gray-200 p-2 ${isToday ? 'bg-orange-50' : holiday ? '' : cell.current ? 'bg-white' : 'bg-gray-50'}`}
+              style={holiday && !isToday ? { background: hs.bg } : undefined}
+            >
+              <span className={`text-sm font-bold ${isToday ? 'text-[#ff7a00]' : holiday ? '' : daySessions.length ? 'text-gray-950' : 'text-gray-400'}`}
+                style={holiday && !isToday ? { color: hs.text } : undefined}
+              >{cell.current ? cell.day : ''}</span>
+              {holiday && (
+                <span
+                  className="block text-[8px] font-bold truncate leading-tight px-1 rounded mt-0.5"
+                  style={{ background: hs.bg, color: hs.text, border: `1px solid ${hs.border}` }}
+                  title={holiday.description ? `${holiday.title} — ${holiday.description}` : holiday.title}
+                >
+                  Festivo
+                </span>
+              )}
+              <div className="mt-1 space-y-1">
                 {daySessions.slice(0, 3).map(s => <CalendarPill key={s.id} session={s} />)}
               </div>
             </div>
@@ -550,10 +565,11 @@ function ActionCard({ icon, title, text }: { icon: string; title: string; text: 
 function Legend() {
   return (
     <div className="mt-4 flex flex-wrap gap-5 text-sm text-gray-600">
-      <span className="flex items-center gap-2"><i className="h-3 w-3 rounded-full bg-green-500" />Disponible</span>
-      <span className="flex items-center gap-2"><i className="h-3 w-3 rounded-full bg-blue-500" />Agendada</span>
-      <span className="flex items-center gap-2"><i className="h-3 w-3 rounded-full bg-purple-500" />Completada</span>
-      <span className="flex items-center gap-2"><i className="h-3 w-3 rounded-full bg-red-500" />Cancelada</span>
+      <span className="flex items-center gap-2"><i className="h-3 w-3 rounded-full bg-green-500" />Confirmada</span>
+      <span className="flex items-center gap-2"><i className="h-3 w-3 rounded-full bg-blue-500" />Completada</span>
+      <span className="flex items-center gap-2"><i className="h-3 w-3 rounded-full bg-amber-400" />Pendiente</span>
+      <span className="flex items-center gap-2"><i className="h-3 w-3 rounded-full bg-red-500" />Para reprogramar</span>
+      <span className="flex items-center gap-2"><i className="h-3 w-3 rounded-full bg-yellow-400" />Festivo</span>
     </div>
   )
 }

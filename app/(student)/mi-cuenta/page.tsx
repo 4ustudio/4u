@@ -1,11 +1,8 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createAuthServerClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
 import { getMyDashboardData, getMonthSessions } from '../_actions/student'
 import StudentNav from '../_components/StudentNav'
-import BookingCalendar from '@/components/sections/BookingCalendar'
-import { studentBookAction } from '../_actions/student'
 import AutoRefresh from './_components/AutoRefresh'
 import ProfileModal from './_components/ProfileModal'
 import ClassesCalendar from './_components/ClassesCalendar'
@@ -21,12 +18,7 @@ export default async function MiCuentaPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/mi-cuenta/login')
 
-  const adminClient = createAdminClient()
-  const [data, { data: instructorsRaw }] = await Promise.all([
-    getMyDashboardData(user.id),
-    adminClient.from('instructors').select('id, name').eq('status', 'active').order('name'),
-  ])
-  const instructors = (instructorsRaw ?? []) as { id: string; name: string }[]
+  const data = await getMyDashboardData(user.id)
 
   if (!data) {
     redirect('/admin')
@@ -237,25 +229,6 @@ export default async function MiCuentaPage() {
             <HistoryDrawer past={past} />
           </section>
         )}
-
-        {/* ── AGENDAR NUEVA CLASE ────────────────────────────────────── */}
-        <section id="agendar">
-          <SectionLabel>Agendar nueva clase</SectionLabel>
-          {usageTyped && usageTyped.classes_available > 0 ? (
-            <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 sm:p-6">
-              <BookingCalendar
-                serverAction={studentBookAction}
-                mode="student"
-                isLoggedIn={true}
-                instructors={instructors}
-              />
-            </div>
-          ) : (
-            <EmptyState>
-              No tienes clases disponibles este mes. Comunícate con 4U Studio para más información.
-            </EmptyState>
-          )}
-        </section>
 
       </main>
     </>

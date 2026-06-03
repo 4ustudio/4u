@@ -112,7 +112,7 @@ export default function ClassesCalendar({ initialSessions, schedules, initialYea
   }, [sessions, schedules])
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 sm:p-5">
+    <div className="rounded-2xl border border-white/[0.08] bg-gradient-to-br from-zinc-800/40 via-zinc-900/40 to-zinc-950/60 p-4 sm:p-5">
       {/* Header: navegación + toggle */}
       <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
         <div className="flex items-center gap-2">
@@ -161,36 +161,42 @@ export default function ClassesCalendar({ initialSessions, schedules, initialYea
                 <div key={d} className="text-center text-[10px] font-semibold text-white/30 uppercase tracking-wider py-1">{d}</div>
               ))}
             </div>
-            <div className="grid grid-cols-7 gap-1">
+            <div className="grid grid-cols-7 gap-1.5">
               {cells.map((cell, i) => {
-                if (!cell.current) return <div key={i} className="min-h-[64px] lg:min-h-[84px] rounded-lg" />
+                if (!cell.current) return <div key={i} className="min-h-[76px] lg:min-h-[104px] rounded-lg bg-white/[0.01]" />
                 const dateStr = `${year}-${mm}-${String(cell.day).padStart(2, '0')}`
                 const dayClasses = byDay[dateStr] ?? []
                 const isToday = dateStr === todayIso
                 return (
                   <div
                     key={i}
-                    className={`min-h-[64px] lg:min-h-[84px] rounded-lg border p-1.5 flex flex-col gap-1 transition-colors ${
-                      isToday ? 'border-[#ff7a00]/50 bg-[#ff7a00]/[0.06]' : 'border-white/[0.06] bg-white/[0.015]'
+                    className={`min-h-[76px] lg:min-h-[104px] rounded-lg border p-1.5 flex flex-col gap-1 transition-colors ${
+                      isToday
+                        ? 'border-[#ff7a00]/60 bg-[#ff7a00]/[0.10]'
+                        : dayClasses.length > 0
+                          ? 'border-white/[0.12] bg-white/[0.06]'
+                          : 'border-white/[0.06] bg-white/[0.025]'
                     }`}
                   >
-                    <span className={`text-[11px] font-semibold ${isToday ? 'text-[#ff7a00]' : 'text-white/40'}`}>{cell.day}</span>
-                    <div className="flex flex-col gap-0.5 overflow-hidden">
+                    <span className={`text-[11px] font-bold ${isToday ? 'text-[#ff7a00]' : dayClasses.length > 0 ? 'text-white/70' : 'text-white/30'}`}>{cell.day}</span>
+                    <div className="flex flex-col gap-1 overflow-hidden">
                       {dayClasses.map(s => {
                         const meta = statusMeta(s.status)
                         return (
                           <button
                             key={s.id}
                             onClick={() => setSelected(s)}
-                            className="group flex items-center gap-1 rounded px-1 py-0.5 text-left hover:bg-white/[0.06] transition-colors"
-                            style={{ background: meta.hex + '1a' }}
+                            className="group flex items-center gap-1 rounded-md px-1.5 py-1 text-left transition-all hover:brightness-125"
+                            style={{ background: meta.hex + '26', borderLeft: `2px solid ${meta.hex}` }}
                             title={`${s.course?.name ?? ''} · ${fmtTime(s.start_time)}`}
                           >
-                            <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${meta.dotClass}`} />
-                            <span className="text-white/70 shrink-0" style={{ color: meta.hex }}>
+                            <span className="shrink-0" style={{ color: meta.hex }}>
                               <InstrumentIcon courseName={s.course?.name} className="h-3 w-3" />
                             </span>
-                            <span className="text-[10px] text-white/70 truncate hidden lg:inline">{fmtTime(s.start_time)}</span>
+                            <span className="min-w-0 flex flex-col leading-tight">
+                              <span className="text-[10px] font-semibold text-white/90 truncate">{s.course?.name ?? '—'}</span>
+                              <span className="text-[9px] text-white/55 hidden lg:inline">{fmtTime(s.start_time)}</span>
+                            </span>
                           </button>
                         )
                       })}

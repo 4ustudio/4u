@@ -15,13 +15,18 @@ export default function AutoRefresh({ studentId }: { studentId?: string }) {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
 
+    let disposed = false
     let retry: ReturnType<typeof setTimeout> | undefined
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let channel: any
 
     const subscribe = () => {
+      if (disposed) return
+      // Nombre único por suscripción: evita reutilizar un canal ya suscrito
+      // (causa de "cannot add postgres_changes callbacks after subscribe()").
+      const name = `student-sessions-${studentId ?? 'all'}-${Date.now()}`
       channel = sb
-        .channel('student-sessions-refresh')
+        .channel(name)
         .on('postgres_changes', {
           event:  '*',
           schema: 'public',
@@ -29,10 +34,13 @@ export default function AutoRefresh({ studentId }: { studentId?: string }) {
           ...(studentId ? { filter: `student_id=eq.${studentId}` } : {}),
         }, () => refresh())
         .subscribe((status) => {
-          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          // Solo reintentar ante fallos reales; 'CLOSED' ocurre en el
+          // desmontaje normal y no debe disparar una re-suscripción.
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
             clearTimeout(retry)
             retry = setTimeout(() => {
-              sb.removeChannel(channel)
+              if (disposed) return
+              if (channel) sb.removeChannel(channel)
               subscribe()
             }, 3000)
           }
@@ -49,6 +57,7 @@ export default function AutoRefresh({ studentId }: { studentId?: string }) {
     document.addEventListener('visibilitychange', onVisible)
 
     return () => {
+      disposed = true
       clearTimeout(retry)
       if (channel) sb.removeChannel(channel)
       clearInterval(timer)

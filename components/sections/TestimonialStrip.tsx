@@ -1,20 +1,19 @@
-import OptimizedImage from "@/components/ui/OptimizedImage";
-
 export default function TestimonialStrip() {
   return (
     <section className="w-full bg-white py-3">
       <div className="home-frame">
         <div className="relative grid min-h-[230px] grid-cols-1 overflow-hidden rounded-xl bg-zinc-900 md:min-h-[250px] md:grid-cols-[70%_30%]">
-          {/* Imagen del pianista — protagonista, lado derecho */}
+          {/* Video del pianista — protagonista, lado derecho */}
           <div className="absolute inset-0 md:relative md:col-start-2">
-            <OptimizedImage
-              src="/images/hero/Banner-principal-3.jpg.jpeg"
-              alt="Pianista interpretando en 4U Studio Academy"
-              fill
-              className="scale-[1.35] object-cover object-[58%_46%] md:scale-[1.15]"
-              sizes="(max-width: 768px) 100vw, 40vw"
+            <video
+              src="/images/hero/hf_20260603_132024_66aa16f3-508a-4fd7-9e4f-a228b9963941.mp4"
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="absolute inset-0 h-full w-full scale-[1.35] object-cover object-[58%_46%] md:scale-[1.15]"
             />
-            {/* Degradado que funde la imagen con el texto (móvil: vertical / desktop: horizontal) */}
+            {/* Degradado que funde el video con el texto (móvil: vertical / desktop: horizontal) */}
             <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/70 to-zinc-900/30 md:bg-gradient-to-r md:from-zinc-900 md:via-zinc-900/35 md:to-transparent" />
           </div>
 

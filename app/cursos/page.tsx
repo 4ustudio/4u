@@ -110,13 +110,13 @@ export default function CursosPage() {
         <div className="absolute inset-0">
           {/* Video — scaleX(-1) para que los sujetos miren hacia el texto */}
           <video
-            src="/images/hero/hf_20260603_135817_bc2bc082-82e4-46f3-bc75-4747aa356fee.mp4"
+            src="/images/hero/hf_20260603_145824_b529a97d-f481-4464-bf99-25b64dbdcd14.mp4"
             autoPlay
             muted
             loop
             playsInline
             className="absolute inset-0 h-full w-full object-cover"
-            style={{ objectPosition: "18% center", transform: "scaleX(-1)" }}
+            style={{ objectPosition: "78% center", transform: "scaleX(-1)" }}
           />
           {/* Capa 1 — negro intenso izq → transparencia progresiva (termina antes de los rostros) */}
           <div

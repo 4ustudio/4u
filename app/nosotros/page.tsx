@@ -83,7 +83,7 @@ export default function NosotrosPage() {
             alt="4U Studio Academy"
             fill
             priority
-            className="object-cover object-[center_50%] lg:object-left lg:scale-110 lg:translate-x-[12%]"
+            className="object-cover object-left scale-110 translate-x-[12%]"
             sizes="100vw"
           />
         </div>

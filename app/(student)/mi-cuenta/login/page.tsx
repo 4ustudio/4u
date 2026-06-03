@@ -19,7 +19,7 @@ function LoginForm() {
   return (
     <div className="min-h-screen bg-black text-white">
       <StudentNav />
-      <div className="flex items-center justify-center px-4 pt-24 pb-12">
+      <div className="flex items-center justify-center px-4 py-12 min-h-[calc(100vh-80px)]">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-white font-poppins">Iniciar sesión</h1>

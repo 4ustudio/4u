@@ -8,6 +8,8 @@ import AutoRefresh from './_components/AutoRefresh'
 import ProfileModal from './_components/ProfileModal'
 import SchedulePdfButton from './_components/SchedulePdfButton'
 import ClassesCalendar from './_components/ClassesCalendar'
+import InstructorCalendar from './_components/InstructorCalendar'
+import AvailabilityEditor from './_components/AvailabilityEditor'
 import { InstrumentIcon } from './_components/instruments'
 import { statusMeta } from './_components/statusMeta'
 import { ACADEMY } from '@/lib/constants'
@@ -168,38 +170,81 @@ function InstructorDashboard({ data, user, monthLabel, now }: any) {
             email={instructor.email ?? user.email}
             badge="Maestro"
             memberSince={memberSince}
-            action={<span className="text-[#ff7a00]">✎</span>}
+            action={<span className="text-[#ff7a00] cursor-pointer">✎</span>}
             right={<InstructorSummary stats={stats} />}
           />
 
+          {/* Accesos rápidos */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <ActionCard icon="calendar" title="Ver horarios" text="Tu disponibilidad" />
-            <ActionCard icon="briefcase" title="Gestionar clases" text="Crear, editar o cancelar" />
-            <ActionCard icon="users" title="Mis alumnos" text="Ver y gestionar" />
-            <ActionCard icon="report" title="Reportes" text="Tu actividad y estadisticas" />
+            <ActionCard icon="calendar" title="Ver horarios"     text="Tu disponibilidad"        href="#disponibilidad" />
+            <ActionCard icon="briefcase" title="Gestionar clases" text="Ver tus clases del mes"  href="#calendario" />
+            <ActionCard icon="users"    title="Mis alumnos"      text="Ver estudiantes activos"   href="#alumnos" />
+            <ActionCard icon="report"   title="Reportes"         text="Tu actividad mensual"     href="/mi-cuenta/clases-mes" />
           </div>
 
+          {/* Métricas */}
           <section>
-            <SectionTitle title="Resumen de clases" subtitle="Asi va tu actividad." />
+            <SectionTitle title="Resumen de clases" subtitle="Asi va tu actividad este mes." />
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <MetricCard icon="calendar" value={stats.weekScheduled} label="Programadas" hint="Esta semana" color="blue" />
-              <MetricCard icon="check" value={stats.completed} label="Completadas" hint="Este mes" color="green" />
-              <MetricCard icon="clock" value={stats.todayUpcoming} label="Proximas hoy" hint="Siguiente clase" color="orange" />
-              <MetricCard icon="x" value={stats.cancelled} label="Canceladas" hint="Este mes" color="red" />
+              <MetricCard icon="calendar" value={stats.weekScheduled}  label="Proximas"     hint="Confirmadas"   color="blue" />
+              <MetricCard icon="check"    value={stats.completed}      label="Completadas"  hint="Este mes"      color="green" />
+              <MetricCard icon="clock"    value={stats.todayUpcoming}  label="Hoy"          hint="Proximas hoy"  color="orange" />
+              <MetricCard icon="x"        value={stats.cancelled}      label="Canceladas"   hint="Este mes"      color="red" />
             </div>
           </section>
 
-          <section className="grid gap-5 lg:grid-cols-[1fr_300px]">
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-              <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                <SectionTitle title="Tu calendario" subtitle="Vista de tus clases programadas." />
-                <SchedulePdfButton name={name} roleLabel="Instructor" monthLabel={monthLabel} sessions={sessions} />
+          {/* Próximas clases hoy */}
+          {upcoming.filter((s: any) => s.scheduled_date === now.toISOString().split('T')[0]).length > 0 && (
+            <section className="rounded-xl bg-[#090909] p-6 text-white shadow-lg">
+              <h2 className="mb-4 font-poppins text-lg font-extrabold text-[#ff7a00]">Clases de hoy</h2>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {upcoming.filter((s: any) => s.scheduled_date === now.toISOString().split('T')[0]).map((s: any) => (
+                  <div key={s.id} className="rounded-xl border border-white/10 bg-white/5 p-4">
+                    <p className="font-poppins font-bold">{s.start_time?.slice(0,5)} · {s.course?.name ?? 'Clase'}</p>
+                    <p className="text-sm text-white/60 mt-1">{s.student?.name ?? 'Sin alumno'}</p>
+                    <p className="text-xs text-white/40 mt-0.5">{s.classroom?.name ?? '—'}</p>
+                  </div>
+                ))}
               </div>
-              <InstructorWeekCalendar sessions={sessions} now={now} />
-              <AvailabilityStrip availability={availability} />
+            </section>
+          )}
+
+          {/* Calendario interactivo */}
+          <section>
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <SectionTitle title="Tu calendario" subtitle="Tus clases del mes — navega por fecha." />
+              <SchedulePdfButton name={name} roleLabel="Instructor" monthLabel={monthLabel} sessions={sessions} />
             </div>
-            <InstructorSidePanel upcoming={upcoming} cancelled={cancelled} />
+            <InstructorCalendar
+              initialSessions={sessions}
+              initialYear={now.getFullYear()}
+              initialMonth={now.getMonth() + 1}
+            />
           </section>
+
+          {/* Alumnos activos */}
+          {upcoming.length > 0 && (
+            <section id="alumnos" className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+              <SectionTitle title="Proximas clases" subtitle="Tus clases confirmadas y pendientes este mes." />
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {upcoming.slice(0, 6).map((s: any) => (
+                  <div key={s.id} className="flex items-center gap-3 rounded-xl border border-gray-100 p-3">
+                    <span className="h-9 w-9 rounded-full bg-orange-100 text-[#ff7a00] flex items-center justify-center font-bold text-sm shrink-0">
+                      {(s.student?.name ?? '?')[0].toUpperCase()}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-gray-900 truncate">{s.student?.name ?? 'Sin alumno'}</p>
+                      <p className="text-xs text-gray-400">{s.course?.name ?? '—'} · {s.scheduled_date} {s.start_time?.slice(0,5)}</p>
+                    </div>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold ${statusMeta(s.status).badgeClass}`}>{statusMeta(s.status).label}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Editor de disponibilidad */}
+          <AvailabilityEditor initialAvailability={availability ?? []} />
 
           <SupportBar />
         </div>
@@ -551,16 +596,24 @@ function AvailabilityStrip({ availability }: { availability: any[] }) {
   )
 }
 
-function ActionCard({ icon, title, text }: { icon: string; title: string; text: string }) {
-  return (
-    <div className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-orange-100 text-[#ff7a00]"><Icon name={icon} className="h-5 w-5" /></span>
+function ActionCard({ icon, title, text, href }: { icon: string; title: string; text: string; href?: string }) {
+  const content = (
+    <>
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-orange-100 text-[#ff7a00]"><Icon name={icon} className="h-5 w-5" /></span>
       <div>
         <p className="font-poppins font-extrabold text-gray-950">{title}</p>
         <p className="text-sm text-gray-600">{text}</p>
       </div>
-    </div>
+    </>
   )
+  const cls = "flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm hover:border-[#ff7a00]/30 hover:shadow-md transition-all"
+  if (href?.startsWith('#')) {
+    return <a href={href} className={cls}>{content}</a>
+  }
+  if (href) {
+    return <Link href={href} className={cls}>{content}</Link>
+  }
+  return <div className={cls}>{content}</div>
 }
 
 function Legend() {

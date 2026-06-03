@@ -489,3 +489,68 @@ export async function uploadAvatarAction(
   revalidatePath('/mi-cuenta')
   return { url: publicUrl }
 }
+
+// ─── Instructor: sesiones por mes (para calendario navegable) ────────
+
+export async function getInstructorMonthSessions(year: number, month: number) {
+  const supabase = await createAuthServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user?.email) return []
+
+  const mm = String(month).padStart(2, '0')
+  const monthStart = `${year}-${mm}-01`
+  const nextYear  = month === 12 ? year + 1 : year
+  const nextMonth = month === 12 ? 1 : month + 1
+  const nextStart = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`
+
+  const adminClient = admin()
+  const { data: instructor } = await adminClient
+    .from('instructors')
+    .select('id')
+    .eq('email', user.email.trim())
+    .maybeSingle()
+
+  if (!instructor) return []
+
+  const { data: sessions } = await adminClient
+    .from('class_sessions')
+    .select('*, student:students(name,phone), course:courses(name), classroom:classrooms(name), instructor:instructors(name)')
+    .eq('instructor_id', instructor.id)
+    .gte('scheduled_date', monthStart)
+    .lt('scheduled_date', nextStart)
+    .order('scheduled_date', { ascending: true })
+    .order('start_time',     { ascending: true })
+
+  return (sessions ?? []) as any[] // eslint-disable-line @typescript-eslint/no-explicit-any
+}
+
+// ─── Instructor: guardar disponibilidad ─────────────────────────────
+
+export async function saveInstructorAvailabilityAction(
+  slots: Array<{ day_of_week: number; start_time: string; end_time: string }>
+): Promise<{ success?: boolean; error?: string }> {
+  const supabase = await createAuthServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user?.email) return { error: 'Sesión expirada.' }
+
+  const adminClient = admin()
+  const { data: instructor } = await adminClient
+    .from('instructors')
+    .select('id')
+    .eq('email', user.email.trim())
+    .maybeSingle()
+
+  if (!instructor) return { error: 'Instructor no encontrado.' }
+
+  await adminClient.from('instructor_availability').delete().eq('instructor_id', instructor.id)
+
+  if (slots.length > 0) {
+    const { error } = await adminClient.from('instructor_availability').insert(
+      slots.map(s => ({ ...s, instructor_id: instructor.id }))
+    )
+    if (error) return { error: error.message }
+  }
+
+  revalidatePath('/mi-cuenta')
+  return { success: true }
+}

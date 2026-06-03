@@ -8,56 +8,6 @@ import { PLANES_ADULTOS, type PlanDetail } from '@/data/plans-adults'
 
 const FILTERS = ['Todos', 'Inicial', 'Artista', 'Profesional', 'Empresas'] as const
 
-const KEY_HIGHLIGHTS: Record<number, string[]> = {
-  1: [
-    'Grabación profesional cada 3 meses',
-    '8 clases mensuales personalizadas',
-    'Presentaciones en tarima 4× al año',
-    'MP3 de clases para seguimiento',
-  ],
-  2: [
-    'Grabación profesional cada mes',
-    '8 clases mensuales personalizadas',
-    'Presentaciones en tarima 4× al año',
-    'MP3 de clases para seguimiento',
-  ],
-  3: [
-    'Grabación grupal cada 3 meses',
-    '8 sesiones mensuales de ensamble',
-    'Presentaciones en tarima 4× al año',
-    'Hasta 4 integrantes por banda',
-  ],
-  4: [
-    'Producción y desarrollo de tu canción',
-    '8 sesiones mensuales',
-    'Dirección artística personalizada',
-    'Canción mezclada y masterizada',
-  ],
-  5: [
-    'Canción producida + imagen artística',
-    '8 sesiones mensuales',
-    'Sesión fotográfica + diseño de portada',
-    'Identidad visual y asesoría de imagen',
-  ],
-  6: [
-    'Álbum, EP o catálogo completo',
-    'Dirección artística integral',
-    'Mezcla y masterización profesional',
-    'Desarrollo de identidad artística',
-  ],
-  7: [
-    'Diagnóstico y estrategia de marca sonora',
-    'Jingles y producción institucional',
-    'Locuciones y audiobranding',
-    'Entrega optimizada por canal',
-  ],
-}
-
-const SHORT_DESC: Record<number, string> = {
-  1: 'Comienza tu camino musical. Aprende, crea y graba tu primera canción profesional.',
-  2: 'Avanza más rápido. Una grabación profesional cada mes para construir tu portafolio.',
-}
-
 export default function PlanCardsSection() {
   const [active, setActive] = useState<string>('Todos')
   const [selectedPlan, setSelectedPlan] = useState<PlanDetail | null>(null)
@@ -94,8 +44,6 @@ export default function PlanCardsSection() {
           <PlanCard
             key={plan.id}
             plan={plan}
-            highlights={KEY_HIGHLIGHTS[plan.id] ?? plan.features.slice(0, 4)}
-            shortDesc={SHORT_DESC[plan.id] ?? plan.description}
             onDetails={() => setSelectedPlan(plan)}
           />
         ))}
@@ -111,13 +59,9 @@ export default function PlanCardsSection() {
 
 function PlanCard({
   plan,
-  highlights,
-  shortDesc,
   onDetails,
 }: {
   plan: PlanDetail
-  highlights: string[]
-  shortDesc: string
   onDetails: () => void
 }) {
   return (
@@ -168,18 +112,24 @@ function PlanCard({
           {plan.name}
         </h2>
 
-        {shortDesc && (
+        {plan.description && (
           <p className="text-xs font-roboto text-gray-500 group-hover:text-white/55 [transition:color_.3s_ease] leading-relaxed mb-3 line-clamp-2">
-            {shortDesc}
+            {plan.description}
           </p>
         )}
 
         <ul className="space-y-1.5 mb-4">
-          {highlights.slice(0, 4).map((h) => (
-            <li key={h} className="flex items-start gap-2 text-[12px] font-roboto text-gray-600 group-hover:text-white/60 [transition:color_.3s_ease]">
-              <span className="mt-0.5 text-[#ff6b00] shrink-0">◎</span> {h}
+          {plan.features.slice(0, 4).map((f) => (
+            <li key={f} className="flex items-start gap-2 text-[12px] font-roboto text-gray-600 group-hover:text-white/60 [transition:color_.3s_ease]">
+              <span className="mt-0.5 text-[#ff6b00] shrink-0">◎</span> {f}
             </li>
           ))}
+          {plan.features.length > 4 && (
+            <li className="flex items-start gap-2 text-[12px] font-roboto text-[#ff6b00] font-semibold mt-2">
+              <span className="mt-0.5 shrink-0">◎</span>
+              +{plan.features.length - 4} beneficios más
+            </li>
+          )}
         </ul>
 
         <div className="mt-auto">

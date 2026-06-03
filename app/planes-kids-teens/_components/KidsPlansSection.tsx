@@ -20,7 +20,6 @@ interface KidsPlan {
   image: string
   features: string[]
   objective: string
-  highlights: string[]
   shortDesc: string
 }
 
@@ -33,12 +32,6 @@ const kidsPlans: KidsPlan[] = [
     color: "#ff6b00",
     imagePosition: "object-top",
     image: "/images/courses/plan-kids/Plan 1 Kids.png",
-    highlights: [
-      "Grabación profesional cada 3 meses",
-      "8 clases mensuales personalizadas",
-      "Presentaciones en tarima 4× al año",
-      "MP3 de clases para seguimiento",
-    ],
     shortDesc: "Aprende, crea y expresa tu talento en un ambiente divertido e inspirador.",
     features: [
       "Cada 3 meses se entrega una canción acústica grabada profesionalmente, mezclada y masterizada, lista para compartir con familiares, amigos o publicar en plataformas digitales.",
@@ -59,12 +52,6 @@ const kidsPlans: KidsPlan[] = [
     color: "#1397a5",
     imagePosition: "object-top",
     image: "/images/courses/plan-kids/Plan 2 Teens.png",
-    highlights: [
-      "Grabación profesional cada mes",
-      "8 clases mensuales personalizadas",
-      "Presentaciones en tarima 4× al año",
-      "MP3 de clases para seguimiento",
-    ],
     shortDesc: "Una grabación profesional cada mes para construir tu portafolio musical propio.",
     features: [
       "Cada mes se entrega una canción acústica grabada profesionalmente, mezclada y masterizada, lista para compartir con familiares, amigos o publicar en plataformas digitales.",
@@ -106,7 +93,7 @@ export default function KidsPlansSection() {
 }
 
 function KidsPlanCard({ plan, onDetails }: { plan: KidsPlan; onDetails: () => void }) {
-  const { color, image, title, accent, price, highlights, shortDesc } = plan
+  const { color, image, title, accent, price, features, shortDesc } = plan
 
   return (
     <article
@@ -133,12 +120,18 @@ function KidsPlanCard({ plan, onDetails }: { plan: KidsPlan; onDetails: () => vo
         <p className="mt-2 text-[13px] leading-relaxed text-gray-500 font-roboto">{shortDesc}</p>
 
         <ul className="mt-4 space-y-1.5">
-          {highlights.map((h) => (
-            <li key={h} className="flex items-start gap-3 text-[13px] text-gray-700 font-roboto">
+          {features.slice(0, 4).map((f) => (
+            <li key={f} className="flex items-start gap-3 text-[13px] text-gray-700 font-roboto">
               <span className="mt-0.5 shrink-0" style={{ color }}>◎</span>
-              {h}
+              {f}
             </li>
           ))}
+          {features.length > 4 && (
+            <li className="flex items-start gap-3 text-[13px] font-semibold font-roboto mt-2" style={{ color }}>
+              <span className="mt-0.5 shrink-0">◎</span>
+              +{features.length - 4} beneficios más
+            </li>
+          )}
         </ul>
 
         <div className="mt-auto pt-5">

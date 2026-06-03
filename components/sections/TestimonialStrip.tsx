@@ -13,7 +13,7 @@ export default function TestimonialStrip() {
               loop
               playsInline
               className="h-full w-full object-cover"
-              style={{ objectPosition: "75% center" }}
+              style={{ objectPosition: "82% center" }}
             />
           </div>
 
@@ -22,7 +22,7 @@ export default function TestimonialStrip() {
             className="pointer-events-none absolute inset-0 z-[1]"
             style={{
               background:
-                "linear-gradient(90deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.72) 28%, rgba(0,0,0,0.35) 52%, rgba(0,0,0,0.08) 72%, rgba(0,0,0,0) 100%)",
+                "linear-gradient(90deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.80) 20%, rgba(0,0,0,0.40) 36%, rgba(0,0,0,0.08) 46%, rgba(0,0,0,0) 54%)",
             }}
             aria-hidden="true"
           />
@@ -47,7 +47,7 @@ export default function TestimonialStrip() {
           />
 
           {/* Texto — tercio izquierdo */}
-          <div className="relative z-10 flex flex-col justify-center px-8 py-10 md:w-[58%] md:px-12 md:py-12">
+          <div className="relative z-10 flex flex-col justify-center px-8 py-10 md:w-[38%] md:px-12 md:py-12">
             <span className="mb-1 font-poppins text-5xl font-black leading-none text-[#ff7a00]">&ldquo;</span>
             <p className="max-w-xl font-poppins text-xl font-extrabold italic leading-[1.2] text-white md:text-[26px] lg:text-[30px]">
               La música no solo cambia tu sonido,<br />

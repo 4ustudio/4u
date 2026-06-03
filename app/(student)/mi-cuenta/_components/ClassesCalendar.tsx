@@ -10,7 +10,7 @@ import { statusMeta, STATUS_LEGEND } from './statusMeta'
 
 const MONTHS_ES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
 const DOW_HEAD = ['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB']
-const WEEK_DAYS = [1, 2, 3, 4, 5, 6] // Lun..Sáb (ISO sin domingo)
+const WEEK_DAYS = [1, 2, 3, 4, 5, 6]
 const WEEK_HEAD = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
 
 function calendarDays(year: number, month: number) {
@@ -23,9 +23,7 @@ function calendarDays(year: number, month: number) {
   return cells
 }
 
-function fmtTime(t?: string) {
-  return t ? t.slice(0, 5) : ''
-}
+function fmtTime(t?: string) { return t ? t.slice(0, 5) : '' }
 
 function fmtDateLong(iso: string) {
   return new Date(iso + 'T12:00:00').toLocaleDateString('es-CO', {
@@ -33,18 +31,62 @@ function fmtDateLong(iso: string) {
   })
 }
 
+function fmtDateShort(iso: string) {
+  return new Date(iso + 'T12:00:00').toLocaleDateString('es-CO', {
+    weekday: 'short', day: 'numeric', month: 'short',
+  })
+}
+
+function googleCalUrl(s: any): string {
+  const title = encodeURIComponent(s.course?.name ?? 'Clase 4U Studio')
+  const date = s.scheduled_date ? s.scheduled_date.replace(/-/g, '') : ''
+  const start = s.start_time ? s.start_time.slice(0, 5).replace(':', '') : '0900'
+  const startISO = `${date}T${start}00`
+  const endH = s.start_time ? parseInt(s.start_time.slice(0, 2)) + 1 : 10
+  const endStr = `${String(endH).padStart(2, '0')}${s.start_time?.slice(3, 5) ?? '00'}`
+  const endISO = `${date}T${endStr}00`
+  const details = encodeURIComponent(`Clase de ${s.course?.name ?? 'música'} en 4U Studio Academy. Instructor: ${s.instructor?.name ?? '—'}. Salón: ${s.classroom?.name ?? '—'}.`)
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startISO}/${endISO}&details=${details}`
+}
+
+function downloadICS(s: any) {
+  const date = s.scheduled_date?.replace(/-/g, '') ?? ''
+  const startH = s.start_time ? s.start_time.slice(0, 5).replace(':', '') : '0900'
+  const endH = s.start_time ? `${String(parseInt(s.start_time.slice(0, 2)) + 1).padStart(2, '0')}${s.start_time.slice(3, 5)}` : '1000'
+  const ics = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//4U Studio//ES',
+    'BEGIN:VEVENT',
+    `DTSTART:${date}T${startH}00`,
+    `DTEND:${date}T${endH}00`,
+    `SUMMARY:${s.course?.name ?? 'Clase 4U Studio'}`,
+    `DESCRIPTION:Clase de ${s.course?.name ?? 'música'} en 4U Studio Academy. Instructor: ${s.instructor?.name ?? '—'}. Salón: ${s.classroom?.name ?? '—'}.`,
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].join('\r\n')
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `clase-4u-${s.scheduled_date ?? 'fecha'}.ics`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 interface Props {
   initialSessions: any[]
   schedules: any[]
   initialYear: number
-  initialMonth: number // 1-12
+  initialMonth: number
 }
 
 export default function ClassesCalendar({ initialSessions, schedules, initialYear, initialMonth }: Props) {
   const [mounted, setMounted] = useState(false)
-  const [view, setView] = useState<'mes' | 'semana'>('mes')
+  const [view, setView] = useState<'agenda' | 'calendar'>('agenda')
+  const [calendarView, setCalendarView] = useState<'mes' | 'semana'>('mes')
   const [year, setYear] = useState(initialYear)
-  const [month, setMonth] = useState(initialMonth) // 1-12
+  const [month, setMonth] = useState(initialMonth)
   const [sessions, setSessions] = useState<any[]>(initialSessions)
   const [cache, setCache] = useState<Record<string, any[]>>({
     [`${initialYear}-${initialMonth}`]: initialSessions,
@@ -59,7 +101,6 @@ export default function ClassesCalendar({ initialSessions, schedules, initialYea
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
   }, [])
 
-  // Sesiones agrupadas por día (YYYY-MM-DD → sesiones[])
   const byDay = useMemo(() => {
     const map: Record<string, any[]> = {}
     for (const s of sessions) {
@@ -92,8 +133,6 @@ export default function ClassesCalendar({ initialSessions, schedules, initialYea
   const mm = String(month).padStart(2, '0')
   const cells = calendarDays(year, month - 1)
 
-  // Vista Semana: clases del mes agrupadas por día de la semana (Lun–Sáb).
-  // Combina sesiones puntuales (con fecha) y horarios fijos recurrentes.
   const byWeekday = useMemo(() => {
     const map: Record<number, any[]> = {}
     const push = (d: number, item: any) => {
@@ -102,7 +141,7 @@ export default function ClassesCalendar({ initialSessions, schedules, initialYea
       map[d].push(item)
     }
     for (const s of sessions) {
-      const dow = new Date(s.scheduled_date + 'T12:00:00').getDay() // 0=Dom..6=Sáb
+      const dow = new Date(s.scheduled_date + 'T12:00:00').getDay()
       push(dow, { ...s, _hour: fmtTime(s.start_time) })
     }
     for (const sc of schedules ?? []) {
@@ -137,89 +176,43 @@ export default function ClassesCalendar({ initialSessions, schedules, initialYea
           </button>
         </div>
 
-        {/* Toggle Mes / Semana */}
+        {/* Toggle Agenda / Calendario */}
         <div className="flex rounded-xl border border-gray-200 bg-stone-100 p-0.5">
-          {(['mes', 'semana'] as const).map(v => (
+          {(['agenda', 'calendar'] as const).map(v => (
             <button
               key={v}
               onClick={() => setView(v)}
-               className={`px-4 py-1.5 rounded-lg text-xs font-semibold font-poppins capitalize transition-all ${
-                  view === v ? 'bg-[#ff7a00] text-white' : 'text-gray-500 hover:text-gray-700'
-                }`}
+              className={`px-4 py-1.5 rounded-lg text-xs font-semibold font-poppins capitalize transition-all ${
+                view === v ? 'bg-[#ff7a00] text-white' : 'text-gray-500 hover:text-gray-700'
+              }`}
             >
-              {v}
+              {v === 'agenda' ? 'Agenda' : 'Calendario'}
             </button>
           ))}
         </div>
       </div>
 
-      {view === 'mes' ? (
-        <>
-          {/* ── Grid mensual (tablet/desktop) ── */}
-          <div className="hidden sm:block">
-            <div className="grid grid-cols-7 gap-1 mb-1">
-              {DOW_HEAD.map(d => (
-                <div key={d} className="text-center text-[10px] font-semibold text-gray-400 uppercase tracking-wider py-1">{d}</div>
-              ))}
-            </div>
-            <div className="grid grid-cols-7 gap-1.5">
-              {cells.map((cell, i) => {
-                if (!cell.current) return <div key={i} className="min-h-[76px] lg:min-h-[104px] rounded-lg bg-gray-50" />
-                const dateStr = `${year}-${mm}-${String(cell.day).padStart(2, '0')}`
-                const dayClasses = byDay[dateStr] ?? []
-                const isToday = dateStr === todayIso
-                return (
-                  <div
-                    key={i}
-                    className={`min-h-[76px] lg:min-h-[104px] rounded-lg border p-1.5 flex flex-col gap-1 transition-colors ${
-                      isToday
-                        ? 'border-[#ff7a00]/50 bg-orange-50'
-                        : dayClasses.length > 0
-                          ? 'border-[#ff7a00]/20 bg-orange-50/20'
-                          : 'border-gray-100 bg-white'
-                    }`}
-                  >
-                    <span className={`text-[11px] font-bold ${isToday ? 'text-[#ff7a00]' : dayClasses.length > 0 ? 'text-gray-800' : 'text-gray-400'}`}>{cell.day}</span>
-                    <div className="flex flex-col gap-1 overflow-hidden">
-                      {dayClasses.map(s => {
-                        const meta = statusMeta(s.status)
-                        return (
-                          <button
-                            key={s.id}
-                            onClick={() => setSelected(s)}
-                            className="group flex items-center gap-1 rounded-md px-1.5 py-1 text-left transition-all hover:brightness-125"
-                            style={{ background: meta.hex + '26', borderLeft: `2px solid ${meta.hex}` }}
-                            title={`${s.course?.name ?? ''} · ${fmtTime(s.start_time)}`}
-                          >
-                            <span className="shrink-0" style={{ color: meta.hex }}>
-                              <InstrumentIcon courseName={s.course?.name} className="h-3 w-3" />
-                            </span>
-                            <span className="min-w-0 flex flex-col leading-tight">
-                              <span className="text-[10px] font-semibold text-gray-800 truncate">{s.course?.name ?? '—'}</span>
-                              <span className="text-[9px] text-gray-500 hidden lg:inline">{fmtTime(s.start_time)}</span>
-                            </span>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* ── Vista agenda (mobile) ── */}
-          <div className="sm:hidden space-y-2">
-            {Object.keys(byDay).sort().length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-6 font-roboto">No hay clases este mes.</p>
-            ) : (
-              Object.keys(byDay).sort().map(dateStr => (
+      {view === 'agenda' ? (
+        /* ── VISTA AGENDA ──────────────────────────────────────────── */
+        <div className="space-y-4">
+          {Object.keys(byDay).sort().length === 0 ? (
+            <p className="text-sm text-gray-400 text-center py-8 font-roboto">No hay clases este mes.</p>
+          ) : (
+            Object.keys(byDay).sort().map(dateStr => {
+              const isToday = dateStr === todayIso
+              const daySessions = [...byDay[dateStr]].sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''))
+              return (
                 <div key={dateStr}>
-                  <p className={`text-[11px] font-semibold uppercase tracking-wider mb-1 ${dateStr === todayIso ? 'text-[#ff7a00]' : 'text-gray-500'}`}>
-                    {fmtDateLong(dateStr)}
-                  </p>
-                  <div className="space-y-1.5">
-                    {byDay[dateStr].map(s => {
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={`text-sm font-bold font-poppins ${isToday ? 'text-[#ff7a00]' : 'text-gray-800'}`}>
+                      {fmtDateShort(dateStr)}
+                    </span>
+                    {isToday && (
+                      <span className="text-[10px] font-semibold text-white bg-[#ff7a00] px-2 py-0.5 rounded-full">Hoy</span>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    {daySessions.map(s => {
                       const meta = statusMeta(s.status)
                       return (
                         <button
@@ -240,30 +233,106 @@ export default function ClassesCalendar({ initialSessions, schedules, initialYea
                     })}
                   </div>
                 </div>
-              ))
-            )}
-          </div>
-        </>
-      ) : (
-        /* ── Vista Semana (horario tipo academia) ── */
-        <div className="overflow-x-auto">
-          {Object.keys(byWeekday).length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-8 font-roboto">No hay clases este mes.</p>
-          ) : (
-            <WeekTimetable byWeekday={byWeekday} onSelect={setSelected} />
+              )
+            })
           )}
         </div>
+      ) : (
+        <>
+          {/* Sub-toggle Mes / Semana */}
+          <div className="flex items-center justify-center mb-4">
+            <div className="flex rounded-lg border border-gray-200 bg-stone-100 p-0.5">
+              {(['mes', 'semana'] as const).map(v => (
+                <button
+                  key={v}
+                  onClick={() => setCalendarView(v)}
+                  className={`px-3 py-1 rounded-md text-[11px] font-semibold font-poppins capitalize transition-all ${
+                    calendarView === v ? 'bg-[#ff7a00] text-white' : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  {v === 'mes' ? 'Mes' : 'Semana'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {calendarView === 'mes' ? (
+            /* ── Grid mensual ── */
+            <div className="hidden sm:block">
+              <div className="grid grid-cols-7 gap-1 mb-1">
+                {DOW_HEAD.map(d => (
+                  <div key={d} className="text-center text-[10px] font-semibold text-gray-400 uppercase tracking-wider py-1">{d}</div>
+                ))}
+              </div>
+              <div className="grid grid-cols-7 gap-1.5">
+                {cells.map((cell, i) => {
+                  if (!cell.current) return <div key={i} className="min-h-[76px] lg:min-h-[104px] rounded-lg bg-gray-50" />
+                  const dateStr = `${year}-${mm}-${String(cell.day).padStart(2, '0')}`
+                  const dayClasses = byDay[dateStr] ?? []
+                  const isToday = dateStr === todayIso
+                  return (
+                    <div
+                      key={i}
+                      className={`min-h-[76px] lg:min-h-[104px] rounded-lg border p-1.5 flex flex-col gap-1 transition-colors ${
+                        isToday
+                          ? 'border-[#ff7a00]/50 bg-orange-50'
+                          : dayClasses.length > 0
+                            ? 'border-[#ff7a00]/20 bg-orange-50/20'
+                            : 'border-gray-100 bg-white'
+                      }`}
+                    >
+                      <span className={`text-[11px] font-bold ${isToday ? 'text-[#ff7a00]' : dayClasses.length > 0 ? 'text-gray-800' : 'text-gray-400'}`}>{cell.day}</span>
+                      <div className="flex flex-col gap-1 overflow-hidden">
+                        {dayClasses.map(s => {
+                          const meta = statusMeta(s.status)
+                          return (
+                            <button
+                              key={s.id}
+                              onClick={() => setSelected(s)}
+                              className="group flex items-center gap-1 rounded-md px-1.5 py-1 text-left transition-all hover:brightness-125"
+                              style={{ background: meta.hex + '26', borderLeft: `2px solid ${meta.hex}` }}
+                              title={`${s.course?.name ?? ''} · ${fmtTime(s.start_time)}`}
+                            >
+                              <span className="shrink-0" style={{ color: meta.hex }}>
+                                <InstrumentIcon courseName={s.course?.name} className="h-3 w-3" />
+                              </span>
+                              <span className="min-w-0 flex flex-col leading-tight">
+                                <span className="text-[10px] font-semibold text-gray-800 truncate">{s.course?.name ?? '—'}</span>
+                                <span className="text-[9px] text-gray-500 hidden lg:inline">{fmtTime(s.start_time)}</span>
+                              </span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          ) : (
+            /* ── Vista Semana ── */
+            <div className="overflow-x-auto">
+              {Object.keys(byWeekday).length === 0 ? (
+                <p className="text-sm text-gray-400 text-center py-8 font-roboto">No hay clases este mes.</p>
+              ) : (
+                <WeekTimetable byWeekday={byWeekday} onSelect={setSelected} />
+              )}
+            </div>
+          )}
+        </>
       )}
 
-      {/* Leyenda */}
-      <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-4 pt-3 border-t border-gray-200">
-        {STATUS_LEGEND.map(m => (
-          <span key={m.key} className="inline-flex items-center gap-1.5 text-[11px] text-gray-500 font-roboto">
-            <span className={`h-2 w-2 rounded-full ${m.dotClass}`} />
-            {m.label}
-          </span>
-        ))}
-      </div>
+      {/* Leyenda (solo en modo calendario) */}
+      {view === 'calendar' && (
+        <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-4 pt-3 border-t border-gray-200">
+          {STATUS_LEGEND.map(m => (
+            <span key={m.key} className="inline-flex items-center gap-1.5 text-[11px] text-gray-500 font-roboto">
+              <span className={`h-2 w-2 rounded-full ${m.dotClass}`} />
+              {m.label}
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Modal de detalle */}
       {mounted && selected && createPortal(
@@ -275,7 +344,6 @@ export default function ClassesCalendar({ initialSessions, schedules, initialYea
 }
 
 function WeekTimetable({ byWeekday, onSelect }: { byWeekday: Record<number, any[]>; onSelect: (s: any) => void }) {
-  // Filas = horas presentes en las clases; fallback a 17-20
   const hours = useMemo(() => {
     const set = new Set<string>()
     for (const list of Object.values(byWeekday)) {
@@ -334,9 +402,13 @@ function WeekTimetable({ byWeekday, onSelect }: { byWeekday: Record<number, any[
 function DetailModal({ session: s, onClose }: { session: any; onClose: () => void }) {
   const meta = statusMeta(s.status)
   useEffect(() => {
+    document.body.style.overflow = 'hidden'
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = ''
+      window.removeEventListener('keydown', onKey)
+    }
   }, [onClose])
 
   return (
@@ -371,6 +443,39 @@ function DetailModal({ session: s, onClose }: { session: any; onClose: () => voi
           <Row label="Salón" value={s.classroom?.name ?? '—'} />
           {s.notes && <Row label="Observaciones" value={s.notes} />}
         </dl>
+
+        {/* Google Calendar + Apple Calendar */}
+        {s.scheduled_date && !s._fixed && (
+          <div className="flex gap-2 mt-5 pt-4 border-t border-gray-100">
+            <a
+              href={googleCalUrl(s)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-[11px] font-semibold text-gray-600 font-roboto hover:bg-gray-50 hover:text-gray-900 transition-all"
+            >
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M7 2h10v2H7zM4 5h16v2H4zM3 8h18l-1 13H4L3 8zm3 2h2v9H6v-9zm4 0h2v9h-2v-9zm4 0h2v9h-2v-9z"/></svg>
+              Google Calendar
+            </a>
+            <button
+              onClick={() => downloadICS(s)}
+              className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-[11px] font-semibold text-gray-600 font-roboto hover:bg-gray-50 hover:text-gray-900 transition-all"
+            >
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              Apple Calendar
+            </button>
+          </div>
+        )}
+
+        {/* Solicitar cambio */}
+        <button
+          onClick={() => {
+            const msg = 'Para solicitar un cambio de horario, por favor comunícate con recepción.'
+            alert(msg)
+          }}
+          className="w-full mt-3 rounded-lg border border-[#ff7a00]/20 text-[#ff7a00] px-3 py-2 text-[11px] font-semibold font-roboto hover:bg-[#ff7a00]/5 transition-all"
+        >
+          Solicitar cambio de horario
+        </button>
       </div>
     </div>
   )

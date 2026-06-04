@@ -7,16 +7,11 @@ import SessionDetailModal from './SessionDetailModal'
 import type { ClassSession, AvailableSlot } from '@/types/admin'
 
 // Slots por día de la semana
-// ISODOW: 1=Lun…5=Vie → 10:00–21:00  |  6=Sáb → 08:00–13:00  |  7=Dom → cerrado
+// ISODOW: 1=Lun…5=Vie → 10:00–22:00  |  6=Sáb, 7=Dom → cerrado
 function generateSlots(isodow: number): string[] {
-  if (isodow === 7) return []
-  if (isodow === 6) {
-    const slots: string[] = []
-    for (let h = 8; h <= 13; h++) slots.push(`${String(h).padStart(2, '0')}:00`)
-    return slots
-  }
+  if (isodow === 6 || isodow === 7) return []
   const slots: string[] = []
-  for (let h = 10; h <= 21; h++) slots.push(`${String(h).padStart(2, '0')}:00`)
+  for (let h = 10; h <= 22; h++) slots.push(`${String(h).padStart(2, '0')}:00`)
   return slots
 }
 

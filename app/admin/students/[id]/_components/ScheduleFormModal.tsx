@@ -11,7 +11,6 @@ const DAYS = [
   { value: 3, label: 'Miércoles' },
   { value: 4, label: 'Jueves' },
   { value: 5, label: 'Viernes' },
-  { value: 6, label: 'Sábado' },
 ]
 
 const inputClass = 'w-full bg-gray-800 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500/30 disabled:opacity-50'
@@ -90,7 +89,7 @@ export default function ScheduleFormModal({ studentId, schedule, courses, classr
             </div>
             <div>
               <label className="block text-xs text-white/50 mb-1.5">Hora *</label>
-              <input type="time" name="start_time" required disabled={isPending} className={inputClass} defaultValue={schedule?.start_time?.slice(0, 5) ?? '17:00'} step="3600" />
+              <input type="time" name="start_time" required disabled={isPending} className={inputClass} defaultValue={schedule?.start_time?.slice(0, 5) ?? '10:00'} step="3600" />
             </div>
           </div>
 

@@ -81,8 +81,8 @@ export default function InscripcionPage() {
   return (
     <PageLayout>
       <section className="relative w-full min-h-screen overflow-hidden">
-        {/* Imagen de fondo fija — no se mueve al cambiar el formulario */}
-        <div className="fixed inset-0 z-0">
+        {/* Imagen de fondo */}
+        <div className="absolute inset-0 z-0">
           <Image
             src="/images/hero/Fondo inscribete.png"
             alt=""
@@ -93,7 +93,7 @@ export default function InscripcionPage() {
           />
           <div className="absolute inset-0 bg-black/70" />
         </div>
-        <div className="pointer-events-none fixed inset-0 z-[1]" style={{ background: "radial-gradient(ellipse 80% 60% at 50% 30%, rgba(255,122,0,0.07), transparent 70%)" }} aria-hidden="true" />
+        <div className="pointer-events-none absolute inset-0 z-[1]" style={{ background: "radial-gradient(ellipse 80% 60% at 50% 30%, rgba(255,122,0,0.07), transparent 70%)" }} aria-hidden="true" />
 
         <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-14 md:py-20 [&_*]:relative [&_*]:z-auto" style={{ isolation: 'isolate' }}>
           {/* Encabezado */}
@@ -184,31 +184,21 @@ export default function InscripcionPage() {
                 )}
               </div>
 
-              {/* ── 4. Acudiente — siempre en DOM, visibilidad por CSS para evitar
-                  layout shift que mueve la imagen de fondo */}
-              <div
-                className="overflow-hidden"
-                style={{
-                  maxHeight: studentType === 'child' ? '120px' : '0px',
-                  opacity:   studentType === 'child' ? 1 : 0,
-                  transition: 'max-height 0.25s ease, opacity 0.2s ease',
-                }}
-                aria-hidden={studentType !== 'child'}
-              >
-                <div>
-                  <label htmlFor="guardian_name" className={labelClass}>Nombre del acudiente</label>
-                  <input
-                    id="guardian_name"
-                    name="guardian_name"
-                    type="text"
-                    placeholder="Ej: María García"
-                    required={studentType === 'child'}
-                    disabled={isPending || studentType !== 'child'}
-                    tabIndex={studentType === 'child' ? 0 : -1}
-                    className={inputClass}
-                  />
-                  {state.errors?.guardian_name && <p className={errorClass}>{state.errors.guardian_name}</p>}
-                </div>
+              {/* ── 4. Acudiente — siempre visible para que el formulario
+                  nunca cambie de altura y la imagen de fondo no se mueva */}
+              <div style={{ opacity: studentType === 'child' ? 1 : 0.35, transition: 'opacity 0.2s ease' }}>
+                <label htmlFor="guardian_name" className={labelClass}>Nombre del acudiente</label>
+                <input
+                  id="guardian_name"
+                  name="guardian_name"
+                  type="text"
+                  placeholder="Ej: María García"
+                  required={studentType === 'child'}
+                  disabled={isPending || studentType !== 'child'}
+                  tabIndex={studentType === 'child' ? 0 : -1}
+                  className={inputClass}
+                />
+                {state.errors?.guardian_name && <p className={errorClass}>{state.errors.guardian_name}</p>}
               </div>
 
               {/* ── 5. WhatsApp ── */}

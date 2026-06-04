@@ -67,7 +67,7 @@ export default async function AgendarPage() {
 
                 <div className="relative h-40 rounded-t-xl overflow-hidden">
                   <Image
-                    src="/images/hero/imagen-instruc1.jpeg"
+                    src="/images/instructors/mario-mayorga.jpeg"
                     alt="Equipo de instructores 4U Studio Academy"
                     fill
                     className="object-cover object-center"

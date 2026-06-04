@@ -224,6 +224,7 @@ export default function BookingCalendar({
     const dt = new Date(year, month-1, d); dt.setHours(0,0,0,0); return dt < todayMidnight;
   };
   const isSunday   = (d:number, cur:boolean) => cur && d>0 && new Date(year,month-1,d).getDay()===0;
+  const isSaturday = (d:number, cur:boolean) => cur && d>0 && new Date(year,month-1,d).getDay()===6;
   const isTodayDay = (d:number, cur:boolean) => cur && d>0 && `${year}-${mm}-${String(d).padStart(2,"0")}`===todayIso;
   const isSelected = (d:number, cur:boolean) => cur && d>0 && `${year}-${mm}-${String(d).padStart(2,"0")}`===selectedDateIso;
   const getHoliday = (d:number, cur:boolean) => {
@@ -244,7 +245,7 @@ export default function BookingCalendar({
   };
 
   const handleDayClick = (d:number, cur:boolean) => {
-    if (!cur || d===0 || isSunday(d,cur) || isPastDay(d,cur)) return;
+    if (!cur || d===0 || isSunday(d,cur) || isSaturday(d,cur) || isPastDay(d,cur) || getHoliday(d,cur)) return;
     setSelectedDate(new Date(year, month-1, d));
     setSelectedCourse(""); setSelectedTime(null); setRaceError(null);
     setTimeout(() => {
@@ -432,23 +433,22 @@ export default function BookingCalendar({
                 const dateStr  = getDateStr(cell.day);
                 const holiday  = getHoliday(cell.day, true);
                 const sun      = isSunday(cell.day, true);
+                const sat      = isSaturday(cell.day, true);
                 const past     = isPastDay(cell.day, true);
                 const tod      = isTodayDay(cell.day, true);
                 const sel      = isSelected(cell.day, true);
-                const disabled = sun || past;
+                const disabled = sun || sat || past || (!!holiday && !past);
                 const slotCount = daySlotCounts[dateStr];
 
                 let cellCls: string;
                 if (sel)      cellCls = "border-[#ff7a00] bg-orange-50 ring-1 ring-[#ff7a00]/20";
-                else if (tod) cellCls = "border-[#ff7a00]/50 bg-orange-50";
-                else if (holiday && !past) cellCls = "border-yellow-300 bg-yellow-50";
+                else if (tod && !disabled) cellCls = "border-[#ff7a00]/50 bg-orange-50";
                 else if (disabled) cellCls = "border-gray-100 bg-gray-50/60 cursor-not-allowed";
                 else          cellCls = "border-gray-100 bg-white hover:border-[#ff7a00]/30 hover:bg-orange-50/30 cursor-pointer";
 
                 const numCls = sel ? "text-[#ff7a00] font-extrabold"
-                  : tod ? "text-[#ff7a00] font-bold"
-                  : holiday && !past ? "text-yellow-700 font-bold"
-                  : past || sun ? "text-gray-300"
+                  : tod && !disabled ? "text-[#ff7a00] font-bold"
+                  : past || sun || sat || holiday ? "text-gray-300"
                   : "text-gray-700 font-bold";
 
                 return (
@@ -465,13 +465,12 @@ export default function BookingCalendar({
                     <span className={`text-[10px] sm:text-[11px] leading-none ${numCls}`}>{cell.day}</span>
                     {holiday && !past && (
                       <>
-                        <span className="hidden sm:block text-[8px] font-bold px-1 py-0.5 rounded leading-none truncate"
-                          style={{ background:"#fefce8", color:"#854d0e", border:"1px solid #fde047" }}
+                        <span className="hidden sm:block text-[8px] text-gray-400 px-1 py-0.5 rounded leading-none truncate"
                           title={holiday.description ?? holiday.title}>Festivo</span>
-                        <span className="sm:hidden h-1.5 w-1.5 rounded-full bg-yellow-400 mt-0.5"/>
+                        <span className="sm:hidden h-1.5 w-1.5 rounded-full bg-gray-300 mt-0.5"/>
                       </>
                     )}
-                    {!holiday && !past && !sun && (
+                    {!holiday && !past && !sun && !sat && (
                       <div className="flex flex-col gap-0.5 mt-auto">
                         {slotCount !== undefined ? (
                           slotCount > 0 ? (
@@ -556,7 +555,7 @@ export default function BookingCalendar({
               <span className="flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white shrink-0" style={{ backgroundColor:ORANGE }}>
                 {selectedCourse ? "✓" : 2}
               </span>
-              <p className="text-sm font-bold text-gray-900 font-poppins">Elige tu instrumento</p>
+              <p className="text-sm font-bold text-gray-900 font-poppins">Elige tu clase</p>
             </div>
             <div className="flex flex-wrap gap-2">
               {courses.map(c => (

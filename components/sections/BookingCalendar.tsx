@@ -378,7 +378,7 @@ export default function BookingCalendar({
         <div className="grid gap-3 sm:grid-cols-4 sm:gap-4">
           {[
             { step: 1, label: "Fecha", hint: selectedDateIso ? fmtDateLong(selectedDateIso) : "Elige el día" },
-            { step: 2, label: "Instrumento", hint: selectedCourse || "Selecciona tu clase" },
+            { step: 2, label: "Clase", hint: selectedCourse || "Selecciona tu clase" },
             { step: 3, label: "Horario", hint: selectedTimeLabel || "Elige tu horario" },
             { step: 4, label: "Confirmar", hint: canSubmit ? "Revisa y confirma" : "Completa tu reserva" },
           ].map((s, i) => {
@@ -580,7 +580,7 @@ export default function BookingCalendar({
                 {selectedCourse ? "✓" : 2}
               </span>
               <div>
-                <p className="text-sm font-bold text-white font-poppins">Elegir instrumento</p>
+                <p className="text-sm font-bold text-white font-poppins">Elegir clase</p>
                 <p className="text-xs text-white/40 font-roboto">{selectedDate ? "Selecciona la clase que quieres tomar." : "Primero selecciona una fecha."}</p>
               </div>
             </div>
@@ -615,7 +615,7 @@ export default function BookingCalendar({
                   Horarios disponibles
                   {slotsLoading && <span className="ml-2 inline-block h-3 w-3 border-2 border-[#ff7a00]/30 border-t-[#ff7a00] rounded-full animate-spin align-middle"/>}
                 </p>
-                <p className="text-xs text-white/40 font-roboto">{selectedCourse ? "Elige uno de los cupos disponibles." : "Primero selecciona un instrumento."}</p>
+                <p className="text-xs text-white/40 font-roboto">{selectedCourse ? "Elige uno de los cupos disponibles." : "Primero selecciona una clase."}</p>
               </div>
             </div>
 
@@ -629,7 +629,7 @@ export default function BookingCalendar({
             )}
 
             {!selectedCourse ? (
-              <div className="rounded-xl border border-white/10 bg-white/[0.035] px-4 py-5 text-sm text-white/35 font-roboto">Primero selecciona un instrumento.</div>
+              <div className="rounded-xl border border-white/10 bg-white/[0.035] px-4 py-5 text-sm text-white/35 font-roboto">Primero selecciona una clase.</div>
             ) : slotsLoading ? (
               <div className="flex flex-wrap gap-3">
                 {[...Array(5)].map((_,i) => <div key={i} className="h-12 w-24 rounded-lg bg-white/10 animate-pulse"/>)}
@@ -676,7 +676,7 @@ export default function BookingCalendar({
               <div className="space-y-5">
                 {[
                   { icon:"calendar", label:"Fecha", value: selectedDateIso ? fmtDateLong(selectedDateIso).replace(/^./, (c:string) => c.toUpperCase()) : "Aún no seleccionado" },
-                  { icon:"music", label:"Instrumento", value: selectedCourse || "Aún no seleccionado" },
+                  { icon:"music", label:"Clase", value: selectedCourse || "Aún no seleccionado" },
                   { icon:"clock", label:"Hora", value: selectedTimeLabel || "Aún no seleccionado" },
                 ].map(item => (
                   <div key={item.label} className="flex items-start gap-3">

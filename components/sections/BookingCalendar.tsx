@@ -15,6 +15,10 @@ type BookingCalendarProps = {
   instructors?: { id: string; name: string }[]
 }
 
+function instructorInitials(name: string) {
+  return name.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase()
+}
+
 // Convierte "6:00 PM" → "18:00" para el campo hidden en modo estudiante
 function to24h(t: string): string {
   const [time, period] = t.split(' ')
@@ -104,6 +108,9 @@ export default function BookingCalendar({ serverAction, mode = 'public', isLogge
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [selectedCourse, setSelectedCourse] = useState("Canto");
+  const [selectedInstructorId, setSelectedInstructorId] = useState<string>(instructors[0]?.id ?? '');
+
+  const activeInstructor = instructors.find(i => i.id === selectedInstructorId) ?? instructors[0] ?? null;
 
   const prevMonth = () => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
   const nextMonth = () => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1));
@@ -221,7 +228,7 @@ export default function BookingCalendar({ serverAction, mode = 'public', isLogge
       <input type="hidden" name="source"   value="agendar" />
       <input type="hidden" name="selected_date_iso"    value={selectedDate ? selectedDate.toISOString().split('T')[0] : ''} />
       <input type="hidden" name="selected_time_24h"    value={selectedTime ? to24h(selectedTime) : ''} />
-      <input type="hidden" name="selected_instructor_id" value="" />
+      <input type="hidden" name="selected_instructor_id" value={selectedInstructorId} />
 
       <div className="grid lg:grid-cols-[1fr_2fr] gap-5 items-start">
 
@@ -242,23 +249,31 @@ export default function BookingCalendar({ serverAction, mode = 'public', isLogge
           <div className="rounded-2xl border border-white/10 bg-white/[0.05] backdrop-blur-md p-5 space-y-3">
             {/* Avatar + nombre */}
             <div className="flex items-center gap-4">
-              <div className="h-[110px] w-[110px] rounded-xl overflow-hidden shrink-0 shadow-xl shadow-black/40">
-                <Image
-                  src="/images/instructors/Perfil.png"
-                  alt="Andrés Ospina"
-                  width={110}
-                  height={110}
-                  className="object-cover w-full h-full"
-                />
-              </div>
+              {mode === 'student' && activeInstructor ? (
+                <div className="h-[110px] w-[110px] rounded-xl overflow-hidden shrink-0 shadow-xl shadow-black/40 bg-[#ff7a00]/20 flex items-center justify-center">
+                  <span className="text-white font-poppins font-black text-3xl">{instructorInitials(activeInstructor.name)}</span>
+                </div>
+              ) : (
+                <div className="h-[110px] w-[110px] rounded-xl overflow-hidden shrink-0 shadow-xl shadow-black/40">
+                  <Image
+                    src="/images/instructors/Perfil.png"
+                    alt="Instructor 4U Studio"
+                    width={110}
+                    height={110}
+                    className="object-cover w-full h-full"
+                  />
+                </div>
+              )}
               <div>
                 <div className="flex items-center gap-1.5">
-                  <p className="text-white font-bold text-sm font-poppins">Andrés Ospina</p>
+                  <p className="text-white font-bold text-sm font-poppins">
+                    {mode === 'student' && activeInstructor ? activeInstructor.name : 'Andrés Ospina'}
+                  </p>
                   <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill={ORANGE} aria-hidden="true">
                     <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z" />
                   </svg>
                 </div>
-                <p className="text-white/50 text-xs font-roboto">Guitarrista & Productor</p>
+                <p className="text-white/50 text-xs font-roboto">Instructor 4U Studio Academy</p>
                 <div className="flex items-center gap-1 mt-0.5">
                   <svg className="h-3 w-3 fill-yellow-400" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z" />
@@ -268,6 +283,30 @@ export default function BookingCalendar({ serverAction, mode = 'public', isLogge
                 </div>
               </div>
             </div>
+
+            {/* Selector de instructor (solo modo estudiante con múltiples instructores) */}
+            {mode === 'student' && instructors.length > 1 && (
+              <div>
+                <p className="text-white/40 text-[10px] uppercase tracking-wider mb-2 font-roboto">Instructor:</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {instructors.map((inst) => (
+                    <button
+                      key={inst.id}
+                      type="button"
+                      onClick={() => setSelectedInstructorId(inst.id)}
+                      className="px-2 py-0.5 rounded-md text-[10px] font-semibold transition-all font-roboto leading-tight"
+                      style={
+                        selectedInstructorId === inst.id
+                          ? { backgroundColor: ORANGE, color: "#fff" }
+                          : { backgroundColor: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.6)" }
+                      }
+                    >
+                      {inst.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Especialidades */}
             <div>

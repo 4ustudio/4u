@@ -17,7 +17,6 @@ export const metadata: Metadata = {
 export default async function AgendarPage() {
   const supabase = await createAuthServerClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const isLoggedIn = !!user
 
   const adminClient = createAdminClient()
 
@@ -33,15 +32,13 @@ export default async function AgendarPage() {
   const allInstructors = (instrResult.data ?? []) as { id: string; name: string; notes?: string | null }[]
   activeCourses = (coursesResult.data ?? []) as { id: string; name: string }[]
 
-  if (isLoggedIn && user) {
+  if (user) {
     const { data } = await adminClient.from("students").select("id").eq("user_id", user.id).maybeSingle()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     studentId = (data as any)?.id as string | undefined
   }
 
-  const instructorsForCalendar = isLoggedIn
-    ? allInstructors.map(({ id, name }) => ({ id, name }))
-    : []
+  const instructorsForCalendar = allInstructors.map(({ id, name }) => ({ id, name }))
 
   return (
     <>
@@ -126,9 +123,9 @@ export default async function AgendarPage() {
             {/* ── COLUMNA DERECHA: Calendario + Flujo de reserva ──────── */}
             <div className="order-1 lg:order-2">
               <BookingCalendar
-                serverAction={isLoggedIn ? studentBookAction : undefined}
-                mode={isLoggedIn ? "student" : "public"}
-                isLoggedIn={isLoggedIn}
+                serverAction={studentBookAction}
+                mode="student"
+                isLoggedIn={true}
                 instructors={instructorsForCalendar}
                 activeCourses={activeCourses}
                 studentId={studentId}

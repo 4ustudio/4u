@@ -29,6 +29,16 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
   const role = user?.user_metadata?.role
 
+  // ── Ruta /agendar ─────────────────────────────────────────────────
+  if (pathname === '/agendar') {
+    if (!user) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/mi-cuenta/login'
+      url.searchParams.set('next', '/agendar')
+      return NextResponse.redirect(url)
+    }
+  }
+
   // ── Rutas /admin ──────────────────────────────────────────────────
   if (pathname.startsWith('/admin')) {
     if (!user) {
@@ -65,5 +75,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/mi-cuenta', '/mi-cuenta/login'],
+  matcher: ['/admin/:path*', '/mi-cuenta', '/mi-cuenta/login', '/agendar'],
 }

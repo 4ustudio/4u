@@ -471,13 +471,20 @@ export default function BookingCalendar({
                 const slotCount = daySlotCounts[dateStr];
 
                 let cellCls: string;
-                if (sel)      cellCls = "border-[#ff7a00] bg-[#ff7a00]/10 ring-1 ring-[#ff7a00]/30";
-                else if (tod && !disabled) cellCls = "border-[#ff7a00]/50 bg-[#ff7a00]/8";
-                else if (disabled) cellCls = "border-white/5 bg-white/[0.03] cursor-not-allowed";
-                else          cellCls = "border-white/10 bg-white/[0.045] hover:border-[#ff7a00]/45 hover:bg-[#ff7a00]/8 cursor-pointer";
+                let cellStyle: React.CSSProperties = {};
+                if (sel) {
+                  cellCls = "border-[#ff7a00] bg-[#ff7a00]/10 cursor-pointer";
+                  cellStyle = { boxShadow: "0 0 0 2px rgba(255,122,0,0.35), 0 4px 16px rgba(255,122,0,0.25)" };
+                } else if (tod && !disabled) {
+                  cellCls = "border-dashed border-[#ff7a00]/60 bg-white/[0.045] cursor-pointer hover:border-[#ff7a00]/80 hover:bg-[#ff7a00]/8";
+                } else if (disabled) {
+                  cellCls = "border-white/5 bg-white/[0.03] cursor-not-allowed";
+                } else {
+                  cellCls = "border-white/10 bg-white/[0.045] hover:border-[#ff7a00]/45 hover:bg-[#ff7a00]/8 cursor-pointer";
+                }
 
                 const numCls = sel ? "text-[#ff7a00] font-extrabold"
-                  : tod && !disabled ? "text-[#ff7a00] font-bold"
+                  : tod && !disabled ? "text-white/90 font-bold"
                   : past || sun || sat || holiday ? "text-white/20"
                   : "text-white/80 font-bold";
 
@@ -490,9 +497,18 @@ export default function BookingCalendar({
                     tabIndex={disabled ? undefined : 0}
                     onClick={() => handleDayClick(cell.day, true)}
                     onKeyDown={(e) => e.key==="Enter"||e.key===" " ? handleDayClick(cell.day,true):undefined}
+                    style={cellStyle}
                     className={`min-h-[38px] sm:min-h-[76px] lg:min-h-[96px] rounded-lg border p-1 sm:p-1.5 flex flex-col gap-0.5 select-none transition-all ${cellCls}`}
                   >
-                    <span className={`text-[10px] sm:text-[12px] leading-none ${numCls}`}>{cell.day}</span>
+                    <div className="flex items-start justify-between leading-none">
+                      <span className={`text-[10px] sm:text-[12px] leading-none ${numCls}`}>{cell.day}</span>
+                      {tod && !sel && !disabled && (
+                        <span className="hidden sm:block text-[7px] font-bold uppercase tracking-wide px-1 py-0.5 rounded"
+                          style={{ background:"rgba(255,122,0,0.15)", color:"#ff7a00", border:"1px dashed rgba(255,122,0,0.5)" }}>
+                          Hoy
+                        </span>
+                      )}
+                    </div>
                     {holiday && !past && (
                       <>
                         <span className="hidden sm:block text-[9px] text-yellow-300 px-1 py-0.5 rounded leading-none truncate"
@@ -530,6 +546,9 @@ export default function BookingCalendar({
           <span className="inline-flex items-center gap-1.5 text-[11px] text-white/50"><span className="h-2 w-2 rounded-full bg-green-400"/>Con cupos</span>
           <span className="inline-flex items-center gap-1.5 text-[11px] text-white/50"><span className="h-2 w-2 rounded-full bg-yellow-400"/>Festivo</span>
           <span className="inline-flex items-center gap-1.5 text-[11px] text-white/50"><span className="h-2 w-2 rounded-full bg-white/25"/>No disponible</span>
+          <span className="inline-flex items-center gap-1.5 text-[11px] text-white/50">
+            <span className="h-2 w-3 rounded-sm border border-dashed" style={{ borderColor:"rgba(255,122,0,0.6)" }}/>Hoy
+          </span>
           <span className="inline-flex items-center gap-1.5 text-[11px] text-white/50"><span className="h-2 w-2 rounded-full" style={{ backgroundColor:ORANGE }}/>Seleccionado</span>
         </div>
       </div>

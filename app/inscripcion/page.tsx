@@ -81,10 +81,8 @@ export default function InscripcionPage() {
   return (
     <PageLayout>
       <section className="relative w-full min-h-screen overflow-hidden">
-        {/* Imagen de fondo */}
-        {/* will-change:transform aisla la imagen en su propia capa GPU —
-            los cambios de layout del formulario no la afectan */}
-        <div className="absolute inset-0 z-0" style={{ willChange: 'transform', transform: 'translateZ(0)' }}>
+        {/* Imagen de fondo fija — no se mueve al cambiar el formulario */}
+        <div className="fixed inset-0 z-0">
           <Image
             src="/images/hero/Fondo inscribete.png"
             alt=""
@@ -95,7 +93,7 @@ export default function InscripcionPage() {
           />
           <div className="absolute inset-0 bg-black/70" />
         </div>
-        <div className="pointer-events-none absolute inset-0 z-[1]" style={{ background: "radial-gradient(ellipse 80% 60% at 50% 30%, rgba(255,122,0,0.07), transparent 70%)" }} aria-hidden="true" />
+        <div className="pointer-events-none fixed inset-0 z-[1]" style={{ background: "radial-gradient(ellipse 80% 60% at 50% 30%, rgba(255,122,0,0.07), transparent 70%)" }} aria-hidden="true" />
 
         <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-14 md:py-20 [&_*]:relative [&_*]:z-auto" style={{ isolation: 'isolate' }}>
           {/* Encabezado */}

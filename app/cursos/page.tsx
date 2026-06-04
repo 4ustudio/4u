@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import PageLayout from "@/components/layout/PageLayout";
 import CoursesGrid from "@/components/sections/CoursesGrid";
+import { createAuthServerClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Cursos de Música | 4U Studio Academy",
@@ -102,7 +103,12 @@ const methodologyCards = [
   },
 ];
 
-export default function CursosPage() {
+export default async function CursosPage() {
+  const supabase = await createAuthServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const isLoggedIn = !!user
+  const agendarHref = isLoggedIn ? "/agendar" : "/mi-cuenta/login?next=/agendar"
+
   return (
     <PageLayout>
       {/* Hero */}
@@ -171,7 +177,7 @@ export default function CursosPage() {
                 </svg>
               </a>
               <a
-                href="/inscripcion"
+                href={agendarHref}
                 className="inline-flex items-center gap-2.5 bg-white/10 text-white font-semibold px-7 py-3.5 rounded-full text-sm transition-all duration-300 hover:bg-white/20 hover:-translate-y-0.5 shadow-xl shadow-black/20 hover:shadow-2xl border border-white/20 font-poppins"
               >
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -206,7 +212,7 @@ export default function CursosPage() {
             </p>
           </div>
 
-          <CoursesGrid />
+          <CoursesGrid isLoggedIn={isLoggedIn} />
         </div>
       </section>
 

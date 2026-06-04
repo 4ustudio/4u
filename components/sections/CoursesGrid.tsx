@@ -9,7 +9,7 @@ import { courses } from '@/data/courses'
 import { ACADEMY } from '@/lib/constants'
 import type { Course } from '@/types'
 
-export default function CoursesGrid() {
+export default function CoursesGrid({ isLoggedIn = false }: { isLoggedIn?: boolean }) {
   const [selected, setSelected] = useState<Course | null>(null)
   const [mounted, setMounted] = useState(false)
 
@@ -28,14 +28,14 @@ export default function CoursesGrid() {
       </div>
 
       {mounted && selected && createPortal(
-        <CourseModal course={selected} onClose={() => setSelected(null)} />,
+        <CourseModal course={selected} onClose={() => setSelected(null)} isLoggedIn={isLoggedIn} />,
         document.body
       )}
     </>
   )
 }
 
-function CourseModal({ course, onClose }: { course: Course; onClose: () => void }) {
+function CourseModal({ course, onClose, isLoggedIn }: { course: Course; onClose: () => void; isLoggedIn: boolean }) {
   const waLink = `https://api.whatsapp.com/send/?phone=${ACADEMY.phone}&text=Hola%2C%20quiero%20informaci%C3%B3n%20sobre%20el%20curso%20de%20${encodeURIComponent(course.title)}%20en%204U%20Studio%20Academy`
 
   useEffect(() => {
@@ -139,7 +139,7 @@ function CourseModal({ course, onClose }: { course: Course; onClose: () => void 
           {/* CTAs principales */}
           <div className="border-t border-white/10 pt-5 space-y-2.5">
             <Link
-              href="/agendar"
+              href={isLoggedIn ? "/agendar" : "/mi-cuenta/login?next=/agendar"}
               className="flex items-center justify-center gap-2.5 w-full rounded-xl py-3 text-sm font-bold text-white font-poppins transition-all hover:brightness-110"
               style={{ backgroundColor: course.color }}
             >

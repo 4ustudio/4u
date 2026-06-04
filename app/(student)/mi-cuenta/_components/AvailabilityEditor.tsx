@@ -154,43 +154,50 @@ function AvailabilityModal({ initialSlots, onClose, onSaved }: {
             const day = i + 1
             const active = slots[day] !== null
             return (
-              <div key={day} className={`rounded-xl border p-3 transition-colors ${active ? 'border-[#ff7a00]/30 bg-orange-50/30' : 'border-gray-100 bg-gray-50/50'}`}>
-                <div className="flex items-center gap-3">
-                  {/* Toggle */}
+              <div key={day} className={`rounded-xl border px-4 py-3 transition-colors ${active ? 'border-[#ff7a00]/30 bg-orange-50/30' : 'border-gray-100 bg-gray-50/50'}`}>
+                <div className="flex items-center gap-4 min-w-0">
+                  {/* Switch — tamaño fijo, overflow-hidden evita que el knob se salga */}
                   <button
+                    type="button"
+                    role="switch"
+                    aria-checked={active}
                     onClick={() => toggleDay(day)}
-                    className={`relative h-6 w-11 rounded-full transition-colors shrink-0 ${active ? 'bg-[#ff7a00]' : 'bg-gray-200'}`}
                     aria-label={active ? `Desactivar ${name}` : `Activar ${name}`}
+                    className={`relative flex-none h-6 w-11 rounded-full transition-colors overflow-hidden ${active ? 'bg-[#ff7a00]' : 'bg-gray-200'}`}
                   >
-                    <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${active ? 'translate-x-5' : 'translate-x-0.5'}`}/>
+                    <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${active ? 'translate-x-5' : 'translate-x-0'}`}/>
                   </button>
-                  <span className={`font-poppins font-bold text-sm min-w-[80px] ${active ? 'text-gray-900' : 'text-gray-400'}`}>{name}</span>
 
-                  {active && slots[day] && (
-                    <div className="flex items-center gap-2 ml-auto">
+                  {/* Etiqueta — ancho fijo para que nunca se mueva */}
+                  <span className={`flex-none w-24 font-poppins font-bold text-sm ${active ? 'text-gray-900' : 'text-gray-400'}`}>{name}</span>
+
+                  {/* Horario o "No disponible" */}
+                  {active && slots[day] ? (
+                    <div className="flex items-center gap-2 ml-auto flex-wrap">
                       <div className="flex items-center gap-1.5">
-                        <label className="text-xs text-gray-500">De</label>
+                        <span className="text-xs text-gray-500">De</span>
                         <input
                           type="time"
                           value={slots[day]!.start}
                           min="10:00" max="22:00" step="3600"
                           onChange={e => setTime(day, 'start', e.target.value)}
-                          className="rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-800 focus:border-[#ff7a00]/50 focus:outline-none bg-white w-[90px]"
+                          className="rounded-lg border border-gray-200 px-2 py-1.5 text-xs font-semibold text-gray-800 focus:border-[#ff7a00]/50 focus:outline-none bg-white w-[88px]"
                         />
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <label className="text-xs text-gray-500">a</label>
+                        <span className="text-xs text-gray-500">a</span>
                         <input
                           type="time"
                           value={slots[day]!.end}
                           min="10:00" max="22:00" step="3600"
                           onChange={e => setTime(day, 'end', e.target.value)}
-                          className="rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-800 focus:border-[#ff7a00]/50 focus:outline-none bg-white w-[90px]"
+                          className="rounded-lg border border-gray-200 px-2 py-1.5 text-xs font-semibold text-gray-800 focus:border-[#ff7a00]/50 focus:outline-none bg-white w-[88px]"
                         />
                       </div>
                     </div>
+                  ) : (
+                    <span className="ml-auto text-xs text-gray-400">No disponible</span>
                   )}
-                  {!active && <span className="ml-auto text-xs text-gray-400">No disponible</span>}
                 </div>
               </div>
             )

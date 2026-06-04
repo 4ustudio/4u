@@ -47,12 +47,12 @@ export default async function AgendarPage() {
         <div className="mx-auto max-w-[1400px]">
 
           {/* ══ HERO ══════════════════════════════════════════════════════ */}
-          <section className="mb-8 pt-2">
+          <section className="mb-7 pt-2">
             <h1 className="font-poppins text-3xl sm:text-4xl font-extrabold text-white leading-tight">
               Agenda tu curso <span style={{ color: "#ff7a00" }}>ideal</span>
             </h1>
-            <p className="mt-2 text-white/50 text-sm max-w-2xl leading-relaxed font-roboto">
-              Selecciona la fecha y horario que mejor se adapten a ti. Un instructor especializado será asignado según disponibilidad y especialidad.
+            <p className="mt-2 text-white/50 text-sm max-w-xl leading-relaxed font-roboto">
+              Elige fecha, clase y horario. Confirma tu reserva en pocos pasos.
             </p>
           </section>
 
@@ -60,12 +60,12 @@ export default async function AgendarPage() {
           <div className="grid lg:grid-cols-[340px_1fr] gap-6 items-start">
 
             {/* ── COLUMNA IZQUIERDA: Equipo docente ────────────────────── */}
-            <div className="order-2 lg:order-1">
+            <div className="order-2 lg:order-1 lg:sticky lg:top-[100px]">
 
               {/* Card equipo docente premium */}
-              <div className="rounded-2xl border border-white/10 bg-[#141414] overflow-hidden">
+              <div className="rounded-2xl border border-white/10 bg-[#141414] overflow-hidden shadow-2xl shadow-black/30">
 
-                <div className="relative h-32 rounded-t-xl overflow-hidden">
+                <div className="relative h-40 rounded-t-xl overflow-hidden">
                   <Image
                     src="/images/banners-responsive/Banner Responsive.png"
                     alt="Equipo de instructores 4U Studio Academy"
@@ -76,30 +76,18 @@ export default async function AgendarPage() {
                   <div className="absolute inset-0" style={{ background:"linear-gradient(to top, #141414 0%, rgba(255,100,0,0.15) 50%, transparent 100%)" }} />
                 </div>
 
-                <div className="p-4 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-lg shrink-0" style={{ backgroundColor:"rgba(255,122,0,0.15)", color:"#ff7a00" }}>
-                      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                        <circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/>
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                      </svg>
-                    </span>
-                    <p className="text-white/60 text-xs font-semibold font-roboto">Nuestro equipo docente</p>
-                  </div>
+                <div className="p-5 space-y-4">
+                  <h2 className="font-poppins text-xl font-extrabold text-white">Nuestro equipo docente</h2>
 
-                  <p className="text-white/40 text-[11px] font-roboto leading-relaxed">
-                    Nuestros instructores especializados
-                  </p>
-
-                  <ul className="space-y-1">
+                  <ul className="grid gap-3">
                     {[
                       "Atención personalizada",
                       "Horarios flexibles",
                       "Clases presenciales",
                       "Material incluido",
                     ].map((item) => (
-                      <li key={item} className="flex items-center gap-1.5 text-xs text-white/60 font-roboto">
-                        <svg className="h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+                      <li key={item} className="flex items-center gap-3 text-sm text-white/75 font-roboto">
+                        <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="#ff7a00" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
                           <path d="M20 6 9 17l-5-5" />
                         </svg>
                         {item}
@@ -107,14 +95,10 @@ export default async function AgendarPage() {
                     ))}
                   </ul>
 
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-green-500/30 bg-green-500/10 px-2.5 py-1 text-[10px] font-semibold text-green-400 font-roboto">
-                    <span className="h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse" />
+                  <span className="inline-flex items-center gap-2 rounded-xl border border-green-500/35 bg-green-500/10 px-4 py-2 text-sm font-bold text-green-400 font-roboto">
+                    <span className="h-2.5 w-2.5 rounded-full bg-green-400 animate-pulse" />
                     Disponibles hoy
                   </span>
-
-                  <p className="text-white/35 text-xs font-roboto leading-relaxed pt-3 border-t border-white/[0.06]">
-                    Los horarios disponibles se generan automáticamente según la disponibilidad y especialidad de nuestros instructores.
-                  </p>
                 </div>
               </div>
 

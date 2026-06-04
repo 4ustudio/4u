@@ -484,25 +484,92 @@ export default function BookingCalendar({
       {selectedDate && (
         <div
           id="booking-panel"
-          className="mt-4 rounded-2xl border border-[#ff7a00]/20 bg-white p-5 sm:p-6 space-y-5"
+          className="mt-4 rounded-2xl border border-[#ff7a00]/20 bg-white overflow-hidden"
           style={{ boxShadow:"0 4px 32px rgba(255,122,0,0.08), 0 1px 3px rgba(0,0,0,0.05)" }}
         >
-          {/* Fecha seleccionada */}
-          <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-[#ff7a00]">
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
-              </svg>
+          {/* ── Step flow indicator ──────────────────────────────── */}
+          <div className="px-5 pt-5 pb-4 border-b border-gray-100">
+            <div className="flex items-center gap-1">
+              {([
+                { n:1, label:"Fecha",      done: true,            active: !selectedCourse && !selectedTime },
+                { n:2, label:"Instrumento",done: !!selectedCourse, active: !!selectedDate && !selectedCourse },
+                { n:3, label:"Horario",    done: !!selectedTime,   active: !!selectedCourse && !selectedTime },
+                { n:4, label:"Confirmar",  done: canSubmit,        active: canSubmit },
+              ] as const).map((s, i) => (
+                <div key={s.n} className="flex items-center gap-1 flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span
+                      className="flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold shrink-0 transition-all"
+                      style={{
+                        backgroundColor: s.done ? ORANGE : s.active ? ORANGE : "#e5e7eb",
+                        color: s.done || s.active ? "#fff" : "#9ca3af",
+                        boxShadow: s.active && !s.done ? `0 0 0 3px rgba(255,122,0,0.2)` : "none",
+                      }}
+                    >
+                      {s.done && !s.active ? "✓" : s.n}
+                    </span>
+                    <span
+                      className={`text-[11px] font-semibold font-roboto hidden sm:block transition-colors ${
+                        s.done || s.active ? "text-[#ff7a00]" : "text-gray-300"
+                      }`}
+                    >
+                      {s.label}
+                    </span>
+                  </div>
+                  {i < 3 && (
+                    <div
+                      className="flex-1 h-px mx-1 transition-colors"
+                      style={{ backgroundColor: s.done ? ORANGE : "#e5e7eb" }}
+                    />
+                  )}
+                </div>
+              ))}
             </div>
-            <div>
-              <p className="text-xs text-gray-400 font-roboto uppercase tracking-wider">Fecha seleccionada</p>
-              <p className="font-poppins font-bold text-gray-900 capitalize">{fmtDateFull(selectedDateIso!)}</p>
+
+            {/* Fecha + slot count */}
+            <div className="flex items-center justify-between mt-4 flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <span className="text-[#ff7a00]">
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                    <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+                  </svg>
+                </span>
+                <p className="font-poppins font-bold text-gray-900 text-sm sm:text-base capitalize">
+                  {fmtDateFull(selectedDateIso!)}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {slotsLoading ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-400">
+                    <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z"/>
+                    </svg>
+                    Consultando…
+                  </span>
+                ) : mode === "student" && timeSlots.length > 0 ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 border border-green-200 px-3 py-1 text-xs font-semibold text-green-700">
+                    <span className="h-1.5 w-1.5 rounded-full bg-green-500"/>
+                    {timeSlots.filter(ts => ts.available).length} {timeSlots.filter(ts => ts.available).length === 1 ? "horario disponible" : "horarios disponibles"}
+                  </span>
+                ) : mode === "student" && !slotsLoading && timeSlots.length === 0 ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 border border-red-200 px-3 py-1 text-xs font-semibold text-red-600">
+                    Sin disponibilidad
+                  </span>
+                ) : null}
+                <button type="button"
+                  onClick={() => { setSelectedDate(null); setSelectedCourse(""); setSelectedTime(null); }}
+                  className="text-gray-300 hover:text-gray-500 transition-colors ml-1" aria-label="Cambiar fecha">
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                    <path d="M18 6 6 18M6 6l12 12"/>
+                  </svg>
+                </button>
+              </div>
             </div>
-            <button type="button" onClick={() => { setSelectedDate(null); setSelectedCourse(""); setSelectedTime(null); }}
-              className="ml-auto text-gray-300 hover:text-gray-500 transition-colors" aria-label="Cambiar fecha">
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
-            </button>
           </div>
+
+          {/* ── Steps content ─────────────────────────────────────── */}
+          <div className="p-5 sm:p-6 space-y-5">
 
           {/* ── Paso 2: Instrumento ────────────────────────────── */}
           <div>
@@ -667,6 +734,7 @@ export default function BookingCalendar({
             <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
             Tu información está segura con nosotros.
           </p>
+          </div>{/* end steps content */}
         </div>
       )}
 

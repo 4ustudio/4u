@@ -52,15 +52,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // ── Ruta /agendar — requiere sesión ───────────────────────────────
-  if (pathname === '/agendar') {
-    if (!user) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/mi-cuenta/login'
-      url.searchParams.set('next', '/agendar')
-      return NextResponse.redirect(url)
-    }
-  }
+  // /agendar es pública: logueados usan el flujo real, no logueados usan WhatsApp
 
   // Redirigir al dashboard si ya tiene sesión y entra al login del portal
   if (pathname === '/mi-cuenta/login' && user) {
@@ -73,5 +65,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/mi-cuenta', '/mi-cuenta/login', '/agendar'],
+  matcher: ['/admin/:path*', '/mi-cuenta', '/mi-cuenta/login'],
 }

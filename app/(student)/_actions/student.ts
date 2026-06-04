@@ -254,7 +254,11 @@ export async function studentBookAction(
   )
 
   if (!availableSlot) {
-    return { status: 'error', message: 'El horario seleccionado no está disponible. Elige otro horario.' }
+    return {
+      status: 'error',
+      message: 'Este horario acaba de ser reservado. Por favor selecciona otro horario disponible.',
+      isRaceCondition: true,
+    }
   }
 
   // fn_book_session es SECURITY DEFINER — usar admin client para garantizar ejecución
@@ -277,7 +281,35 @@ export async function studentBookAction(
   }
 
   revalidatePath('/mi-cuenta')
+  revalidatePath('/agendar')
   return { status: 'success', submittedCourse: (course as any).name }
+}
+
+// ─── Disponibilidad de slots (para booking en tiempo real) ───────────
+
+export async function getAvailableSlotsAction(date: string): Promise<Array<{
+  slot_time: string
+  classroom_id: string
+  classroom_name: string
+  is_available: boolean
+}>> {
+  const student = await getAuthenticatedStudent()
+  if (!student) return []
+
+  const { data } = await admin().rpc('fn_available_slots', {
+    p_date: date,
+    p_student_id: student.id,
+  })
+  return (data ?? []) as any[] // eslint-disable-line @typescript-eslint/no-explicit-any
+}
+
+export async function getActiveCoursesAction(): Promise<{ id: string; name: string }[]> {
+  const { data } = await admin()
+    .from('courses')
+    .select('id, name')
+    .eq('is_active', true)
+    .order('name')
+  return (data ?? []) as { id: string; name: string }[]
 }
 
 // ─── Auth ────────────────────────────────────────────────────────────

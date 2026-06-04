@@ -22,7 +22,8 @@ export interface BookingFormState {
   status: 'idle' | 'success' | 'error'
   errors?: Partial<Record<'name' | 'phone' | 'course', string>>
   message?: string
-  // Devueltos en éxito para construir el link de WhatsApp
   submittedName?: string
   submittedCourse?: string
+  // true cuando fn_book_session detecta conflicto de slot (race condition)
+  isRaceCondition?: boolean
 }

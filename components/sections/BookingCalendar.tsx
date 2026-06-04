@@ -436,16 +436,28 @@ export default function BookingCalendar({
                     {/* Disponibilidad indicator */}
                     {!holiday && !past && !sun && (
                       <div className="hidden sm:flex flex-col gap-0.5 mt-auto">
-                        {slotCount !== undefined ? (
+                        {/* Celda seleccionada: badge prominente con count */}
+                        {sel && slotCount !== undefined ? (
                           slotCount > 0 ? (
-                            <span className="text-[8px] font-semibold text-green-700 bg-green-50 px-1 py-0.5 rounded border border-green-200 leading-none">
+                            <span className="inline-flex items-center gap-0.5 text-[8px] font-bold text-green-700 bg-green-50 px-1.5 py-0.5 rounded-md border border-green-200 leading-none">
+                              <span className="h-1 w-1 rounded-full bg-green-500 shrink-0"/>
                               {slotCount} {slotCount===1?"horario":"horarios"}
                             </span>
                           ) : (
-                            <span className="text-[8px] text-gray-400 leading-none">Sin disponibilidad</span>
+                            <span className="text-[8px] text-red-400 leading-none">Sin horarios</span>
+                          )
+                        ) : sel && slotsLoading ? (
+                          <span className="text-[8px] text-gray-400 leading-none">cargando…</span>
+                        ) : slotCount !== undefined && !sel ? (
+                          slotCount > 0 ? (
+                            <span className="text-[8px] font-semibold text-green-700 bg-green-50 px-1 py-0.5 rounded border border-green-200 leading-none">
+                              {slotCount} {slotCount===1?"h":"h"}
+                            </span>
+                          ) : (
+                            <span className="text-[8px] text-gray-300 leading-none">·</span>
                           )
                         ) : (
-                          !past && !sun && <span className="h-1.5 w-1.5 rounded-full bg-green-400 mt-0.5"/>
+                          <span className="h-1.5 w-1.5 rounded-full bg-green-400"/>
                         )}
                       </div>
                     )}
@@ -528,15 +540,18 @@ export default function BookingCalendar({
 
             {/* Fecha + slot count */}
             <div className="flex items-center justify-between mt-4 flex-wrap gap-2">
-              <div className="flex items-center gap-2">
-                <span className="text-[#ff7a00]">
+              <div className="flex items-start gap-2">
+                <span className="text-[#ff7a00] mt-0.5 shrink-0">
                   <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
                     <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
                   </svg>
                 </span>
-                <p className="font-poppins font-bold text-gray-900 text-sm sm:text-base capitalize">
-                  {fmtDateFull(selectedDateIso!)}
-                </p>
+                <div>
+                  <p className="text-[10px] text-gray-400 font-roboto leading-none mb-0.5">Fecha seleccionada</p>
+                  <p className="font-poppins font-bold text-gray-900 text-sm sm:text-base capitalize">
+                    {fmtDateFull(selectedDateIso!)}
+                  </p>
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 {slotsLoading ? (

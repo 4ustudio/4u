@@ -105,18 +105,45 @@ export default async function AgendarPage() {
                 Un instructor especializado será asignado según disponibilidad y especialidad.
               </p>
             </div>
-            {/* Benefit chips — solo desktop */}
-            <div className="hidden lg:flex flex-col gap-2 shrink-0">
+            {/* Benefit chips — solo desktop, horizontal */}
+            <div className="hidden lg:flex flex-row gap-3 shrink-0">
               {[
-                { icon: "👤", t: "Atención personalizada", s: "Instructores especializados." },
-                { icon: "📅", t: "Horarios flexibles",     s: "Agenda según tu disponibilidad." },
-                { icon: "🎸", t: "Clases presenciales",    s: "Experiencia real en estudio." },
+                {
+                  icon: (
+                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                      <circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/>
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.87"/>
+                    </svg>
+                  ),
+                  t: "Atención personalizada", s: "Instructores especializados.",
+                },
+                {
+                  icon: (
+                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                      <rect x="3" y="4" width="18" height="18" rx="2"/>
+                      <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+                      <line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                  ),
+                  t: "Horarios flexibles", s: "Agenda según tu disponibilidad.",
+                },
+                {
+                  icon: (
+                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                      <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                  ),
+                  t: "Clases presenciales", s: "Experiencia real en estudio.",
+                },
               ].map(b => (
-                <div key={b.t} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 min-w-[240px]">
-                  <span className="text-base shrink-0">{b.icon}</span>
+                <div key={b.t} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 w-[190px]">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor:"rgba(255,122,0,0.15)", color:"#ff7a00" }}>
+                    {b.icon}
+                  </span>
                   <div>
                     <p className="text-white text-xs font-bold font-poppins leading-tight">{b.t}</p>
-                    <p className="text-white/40 text-[10px] font-roboto">{b.s}</p>
+                    <p className="text-white/40 text-[10px] font-roboto mt-0.5">{b.s}</p>
                   </div>
                 </div>
               ))}
@@ -131,37 +158,33 @@ export default async function AgendarPage() {
 
               {/* Team card */}
               <div className="rounded-2xl border border-white/10 bg-[#141414] overflow-hidden">
-                {/* Photo */}
-                <div className="relative h-52 overflow-hidden">
+                {/* Label */}
+                <div className="flex items-center gap-2 px-4 pt-4 pb-0">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-lg" style={{ backgroundColor:"rgba(255,122,0,0.15)", color:"#ff7a00" }}>
+                    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                      <circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/>
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                  </span>
+                  <p className="text-white/60 text-xs font-semibold font-roboto">Nuestro equipo docente</p>
+                </div>
+
+                {/* Group Photo */}
+                <div className="relative h-48 mt-3 overflow-hidden">
                   <Image
-                    src="/images/instructors/Perfil.png"
-                    alt="Instructor 4U Studio Academy"
+                    src="/images/banners-responsive/Banner Responsive.png"
+                    alt="Equipo de instructores 4U Studio Academy"
                     fill
-                    className="object-cover object-top"
+                    className="object-cover object-center"
                     sizes="300px"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-[#141414]/30 to-transparent" />
-                  {/* Instructor avatars overlay */}
-                  <div className="absolute bottom-4 left-4 flex -space-x-2">
-                    {teamInstructors.map((inst) => (
-                      <div
-                        key={inst.id}
-                        className="h-9 w-9 rounded-full border-2 border-[#141414] flex items-center justify-center text-white text-[11px] font-black font-poppins shrink-0"
-                        style={{ backgroundColor: "#ff7a00" }}
-                        title={inst.name}
-                      >
-                        {initials(inst.name)}
-                      </div>
-                    ))}
-                  </div>
+                  {/* Warm orange glow overlay */}
+                  <div className="absolute inset-0" style={{ background:"linear-gradient(to top, #141414 0%, rgba(255,100,0,0.15) 50%, transparent 100%)" }} />
                 </div>
 
                 {/* Content */}
                 <div className="p-5 space-y-4">
                   <div>
-                    <p className="text-[10px] text-white/40 font-roboto uppercase tracking-widest mb-1">
-                      Nuestro equipo docente
-                    </p>
                     <h3 className="font-poppins font-extrabold text-white text-base leading-snug">
                       Instructores especializados
                     </h3>

@@ -6,6 +6,7 @@ import { getInstructorDashboardData, getMonthSessions, getMyDashboardData } from
 import Header from '@/components/layout/Header'
 import AutoRefresh from './_components/AutoRefresh'
 import ProfileModal from './_components/ProfileModal'
+import InstructorProfileModal from './_components/InstructorProfileModal'
 import SchedulePdfButton from './_components/SchedulePdfButton'
 import ClassesCalendar from './_components/ClassesCalendar'
 import InstructorCalendar from './_components/InstructorCalendar'
@@ -170,7 +171,7 @@ function InstructorDashboard({ data, user, monthLabel, now }: any) {
             email={instructor.email ?? user.email}
             badge="Maestro"
             memberSince={memberSince}
-            action={<span className="text-[#ff7a00] cursor-pointer">✎</span>}
+            action={<InstructorProfileModal name={name} email={instructor.email ?? user.email ?? ''} avatarUrl={avatarUrl} />}
             right={<InstructorSummary stats={stats} />}
           />
 

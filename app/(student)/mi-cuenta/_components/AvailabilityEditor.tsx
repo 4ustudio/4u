@@ -4,9 +4,9 @@ import { useState, useTransition, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { saveInstructorAvailabilityAction } from '../../_actions/student'
 
-const DAY_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
-const DEFAULT_START = '08:00'
-const DEFAULT_END   = '20:00'
+const DAY_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes']
+const DEFAULT_START = '10:00'
+const DEFAULT_END   = '22:00'
 
 interface Slot {
   day_of_week: number   // 1=Lunes … 7=Domingo
@@ -81,7 +81,7 @@ function AvailabilityModal({ initialSlots, onClose, onSaved }: {
   // Estado: un objeto por día (1-7), null = no disponible
   const [slots, setSlots] = useState<Record<number, { start: string; end: string } | null>>(() => {
     const init: Record<number, { start: string; end: string } | null> = {}
-    for (let d = 1; d <= 7; d++) {
+    for (let d = 1; d <= 5; d++) {
       const existing = initialSlots.find(s => s.day_of_week === d)
       init[d] = existing
         ? { start: existing.start_time.slice(0,5), end: existing.end_time.slice(0,5) }
@@ -118,7 +118,7 @@ function AvailabilityModal({ initialSlots, onClose, onSaved }: {
   function handleSave() {
     setError(null)
     const payload: Slot[] = []
-    for (let d = 1; d <= 7; d++) {
+    for (let d = 1; d <= 5; d++) {
       const s = slots[d]
       if (!s) continue
       if (s.start >= s.end) {
@@ -173,8 +173,9 @@ function AvailabilityModal({ initialSlots, onClose, onSaved }: {
                         <input
                           type="time"
                           value={slots[day]!.start}
+                          min="10:00" max="22:00" step="3600"
                           onChange={e => setTime(day, 'start', e.target.value)}
-                          className="rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-800 focus:border-[#ff7a00]/50 focus:outline-none bg-white"
+                          className="rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-800 focus:border-[#ff7a00]/50 focus:outline-none bg-white w-[90px]"
                         />
                       </div>
                       <div className="flex items-center gap-1.5">
@@ -182,8 +183,9 @@ function AvailabilityModal({ initialSlots, onClose, onSaved }: {
                         <input
                           type="time"
                           value={slots[day]!.end}
+                          min="10:00" max="22:00" step="3600"
                           onChange={e => setTime(day, 'end', e.target.value)}
-                          className="rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-800 focus:border-[#ff7a00]/50 focus:outline-none bg-white"
+                          className="rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-800 focus:border-[#ff7a00]/50 focus:outline-none bg-white w-[90px]"
                         />
                       </div>
                     </div>

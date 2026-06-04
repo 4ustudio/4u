@@ -586,3 +586,52 @@ export async function saveInstructorAvailabilityAction(
   revalidatePath('/mi-cuenta')
   return { success: true }
 }
+
+// ─── Instructor: actualizar perfil (nombre, email, foto) ─────────────
+
+export async function updateInstructorProfileAction(
+  _prev: { error?: string; success?: boolean },
+  formData: FormData
+): Promise<{ error?: string; success?: boolean }> {
+  const supabase = await createAuthServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Sesión expirada.' }
+
+  const name      = (formData.get('name')      as string)?.trim()
+  const email     = (formData.get('email')     as string)?.trim()
+  const avatarUrl = (formData.get('avatar_url') as string)?.trim() || undefined
+
+  if (!name) return { error: 'El nombre es requerido.' }
+
+  const adminClient = createAdminClient()
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: instructor } = await (adminClient as any)
+    .from('instructors')
+    .select('id')
+    .or(`email.eq.${user.email},id.eq.${user.id}`)
+    .maybeSingle()
+
+  if (!instructor) return { error: 'Instructor no encontrado.' }
+
+  const updates: Record<string, string> = { name }
+  if (email) updates.email = email
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: updErr } = await (adminClient as any)
+    .from('instructors')
+    .update(updates)
+    .eq('id', instructor.id)
+
+  if (updErr) return { error: 'No se pudo actualizar el perfil.' }
+
+  const metaUpdates: Record<string, string> = { full_name: name }
+  if (avatarUrl) metaUpdates.avatar_url = avatarUrl
+
+  await adminClient.auth.admin.updateUserById(user.id, {
+    user_metadata: { ...user.user_metadata, ...metaUpdates },
+  })
+
+  revalidatePath('/mi-cuenta')
+  return { success: true }
+}

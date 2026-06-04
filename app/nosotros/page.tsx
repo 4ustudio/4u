@@ -210,12 +210,12 @@ export default function NosotrosPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Historia */}
             <article className="group rounded-2xl border border-white/5 bg-white/[0.03] overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:border-[#ff7a00]/20 hover:shadow-2xl hover:shadow-[#ff7a00]/5">
-              <div className="relative h-64 overflow-hidden">
+              <div className="relative h-72 overflow-hidden">
                 <OptimizedImage
                   src="/images/hero/Nuestra historia.png"
                   alt="Nuestra Historia"
                   fill
-                  className="object-cover object-[50%_45%] transition-transform duration-700 group-hover:scale-105"
+                  className="object-cover object-[50%_50%] transition-transform duration-700 group-hover:scale-105"
                   sizes="(max-width: 768px) 100vw, 33vw"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
@@ -232,12 +232,12 @@ export default function NosotrosPage() {
 
             {/* Misión */}
             <article className="group rounded-2xl border border-white/5 bg-white/[0.03] overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:border-[#ff7a00]/20 hover:shadow-2xl hover:shadow-[#ff7a00]/5">
-              <div className="relative h-[200px] overflow-hidden">
+              <div className="relative h-72 overflow-hidden">
                 <OptimizedImage
                   src="/images/hero/Nuestra mision.png"
                   alt="Nuestra Misión"
                   fill
-                  className="object-cover object-[50%_20%] transition-transform duration-700 group-hover:scale-105"
+                  className="object-cover object-[50%_35%] transition-transform duration-700 group-hover:scale-105"
                   sizes="(max-width: 768px) 100vw, 33vw"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
@@ -254,12 +254,12 @@ export default function NosotrosPage() {
 
             {/* Filosofía */}
             <article className="group rounded-2xl border border-white/5 bg-white/[0.03] overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:border-[#ff7a00]/20 hover:shadow-2xl hover:shadow-[#ff7a00]/5">
-              <div className="relative h-[200px] overflow-hidden">
+              <div className="relative h-72 overflow-hidden">
                 <OptimizedImage
                   src="/images/hero/Nuestra filosofia 2.png"
                   alt="Nuestra Filosofía"
                   fill
-                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                  className="object-cover object-[50%_45%] transition-transform duration-700 group-hover:scale-105"
                   sizes="(max-width: 768px) 100vw, 33vw"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />

@@ -63,6 +63,10 @@ export default function HybridView({
     }, 800)
   }, [router])
 
+  // Ref para acceder a doRefresh sin re-disparar el effect
+  const doRefreshRef = useRef(doRefresh)
+  useEffect(() => { doRefreshRef.current = doRefresh }, [doRefresh])
+
   // ── Supabase Realtime: escuchar INSERT/UPDATE en class_sessions ──
   useEffect(() => {
     const sb = createBrowserClient(
@@ -70,29 +74,30 @@ export default function HybridView({
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
 
+    // Nombre único por instancia para evitar conflictos al re-montar
+    const channelName = `admin-agenda-sessions-${Date.now()}`
     let retry: ReturnType<typeof setTimeout> | undefined
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let channel: any
 
     const subscribe = () => {
       channel = sb
-        .channel('admin-agenda-sessions')
+        .channel(channelName)
         .on('postgres_changes', {
           event:  '*',
           schema: 'public',
           table:  'class_sessions',
-        }, () => doRefresh())
+        }, () => doRefreshRef.current())
         .on('postgres_changes', {
           event:  '*',
           schema: 'public',
           table:  'blocked_dates',
-        }, () => doRefresh())
+        }, () => doRefreshRef.current())
         .subscribe((status) => {
-          // Re-suscribir si la conexión falla o expira
           if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
             clearTimeout(retry)
-            retry = setTimeout(() => {
-              sb.removeChannel(channel)
+            retry = setTimeout(async () => {
+              await sb.removeChannel(channel)
               subscribe()
             }, 3000)
           }
@@ -105,7 +110,7 @@ export default function HybridView({
       clearTimeout(retry)
       if (channel) sb.removeChannel(channel)
     }
-  }, [doRefresh])
+  }, []) // sin dependencias — doRefreshRef siempre está actualizado
 
   // ── Polling cada 30s como fallback ──────────────────────────────
   useEffect(() => {

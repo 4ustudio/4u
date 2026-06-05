@@ -1,10 +1,10 @@
 import { redirect } from 'next/navigation'
 import { createAuthServerClient } from '@/lib/supabase/server'
 import AdminSidebar, { MobileBottomNav } from './_components/AdminSidebar'
-import { signOutAction } from './_actions/auth'
 import { RealtimeProvider } from '@/components/admin/RealtimeProvider'
 import NotificationBell from '@/components/admin/NotificationBell'
 import PageWrapper from './_components/PageWrapper'
+import UserMenu from './_components/UserMenu'
 import { getRoleLabel, parseRole } from '@/lib/auth/roles'
 
 export const metadata = { title: 'Panel Admin — 4U Studio Academy' }
@@ -55,36 +55,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               </svg>
             </button>
 
-            <div className="ml-auto flex items-center gap-2">
-              {/* Centro de notificaciones */}
+            <div className="ml-auto flex items-center gap-3">
               <NotificationBell />
-
-              <div className="hidden md:flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2.5">
-                <div className="relative grid h-11 w-11 place-items-center overflow-hidden rounded-full border border-white/10 bg-[#171717] text-sm font-bold text-white">
-                  {avatarUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
-                  ) : (
-                    initials
-                  )}
-                  <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-[#0a0a0a] bg-[#ff7a00]" />
-                </div>
-
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-white">{displayName}</p>
-                  <p className="text-xs text-white/45">{getRoleLabel(role)}</p>
-                </div>
-              </div>
-
-              {/* Sign out */}
-              <form action={signOutAction}>
-                <button
-                  type="submit"
-                  className="text-xs text-white/55 hover:text-white transition-colors px-3 py-2 rounded-xl border border-white/8 hover:bg-white/5"
-                >
-                  Salir
-                </button>
-              </form>
+              <UserMenu
+                displayName={displayName}
+                roleLabel={getRoleLabel(role)}
+                avatarUrl={avatarUrl}
+                initials={initials}
+              />
             </div>
           </header>
 

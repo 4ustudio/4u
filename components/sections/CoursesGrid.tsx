@@ -85,7 +85,7 @@ function CourseModal({ course, onClose, isLoggedIn }: { course: Course; onClose:
               className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full shadow-lg"
               style={{ backgroundColor: course.color }}
             >
-              <div className="scale-[0.42] [&_svg]:fill-white">{course.icon}</div>
+              <div className="text-xl [&_svg]:w-5 [&_svg]:h-5 [&_svg]:fill-white">{course.icon}</div>
             </div>
             <div>
               <h2 className="text-xl font-extrabold text-white font-poppins leading-tight">{course.title}</h2>

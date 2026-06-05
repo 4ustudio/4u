@@ -26,7 +26,7 @@ export default function CourseCardFull({ course, onClick }: CourseCardFullProps)
             className="flex h-11 w-11 items-center justify-center rounded-full shadow-lg backdrop-blur-sm"
             style={{ backgroundColor: course.color }}
           >
-            <div className="scale-[0.42] [&_svg]:fill-white">
+            <div className="text-xl [&_svg]:w-5 [&_svg]:h-5 [&_svg]:fill-white">
               {course.icon}
             </div>
           </div>

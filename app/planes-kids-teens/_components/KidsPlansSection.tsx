@@ -97,31 +97,32 @@ function KidsPlanCard({ plan, onDetails }: { plan: KidsPlan; onDetails: () => vo
 
   return (
     <article
-      className="grid overflow-hidden rounded-2xl bg-white shadow-xl shadow-gray-950/10 ring-1 lg:grid-cols-[48%_52%]"
+      className="group grid overflow-hidden rounded-2xl bg-white shadow-xl shadow-gray-950/10 ring-1 lg:grid-cols-[48%_52%] [transition:transform_.3s_ease,box-shadow_.3s_ease,background-color_.3s_ease] hover:-translate-y-[6px] hover:shadow-[0_20px_40px_rgba(0,0,0,0.22)] hover:bg-[#050816] hover:ring-[#050816]"
       style={{ borderColor: `${color}55` }}
     >
-      {/* Imagen lateral — object-[center_35%] prioriza caras en fotos grupales */}
-      <div className="relative min-h-[340px] lg:min-h-0">
+      {/* Imagen lateral */}
+      <div className="relative min-h-[340px] lg:min-h-0 overflow-hidden">
         <OptimizedImage
           src={image}
           alt={accent}
           fill
-          className="object-cover object-[center_35%]"
+          className="object-cover object-[center_35%] transition-transform duration-300 group-hover:scale-105"
           sizes="(max-width: 1024px) 100vw, 45vw"
         />
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ background: 'linear-gradient(to right, rgba(0,0,0,.5), rgba(0,0,0,.1))' }} aria-hidden="true" />
       </div>
 
       <div className="flex flex-col p-6">
-        <h2 className="text-2xl font-extrabold uppercase leading-tight font-poppins">
+        <h2 className="text-2xl font-extrabold uppercase leading-tight font-poppins group-hover:text-white [transition:color_.3s_ease]">
           {title}
           <br />
           <span className="normal-case" style={{ color }}>{accent}</span>
         </h2>
-        <p className="mt-2 text-[13px] leading-relaxed text-gray-500 font-roboto">{shortDesc}</p>
+        <p className="mt-2 text-[13px] leading-relaxed text-gray-500 group-hover:text-white/55 font-roboto [transition:color_.3s_ease]">{shortDesc}</p>
 
         <ul className="mt-4 space-y-1.5">
           {features.slice(0, 4).map((f) => (
-            <li key={f} className="flex items-start gap-3 text-[13px] text-gray-700 font-roboto">
+            <li key={f} className="flex items-start gap-3 text-[13px] text-gray-700 group-hover:text-white/60 font-roboto [transition:color_.3s_ease]">
               <span className="mt-0.5 shrink-0" style={{ color }}>◎</span>
               {f}
             </li>
@@ -135,10 +136,10 @@ function KidsPlanCard({ plan, onDetails }: { plan: KidsPlan; onDetails: () => vo
         </ul>
 
         <div className="mt-auto pt-5">
-          <p className="text-2xl font-extrabold font-poppins mb-3">{price}</p>
+          <p className="text-2xl font-extrabold font-poppins mb-3 group-hover:text-white [transition:color_.3s_ease]">{price}</p>
           <button
             onClick={onDetails}
-            className="w-full rounded-lg border py-2.5 text-sm font-bold font-poppins transition-all hover:opacity-80"
+            className="w-full rounded-lg border py-2.5 text-sm font-bold font-poppins group-hover:border-white/20 group-hover:text-white/75 [transition:all_.3s_ease]"
             style={{ borderColor: color, color }}
           >
             Ver detalles

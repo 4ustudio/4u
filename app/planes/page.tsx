@@ -127,26 +127,27 @@ function PlanPathCard({
   plans: string[];
 }) {
   return (
-    <article className="rounded-2xl bg-white shadow-2xl shadow-gray-950/10 ring-1 ring-gray-200 flex flex-col h-full">
+    <article className="group rounded-2xl bg-white shadow-2xl shadow-gray-950/10 ring-1 ring-gray-200 flex flex-col h-full [transition:transform_.3s_ease,box-shadow_.3s_ease,background-color_.3s_ease] hover:-translate-y-[6px] hover:shadow-[0_20px_40px_rgba(0,0,0,0.22)] hover:bg-[#050816] hover:ring-[#050816]">
       <div className="relative h-[315px] shrink-0 overflow-hidden rounded-t-2xl">
         <OptimizedImage
           src={imageSrc}
           alt={title}
           fill
-          className={`object-cover ${imagePosition}`}
+          className={`object-cover ${imagePosition} transition-transform duration-300 group-hover:scale-105`}
           sizes="(max-width: 1024px) 100vw, 50vw"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent" />
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ background: 'linear-gradient(to top, rgba(0,0,0,.65), rgba(0,0,0,.25))' }} aria-hidden="true" />
       </div>
       <div className="relative px-8 pb-8 pt-7 text-center flex flex-col flex-1">
-        <span className="absolute -top-16 left-8 flex h-24 w-24 items-center justify-center rounded-full bg-white text-[#ff7a00] shadow-xl ring-4 ring-white">
+        <span className="absolute -top-16 left-8 flex h-24 w-24 items-center justify-center rounded-full bg-white group-hover:bg-gray-800 text-[#ff7a00] shadow-xl ring-4 ring-white group-hover:ring-gray-700 [transition:background-color_.3s_ease]">
           <PathIcon type={icon} />
         </span>
-        <h2 className="text-3xl font-extrabold font-poppins">{title}</h2>
-        <p className="mx-auto mt-3 max-w-md text-lg leading-relaxed text-gray-500 font-roboto">{description}</p>
-        <div className="mt-7 grid gap-4 border-b border-gray-200 pb-7 md:grid-cols-3">
+        <h2 className="text-3xl font-extrabold font-poppins group-hover:text-white [transition:color_.3s_ease]">{title}</h2>
+        <p className="mx-auto mt-3 max-w-md text-lg leading-relaxed text-gray-500 group-hover:text-white/55 font-roboto [transition:color_.3s_ease]">{description}</p>
+        <div className="mt-7 grid gap-4 border-b border-gray-200 group-hover:border-white/10 pb-7 md:grid-cols-3 [transition:border-color_.3s_ease]">
           {bullets.map((item) => (
-            <div key={item.text} className="flex items-center gap-3 text-left text-sm font-bold text-gray-900 font-roboto">
+            <div key={item.text} className="flex items-center gap-3 text-left text-sm font-bold text-gray-900 group-hover:text-white/70 font-roboto [transition:color_.3s_ease]">
               <span className="shrink-0 text-[#ff7a00]">
                 <BulletIcon name={item.icon} />
               </span>
@@ -154,10 +155,10 @@ function PlanPathCard({
             </div>
           ))}
         </div>
-        <div className="divide-y divide-gray-200 py-3 text-left flex-1">
+        <div className="divide-y divide-gray-200 group-hover:divide-white/10 py-3 text-left flex-1 [transition:border-color_.3s_ease]">
           {plans.map((plan) => (
-            <div key={plan} className="flex items-center gap-4 rounded-lg px-4 py-3 font-medium text-gray-950 font-poppins">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-50 text-[#ff7a00]">♫</span>
+            <div key={plan} className="flex items-center gap-4 rounded-lg px-4 py-3 font-medium text-gray-950 group-hover:text-white/60 font-poppins [transition:color_.3s_ease]">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-50 group-hover:bg-white/10 text-[#ff7a00] [transition:background-color_.3s_ease]">♫</span>
               {plan}
             </div>
           ))}

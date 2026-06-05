@@ -16,7 +16,7 @@ interface Props {
 function getPhotoPosition(id: string, name: string) {
   const slug = `${id} ${name}`.toLowerCase()
   if (slug.includes('anais')) return 'object-[center_72%]'
-  if (slug.includes('alvaro')) return 'object-[center_10%]'
+  if (slug.includes('alvaro')) return 'object-[center_50%]'
   return 'object-[center_18%]'
 }
 

@@ -13,7 +13,7 @@ export default function TestimonialStrip() {
             playsInline
             preload="metadata"
             className="absolute inset-0 h-full w-full object-cover"
-            style={{ objectPosition: "center 46%" }}
+            style={{ objectPosition: "center 20%" }}
           />
 
           {/* Degradado cinematográfico: negro denso izq → transparente, se funde sin corte */}

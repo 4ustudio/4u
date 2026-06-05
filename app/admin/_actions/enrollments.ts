@@ -3,7 +3,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createAuthServerClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import type { EnrollmentEvent, EnrollmentEventType } from '@/types/enrollment'
+import type { EnrollmentEvent, EnrollmentEventType, EnrollmentFunnelMetrics } from '@/types/enrollment'
 import { safeRecordStudentActivity } from './retention'
 
 // Para lecturas usa el cliente autenticado (JWT del admin + política RLS authenticated)
@@ -12,11 +12,13 @@ import { safeRecordStudentActivity } from './retention'
 function db(): any { return createAdminClient() }
 
 const STATUS_NAMES: Record<string, string> = {
-  pending:   'Pendiente',
-  contacted: 'Contactado',
-  scheduled: 'Agendado',
-  cancelled: 'Cancelado',
-  converted: 'Convertido',
+  pending:      'Nuevo',
+  contacted:    'Contactado',
+  clase_prueba: 'Clase de Prueba',
+  scheduled:    'Clase de Prueba',  // legacy
+  perdido:      'Perdido',
+  cancelled:    'Perdido',          // legacy
+  converted:    'Matriculado',
 }
 
 // ── Lectura ──────────────────────────────────────────────────
@@ -145,6 +147,113 @@ export async function saveInternalNotes(
   return {}
 }
 
+export async function updateEnrollmentFieldsAction(
+  enrollmentId: string,
+  fields: {
+    source?: string | null
+    assigned_to?: string | null
+    last_contact_at?: string | null
+    next_followup_at?: string | null
+    lost_reason?: string | null
+  }
+): Promise<{ error?: string }> {
+  const { error } = await db()
+    .from('enrollments')
+    .update(fields)
+    .eq('id', enrollmentId)
+
+  if (error) return { error: error.message }
+  revalidatePath('/admin/enrollments')
+  revalidatePath('/admin/leads')
+  return {}
+}
+
+export async function getEnrollmentFunnelMetrics(): Promise<EnrollmentFunnelMetrics> {
+  try {
+    const startOfMonth = new Date()
+    startOfMonth.setDate(1)
+    startOfMonth.setHours(0, 0, 0, 0)
+
+    const { data, error } = await db()
+      .from('enrollments')
+      .select('id, status, course_interest, source, created_at, converted_at')
+
+    if (error || !data) {
+      return {
+        totalMonth: 0, pending: 0, contacted: 0, clasePrueba: 0,
+        converted: 0, perdido: 0, conversionRate: 0,
+        topCourses: [], topSources: [], avgDaysToConvert: null,
+      }
+    }
+
+    const monthData = data.filter(
+      (r: any) => new Date(r.created_at) >= startOfMonth
+    )
+
+    const counts = { pending: 0, contacted: 0, clasePrueba: 0, converted: 0, perdido: 0 }
+    const courseMap: Record<string, number> = {}
+    const sourceMap: Record<string, number> = {}
+    const conversionDays: number[] = []
+
+    for (const r of data as any[]) {
+      const s = r.status
+      if (s === 'pending')                         counts.pending++
+      else if (s === 'contacted')                  counts.contacted++
+      else if (s === 'clase_prueba' || s === 'scheduled') counts.clasePrueba++
+      else if (s === 'converted')                  counts.converted++
+      else if (s === 'perdido' || s === 'cancelled') counts.perdido++
+
+      if (r.course_interest) courseMap[r.course_interest] = (courseMap[r.course_interest] ?? 0) + 1
+      if (r.source)          sourceMap[r.source]           = (sourceMap[r.source]           ?? 0) + 1
+
+      if (s === 'converted' && r.converted_at && r.created_at) {
+        const days = Math.round(
+          (new Date(r.converted_at).getTime() - new Date(r.created_at).getTime()) / 86400000
+        )
+        if (days >= 0) conversionDays.push(days)
+      }
+    }
+
+    const decided = counts.converted + counts.perdido
+    const conversionRate = decided > 0
+      ? Math.round((counts.converted / decided) * 100)
+      : 0
+
+    const avgDaysToConvert = conversionDays.length > 0
+      ? Math.round(conversionDays.reduce((a, b) => a + b, 0) / conversionDays.length)
+      : null
+
+    const topCourses = Object.entries(courseMap)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([course, count]) => ({ course, count }))
+
+    const topSources = Object.entries(sourceMap)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([source, count]) => ({ source, count }))
+
+    return {
+      totalMonth: monthData.length,
+      pending:    counts.pending,
+      contacted:  counts.contacted,
+      clasePrueba: counts.clasePrueba,
+      converted:  counts.converted,
+      perdido:    counts.perdido,
+      conversionRate,
+      topCourses,
+      topSources,
+      avgDaysToConvert,
+    }
+  } catch {
+    return {
+      totalMonth: 0, pending: 0, contacted: 0, clasePrueba: 0,
+      converted: 0, perdido: 0, conversionRate: 0,
+      topCourses: [], topSources: [], avgDaysToConvert: null,
+    }
+  }
+}
+
 export async function convertEnrollmentToStudent(
   enrollmentId: string
 ): Promise<{ error?: string; studentId?: string }> {
@@ -204,6 +313,7 @@ export async function convertEnrollmentToStudent(
   })
 
   revalidatePath('/admin/enrollments')
+  revalidatePath('/admin/leads')
   revalidatePath('/admin/students')
   return { studentId: student.id }
 }

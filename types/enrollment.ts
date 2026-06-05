@@ -1,6 +1,19 @@
 export type StudentType = 'self' | 'child'
 export type Level = 'never' | 'beginner' | 'intermediate' | 'advanced'
-export type EnrollmentStatus = 'pending' | 'contacted' | 'scheduled' | 'cancelled' | 'converted'
+export type EnrollmentStatus =
+  | 'pending'
+  | 'contacted'
+  | 'clase_prueba'
+  | 'scheduled'     // legacy alias de clase_prueba
+  | 'perdido'
+  | 'cancelled'     // legacy alias de perdido
+  | 'converted'
+
+export type EnrollmentSource =
+  | 'inscripcion'                                       // formulario web /inscripcion
+  | 'whatsapp' | 'instagram' | 'facebook' | 'google'
+  | 'referido' | 'web' | 'presencial' | 'otro'
+
 export type EnrollmentEventType =
   | 'form_received' | 'status_changed'
   | 'whatsapp_sent' | 'called' | 'email_sent'
@@ -21,12 +34,18 @@ export interface EnrollmentInsert {
 }
 
 export interface EnrollmentRow extends EnrollmentInsert {
-  id:                   string
-  created_at:           string
-  status:               EnrollmentStatus
-  internal_notes?:      string | null
-  converted_at?:        string | null
+  id:                    string
+  created_at:            string
+  status:                EnrollmentStatus
+  internal_notes?:       string | null
+  converted_at?:         string | null
   converted_student_id?: string | null
+  // CRM Comercial V1
+  source:                string | null
+  assigned_to?:          string | null
+  last_contact_at?:      string | null
+  next_followup_at?:     string | null
+  lost_reason?:          string | null
 }
 
 export interface EnrollmentEvent {
@@ -46,4 +65,17 @@ export interface EnrollmentFormState {
   >>
   message?: string
   fieldErrors?: Record<string, string[]>
+}
+
+export interface EnrollmentFunnelMetrics {
+  totalMonth:      number
+  pending:         number
+  contacted:       number
+  clasePrueba:     number  // clase_prueba + scheduled
+  converted:       number
+  perdido:         number  // perdido + cancelled
+  conversionRate:  number  // converted / (converted + perdido) * 100
+  topCourses:      { course: string; count: number }[]
+  topSources:      { source: string; count: number }[]
+  avgDaysToConvert: number | null
 }

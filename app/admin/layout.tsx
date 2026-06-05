@@ -5,6 +5,7 @@ import { signOutAction } from './_actions/auth'
 import { RealtimeProvider } from '@/components/admin/RealtimeProvider'
 import NotificationBell from '@/components/admin/NotificationBell'
 import PageWrapper from './_components/PageWrapper'
+import { parseRole } from '@/lib/auth/roles'
 
 export const metadata = { title: 'Panel Admin — 4U Studio Academy' }
 
@@ -16,11 +17,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     redirect('/mi-cuenta/login')
   }
 
+  const role = parseRole(user.user_metadata)
+
   return (
     <RealtimeProvider>
       <div className="min-h-screen bg-gray-950 flex text-white">
         {/* Sidebar desktop */}
-        <AdminSidebar />
+        <AdminSidebar role={role} />
 
         <div className="flex-1 flex flex-col min-w-0">
           {/* Header */}
@@ -55,7 +58,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </div>
 
         {/* Nav inferior móvil */}
-        <MobileBottomNav />
+        <MobileBottomNav role={role} />
       </div>
     </RealtimeProvider>
   )

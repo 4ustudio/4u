@@ -45,19 +45,31 @@ function cleanPhone(p: string) { return p.replace(/[^0-9]/g, '') }
 // ── Labels & colores ─────────────────────────────────────────
 
 const STATUS_LABEL: Record<string, string> = {
-  pending: 'Pendiente', contacted: 'Contactado', scheduled: 'Agendado',
-  cancelled: 'Cancelado', converted: 'Convertido',
+  pending:      'Nuevo',
+  contacted:    'Contactado',
+  clase_prueba: 'Clase Prueba',
+  scheduled:    'Clase Prueba',
+  perdido:      'Perdido',
+  cancelled:    'Perdido',
+  converted:    'Matriculado',
 }
 const STATUS_DOT: Record<string, string> = {
-  pending: 'bg-yellow-400', contacted: 'bg-blue-400', scheduled: 'bg-green-400',
-  cancelled: 'bg-red-500',  converted: 'bg-purple-400',
+  pending:      'bg-yellow-400',
+  contacted:    'bg-blue-400',
+  clase_prueba: 'bg-green-400',
+  scheduled:    'bg-green-400',
+  perdido:      'bg-red-500',
+  cancelled:    'bg-red-500',
+  converted:    'bg-purple-400',
 }
 const STATUS_PILL: Record<string, string> = {
-  pending:   'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
-  contacted: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-  scheduled: 'bg-green-500/10 text-green-400 border-green-500/20',
-  cancelled: 'bg-red-500/10 text-red-400 border-red-500/20',
-  converted: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
+  pending:      'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
+  contacted:    'bg-blue-500/10 text-blue-400 border-blue-500/20',
+  clase_prueba: 'bg-green-500/10 text-green-400 border-green-500/20',
+  scheduled:    'bg-green-500/10 text-green-400 border-green-500/20',
+  perdido:      'bg-red-500/10 text-red-400 border-red-500/20',
+  cancelled:    'bg-red-500/10 text-red-400 border-red-500/20',
+  converted:    'bg-purple-500/10 text-purple-400 border-purple-500/20',
 }
 const LEVEL_LABEL: Record<string, string> = {
   never: 'Sin experiencia', beginner: 'Principiante',
@@ -83,21 +95,25 @@ const EVENT_COLORS: Record<string, string> = {
 
 function SummaryCards({ enrollments }: { enrollments: EnrollmentRow[] | null }) {
   const s = useMemo(() => {
-    if (!enrollments) return { pending: 0, contacted: 0, scheduled: 0, converted: 0 }
+    if (!enrollments) return { pending: 0, contacted: 0, clasePrueba: 0, converted: 0, perdido: 0 }
     return {
-      pending:   enrollments.filter(e => e.status === 'pending').length,
-      contacted: enrollments.filter(e => e.status === 'contacted').length,
-      scheduled: enrollments.filter(e => e.status === 'scheduled').length,
-      converted: enrollments.filter(e => e.status === 'converted').length,
+      pending:    enrollments.filter(e => e.status === 'pending').length,
+      contacted:  enrollments.filter(e => e.status === 'contacted').length,
+      clasePrueba: enrollments.filter(e => e.status === 'clase_prueba' || e.status === 'scheduled').length,
+      converted:  enrollments.filter(e => e.status === 'converted').length,
+      perdido:    enrollments.filter(e => e.status === 'perdido' || e.status === 'cancelled').length,
     }
   }, [enrollments])
+  const decided = s.converted + s.perdido
+  const convRate = decided > 0 ? Math.round((s.converted / decided) * 100) : null
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
       {([
-        { label: 'Pendientes',  val: s.pending,   c: 'text-yellow-400', bg: 'bg-yellow-400/8 border-yellow-400/10' },
-        { label: 'Contactados', val: s.contacted,  c: 'text-blue-400',   bg: 'bg-blue-400/8 border-blue-400/10' },
-        { label: 'Agendados',   val: s.scheduled,  c: 'text-green-400',  bg: 'bg-green-400/8 border-green-400/10' },
-        { label: 'Convertidos', val: s.converted,  c: 'text-purple-400', bg: 'bg-purple-400/8 border-purple-400/10' },
+        { label: 'Nuevos',       val: s.pending,     c: 'text-yellow-400', bg: 'bg-yellow-400/8 border-yellow-400/10' },
+        { label: 'Contactados',  val: s.contacted,   c: 'text-blue-400',   bg: 'bg-blue-400/8 border-blue-400/10' },
+        { label: 'Clase Prueba', val: s.clasePrueba, c: 'text-green-400',  bg: 'bg-green-400/8 border-green-400/10' },
+        { label: 'Matriculados', val: s.converted,   c: 'text-purple-400', bg: 'bg-purple-400/8 border-purple-400/10' },
+        { label: 'Perdidos',     val: s.perdido,     c: 'text-red-400',    bg: 'bg-red-400/8 border-red-400/10' },
       ] as const).map(card => (
         <div key={card.label} className={`rounded-xl border px-4 py-3 ${card.bg}`}>
           <p className={`text-2xl font-extrabold ${card.c}`}>{enrollments === null ? '—' : card.val}</p>
@@ -297,7 +313,7 @@ function Drawer({
                   <section>
                     <p className="text-[10px] uppercase tracking-widest text-white/25 font-semibold mb-3">Estado del lead</p>
                     <div className="flex flex-wrap gap-1.5">
-                      {(['pending', 'contacted', 'scheduled', 'cancelled'] as const).map(s => (
+                      {(['pending', 'contacted', 'clase_prueba', 'perdido'] as const).map(s => (
                         <button
                           key={s}
                           onClick={() => onStatusChange(e.id, s)}
@@ -496,7 +512,13 @@ export default function AdminEnrollmentsPage() {
 
   const filtered = useMemo(() => {
     if (!enrollments) return []
-    let list = filter === 'all' ? enrollments : enrollments.filter(e => e.status === filter)
+    let list = filter === 'all'
+      ? enrollments
+      : filter === 'clase_prueba'
+        ? enrollments.filter(e => e.status === 'clase_prueba' || e.status === 'scheduled')
+        : filter === 'perdido'
+          ? enrollments.filter(e => e.status === 'perdido' || e.status === 'cancelled')
+          : enrollments.filter(e => e.status === filter)
     if (search.trim()) {
       const q = search.toLowerCase()
       list = list.filter(e =>
@@ -578,10 +600,14 @@ export default function AdminEnrollmentsPage() {
     showFlash('¡Estudiante creado exitosamente!')
   }
 
-  const FILTERS = ['all', 'pending', 'contacted', 'scheduled', 'converted', 'cancelled']
+  const FILTERS = ['all', 'pending', 'contacted', 'clase_prueba', 'converted', 'perdido']
   const FILTER_LABEL: Record<string, string> = {
-    all: 'Todos', pending: 'Pendientes', contacted: 'Contactados',
-    scheduled: 'Agendados', converted: 'Convertidos', cancelled: 'Cancelados',
+    all:          'Todos',
+    pending:      'Nuevos',
+    contacted:    'Contactados',
+    clase_prueba: 'Clase Prueba',
+    converted:    'Matriculados',
+    perdido:      'Perdidos',
   }
 
   return (

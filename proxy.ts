@@ -1,7 +1,8 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { parseRole, hasAdminAccess } from '@/lib/auth/roles'
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -27,7 +28,7 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   const pathname = request.nextUrl.pathname
-  const role = user?.user_metadata?.role
+  const role = parseRole(user?.user_metadata ?? null)
 
   // ── Ruta /agendar ─────────────────────────────────────────────────
   if (pathname === '/agendar') {
@@ -46,7 +47,7 @@ export async function middleware(request: NextRequest) {
       url.pathname = '/mi-cuenta/login'
       return NextResponse.redirect(url)
     }
-    if (role !== 'admin') {
+    if (!hasAdminAccess(role)) {
       const url = request.nextUrl.clone()
       url.pathname = '/mi-cuenta'
       return NextResponse.redirect(url)

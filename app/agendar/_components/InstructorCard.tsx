@@ -16,7 +16,7 @@ interface Props {
 function getPhotoPosition(id: string, name: string) {
   const slug = `${id} ${name}`.toLowerCase()
   if (slug.includes('anais')) return 'object-[center_72%]'
-  if (slug.includes('alvaro')) return 'object-[center_28%]'
+  if (slug.includes('alvaro')) return 'object-[center_10%]'
   return 'object-[center_18%]'
 }
 
@@ -97,9 +97,9 @@ export default function InstructorCard({ id, name, role, bio, specialties, photo
           >
             {/* Header con foto */}
             {photo && (
-              <div className="relative h-52 overflow-hidden">
+              <div className="relative h-72 overflow-hidden">
                 <Image src={photo} alt={name} fill className={`object-cover ${photoPosition}`} sizes="512px" />
-                <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, #141414 5%, rgba(0,0,0,0.3) 60%, transparent 100%)' }} />
+                <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, #141414 8%, rgba(0,0,0,0.1) 50%, transparent 100%)' }} />
                 <button
                   onClick={() => setOpen(false)}
                   className="absolute top-3 right-3 h-8 w-8 rounded-full flex items-center justify-center bg-black/50 text-white/70 hover:text-white transition-colors backdrop-blur-sm"

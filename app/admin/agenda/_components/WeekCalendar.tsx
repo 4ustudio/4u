@@ -134,7 +134,7 @@ export default function WeekCalendar({ weekStart, sessions, blocked, students, c
       </div>
 
       {/* Grilla */}
-      <div className="overflow-x-auto rounded-xl border border-white/10 bg-[#0f0f0f]">
+      <div className="overflow-x-auto rounded-xl border border-white/8 bg-[#050505]">
         <table className="w-full text-xs border-collapse min-w-[700px]">
           <thead>
             <tr className="border-b border-white/10">
@@ -172,7 +172,7 @@ export default function WeekCalendar({ weekStart, sessions, blocked, students, c
                   // Domingo → cerrado
                   if (isClosed) {
                     return (
-                      <td key={dateStr} className="px-1 py-1 border-l border-white/5 bg-black/40 align-top" rowSpan={1}>
+                      <td key={dateStr} className="px-1 py-1 border-l border-white/5 bg-[#080808] align-top" rowSpan={1}>
                         {slot === sortedSlots[0] && (
                           <div className="h-full min-h-[60px] flex items-center justify-center">
                             <span className="text-red-400/50 text-[10px] text-center leading-tight">Sin<br/>disponibilidad</span>
@@ -185,7 +185,7 @@ export default function WeekCalendar({ weekStart, sessions, blocked, students, c
                   // Fuera del horario del día
                   if (!inRange) {
                     return (
-                      <td key={dateStr} className="border-l border-white/5 bg-black/20">
+                      <td key={dateStr} className="border-l border-white/5 bg-[#090909]">
                         <div className="h-8" />
                       </td>
                     )

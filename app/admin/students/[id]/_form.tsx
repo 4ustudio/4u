@@ -116,7 +116,7 @@ export default function StudentEditForm({ student }: { student: Student & { plai
 
       <div className="grid sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs text-white/50 mb-1.5">Estado</label>
+          <label className="block text-xs text-white/50 mb-1.5">Estado operativo</label>
           <select name="status" disabled={isPending} defaultValue={student.status} className={inputClass + ' appearance-none'}>
             <option value="active">Activo</option>
             <option value="inactive">Inactivo</option>
@@ -129,6 +129,32 @@ export default function StudentEditForm({ student }: { student: Student & { plai
             <option value="new">Nuevo (solo 5PM–10PM)</option>
             <option value="regular">Regular (10AM–10PM)</option>
           </select>
+        </div>
+      </div>
+
+      <div className="grid sm:grid-cols-4 gap-4">
+        <div>
+          <label className="block text-xs text-white/50 mb-1.5">Estado de retención</label>
+          <select name="student_status" disabled={isPending} defaultValue={student.student_status ?? 'activo'} className={inputClass + ' appearance-none'}>
+            <option value="lead">Lead</option>
+            <option value="matriculado">Matriculado</option>
+            <option value="activo">Activo</option>
+            <option value="riesgo">Riesgo</option>
+            <option value="inactivo">Inactivo</option>
+            <option value="exalumno">Exalumno</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs text-white/50 mb-1.5">Alumno desde</label>
+          <input type="date" name="student_since" disabled={isPending} defaultValue={(student.student_since ?? student.enrolled_at ?? '').slice(0, 10)} className={inputClass} />
+        </div>
+        <div>
+          <label className="block text-xs text-white/50 mb-1.5">Próximo pago</label>
+          <input type="date" name="next_payment_due_at" disabled={isPending} defaultValue={(student.next_payment_due_at ?? '').slice(0, 10)} className={inputClass} />
+        </div>
+        <div>
+          <label className="block text-xs text-white/50 mb-1.5">Score retención</label>
+          <input type="number" name="retention_score" min={0} max={100} disabled={isPending} defaultValue={student.retention_score ?? 100} className={inputClass} />
         </div>
       </div>
 

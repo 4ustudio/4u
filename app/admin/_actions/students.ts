@@ -3,7 +3,8 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createAuthServerClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import type { Student, StudentStatus, StudentType, StudentSchedule, Frequency } from '@/types/admin'
+import type { Student, StudentLifecycleStatus, StudentStatus, StudentType, StudentSchedule, Frequency } from '@/types/admin'
+import { safeRecordStudentActivity } from './retention'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function db(): any { return createAdminClient() }
@@ -38,16 +39,38 @@ async function validateKidsAge(studentId: string): Promise<string | null> {
 export async function getStudents(): Promise<Student[]> {
   try {
     const supabase = await createAuthServerClient()
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('students')
       .select('*')
+      .is('archived_at', null)
       .order('created_at', { ascending: false })
 
     if (error) {
-      const { data: d2, error: e2 } = await db()
+      const missingArchiveColumn = error.message?.includes('archived_at')
+      if (missingArchiveColumn) {
+        const retry = await supabase
+          .from('students')
+          .select('*')
+          .order('created_at', { ascending: false })
+        data = retry.data
+        error = retry.error
+      }
+    }
+
+    if (error) {
+      let { data: d2, error: e2 } = await db()
         .from('students')
         .select('*')
+        .is('archived_at', null)
         .order('created_at', { ascending: false })
+      if (e2?.message?.includes('archived_at')) {
+        const retry = await db()
+          .from('students')
+          .select('*')
+          .order('created_at', { ascending: false })
+        d2 = retry.data
+        e2 = retry.error
+      }
       if (e2) throw new Error(e2.message)
       return d2 ?? []
     }
@@ -260,12 +283,13 @@ export async function createStudentAction(
   const student_type = (formData.get('student_type') as StudentType) ?? 'new'
   const notes        = (formData.get('notes')        as string | null)?.trim() || null
   const lead_id      = (formData.get('lead_id')      as string | null) || null
+  const now          = new Date().toISOString()
 
   if (!first_name || !phone) {
     return { error: 'Nombre y WhatsApp son obligatorios.' }
   }
 
-  const { error } = await db()
+  const { data: student, error } = await db()
     .from('students')
     .insert({
       name,
@@ -284,13 +308,20 @@ export async function createStudentAction(
       notes,
       lead_id,
       status: 'active',
+      student_status: 'activo',
+      student_since: now,
+      last_activity_at: now,
+      retention_score: 100,
     })
+    .select('id')
+    .single()
 
   if (error) {
     if (error.code === '23505') return { error: 'Ya existe un estudiante con ese email.' }
     return { error: error.message }
   }
 
+  await safeRecordStudentActivity(student?.id, 'enrolled', 'Estudiante creado desde administracion.')
   revalidatePath('/admin/students')
   return { success: true }
 }
@@ -348,30 +379,25 @@ export async function deleteStudentAction(
   if (!id) return { error: 'ID de estudiante requerido.' }
 
   const client = db()
+  const now = new Date().toISOString()
+  const reason = (formData.get('archived_reason') as string | null)?.trim() || 'Archivado desde administracion'
 
-  // Obtener user_id para eliminar también la cuenta de auth si existe
-  const { data: student } = await client
+  const { error } = await client
     .from('students')
-    .select('user_id')
+    .update({
+      archived_at: now,
+      archived_reason: reason,
+      student_status: 'exalumno',
+      status: 'inactive',
+    })
     .eq('id', id)
-    .single()
 
-  // Eliminar registros dependientes primero (evita errores de FK)
-  await client.from('class_history').delete().eq('student_id', id)
-  await client.from('class_sessions').delete().eq('student_id', id)
-  await client.from('student_schedules').delete().eq('student_id', id)
-  await client.from('monthly_quotas').delete().eq('student_id', id)
-  await client.from('credit_adjustments').delete().eq('student_id', id)
-
-  const { error } = await client.from('students').delete().eq('id', id)
   if (error) return { error: error.message }
 
-  // Eliminar la cuenta de auth vinculada (si tiene portal)
-  if (student?.user_id) {
-    try { await client.auth.admin.deleteUser(student.user_id) } catch { /* ignorar */ }
-  }
+  await safeRecordStudentActivity(id, 'archived', reason)
 
   revalidatePath('/admin/students')
+  revalidatePath('/admin/reactivacion')
   return { success: true }
 }
 
@@ -448,31 +474,44 @@ export async function updateStudentAction(
   const document_number = (formData.get('document_number') as string | null)?.trim() || null
   const status       = (formData.get('status')       as StudentStatus)
   const student_type = (formData.get('student_type') as StudentType)
+  const student_status = (formData.get('student_status') as StudentLifecycleStatus | null) || null
+  const student_since = (formData.get('student_since') as string | null)?.trim() || null
+  const plan_expires_at = (formData.get('plan_expires_at') as string | null)?.trim() || null
+  const next_payment_due_at = (formData.get('next_payment_due_at') as string | null)?.trim() || null
+  const retention_score_raw = (formData.get('retention_score') as string | null)?.trim()
   const notes        = (formData.get('notes')        as string | null)?.trim() || null
 
   if (!first_name || !phone) {
     return { error: 'Nombre y WhatsApp son obligatorios.' }
   }
 
+  const update: Record<string, unknown> = {
+    name,
+    first_name,
+    last_name,
+    phone,
+    email,
+    address,
+    city,
+    birth_date,
+    profession,
+    music_genre,
+    document_type,
+    document_number,
+    status,
+    student_type,
+    notes,
+  }
+
+  if (student_status) update.student_status = student_status
+  if (student_since !== null) update.student_since = student_since || null
+  if (plan_expires_at !== null) update.plan_expires_at = plan_expires_at || null
+  if (next_payment_due_at !== null) update.next_payment_due_at = next_payment_due_at || null
+  if (retention_score_raw) update.retention_score = Math.max(0, Math.min(100, Number(retention_score_raw)))
+
   const { error } = await db()
     .from('students')
-    .update({
-      name,
-      first_name,
-      last_name,
-      phone,
-      email,
-      address,
-      city,
-      birth_date,
-      profession,
-      music_genre,
-      document_type,
-      document_number,
-      status,
-      student_type,
-      notes,
-    })
+    .update(update)
     .eq('id', id)
 
   if (error) return { error: error.message }

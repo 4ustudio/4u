@@ -3,6 +3,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import type { ClassSession } from '@/types/admin'
+import { safeRecordStudentActivity } from './retention'
 
 // El cliente admin no tiene tipos de DB generados — cast a any para RPCs y tablas nuevas
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -101,6 +102,12 @@ export async function bookSessionAction(
   if (error) return { error: error.message }
   if (!data?.success) return { error: data?.error ?? 'No se pudo crear la clase.' }
 
+  await safeRecordStudentActivity(input.student_id, 'class_booked', 'Clase agendada desde administracion.', {
+    course_id: input.course_id,
+    scheduled_date: input.date,
+    start_time: input.start_time,
+  })
+
   revalidatePath('/admin/agenda')
   return { success: true }
 }
@@ -112,6 +119,12 @@ export async function cancelSessionAction(
   const sessionId = formData.get('session_id') as string
   const reason    = (formData.get('reason') as string | null)?.trim() || null
 
+  const { data: session } = await db()
+    .from('class_sessions')
+    .select('student_id, scheduled_date, start_time')
+    .eq('id', sessionId)
+    .maybeSingle()
+
   const { data, error } = await db().rpc('fn_cancel_session', {
     p_session_id: sessionId,
     p_reason:     reason,
@@ -119,6 +132,13 @@ export async function cancelSessionAction(
 
   if (error) return { error: error.message }
   if (!data?.success) return { error: data?.error ?? 'No se pudo cancelar la clase.' }
+
+  await safeRecordStudentActivity(session?.student_id, 'class_cancelled', 'Clase cancelada.', {
+    session_id: sessionId,
+    reason,
+    scheduled_date: session?.scheduled_date,
+    start_time: session?.start_time,
+  })
 
   revalidatePath('/admin/agenda')
   return { success: true, late: data.late_cancellation }
@@ -154,6 +174,12 @@ export async function adminUpdateStatusAction(
 
   if (!session_id || !new_status) return { error: 'Faltan datos.' }
 
+  const { data: session } = await db()
+    .from('class_sessions')
+    .select('student_id, scheduled_date, start_time, course_id')
+    .eq('id', session_id)
+    .maybeSingle()
+
   const update: Record<string, unknown> = { status: new_status }
   if (notes !== undefined) update.notes = notes
 
@@ -163,6 +189,24 @@ export async function adminUpdateStatusAction(
     .eq('id', session_id)
 
   if (error) return { error: error.message }
+
+  if (new_status === 'completed') {
+    await safeRecordStudentActivity(session?.student_id, 'class_completed', 'Clase marcada como completada.', {
+      session_id,
+      course_id: session?.course_id,
+      scheduled_date: session?.scheduled_date,
+      start_time: session?.start_time,
+    })
+  }
+  if (new_status === 'no_show') {
+    await safeRecordStudentActivity(session?.student_id, 'class_no_show', 'Clase marcada como no asistio.', { session_id })
+  }
+  if (new_status === 'cancelled') {
+    await safeRecordStudentActivity(session?.student_id, 'class_cancelled', 'Clase marcada como cancelada.', { session_id })
+  }
+  if (new_status === 'rescheduled') {
+    await safeRecordStudentActivity(session?.student_id, 'class_rescheduled', 'Clase marcada como reagendada.', { session_id })
+  }
 
   revalidatePath('/admin/agenda')
   revalidatePath('/admin')

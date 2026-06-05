@@ -1,5 +1,12 @@
 export type StudentStatus = 'active' | 'inactive' | 'suspended'
 export type StudentType = 'new' | 'regular'
+export type StudentLifecycleStatus = 'lead' | 'matriculado' | 'activo' | 'riesgo' | 'inactivo' | 'exalumno'
+export type StudentActivityEventType =
+  | 'lead_created' | 'enrolled' | 'plan_purchased' | 'plan_renewed'
+  | 'class_booked' | 'class_completed' | 'class_cancelled'
+  | 'class_rescheduled' | 'class_no_show' | 'login'
+  | 'portal_activity' | 'follow_up' | 'status_changed'
+  | 'reactivated' | 'archived'
 export type SessionStatus =
   | 'pending' | 'confirmed' | 'completed'
   | 'cancelled' | 'rescheduled' | 'no_show'
@@ -25,6 +32,16 @@ export interface Student {
   status: StudentStatus
   student_type: StudentType
   enrolled_at: string
+  student_status?: StudentLifecycleStatus
+  last_activity_at?: string | null
+  student_since?: string | null
+  plan_expires_at?: string | null
+  next_payment_due_at?: string | null
+  retention_score?: number | null
+  primary_course_id?: string | null
+  archived_at?: string | null
+  archived_reason?: string | null
+  reactivated_at?: string | null
   lead_id: string | null
   notes: string | null
   user_id: string | null
@@ -130,4 +147,50 @@ export interface AdminStats {
   todaySessions: ClassSession[]
   weekSessionCount: number
   roomOccupancy: { name: string; count: number }[]
+}
+
+export interface StudentActivityEvent {
+  id: string
+  student_id: string
+  event_type: StudentActivityEventType
+  occurred_at: string
+  source: string
+  description: string | null
+  metadata: Record<string, unknown> | null
+  created_by: string | null
+}
+
+export interface StudentAdminNote {
+  id: string
+  student_id: string
+  note: string
+  follow_up_at: string | null
+  outcome: string | null
+  created_at: string
+  created_by: string | null
+}
+
+export interface RetentionAlert {
+  id: string
+  student_id: string | null
+  alert_type: string
+  severity: 'info' | 'warning' | 'critical'
+  title: string
+  message: string
+  status: 'open' | 'resolved' | 'dismissed'
+  due_at: string | null
+  created_at: string
+}
+
+export interface ReactivationTask {
+  id: string
+  student_id: string
+  task_type: string
+  status: 'pending' | 'done' | 'dismissed'
+  priority: 'low' | 'medium' | 'high'
+  title: string
+  description: string | null
+  due_at: string | null
+  completed_at: string | null
+  created_at: string
 }

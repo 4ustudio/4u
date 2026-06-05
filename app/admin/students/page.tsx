@@ -31,11 +31,18 @@ function isThisMonth(iso: string): boolean {
 // ── Colores ───────────────────────────────────────────────────
 
 const STATUS_PILL: Record<string, string> = {
-  active:    'bg-green-500/10 text-green-400 border-green-500/20',
-  inactive:  'bg-white/5 text-white/35 border-white/10',
-  suspended: 'bg-red-500/10 text-red-400 border-red-500/20',
+  lead:        'bg-blue-500/10 text-blue-300 border-blue-500/20',
+  matriculado: 'bg-purple-500/10 text-purple-300 border-purple-500/20',
+  activo:      'bg-green-500/10 text-green-400 border-green-500/20',
+  riesgo:      'bg-yellow-500/10 text-yellow-300 border-yellow-500/20',
+  inactivo:    'bg-red-500/10 text-red-300 border-red-500/20',
+  exalumno:    'bg-white/5 text-white/35 border-white/10',
+  active:      'bg-green-500/10 text-green-400 border-green-500/20',
+  inactive:    'bg-white/5 text-white/35 border-white/10',
+  suspended:   'bg-red-500/10 text-red-400 border-red-500/20',
 }
 const STATUS_LABEL: Record<string, string> = {
+  lead: 'Lead', matriculado: 'Matriculado', activo: 'Activo', riesgo: 'Riesgo', inactivo: 'Inactivo', exalumno: 'Exalumno',
   active: 'Activo', inactive: 'Inactivo', suspended: 'Suspendido',
 }
 const TYPE_LABEL: Record<string, string> = { new: 'Nuevo', regular: 'Regular' }
@@ -65,7 +72,7 @@ function SummaryCards({ students }: { students: Student[] | null }) {
     if (!students) return { total: 0, active: 0, newType: 0, portal: 0 }
     return {
       total:   students.length,
-      active:  students.filter(s => s.status === 'active').length,
+      active:  students.filter(s => s.student_status ? s.student_status === 'activo' : s.status === 'active').length,
       newType: students.filter(s => isThisMonth(s.enrolled_at)).length,
       portal:  students.filter(s => !!s.user_id).length,
     }
@@ -106,7 +113,7 @@ export default function StudentsPage() {
 
   const filtered = useMemo(() => {
     if (!students) return []
-    let list = filter === 'all' ? students : students.filter(s => s.status === filter)
+    let list = filter === 'all' ? students : students.filter(s => (s.student_status ?? s.status) === filter)
     if (search.trim()) {
       const q = search.toLowerCase()
       list = list.filter(s =>
@@ -118,9 +125,9 @@ export default function StudentsPage() {
     return list
   }, [students, filter, search])
 
-  const FILTERS = ['all', 'active', 'inactive', 'suspended']
+  const FILTERS = ['all', 'activo', 'riesgo', 'inactivo', 'exalumno', 'lead', 'matriculado']
   const FILTER_LABEL: Record<string, string> = {
-    all: 'Todos', active: 'Activos', inactive: 'Inactivos', suspended: 'Suspendidos',
+    all: 'Todos', activo: 'Activos', riesgo: 'Riesgo', inactivo: 'Inactivos', exalumno: 'Exalumnos', lead: 'Leads', matriculado: 'Matriculados',
   }
 
   return (
@@ -253,15 +260,15 @@ export default function StudentsPage() {
 
                   {/* Estado */}
                   <div className="hidden md:flex justify-end">
-                    <span className={`text-[11px] px-2 py-0.5 rounded-full font-semibold border ${STATUS_PILL[s.status]}`}>
-                      {STATUS_LABEL[s.status]}
+                    <span className={`text-[11px] px-2 py-0.5 rounded-full font-semibold border ${STATUS_PILL[s.student_status ?? s.status]}`}>
+                      {STATUS_LABEL[s.student_status ?? s.status]}
                     </span>
                   </div>
 
                   {/* Mobile: estado + flecha */}
                   <div className="md:hidden ml-auto flex items-center gap-2 shrink-0">
-                    <span className={`text-[11px] px-2 py-0.5 rounded-full font-semibold border ${STATUS_PILL[s.status]}`}>
-                      {STATUS_LABEL[s.status]}
+                    <span className={`text-[11px] px-2 py-0.5 rounded-full font-semibold border ${STATUS_PILL[s.student_status ?? s.status]}`}>
+                      {STATUS_LABEL[s.student_status ?? s.status]}
                     </span>
                     <svg className="h-4 w-4 text-white/20 group-hover:text-white/50 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                       <path d="m9 18 6-6-6-6"/>

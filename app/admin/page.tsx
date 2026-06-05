@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import Link from 'next/link'
 import type { ClassSession } from '@/types/admin'
 import { ActivityFeed } from './_components/DashboardLive'
+import { getRetentionDashboardData } from './_actions/retention'
 
 export const dynamic = 'force-dynamic'
 
@@ -90,8 +91,10 @@ const STATUS_COLOR: Record<string, string> = {
 }
 
 export default async function AdminDashboard() {
-  const stats = await getDashboardStats()
+  const [stats, retention] = await Promise.all([getDashboardStats(), getRetentionDashboardData()])
   const today = new Date().toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+  const retentionDashboard = retention.dashboard as any
+  const highRisk = retention.highRisk as any[]
 
   return (
     <div className="space-y-6 w-full page-animate">
@@ -151,6 +154,43 @@ export default async function AdminDashboard() {
           <KpiCard label="Clases hoy"           value={stats.todaySessions.length} color="blue"   hint="Clases programadas para el día de hoy" />
           <KpiCard label="Clases esta semana"   value={stats.weekSessionCount}      color="green"  hint="Total de clases de lunes a domingo" />
           <KpiCard label="Salones en uso hoy"   value={stats.roomOccupancy.length}  color="purple" hint="Salones con al menos una clase hoy" />
+        </div>
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-[1fr_340px]">
+        <div className="bg-gray-900 border border-white/10 rounded-xl p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="font-semibold text-sm text-white">Retención de estudiantes</h2>
+              <p className="text-xs text-white/30 mt-0.5">Alertas operativas para priorizar seguimiento</p>
+            </div>
+            <Link href="/admin/reactivacion" className="text-xs text-orange-400 hover:text-orange-300 font-medium">
+              Abrir módulo →
+            </Link>
+          </div>
+          <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <MiniRetention label="En riesgo" value={retentionDashboard?.risk_students ?? 0} tone="yellow" />
+            <MiniRetention label="Inactivos" value={retentionDashboard?.inactive_students ?? 0} tone="red" />
+            <MiniRetention label="Planes vencen" value={retentionDashboard?.plans_expiring_week ?? 0} tone="orange" />
+            <MiniRetention label="Sin próximas" value={retentionDashboard?.without_upcoming_sessions ?? 0} tone="blue" />
+          </div>
+        </div>
+
+        <div className="bg-gray-900 border border-white/10 rounded-xl p-5">
+          <h2 className="font-semibold text-sm text-white">Mayor riesgo</h2>
+          <div className="mt-3 space-y-2">
+            {highRisk.length === 0 ? (
+              <p className="text-xs text-white/35">Sin alumnos priorizados.</p>
+            ) : highRisk.slice(0, 4).map((student) => (
+              <Link key={student.id} href={`/admin/students/${student.id}`} className="flex items-center justify-between rounded-lg border border-white/5 bg-black/20 px-3 py-2 hover:border-orange-500/25">
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-semibold text-white">{student.name}</p>
+                  <p className="text-[10px] text-white/30">{student.days_since_activity} días sin actividad</p>
+                </div>
+                <span className="text-xs font-bold text-red-300">{student.retention_score ?? 0}</span>
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -236,6 +276,21 @@ export default async function AdminDashboard() {
           </div>
         </section>
       </div>
+    </div>
+  )
+}
+
+function MiniRetention({ label, value, tone }: { label: string; value: number; tone: 'yellow' | 'red' | 'orange' | 'blue' }) {
+  const colors = {
+    yellow: 'text-yellow-300',
+    red: 'text-red-300',
+    orange: 'text-orange-300',
+    blue: 'text-blue-300',
+  }
+  return (
+    <div className="rounded-lg border border-white/10 bg-black/20 px-3 py-3">
+      <p className={`text-2xl font-black ${colors[tone]}`}>{value}</p>
+      <p className="text-[11px] text-white/35">{label}</p>
     </div>
   )
 }

@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { createAuthServerClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type { EnrollmentEvent, EnrollmentEventType } from '@/types/enrollment'
+import { safeRecordStudentActivity } from './retention'
 
 // Para lecturas usa el cliente autenticado (JWT del admin + política RLS authenticated)
 // Para escrituras usa el cliente admin (service_role)
@@ -154,6 +155,7 @@ export async function convertEnrollmentToStudent(
   const parts      = enrollment.student_name.trim().split(/\s+/)
   const first_name = parts[0] ?? ''
   const last_name  = parts.slice(1).join(' ') || ''
+  const now = new Date().toISOString()
 
   const { data: student, error: studentErr } = await db()
     .from('students')
@@ -167,6 +169,10 @@ export async function convertEnrollmentToStudent(
       student_type: 'new',
       status:       'active',
       enrolled_at:  new Date().toISOString().split('T')[0],
+      student_status: 'matriculado',
+      student_since: now,
+      last_activity_at: now,
+      retention_score: 100,
     })
     .select('id')
     .single()
@@ -175,8 +181,6 @@ export async function convertEnrollmentToStudent(
     if (studentErr.code === '23505') return { error: 'Ya existe un estudiante con ese email.' }
     return { error: studentErr.message }
   }
-
-  const now = new Date().toISOString()
 
   const { error: updateErr } = await db()
     .from('enrollments')
@@ -193,6 +197,10 @@ export async function convertEnrollmentToStudent(
     enrollment_id: enrollmentId,
     type:         'converted',
     description:  'Convertido a estudiante activo',
+  })
+
+  await safeRecordStudentActivity(student.id, 'enrolled', 'Inscripcion convertida a estudiante.', {
+    enrollment_id: enrollmentId,
   })
 
   revalidatePath('/admin/enrollments')

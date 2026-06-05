@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import type { BookingFormState } from '@/types/booking'
+import { safeRecordStudentActivity } from '@/app/admin/_actions/retention'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function admin(): any { return createAdminClient() }
@@ -280,6 +281,12 @@ export async function studentBookAction(
     }
   }
 
+  await safeRecordStudentActivity(student.id, 'class_booked', 'Clase agendada desde el portal del estudiante.', {
+    course_id: (course as any).id,
+    scheduled_date: selectedDateIso,
+    start_time: startTime,
+  })
+
   revalidatePath('/mi-cuenta')
   revalidatePath('/agendar')
   return { status: 'success', submittedCourse: (course as any).name }
@@ -348,6 +355,7 @@ export async function loginAction(
     if (!studentRecord) {
       redirect('/planes')
     }
+    await safeRecordStudentActivity(studentRecord.id, 'login', 'Inicio de sesion en portal estudiante.')
   }
 
   const next = (formData.get('next') as string | null)?.trim()
@@ -415,11 +423,17 @@ export async function registerAction(
     .from('students')
     .insert({
       name: `${first_name} ${last_name}`.trim() || first_name,
+      first_name,
+      last_name,
       email,
       phone,
       user_id: authData.user.id,
       status: 'active',
       student_type: 'new',
+      student_status: 'lead',
+      student_since: new Date().toISOString(),
+      last_activity_at: new Date().toISOString(),
+      retention_score: 100,
     })
 
   if (studentError) {

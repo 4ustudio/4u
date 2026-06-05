@@ -8,6 +8,7 @@ import DeleteStudentButton from './_components/DeleteStudentButton'
 import StudentSessionsPanel from './_components/StudentSessionsPanel'
 import PasswordSection from './_components/PasswordSection'
 import type { Student, MonthlyUsage, StudentSchedule } from '@/types/admin'
+import { getStudentRetentionProfile } from '../../_actions/retention'
 
 export const dynamic = 'force-dynamic'
 
@@ -59,6 +60,7 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
   if (!data) notFound()
 
   const { student, usage, upcoming, past, schedules } = data
+  const retention = await getStudentRetentionProfile(id)
   const now = new Date()
   const monthLabel = now.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' })
 
@@ -96,6 +98,79 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
           <StudentEditForm student={student} />
 
           <PasswordSection studentId={id} hasAccount={!!student.user_id} email={student.email} />
+
+          <section className="bg-gray-900 border border-white/10 rounded-xl p-5 space-y-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-sm font-semibold text-white">Perfil histórico</h2>
+                <p className="mt-1 text-xs text-white/35">Retención, instrumentos y actividad permanente del alumno.</p>
+              </div>
+              <span className="rounded-full border border-orange-500/20 bg-orange-500/10 px-2.5 py-1 text-xs font-bold text-orange-300">
+                {student.retention_score ?? 100}/100
+              </span>
+            </div>
+
+            {retention.migrationMissing ? (
+              <p className="rounded-lg border border-yellow-500/20 bg-yellow-500/10 px-3 py-2 text-xs text-yellow-100">
+                Aplica supabase-retention-v1.sql para activar historial CRM.
+              </p>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                  <HistoryKpi label="Alumno desde" value={formatShortDate(student.student_since ?? student.enrolled_at)} />
+                  <HistoryKpi label="Última actividad" value={formatShortDate(student.last_activity_at)} />
+                  <HistoryKpi label="Estado" value={student.student_status ?? 'activo'} />
+                  <HistoryKpi label="Instrumentos" value={retention.instruments.length} />
+                </div>
+
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <div className="rounded-lg border border-white/10 bg-black/20 p-4">
+                    <p className="text-xs font-bold uppercase tracking-wider text-white/35">Instrumentos estudiados</p>
+                    <div className="mt-3 space-y-2">
+                      {retention.instruments.length === 0 ? (
+                        <p className="text-xs text-white/35">Sin clases registradas todavía.</p>
+                      ) : retention.instruments.map((item: any) => (
+                        <div key={item.course_id} className="flex items-center justify-between gap-3 text-xs">
+                          <span className="font-semibold text-white">{item.course_name}</span>
+                          <span className="text-white/40">
+                            {item.completed_classes} completadas · {item.cancelled_classes} canceladas · {item.no_show_classes} no show
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border border-white/10 bg-black/20 p-4">
+                    <p className="text-xs font-bold uppercase tracking-wider text-white/35">Eventos recientes</p>
+                    <div className="mt-3 space-y-2">
+                      {retention.events.length === 0 ? (
+                        <p className="text-xs text-white/35">Sin eventos de retención.</p>
+                      ) : retention.events.slice(0, 5).map((event: any) => (
+                        <div key={event.id} className="text-xs">
+                          <p className="font-semibold text-white">{event.description ?? event.event_type}</p>
+                          <p className="text-white/35">{formatShortDate(event.occurred_at)}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-white/10 bg-black/20 p-4">
+                  <p className="text-xs font-bold uppercase tracking-wider text-white/35">Observaciones administrativas</p>
+                  <div className="mt-3 space-y-3">
+                    {retention.notes.length === 0 ? (
+                      <p className="text-xs text-white/35">Sin observaciones históricas.</p>
+                    ) : retention.notes.slice(0, 4).map((note: any) => (
+                      <div key={note.id} className="rounded-lg border border-white/5 bg-white/[0.03] px-3 py-2">
+                        <p className="text-xs text-white/75">{note.note}</p>
+                        <p className="mt-1 text-[11px] text-white/30">{formatShortDate(note.created_at)}{note.outcome ? ` · ${note.outcome}` : ''}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </section>
 
           <ScheduleSection
             schedules={schedules}
@@ -149,6 +224,20 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
           </div>
         </aside>
       </div>
+    </div>
+  )
+}
+
+function formatShortDate(value?: string | null) {
+  if (!value) return 'Sin registro'
+  return new Date(value).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+function HistoryKpi({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="rounded-lg border border-white/10 bg-black/20 px-4 py-3">
+      <p className="text-sm font-black capitalize text-white">{value}</p>
+      <p className="mt-1 text-[11px] text-white/35">{label}</p>
     </div>
   )
 }

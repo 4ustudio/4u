@@ -279,7 +279,7 @@ function LeadDrawer({
           w-full sm:w-[520px] lg:w-[44vw] xl:w-[42vw] max-w-[680px]
           bg-[#0f0f0f] border-l border-white/[0.08]
           transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]
-          ${open ? 'translate-x-0' : 'translate-x-full'}
+          ${open ? 'translate-x-0' : 'translate-x-[105%] pointer-events-none'}
         `}
       >
         {e && (
@@ -562,6 +562,7 @@ function SpinIcon() {
 export default function LeadsPage() {
   const [enrollments, setEnrollments] = useState<EnrollmentRow[] | null>(null)
   const [loading, setLoading]         = useState(true)
+  const [reloading, setReloading]     = useState(false)
   const [selected, setSelected]       = useState<EnrollmentRow | null>(null)
   const [drawerOpen, setDrawerOpen]   = useState(false)
   const [events, setEvents]           = useState<EnrollmentEvent[]>([])
@@ -581,6 +582,12 @@ export default function LeadsPage() {
     setEnrollments(data as EnrollmentRow[])
     setLoading(false)
   }, [])
+
+  const reload = useCallback(async () => {
+    setReloading(true)
+    await load()
+    setReloading(false)
+  }, [load])
 
   useEffect(() => { load() }, [load])
 
@@ -729,7 +736,7 @@ export default function LeadsPage() {
   const total = enrollments?.length ?? 0
 
   return (
-    <div className="space-y-5 w-full">
+    <div className="space-y-5 w-full overflow-x-hidden">
 
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -747,10 +754,12 @@ export default function LeadsPage() {
             Vista lista
           </Link>
           <button
-            onClick={load}
-            className="text-xs text-white/50 hover:text-white transition-colors px-3 py-1.5 rounded-lg border border-white/10 hover:border-white/25"
+            onClick={reload}
+            disabled={reloading}
+            className="inline-flex items-center gap-2 text-xs text-white/50 hover:text-white transition-colors px-3 py-1.5 rounded-lg border border-white/10 hover:border-white/25 disabled:opacity-60"
           >
-            Recargar
+            {reloading && <SpinIcon />}
+            {reloading ? 'Recargando…' : 'Recargar'}
           </button>
         </div>
       </div>

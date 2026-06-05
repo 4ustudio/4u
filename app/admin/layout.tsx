@@ -45,15 +45,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               <span style={{ color: '#ff7a00' }}>4U</span> STUDIO
             </p>
 
-            <button
-              type="button"
+            <div
               className="hidden lg:grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/[0.03] text-white/65"
-              aria-label="Menú"
+              aria-hidden="true"
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
                 <path d="M4 7h16M4 12h16M4 17h16" />
               </svg>
-            </button>
+            </div>
 
             <div className="ml-auto flex items-center gap-3">
               <NotificationBell />

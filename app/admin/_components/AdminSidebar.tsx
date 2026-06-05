@@ -126,7 +126,7 @@ export default function AdminSidebar({ role }: { role: AppRole | null }) {
   const executiveMode = canAccessSalesDashboard(role)
 
   return (
-    <aside className="hidden lg:flex w-[250px] shrink-0 border-r border-white/8 bg-[#070707] flex-col min-h-screen">
+    <aside className="hidden lg:flex sticky top-0 h-screen w-[250px] shrink-0 border-r border-white/8 bg-[#070707] flex-col">
       <div className="px-7 pt-8 pb-6 border-b border-white/8">
         <p className="text-[22px] font-black tracking-tight text-white leading-none">
           <span className="text-[#ff7a00]">4U</span> STUDIO
@@ -144,13 +144,13 @@ export default function AdminSidebar({ role }: { role: AppRole | null }) {
         </div>
       </div>
 
-      <nav className="flex-1 px-4 py-5 space-y-2">
+      <nav className="flex-1 overflow-y-auto px-4 py-5 space-y-2">
         {nav.map((item) => (
           <NavLink key={item.href} item={item} pathname={pathname} />
         ))}
       </nav>
 
-      <div className="px-4 pb-5">
+      <div className="mt-auto px-4 pb-5 pt-3">
         <div className="overflow-hidden rounded-[26px] border border-white/12 bg-[#0d0d0d]">
           <div className="relative h-44">
             <Image

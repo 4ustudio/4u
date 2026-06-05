@@ -182,7 +182,7 @@ function Drawer({
           bg-[#0f0f0f] border-l border-white/[0.08]
           shadow-[−24px_0_80px_rgba(0,0,0,0.6)]
           transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]
-          ${open ? 'translate-x-0' : 'translate-x-full'}
+          ${open ? 'translate-x-0' : 'translate-x-[105%] pointer-events-none'}
         `}
       >
         {e && (
@@ -434,6 +434,7 @@ function Badge({ children, color }: { children: React.ReactNode; color: string }
 export default function AdminEnrollmentsPage() {
   const [enrollments, setEnrollments] = useState<EnrollmentRow[] | null>(null)
   const [loading, setLoading]         = useState(true)
+  const [reloading, setReloading]     = useState(false)
   const [loadError, setLoadError]     = useState<string | null>(null)
   const [selected, setSelected]       = useState<EnrollmentRow | null>(null)
   const [drawerOpen, setDrawerOpen]   = useState(false)
@@ -458,6 +459,12 @@ export default function AdminEnrollmentsPage() {
     setEnrollments(data as EnrollmentRow[])
     setLoading(false)
   }, [])
+
+  const reload = useCallback(async () => {
+    setReloading(true)
+    await load()
+    setReloading(false)
+  }, [load])
 
   useEffect(() => { load() }, [load])
 
@@ -611,7 +618,7 @@ export default function AdminEnrollmentsPage() {
   }
 
   return (
-    <div className="space-y-5 w-full">
+    <div className="space-y-5 w-full overflow-x-hidden">
 
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -619,8 +626,13 @@ export default function AdminEnrollmentsPage() {
           <h1 className="text-xl font-bold text-white">Inscripciones</h1>
           <p className="text-sm text-white/40 mt-0.5">CRM de prospectos</p>
         </div>
-        <button onClick={load} className="text-xs text-white/50 hover:text-white transition-colors px-3 py-1.5 rounded-lg border border-white/10 hover:border-white/25">
-          Recargar
+        <button
+          onClick={reload}
+          disabled={reloading}
+          className="inline-flex items-center gap-2 text-xs text-white/50 hover:text-white transition-colors px-3 py-1.5 rounded-lg border border-white/10 hover:border-white/25 disabled:opacity-60"
+        >
+          {reloading && <SpinIcon />}
+          {reloading ? 'Recargando…' : 'Recargar'}
         </button>
       </div>
 

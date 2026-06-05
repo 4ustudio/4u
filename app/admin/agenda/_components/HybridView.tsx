@@ -347,7 +347,7 @@ export default function HybridView({
   )
 
   return (
-    <div className="animate-fade-in-up">
+    <div className="animate-fade-in-up overflow-x-hidden">
       {/* ── MÓVIL: tabs + contenido ───────────────────────────── */}
       <div className="lg:hidden -m-4">
         {/* Tabs móvil */}
@@ -379,8 +379,8 @@ export default function HybridView({
 
       {/* ── DESKTOP: panel lateral + calendario ───────────────── */}
       {/* Altura fija = viewport - header (48px). El sidebar llena todo, el calendario scrollea dentro. */}
-      <div className="hidden lg:flex -m-6" style={{ height: 'calc(100vh - 48px)' }}>
-        <aside className="w-72 shrink-0 bg-[#0f0f0f] border-r border-white/10 flex flex-col overflow-hidden">
+      <div className="hidden lg:flex min-h-[calc(100vh-10rem)] overflow-hidden rounded-[28px] border border-white/8 bg-[#090909]">
+        <aside className="w-72 xl:w-80 shrink-0 bg-[#0f0f0f] border-r border-white/10 flex flex-col overflow-hidden">
           {StudentsPanel}
         </aside>
         <div className="flex-1 min-w-0 overflow-auto">

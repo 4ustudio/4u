@@ -186,6 +186,7 @@ export default function NosotrosPage() {
                 muted
                 loop
                 playsInline
+                preload="metadata"
                 className="absolute inset-0 h-full w-full object-cover object-center"
               />
               <div className="absolute inset-0 bg-gradient-to-r from-black via-black/30 to-transparent" />

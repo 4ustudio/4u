@@ -13,8 +13,16 @@ interface Props {
   photo?: string | null
 }
 
-export default function InstructorCard({ name, role, bio, specialties, photo }: Props) {
+function getPhotoPosition(id: string, name: string) {
+  const slug = `${id} ${name}`.toLowerCase()
+  if (slug.includes('anais')) return 'object-[center_72%]'
+  if (slug.includes('alvaro')) return 'object-[center_28%]'
+  return 'object-[center_18%]'
+}
+
+export default function InstructorCard({ id, name, role, bio, specialties, photo }: Props) {
   const [open, setOpen] = useState(false)
+  const photoPosition = getPhotoPosition(id, name)
 
   // Texto corto para la card (primera oración)
   const shortBio = bio.split(/\.\s/)[0] + '.'
@@ -25,17 +33,17 @@ export default function InstructorCard({ name, role, bio, specialties, photo }: 
 
         {/* Foto */}
         {photo && (
-          <div className="relative h-48 overflow-hidden">
+          <div className="relative h-56 overflow-hidden">
             <Image
               src={photo}
               alt={name}
               fill
-              className="object-cover object-top"
+              className={`object-cover ${photoPosition}`}
               sizes="340px"
             />
             <div
               className="absolute inset-0"
-              style={{ background: 'linear-gradient(to top, #141414 10%, rgba(0,0,0,0.2) 60%, transparent 100%)' }}
+              style={{ background: 'linear-gradient(to top, #141414 16%, rgba(0,0,0,0.18) 55%, transparent 100%)' }}
             />
             <span className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-lg border border-green-500/30 bg-green-500/15 px-2.5 py-1 text-[11px] font-bold text-green-400 backdrop-blur-sm">
               <span className="h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse" />
@@ -90,7 +98,7 @@ export default function InstructorCard({ name, role, bio, specialties, photo }: 
             {/* Header con foto */}
             {photo && (
               <div className="relative h-52 overflow-hidden">
-                <Image src={photo} alt={name} fill className="object-cover object-top" sizes="512px" />
+                <Image src={photo} alt={name} fill className={`object-cover ${photoPosition}`} sizes="512px" />
                 <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, #141414 5%, rgba(0,0,0,0.3) 60%, transparent 100%)' }} />
                 <button
                   onClick={() => setOpen(false)}

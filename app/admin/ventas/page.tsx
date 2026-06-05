@@ -275,9 +275,6 @@ export default async function VentasPage() {
                 <path d="M8 2v4M16 2v4M4 10h16M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" />
               </svg>
               <span>{data.rangeLabel}</span>
-              <svg className="h-4 w-4 text-white/35" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-                <path d="m6 9 6 6 6-6" />
-              </svg>
             </div>
           </div>
         </div>
@@ -599,11 +596,15 @@ function LegendList({ items, total, compact = false }: { items: DonutItem[]; tot
   return (
     <div className="space-y-3">
       {items.map((item) => (
-        <div key={item.label} className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 text-sm">
-          <span className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
-          <span className="text-white/82">{item.label}</span>
-          <span className="text-white/55">{compact ? peso(item.value) : peso(item.value)}</span>
-          <span className="text-white/35">{percentage(item.value, total)}%</span>
+        <div key={item.label} className="flex items-start gap-3 text-sm">
+          <span className="mt-1 h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: item.color }} />
+          <div className="min-w-0 flex-1">
+            <p className="text-white/82 leading-snug">{item.label}</p>
+            <div className="mt-1 flex items-center gap-3 text-xs">
+              <span className="text-white/55">{compact ? peso(item.value) : peso(item.value)}</span>
+              <span className="text-white/35">{percentage(item.value, total)}%</span>
+            </div>
+          </div>
         </div>
       ))}
     </div>

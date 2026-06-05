@@ -106,7 +106,7 @@ export default async function AgendarPage() {
 
               {/* Nota final */}
               <p className="text-[11px] text-white/30 font-roboto leading-relaxed border-t border-white/8 pt-4">
-                Los horarios disponibles se generan automáticamente según la disponibilidad real de nuestros instructores.
+                Los horarios se actualizan según la disponibilidad real de nuestros instructores.
               </p>
 
             </div>

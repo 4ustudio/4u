@@ -121,6 +121,7 @@ export default async function CursosPage() {
             muted
             loop
             playsInline
+            preload="metadata"
             className="absolute inset-0 h-full w-full object-cover"
             style={{ objectPosition: "78% center", transform: "scaleX(-1)" }}
           />

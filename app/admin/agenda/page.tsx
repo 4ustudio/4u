@@ -47,7 +47,7 @@ async function getPageData(weekStart: string) {
       .order('name'),
 
     supabase.from('courses').select('id, name').eq('is_active', true),
-    supabase.from('classrooms').select('id, name').eq('is_active', true),
+    supabase.from('classrooms').select('id, name, classroom_courses(course_id)').eq('is_active', true),
     supabase.from('instructors').select('id, name').eq('status', 'active'),
   ])
 

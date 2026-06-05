@@ -25,7 +25,7 @@ interface Props {
   upcoming:    any[]
   past:        any[]
   students:    { id: string; name: string; phone: string }[]
-  classrooms:  { id: string; name: string }[]
+  classrooms:  { id: string; name: string; classroom_courses: { course_id: string }[] }[]
   instructors: { id: string; name: string }[]
   courses:     { id: string; name: string }[]
 }

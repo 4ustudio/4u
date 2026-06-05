@@ -24,14 +24,22 @@ export default async function AgendarPage() {
   let activeCourses: { id: string; name: string }[] = []
   let studentId: string | undefined
 
-  const [instrResult, coursesResult] = await Promise.all([
+  const [instrResult, ccResult] = await Promise.all([
     adminClient.from("instructors").select("id, name, notes").eq("status", "active").order("name"),
-    adminClient.from("courses").select("id, name").eq("is_active", true).order("name"),
+    adminClient.from("classroom_courses").select("course_id"),
   ])
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const allInstructors = (instrResult.data ?? []) as { id: string; name: string; notes?: string | null }[]
-  activeCourses = (coursesResult.data ?? []) as { id: string; name: string }[]
+
+  const allowedCourseIds = [...new Set((ccResult.data ?? []).map(r => r.course_id))]
+  const { data: coursesData } = await adminClient
+    .from("courses")
+    .select("id, name")
+    .in("id", allowedCourseIds)
+    .eq("is_active", true)
+    .order("name")
+  activeCourses = (coursesData ?? []) as { id: string; name: string }[]
 
   if (user) {
     const { data } = await adminClient.from("students").select("id").eq("user_id", user.id).maybeSingle()

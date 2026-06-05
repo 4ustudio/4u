@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import WeekCalendar from './WeekCalendar'
 import type { ClassSession, AvailableSlot } from '@/types/admin'
+import type { Classroom } from './BookSessionModal'
 
 interface Student {
   id: string
@@ -22,7 +23,7 @@ interface Props {
   blocked:           any[]
   students:          Student[]
   courses:           { id: string; name: string }[]
-  classrooms:        { id: string; name: string }[]
+  classrooms:        Classroom[]
   instructors:       { id: string; name: string }[]
   availabilityByDay: Record<string, AvailableSlot[]>
 }

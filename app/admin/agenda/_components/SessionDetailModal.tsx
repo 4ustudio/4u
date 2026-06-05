@@ -195,7 +195,7 @@ export default function SessionDetailModal({ session, classrooms, instructors, o
               <div>
                 <label className="block text-xs text-white/50 mb-1.5">Salón</label>
                 <select name="new_classroom_id" required disabled={reschedPending} className={inputClass + ' appearance-none'} defaultValue={session.classroom_id}>
-                  <option value="" disabled>Seleccionar salón</option>
+                  <option value="" disabled>Seleccionar estudio</option>
                   {classrooms.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
                 </select>
               </div>

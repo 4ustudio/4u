@@ -65,7 +65,7 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
   // Datos para los modales de horarios
   const [{ data: courses }, { data: classrooms }, { data: instructors }] = await Promise.all([
     db().from('courses').select('id, name').eq('is_active', true),
-    db().from('classrooms').select('id, name').eq('is_active', true),
+    db().from('classrooms').select('id, name, classroom_courses(course_id)').eq('is_active', true),
     db().from('instructors').select('id, name').eq('status', 'active'),
   ])
 

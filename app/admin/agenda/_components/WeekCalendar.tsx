@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import BookSessionModal from './BookSessionModal'
 import SessionDetailModal from './SessionDetailModal'
 import type { ClassSession, AvailableSlot } from '@/types/admin'
+import type { Classroom } from './BookSessionModal'
 
 // Slots por día de la semana
 // ISODOW: 1=Lun…5=Vie → 10:00–22:00  |  6=Sáb, 7=Dom → cerrado
@@ -58,7 +59,7 @@ interface Props {
   blocked:           any[]
   students:          { id: string; name: string; phone: string }[]
   courses:           { id: string; name: string }[]
-  classrooms:        { id: string; name: string }[]
+  classrooms:        Classroom[]
   instructors:       { id: string; name: string }[]
   availabilityByDay: Record<string, AvailableSlot[]>
   defaultStudentId?: string

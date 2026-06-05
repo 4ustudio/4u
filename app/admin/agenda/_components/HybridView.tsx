@@ -183,7 +183,7 @@ export default function HybridView({
             placeholder="Buscar por nombre o teléfono…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-8 pr-3 py-2 text-xs bg-gray-800 border border-white/10 rounded-lg text-white placeholder:text-white/20 focus:outline-none focus:ring-1 focus:ring-orange-500/50"
+            className="w-full pl-8 pr-3 py-2 text-xs bg-[#141414] border border-white/10 rounded-lg text-white placeholder:text-white/20 focus:outline-none focus:ring-1 focus:ring-orange-500/50"
           />
         </div>
 
@@ -351,7 +351,7 @@ export default function HybridView({
       {/* ── MÓVIL: tabs + contenido ───────────────────────────── */}
       <div className="lg:hidden -m-4">
         {/* Tabs móvil */}
-        <div className="flex border-b border-white/10 bg-gray-900 sticky top-0 z-10">
+        <div className="flex border-b border-white/10 bg-[#0f0f0f] sticky top-0 z-10">
           <button
             onClick={() => setMobileTab('agenda')}
             className={`flex-1 py-3 text-sm font-semibold transition-colors ${
@@ -380,7 +380,7 @@ export default function HybridView({
       {/* ── DESKTOP: panel lateral + calendario ───────────────── */}
       {/* Altura fija = viewport - header (48px). El sidebar llena todo, el calendario scrollea dentro. */}
       <div className="hidden lg:flex -m-6" style={{ height: 'calc(100vh - 48px)' }}>
-        <aside className="w-72 shrink-0 bg-gray-900 border-r border-white/10 flex flex-col overflow-hidden">
+        <aside className="w-72 shrink-0 bg-[#0f0f0f] border-r border-white/10 flex flex-col overflow-hidden">
           {StudentsPanel}
         </aside>
         <div className="flex-1 min-w-0 overflow-auto">

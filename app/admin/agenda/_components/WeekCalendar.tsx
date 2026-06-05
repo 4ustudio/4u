@@ -38,7 +38,7 @@ const STATUS_COLOR: Record<string, string> = {
   completed:   'border-l-green-400 bg-green-900/15',
   cancelled:   'border-l-red-400 bg-red-900/15 opacity-50',
   rescheduled: 'border-l-purple-400 bg-purple-900/15 opacity-50',
-  no_show:     'border-l-gray-500 bg-gray-800/30 opacity-50',
+  no_show:     'border-l-gray-500 bg-[#141414]/30 opacity-50',
 }
 
 function getSlotStatus(
@@ -126,7 +126,7 @@ export default function WeekCalendar({ weekStart, sessions, blocked, students, c
 
       {/* Leyenda */}
       <div className="flex flex-wrap gap-3 mb-3 text-xs text-white/40">
-        <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-green-900/30 border border-green-500/40" />Disponible</span>
+        <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-[#ff7a00]/8 border border-[#ff7a00]/35" />Disponible</span>
         <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-red-900/50 border border-red-900/50" />Ocupado</span>
         <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-green-900/30 border-l-2 border-l-green-400" />Confirmada</span>
         <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-yellow-900/20 border-l-2 border-l-yellow-400" />Pendiente</span>
@@ -134,7 +134,7 @@ export default function WeekCalendar({ weekStart, sessions, blocked, students, c
       </div>
 
       {/* Grilla */}
-      <div className="overflow-x-auto rounded-xl border border-white/10 bg-gray-900">
+      <div className="overflow-x-auto rounded-xl border border-white/10 bg-[#0f0f0f]">
         <table className="w-full text-xs border-collapse min-w-[700px]">
           <thead>
             <tr className="border-b border-white/10">
@@ -172,7 +172,7 @@ export default function WeekCalendar({ weekStart, sessions, blocked, students, c
                   // Domingo → cerrado
                   if (isClosed) {
                     return (
-                      <td key={dateStr} className="px-1 py-1 border-l border-white/5 bg-gray-950/60 align-top" rowSpan={1}>
+                      <td key={dateStr} className="px-1 py-1 border-l border-white/5 bg-black/40 align-top" rowSpan={1}>
                         {slot === sortedSlots[0] && (
                           <div className="h-full min-h-[60px] flex items-center justify-center">
                             <span className="text-red-400/50 text-[10px] text-center leading-tight">Sin<br/>disponibilidad</span>
@@ -185,7 +185,7 @@ export default function WeekCalendar({ weekStart, sessions, blocked, students, c
                   // Fuera del horario del día
                   if (!inRange) {
                     return (
-                      <td key={dateStr} className="border-l border-white/5 bg-gray-950/30">
+                      <td key={dateStr} className="border-l border-white/5 bg-black/20">
                         <div className="h-8" />
                       </td>
                     )
@@ -211,7 +211,7 @@ export default function WeekCalendar({ weekStart, sessions, blocked, students, c
                             <button
                               key={s.id}
                               onClick={() => setViewSession(s)}
-                              className={`w-full text-left px-2 py-1.5 rounded border-l-2 cursor-pointer hover:brightness-125 transition-all ${STATUS_COLOR[s.status] ?? 'bg-gray-800 border-l-gray-500'}`}
+                              className={`w-full text-left px-2 py-1.5 rounded border-l-2 cursor-pointer hover:brightness-125 transition-all ${STATUS_COLOR[s.status] ?? 'bg-[#141414] border-l-gray-500'}`}
                             >
                               <p className="text-white/90 font-medium truncate text-[11px]">
                                 {(s.student as any)?.name ?? '—'}
@@ -246,10 +246,10 @@ export default function WeekCalendar({ weekStart, sessions, blocked, students, c
                     <td key={dateStr} className="px-1 py-1 border-l border-white/5 align-top">
                       <button
                         onClick={() => handleSlotClick(dateStr, slot, isodow, true)}
-                        className="w-full min-h-[52px] rounded border border-green-900/30 bg-green-900/15 hover:bg-green-700/20 hover:border-green-500/40 transition-all group cursor-pointer"
+                        className="w-full min-h-[52px] rounded border border-[#ff7a00]/12 bg-[#ff7a00]/5 hover:bg-[#ff7a00]/12 hover:border-[#ff7a00]/30 transition-all group cursor-pointer"
                         title="Crear clase"
                       >
-                        <span className="text-green-400/50 group-hover:text-green-300/80 text-lg transition-colors">+</span>
+                        <span className="text-[#ff7a00]/45 group-hover:text-[#ff7a00]/75 text-lg transition-colors">+</span>
                       </button>
                     </td>
                   )

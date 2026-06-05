@@ -84,7 +84,7 @@ function SummaryCards({ students }: { students: Student[] | null }) {
         { label: 'Total',            val: s.total,   c: 'text-white',      bg: 'bg-white/5 border-white/8' },
         { label: 'Activos',          val: s.active,  c: 'text-green-400',  bg: 'bg-green-400/8 border-green-400/10' },
         { label: 'Ingresaron este mes', val: s.newType, c: 'text-orange-400', bg: 'bg-orange-400/8 border-orange-400/10' },
-        { label: 'Con portal',       val: s.portal,  c: 'text-violet-400',  bg: 'bg-violet-400/8 border-violet-400/10' },
+        { label: 'Con portal',       val: s.portal,  c: 'text-white/55',  bg: 'bg-white/6 border-white/10' },
       ] as const).map(card => (
         <div key={card.label} className={`rounded-xl border px-4 py-3 ${card.bg}`}>
           <p className={`text-2xl font-extrabold ${card.c}`}>{students === null ? '—' : card.val}</p>
@@ -192,7 +192,7 @@ export default function StudentsPage() {
           ) : 'Sin resultados para este filtro.'}
         </div>
       ) : (
-        <div className="bg-gray-900 border border-white/10 rounded-xl overflow-hidden">
+        <div className="bg-[#0f0f0f] border border-white/10 rounded-xl overflow-hidden">
           {/* Encabezado de tabla — desktop */}
           <div className="hidden md:grid md:grid-cols-[48px_1fr_160px_160px_100px_80px] gap-4 px-5 py-2.5 border-b border-white/[0.06] text-[10px] uppercase tracking-widest text-white/25 font-semibold">
             <span />

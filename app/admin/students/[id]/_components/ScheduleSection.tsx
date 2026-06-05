@@ -51,7 +51,7 @@ export default function ScheduleSection({ schedules, studentId, courses, classro
   }, [studentId, router])
 
   return (
-    <section className="bg-gray-900 border border-white/10 rounded-xl overflow-hidden">
+    <section className="bg-[#0f0f0f] border border-white/10 rounded-xl overflow-hidden">
       <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-white">
           Horarios fijos
@@ -79,7 +79,7 @@ export default function ScheduleSection({ schedules, studentId, courses, classro
                   <span className="text-sm text-white font-medium">
                     {DAY_LABELS[s.day_of_week]} {s.start_time?.slice(0, 5)}
                   </span>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${STATUS_STYLE[s.status] ?? 'bg-gray-800 text-gray-400'}`}>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${STATUS_STYLE[s.status] ?? 'bg-[#141414] text-white/40'}`}>
                     {STATUS_LABEL[s.status] ?? s.status}
                   </span>
                 </div>

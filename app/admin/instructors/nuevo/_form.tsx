@@ -6,7 +6,7 @@ import { createInstructorAction } from '../../_actions/instructors'
 
 const initial = { error: undefined as string | undefined, success: undefined as boolean | undefined }
 
-const inputClass = 'w-full bg-gray-800 border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/25 focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500/30'
+const inputClass = 'w-full bg-[#141414] border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/25 focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500/30'
 
 export default function NewInstructorForm() {
   const router = useRouter()
@@ -18,7 +18,7 @@ export default function NewInstructorForm() {
   }
 
   return (
-    <form action={action} className="bg-gray-900 border border-white/10 rounded-xl p-5 space-y-4">
+    <form action={action} className="bg-[#0f0f0f] border border-white/10 rounded-xl p-5 space-y-4">
       <div className="grid sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-xs text-white/50 mb-1.5">Nombres *</label>

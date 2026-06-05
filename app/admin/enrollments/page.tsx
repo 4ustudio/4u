@@ -55,21 +55,21 @@ const STATUS_LABEL: Record<string, string> = {
 }
 const STATUS_DOT: Record<string, string> = {
   pending:      'bg-yellow-400',
-  contacted:    'bg-violet-400',
+  contacted:    'bg-white/40',
   clase_prueba: 'bg-green-400',
   scheduled:    'bg-green-400',
   perdido:      'bg-red-500',
   cancelled:    'bg-red-500',
-  converted:    'bg-purple-400',
+  converted:    'bg-[#ff7a00]',
 }
 const STATUS_PILL: Record<string, string> = {
   pending:      'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
-  contacted:    'bg-violet-500/10 text-violet-400 border-violet-500/20',
+  contacted:    'bg-white/8 text-white/55 border-white/12',
   clase_prueba: 'bg-green-500/10 text-green-400 border-green-500/20',
   scheduled:    'bg-green-500/10 text-green-400 border-green-500/20',
   perdido:      'bg-red-500/10 text-red-400 border-red-500/20',
   cancelled:    'bg-red-500/10 text-red-400 border-red-500/20',
-  converted:    'bg-purple-500/10 text-purple-400 border-purple-500/20',
+  converted:    'bg-[#ff7a00]/12 text-[#ff9a3b] border-[#ff7a00]/25',
 }
 const LEVEL_LABEL: Record<string, string> = {
   never: 'Sin experiencia', beginner: 'Principiante',
@@ -85,10 +85,10 @@ const EVENT_ICONS: Record<string, React.ReactNode> = {
   converted:      <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>,
 }
 const EVENT_COLORS: Record<string, string> = {
-  form_received: 'text-white/40 bg-white/5',  status_changed: 'text-violet-400 bg-violet-400/10',
+  form_received: 'text-white/40 bg-white/5',  status_changed: 'text-white/55 bg-white/8',
   whatsapp_sent: 'text-green-400 bg-green-400/10', called: 'text-yellow-400 bg-yellow-400/10',
   email_sent:    'text-orange-400 bg-orange-400/10', note_added: 'text-white/50 bg-white/5',
-  converted:     'text-purple-400 bg-purple-400/10',
+  converted:     'text-[#ff9a3b] bg-[#ff7a00]/10',
 }
 
 // ── Summary cards ────────────────────────────────────────────
@@ -110,9 +110,9 @@ function SummaryCards({ enrollments }: { enrollments: EnrollmentRow[] | null }) 
     <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
       {([
         { label: 'Nuevos',       val: s.pending,     c: 'text-yellow-400', bg: 'bg-yellow-400/8 border-yellow-400/10' },
-        { label: 'Contactados',  val: s.contacted,   c: 'text-violet-400',  bg: 'bg-violet-400/8 border-violet-400/10' },
+        { label: 'Contactados',  val: s.contacted,   c: 'text-white/55',  bg: 'bg-white/6 border-white/10' },
         { label: 'Clase Prueba', val: s.clasePrueba, c: 'text-green-400',  bg: 'bg-green-400/8 border-green-400/10' },
-        { label: 'Matriculados', val: s.converted,   c: 'text-purple-400', bg: 'bg-purple-400/8 border-purple-400/10' },
+        { label: 'Matriculados', val: s.converted,   c: 'text-[#ff9a3b]', bg: 'bg-[#ff7a00]/8 border-[#ff7a00]/12' },
         { label: 'Perdidos',     val: s.perdido,     c: 'text-red-400',    bg: 'bg-red-400/8 border-red-400/10' },
       ] as const).map(card => (
         <div key={card.label} className={`rounded-xl border px-4 py-3 ${card.bg}`}>
@@ -299,7 +299,7 @@ function Drawer({
                     ) : (
                       <a
                         href={convertedStudentId ? `/admin/students/${convertedStudentId}` : '/admin/students'}
-                        className="mt-2 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-purple-300 border border-purple-500/25 bg-purple-500/8 hover:bg-purple-500/15 transition-colors"
+                        className="mt-2 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-[#ff9a3b] border border-[#ff7a00]/25 bg-[#ff7a00]/8 hover:bg-[#ff7a00]/15 transition-colors"
                       >
                         <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>
                         Ver perfil del estudiante
@@ -667,7 +667,7 @@ export default function AdminEnrollmentsPage() {
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 text-white/30 text-sm">No hay inscripciones.</div>
       ) : (
-        <div className="bg-gray-900 border border-white/10 rounded-xl overflow-hidden">
+        <div className="bg-[#0f0f0f] border border-white/10 rounded-xl overflow-hidden">
           {/* Cabecera de tabla */}
           <div className="hidden sm:grid grid-cols-[auto_1fr_140px_140px_120px_100px] gap-4 px-4 py-2.5 border-b border-white/[0.06] text-[10px] uppercase tracking-widest text-white/25 font-semibold">
             <span className="w-2" />

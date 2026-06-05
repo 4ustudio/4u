@@ -5,7 +5,7 @@ import { generateMonthlyClassesAction } from '../../../_actions/students'
 
 const initial = { error: undefined as string | undefined, generated: undefined as number | undefined, skipped: undefined as number | undefined, errors: undefined as string[] | undefined }
 
-const inputClass = 'w-full bg-gray-800 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500/30 disabled:opacity-50'
+const inputClass = 'w-full bg-[#141414] border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500/30 disabled:opacity-50'
 
 interface Props {
   studentId: string
@@ -23,7 +23,7 @@ export default function GenerateClassesButton({ studentId }: Props) {
   ]
 
   return (
-    <div className="bg-gray-900 border border-white/10 rounded-xl p-5 space-y-4">
+    <div className="bg-[#0f0f0f] border border-white/10 rounded-xl p-5 space-y-4">
       <h2 className="text-sm font-semibold text-white">Generar clases del mes</h2>
 
       <form action={action} className="space-y-3">

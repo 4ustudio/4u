@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 
 const STATUS_META: Record<string, { label: string; cls: string }> = {
   lead: { label: 'Lead', cls: 'border-white/12 bg-white/6 text-white/55' },
-  matriculado: { label: 'Matriculado', cls: 'border-purple-400/20 bg-purple-400/10 text-purple-300' },
+  matriculado: { label: 'Matriculado', cls: 'border-purple-400/20 bg-[#ff7a00]/10 text-purple-300' },
   activo: { label: 'Activo', cls: 'border-green-400/20 bg-green-400/10 text-green-300' },
   riesgo: { label: 'Riesgo', cls: 'border-yellow-400/20 bg-yellow-400/10 text-yellow-300' },
   inactivo: { label: 'Inactivo', cls: 'border-red-400/20 bg-red-400/10 text-red-300' },
@@ -80,7 +80,7 @@ export default async function ReactivationPage() {
       <RetentionPreviewPanel />
 
       <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
-        <section className="rounded-xl border border-white/10 bg-gray-900 p-5">
+        <section className="rounded-xl border border-white/10 bg-[#0f0f0f] p-5">
           <h2 className="text-sm font-bold text-white">Estudiantes con mayor riesgo</h2>
           <p className="mt-1 text-xs text-white/35">Ordenado por menor score y más días sin actividad.</p>
           <div className="mt-4 space-y-3">
@@ -102,7 +102,7 @@ export default async function ReactivationPage() {
           </div>
         </section>
 
-        <section className="rounded-xl border border-white/10 bg-gray-900 overflow-hidden">
+        <section className="rounded-xl border border-white/10 bg-[#0f0f0f] overflow-hidden">
           <div className="border-b border-white/10 px-5 py-4">
             <h2 className="text-sm font-bold text-white">Centro de reactivación</h2>
             <p className="mt-1 text-xs text-white/35">Contacta, registra observaciones y marca reactivaciones.</p>
@@ -150,8 +150,8 @@ function Metric({ label, value, tone }: { label: string; value: string | number;
     red: 'text-red-300 border-red-400/15 bg-red-400/[0.06]',
     white: 'text-white border-white/10 bg-white/[0.04]',
     orange: 'text-orange-300 border-orange-400/15 bg-orange-400/[0.06]',
-    blue: 'text-violet-300 border-violet-400/15 bg-violet-400/[0.06]',
-    purple: 'text-purple-300 border-purple-400/15 bg-purple-400/[0.06]',
+    blue: 'text-violet-300 border-violet-400/15 bg-white/40/[0.06]',
+    purple: 'text-purple-300 border-purple-400/15 bg-[#ff7a00]/[0.06]',
   }
   return (
     <div className={`rounded-xl border px-5 py-4 ${color[tone]}`}>

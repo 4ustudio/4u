@@ -13,7 +13,7 @@ const DAYS = [
   { value: 5, label: 'Viernes' },
 ]
 
-const inputClass = 'w-full bg-gray-800 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500/30 disabled:opacity-50'
+const inputClass = 'w-full bg-[#141414] border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500/30 disabled:opacity-50'
 
 const initial = { error: undefined as string | undefined, success: undefined as boolean | undefined }
 
@@ -43,7 +43,7 @@ export default function ScheduleFormModal({ studentId, schedule, courses, classr
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="w-full max-w-lg bg-gray-900 border border-white/10 rounded-2xl shadow-2xl p-6 space-y-4"
+        className="w-full max-w-lg bg-[#0f0f0f] border border-white/10 rounded-2xl shadow-2xl p-6 space-y-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between">

@@ -9,15 +9,15 @@ const STATUS_COLOR: Record<string, string> = {
   confirmed:   'bg-green-900/40 text-green-400',
   completed:   'bg-green-900/40 text-green-400',
   cancelled:   'bg-red-900/40 text-red-400',
-  rescheduled: 'bg-purple-900/40 text-purple-400',
-  no_show:     'bg-gray-800 text-gray-400',
+  rescheduled: 'bg-purple-900/40 text-[#ff9a3b]',
+  no_show:     'bg-[#141414] text-white/40',
 }
 const STATUS_LABEL: Record<string, string> = {
   pending: 'Pendiente', confirmed: 'Confirmada', completed: 'Completada',
   cancelled: 'Cancelada', rescheduled: 'Reagendada', no_show: 'No asistió',
 }
 
-const inputClass = 'w-full bg-gray-800 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500/30'
+const inputClass = 'w-full bg-[#141414] border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500/30'
 
 interface Props {
   studentId:   string
@@ -46,7 +46,7 @@ function SessionRow({ session, onClick }: { session: any; onClick: () => void })
         </p>
         <p className="text-xs text-white/40">{session.course?.name} · {session.classroom?.name}</p>
       </div>
-      <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${STATUS_COLOR[session.status] ?? 'bg-gray-800 text-gray-400'}`}>
+      <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${STATUS_COLOR[session.status] ?? 'bg-[#141414] text-white/40'}`}>
         {STATUS_LABEL[session.status] ?? session.status}
       </span>
     </button>
@@ -60,7 +60,7 @@ function QuickDatePicker({ onConfirm, onClose }: { onConfirm: (date: string, tim
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full max-w-xs bg-gray-900 border border-white/10 rounded-2xl shadow-2xl p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-xs bg-[#0f0f0f] border border-white/10 rounded-2xl shadow-2xl p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-bold text-white">Fecha y hora de la clase</h2>
           <button onClick={onClose} className="text-white/30 hover:text-white">
@@ -99,7 +99,7 @@ export default function StudentSessionsPanel({ studentId, student, upcoming, pas
   return (
     <>
       {upcoming.length > 0 && (
-        <section className="bg-gray-900 border border-white/10 rounded-xl overflow-hidden">
+        <section className="bg-[#0f0f0f] border border-white/10 rounded-xl overflow-hidden">
           <div className="px-5 py-4 border-b border-white/10">
             <h2 className="text-sm font-semibold text-white">Próximas clases</h2>
           </div>
@@ -111,7 +111,7 @@ export default function StudentSessionsPanel({ studentId, student, upcoming, pas
         </section>
       )}
 
-      <section className="bg-gray-900 border border-white/10 rounded-xl overflow-hidden">
+      <section className="bg-[#0f0f0f] border border-white/10 rounded-xl overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
           <h2 className="text-sm font-semibold text-white">
             {past.length > 0 ? 'Últimas clases' : 'Historial de clases'}

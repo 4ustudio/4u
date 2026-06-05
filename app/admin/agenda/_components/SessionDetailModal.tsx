@@ -13,7 +13,7 @@ const initialCancel     = { error: undefined as string | undefined, success: und
 const initialReschedule = { error: undefined as string | undefined, success: undefined as boolean | undefined }
 const initialStatus     = { error: undefined as string | undefined, success: undefined as boolean | undefined }
 
-const inputClass = 'w-full bg-gray-800 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500/30 disabled:opacity-50'
+const inputClass = 'w-full bg-[#141414] border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500/30 disabled:opacity-50'
 
 const STATUS_LABEL: Record<string, string> = {
   pending: 'Pendiente', confirmed: 'Confirmada', completed: 'Completada',
@@ -25,7 +25,7 @@ const STATUS_COLOR: Record<string, string> = {
   completed:   'bg-green-900/40  text-green-300  border border-green-700/30',
   cancelled:   'bg-red-900/40    text-red-300    border border-red-700/30',
   rescheduled: 'bg-purple-900/40 text-purple-300 border border-purple-700/30',
-  no_show:     'bg-gray-800      text-gray-400   border border-white/10',
+  no_show:     'bg-[#141414]      text-white/40   border border-white/10',
 }
 
 type Action = 'attendance' | 'reschedule' | 'cancel' | null
@@ -63,7 +63,7 @@ export default function SessionDetailModal({ session, classrooms, instructors, o
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="w-full max-w-md bg-gray-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
+        className="w-full max-w-md bg-[#0f0f0f] border border-white/10 rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
 
@@ -101,7 +101,7 @@ export default function SessionDetailModal({ session, classrooms, instructors, o
           {/* Estado actual */}
           <div className="mt-3 flex items-center gap-2">
             <span className="text-xs text-white/40">Estado actual:</span>
-            <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${STATUS_COLOR[session.status] ?? 'bg-gray-800 text-gray-400'}`}>
+            <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${STATUS_COLOR[session.status] ?? 'bg-[#141414] text-white/40'}`}>
               {STATUS_LABEL[session.status] ?? session.status}
             </span>
           </div>

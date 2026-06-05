@@ -42,20 +42,20 @@ type KanbanStatus = 'pending' | 'contacted' | 'clase_prueba' | 'converted' | 'pe
 
 const COLUMNS: { status: KanbanStatus; label: string; dot: string; header: string; border: string }[] = [
   { status: 'pending',      label: 'Nuevo',        dot: 'bg-yellow-400', header: 'border-yellow-500/30 text-yellow-400', border: 'border-yellow-500/10' },
-  { status: 'contacted',    label: 'Contactado',   dot: 'bg-violet-400',   header: 'border-violet-500/30 text-violet-400',    border: 'border-violet-500/10' },
+  { status: 'contacted',    label: 'Contactado',   dot: 'bg-white/40',   header: 'border-violet-500/30 text-white/55',    border: 'border-white/10' },
   { status: 'clase_prueba', label: 'Clase Prueba', dot: 'bg-green-400',  header: 'border-green-500/30 text-green-400',  border: 'border-green-500/10' },
-  { status: 'converted',    label: 'Matriculado',  dot: 'bg-purple-400', header: 'border-purple-500/30 text-purple-400',border: 'border-purple-500/10' },
+  { status: 'converted',    label: 'Matriculado',  dot: 'bg-[#ff7a00]', header: 'border-purple-500/30 text-[#ff9a3b]',border: 'border-purple-500/10' },
   { status: 'perdido',      label: 'Perdido',      dot: 'bg-red-500',    header: 'border-red-500/30 text-red-400',      border: 'border-red-500/10' },
 ]
 
 const PILL: Record<string, string> = {
   pending:      'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
-  contacted:    'bg-violet-500/10 text-violet-400 border-violet-500/20',
+  contacted:    'bg-white/8 text-white/55 border-white/12',
   clase_prueba: 'bg-green-500/10 text-green-400 border-green-500/20',
   scheduled:    'bg-green-500/10 text-green-400 border-green-500/20',
   perdido:      'bg-red-500/10 text-red-400 border-red-500/20',
   cancelled:    'bg-red-500/10 text-red-400 border-red-500/20',
-  converted:    'bg-purple-500/10 text-purple-400 border-purple-500/20',
+  converted:    'bg-[#ff7a00]/12 text-[#ff9a3b] border-[#ff7a00]/25',
 }
 
 const SOURCE_COLORS: Record<string, string> = {
@@ -112,7 +112,7 @@ function LeadCard({
   const nextSteps = COLUMNS.filter(c => c.status !== canonical && c.status !== 'converted')
 
   return (
-    <div className="relative bg-gray-900 border border-white/[0.08] rounded-xl p-4 hover:border-white/15 transition-all group">
+    <div className="relative bg-[#0f0f0f] border border-white/[0.08] rounded-xl p-4 hover:border-white/15 transition-all group">
 
       {/* Header */}
       <div className="flex items-start justify-between gap-2 mb-3">
@@ -143,7 +143,7 @@ function LeadCard({
             {menuOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-                <div className="absolute right-0 top-full mt-1 z-20 bg-gray-800 border border-white/10 rounded-xl py-1 min-w-[130px] shadow-2xl">
+                <div className="absolute right-0 top-full mt-1 z-20 bg-[#141414] border border-white/10 rounded-xl py-1 min-w-[130px] shadow-2xl">
                   {nextSteps.map(col => (
                     <button
                       key={col.status}
@@ -157,9 +157,9 @@ function LeadCard({
                   {canonical !== 'converted' && (
                     <button
                       onClick={() => { onMove('converted'); setMenuOpen(false) }}
-                      className="w-full text-left px-3 py-2 text-xs text-purple-400 hover:bg-purple-500/10 transition-colors flex items-center gap-2 border-t border-white/[0.06] mt-1 pt-2"
+                      className="w-full text-left px-3 py-2 text-xs text-[#ff9a3b] hover:bg-purple-500/10 transition-colors flex items-center gap-2 border-t border-white/[0.06] mt-1 pt-2"
                     >
-                      <span className="w-1.5 h-1.5 rounded-full shrink-0 bg-purple-400" />
+                      <span className="w-1.5 h-1.5 rounded-full shrink-0 bg-[#ff7a00]" />
                       Matricular
                     </button>
                   )}
@@ -431,7 +431,7 @@ function LeadDrawer({
                     ) : (
                       <a
                         href={convertedStudentId ? `/admin/students/${convertedStudentId}` : '/admin/students'}
-                        className="mt-2 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-purple-300 border border-purple-500/25 bg-purple-500/8 hover:bg-purple-500/15 transition-colors"
+                        className="mt-2 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-[#ff9a3b] border border-[#ff7a00]/25 bg-[#ff7a00]/8 hover:bg-[#ff7a00]/15 transition-colors"
                       >
                         <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>
                         Ver perfil del estudiante

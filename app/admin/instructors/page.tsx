@@ -29,14 +29,14 @@ export default async function InstructorsPage() {
       </div>
 
       {instructors.length === 0 ? (
-        <div className="bg-gray-900 border border-white/10 rounded-xl p-10 text-center">
+        <div className="bg-[#0f0f0f] border border-white/10 rounded-xl p-10 text-center">
           <p className="text-white/35 text-sm">No hay instructores registrados.</p>
           <Link href="/admin/instructors/nuevo" className="inline-block mt-3 text-xs text-orange-400 hover:underline">
             Crear el primer instructor →
           </Link>
         </div>
       ) : (
-        <div className="bg-gray-900 border border-white/10 rounded-xl overflow-hidden">
+        <div className="bg-[#0f0f0f] border border-white/10 rounded-xl overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-white/10">
@@ -64,7 +64,7 @@ export default async function InstructorsPage() {
                     <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
                       inst.status === 'active'
                         ? 'bg-green-900/40 text-green-400'
-                        : 'bg-gray-800 text-gray-400'
+                        : 'bg-[#141414] text-white/40'
                     }`}>
                       {inst.status === 'active' ? 'Activo' : 'Inactivo'}
                     </span>

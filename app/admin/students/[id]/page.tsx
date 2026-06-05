@@ -99,7 +99,7 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
 
           <PasswordSection studentId={id} hasAccount={!!student.user_id} email={student.email} />
 
-          <section className="bg-gray-900 border border-white/10 rounded-xl p-5 space-y-4">
+          <section className="bg-[#0f0f0f] border border-white/10 rounded-xl p-5 space-y-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-sm font-semibold text-white">Perfil histórico</h2>
@@ -196,12 +196,12 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
 
         {/* Aside: sticky en desktop */}
         <aside className="space-y-4 xl:sticky xl:top-6 xl:self-start">
-          <div className="bg-gray-900 border border-white/10 rounded-xl p-5 space-y-3">
+          <div className="bg-[#0f0f0f] border border-white/10 rounded-xl p-5 space-y-3">
             <h2 className="text-sm font-semibold text-white">Acciones</h2>
             <DeleteStudentButton studentId={id} studentName={student.name} />
           </div>
 
-          <div className="bg-gray-900 border border-white/10 rounded-xl p-5">
+          <div className="bg-[#0f0f0f] border border-white/10 rounded-xl p-5">
             <h2 className="text-sm font-semibold text-white mb-4">Cuota — {monthLabel}</h2>
             {usage ? (
               <div className="space-y-2.5">

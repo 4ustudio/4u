@@ -3,7 +3,7 @@
 import { useActionState, useState, useEffect, useRef } from 'react'
 import { setStudentPasswordAction } from '../../../_actions/students'
 
-const inputClass = 'w-full bg-gray-800 border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/25 focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500/30'
+const inputClass = 'w-full bg-[#141414] border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/25 focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500/30'
 
 interface Props {
   studentId: string
@@ -49,7 +49,7 @@ export default function PasswordSection({ studentId, hasAccount, email }: Props)
   )
 
   return (
-    <div className="bg-gray-900 border border-white/10 rounded-xl p-5 space-y-4">
+    <div className="bg-[#0f0f0f] border border-white/10 rounded-xl p-5 space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-white">Acceso al portal</h2>
         <span className={`text-xs px-2 py-0.5 rounded-full border ${hasAccount

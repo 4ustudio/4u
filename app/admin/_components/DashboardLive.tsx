@@ -16,7 +16,7 @@ function timeAgo(d: Date): string {
 const ICON_BG: Record<AdminNotif['type'], string> = {
   enrollment: 'bg-orange-500/10 text-orange-400',
   session:    'bg-white/8 text-white/60',
-  conversion: 'bg-purple-500/10 text-purple-400',
+  conversion: 'bg-purple-500/10 text-[#ff9a3b]',
   student:    'bg-green-500/10 text-green-400',
 }
 

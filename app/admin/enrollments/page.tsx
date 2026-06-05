@@ -55,7 +55,7 @@ const STATUS_LABEL: Record<string, string> = {
 }
 const STATUS_DOT: Record<string, string> = {
   pending:      'bg-yellow-400',
-  contacted:    'bg-blue-400',
+  contacted:    'bg-violet-400',
   clase_prueba: 'bg-green-400',
   scheduled:    'bg-green-400',
   perdido:      'bg-red-500',
@@ -64,7 +64,7 @@ const STATUS_DOT: Record<string, string> = {
 }
 const STATUS_PILL: Record<string, string> = {
   pending:      'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
-  contacted:    'bg-blue-500/10 text-blue-400 border-blue-500/20',
+  contacted:    'bg-violet-500/10 text-violet-400 border-violet-500/20',
   clase_prueba: 'bg-green-500/10 text-green-400 border-green-500/20',
   scheduled:    'bg-green-500/10 text-green-400 border-green-500/20',
   perdido:      'bg-red-500/10 text-red-400 border-red-500/20',
@@ -85,7 +85,7 @@ const EVENT_ICONS: Record<string, React.ReactNode> = {
   converted:      <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>,
 }
 const EVENT_COLORS: Record<string, string> = {
-  form_received: 'text-white/40 bg-white/5',  status_changed: 'text-blue-400 bg-blue-400/10',
+  form_received: 'text-white/40 bg-white/5',  status_changed: 'text-violet-400 bg-violet-400/10',
   whatsapp_sent: 'text-green-400 bg-green-400/10', called: 'text-yellow-400 bg-yellow-400/10',
   email_sent:    'text-orange-400 bg-orange-400/10', note_added: 'text-white/50 bg-white/5',
   converted:     'text-purple-400 bg-purple-400/10',
@@ -110,7 +110,7 @@ function SummaryCards({ enrollments }: { enrollments: EnrollmentRow[] | null }) 
     <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
       {([
         { label: 'Nuevos',       val: s.pending,     c: 'text-yellow-400', bg: 'bg-yellow-400/8 border-yellow-400/10' },
-        { label: 'Contactados',  val: s.contacted,   c: 'text-blue-400',   bg: 'bg-blue-400/8 border-blue-400/10' },
+        { label: 'Contactados',  val: s.contacted,   c: 'text-violet-400',  bg: 'bg-violet-400/8 border-violet-400/10' },
         { label: 'Clase Prueba', val: s.clasePrueba, c: 'text-green-400',  bg: 'bg-green-400/8 border-green-400/10' },
         { label: 'Matriculados', val: s.converted,   c: 'text-purple-400', bg: 'bg-purple-400/8 border-purple-400/10' },
         { label: 'Perdidos',     val: s.perdido,     c: 'text-red-400',    bg: 'bg-red-400/8 border-red-400/10' },
@@ -699,7 +699,7 @@ export default function AdminEnrollmentsPage() {
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="text-sm font-semibold text-white">{e.student_name}</span>
                         {isNew && <Badge color="bg-orange-500/15 text-orange-400">Nuevo</Badge>}
-                        {isKid ? <Badge color="bg-sky-500/10 text-sky-400">Niño</Badge> : <Badge color="bg-white/5 text-white/30">Adulto</Badge>}
+                        {isKid ? <Badge color="bg-white/8 text-white/55">Niño</Badge> : <Badge color="bg-white/5 text-white/30">Adulto</Badge>}
                       </div>
                       <p className="text-xs text-white/40 mt-0.5">{e.student_age} años · {e.course_interest}</p>
                       <p className="text-xs text-white/50 font-mono mt-0.5">{e.phone}</p>
@@ -714,7 +714,7 @@ export default function AdminEnrollmentsPage() {
                       <div className="flex items-center gap-1.5">
                         <span className="text-sm font-semibold text-white group-hover:text-orange-300 transition-colors truncate">{e.student_name}</span>
                         {isNew && <Badge color="bg-orange-500/15 text-orange-400">Nuevo</Badge>}
-                        {isKid ? <Badge color="bg-sky-500/10 text-sky-400">Niño</Badge> : <Badge color="bg-white/5 text-white/30">Adulto</Badge>}
+                        {isKid ? <Badge color="bg-white/8 text-white/55">Niño</Badge> : <Badge color="bg-white/5 text-white/30">Adulto</Badge>}
                       </div>
                       <p className="text-xs text-white/35 mt-0.5">{e.student_age} años</p>
                     </div>

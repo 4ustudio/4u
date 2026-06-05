@@ -6,7 +6,7 @@ import ReactivationRowActions from './_components/ReactivationRowActions'
 export const dynamic = 'force-dynamic'
 
 const STATUS_META: Record<string, { label: string; cls: string }> = {
-  lead: { label: 'Lead', cls: 'border-blue-400/20 bg-blue-400/10 text-blue-300' },
+  lead: { label: 'Lead', cls: 'border-white/12 bg-white/6 text-white/55' },
   matriculado: { label: 'Matriculado', cls: 'border-purple-400/20 bg-purple-400/10 text-purple-300' },
   activo: { label: 'Activo', cls: 'border-green-400/20 bg-green-400/10 text-green-300' },
   riesgo: { label: 'Riesgo', cls: 'border-yellow-400/20 bg-yellow-400/10 text-yellow-300' },
@@ -150,7 +150,7 @@ function Metric({ label, value, tone }: { label: string; value: string | number;
     red: 'text-red-300 border-red-400/15 bg-red-400/[0.06]',
     white: 'text-white border-white/10 bg-white/[0.04]',
     orange: 'text-orange-300 border-orange-400/15 bg-orange-400/[0.06]',
-    blue: 'text-blue-300 border-blue-400/15 bg-blue-400/[0.06]',
+    blue: 'text-violet-300 border-violet-400/15 bg-violet-400/[0.06]',
     purple: 'text-purple-300 border-purple-400/15 bg-purple-400/[0.06]',
   }
   return (

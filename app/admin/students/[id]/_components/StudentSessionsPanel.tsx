@@ -7,7 +7,7 @@ import BookSessionModal from '@/app/admin/agenda/_components/BookSessionModal'
 const STATUS_COLOR: Record<string, string> = {
   pending:     'bg-yellow-900/40 text-yellow-400',
   confirmed:   'bg-green-900/40 text-green-400',
-  completed:   'bg-blue-900/40 text-blue-400',
+  completed:   'bg-green-900/40 text-green-400',
   cancelled:   'bg-red-900/40 text-red-400',
   rescheduled: 'bg-purple-900/40 text-purple-400',
   no_show:     'bg-gray-800 text-gray-400',

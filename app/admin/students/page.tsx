@@ -31,7 +31,7 @@ function isThisMonth(iso: string): boolean {
 // ── Colores ───────────────────────────────────────────────────
 
 const STATUS_PILL: Record<string, string> = {
-  lead:        'bg-blue-500/10 text-blue-300 border-blue-500/20',
+  lead:        'bg-white/8 text-white/55 border-white/10',
   matriculado: 'bg-purple-500/10 text-purple-300 border-purple-500/20',
   activo:      'bg-green-500/10 text-green-400 border-green-500/20',
   riesgo:      'bg-yellow-500/10 text-yellow-300 border-yellow-500/20',
@@ -48,12 +48,12 @@ const STATUS_LABEL: Record<string, string> = {
 const TYPE_LABEL: Record<string, string> = { new: 'Nuevo', regular: 'Regular' }
 const TYPE_PILL: Record<string, string> = {
   new:     'bg-yellow-500/10 text-yellow-400 border-yellow-500/15',
-  regular: 'bg-blue-500/10 text-blue-400 border-blue-500/15',
+  regular: 'bg-white/8 text-white/55 border-white/10',
 }
 
 const AVATAR_COLORS = [
   'bg-orange-500/20 text-orange-300',
-  'bg-blue-500/20 text-blue-300',
+  'bg-white/10 text-white/60',
   'bg-purple-500/20 text-purple-300',
   'bg-green-500/20 text-green-300',
   'bg-pink-500/20 text-pink-300',
@@ -84,7 +84,7 @@ function SummaryCards({ students }: { students: Student[] | null }) {
         { label: 'Total',            val: s.total,   c: 'text-white',      bg: 'bg-white/5 border-white/8' },
         { label: 'Activos',          val: s.active,  c: 'text-green-400',  bg: 'bg-green-400/8 border-green-400/10' },
         { label: 'Ingresaron este mes', val: s.newType, c: 'text-orange-400', bg: 'bg-orange-400/8 border-orange-400/10' },
-        { label: 'Con portal',       val: s.portal,  c: 'text-blue-400',   bg: 'bg-blue-400/8 border-blue-400/10' },
+        { label: 'Con portal',       val: s.portal,  c: 'text-violet-400',  bg: 'bg-violet-400/8 border-violet-400/10' },
       ] as const).map(card => (
         <div key={card.label} className={`rounded-xl border px-4 py-3 ${card.bg}`}>
           <p className={`text-2xl font-extrabold ${card.c}`}>{students === null ? '—' : card.val}</p>
@@ -225,7 +225,7 @@ export default function StudentsPage() {
                         {s.name}
                       </span>
                       {s.user_id && (
-                        <span title="Portal activo" className="text-[10px] text-blue-400">
+                        <span title="Portal activo" className="text-[10px] text-[#ff9a3b]">
                           <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                           </svg>

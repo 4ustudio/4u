@@ -42,7 +42,7 @@ type KanbanStatus = 'pending' | 'contacted' | 'clase_prueba' | 'converted' | 'pe
 
 const COLUMNS: { status: KanbanStatus; label: string; dot: string; header: string; border: string }[] = [
   { status: 'pending',      label: 'Nuevo',        dot: 'bg-yellow-400', header: 'border-yellow-500/30 text-yellow-400', border: 'border-yellow-500/10' },
-  { status: 'contacted',    label: 'Contactado',   dot: 'bg-blue-400',   header: 'border-blue-500/30 text-blue-400',    border: 'border-blue-500/10' },
+  { status: 'contacted',    label: 'Contactado',   dot: 'bg-violet-400',   header: 'border-violet-500/30 text-violet-400',    border: 'border-violet-500/10' },
   { status: 'clase_prueba', label: 'Clase Prueba', dot: 'bg-green-400',  header: 'border-green-500/30 text-green-400',  border: 'border-green-500/10' },
   { status: 'converted',    label: 'Matriculado',  dot: 'bg-purple-400', header: 'border-purple-500/30 text-purple-400',border: 'border-purple-500/10' },
   { status: 'perdido',      label: 'Perdido',      dot: 'bg-red-500',    header: 'border-red-500/30 text-red-400',      border: 'border-red-500/10' },
@@ -50,7 +50,7 @@ const COLUMNS: { status: KanbanStatus; label: string; dot: string; header: strin
 
 const PILL: Record<string, string> = {
   pending:      'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
-  contacted:    'bg-blue-500/10 text-blue-400 border-blue-500/20',
+  contacted:    'bg-violet-500/10 text-violet-400 border-violet-500/20',
   clase_prueba: 'bg-green-500/10 text-green-400 border-green-500/20',
   scheduled:    'bg-green-500/10 text-green-400 border-green-500/20',
   perdido:      'bg-red-500/10 text-red-400 border-red-500/20',
@@ -62,10 +62,10 @@ const SOURCE_COLORS: Record<string, string> = {
   inscripcion: 'text-orange-400',
   whatsapp:    'text-green-400',
   instagram:   'text-pink-400',
-  facebook:    'text-blue-400',
+  facebook:    'text-white/55',
   google:      'text-yellow-400',
   referido:    'text-orange-400',
-  web:         'text-sky-400',
+  web:         'text-white/55',
   presencial:  'text-white/50',
   otro:        'text-white/30',
 }

@@ -70,7 +70,7 @@ const STATUS_LABEL: Record<string, string> = {
 const STATUS_COLOR: Record<string, string> = {
   pending:     'bg-yellow-900/40 text-yellow-400',
   confirmed:   'bg-green-900/40 text-green-400',
-  completed:   'bg-blue-900/40 text-blue-400',
+  completed:   'bg-green-900/40 text-green-400',
   cancelled:   'bg-red-900/40 text-red-400',
   rescheduled: 'bg-purple-900/40 text-purple-400',
   no_show:     'bg-white/5 text-white/40',
@@ -281,7 +281,7 @@ function DashCard({
 }
 
 function MiniRetention({ label, value, tone }: { label: string; value: number; tone: 'yellow' | 'red' | 'orange' | 'blue' }) {
-  const colors = { yellow: 'text-yellow-300', red: 'text-red-300', orange: 'text-[#ff9a3b]', blue: 'text-blue-300' }
+  const colors = { yellow: 'text-yellow-300', red: 'text-red-300', orange: 'text-[#ff9a3b]', blue: 'text-violet-300' }
   return (
     <div className="rounded-2xl border border-white/8 bg-white/[0.02] px-3 py-3">
       <p className={`text-2xl font-black ${colors[tone]}`}>{value}</p>

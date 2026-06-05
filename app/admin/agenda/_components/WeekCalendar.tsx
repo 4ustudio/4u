@@ -35,7 +35,7 @@ function formatDateHeader(dateStr: string) {
 const STATUS_COLOR: Record<string, string> = {
   pending:     'border-l-yellow-400 bg-yellow-900/20',
   confirmed:   'border-l-green-400 bg-green-900/20',
-  completed:   'border-l-blue-400 bg-blue-900/15',
+  completed:   'border-l-green-400 bg-green-900/15',
   cancelled:   'border-l-red-400 bg-red-900/15 opacity-50',
   rescheduled: 'border-l-purple-400 bg-purple-900/15 opacity-50',
   no_show:     'border-l-gray-500 bg-gray-800/30 opacity-50',

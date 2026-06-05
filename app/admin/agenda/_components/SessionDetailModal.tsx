@@ -22,7 +22,7 @@ const STATUS_LABEL: Record<string, string> = {
 const STATUS_COLOR: Record<string, string> = {
   pending:     'bg-yellow-900/40 text-yellow-300 border border-yellow-700/30',
   confirmed:   'bg-green-900/40  text-green-300  border border-green-700/30',
-  completed:   'bg-blue-900/40   text-blue-300   border border-blue-700/30',
+  completed:   'bg-green-900/40  text-green-300  border border-green-700/30',
   cancelled:   'bg-red-900/40    text-red-300    border border-red-700/30',
   rescheduled: 'bg-purple-900/40 text-purple-300 border border-purple-700/30',
   no_show:     'bg-gray-800      text-gray-400   border border-white/10',

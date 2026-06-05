@@ -32,7 +32,8 @@ export default async function AgendarPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const allInstructors = (instrResult.data ?? []) as { id: string; name: string; notes?: string | null }[]
 
-  const allowedCourseIds = [...new Set((ccResult.data ?? []).map(r => r.course_id))]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const allowedCourseIds = [...new Set(((ccResult.data ?? []) as any[]).map((r: any) => r.course_id as string))]
   const { data: coursesData } = await adminClient
     .from("courses")
     .select("id, name")

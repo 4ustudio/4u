@@ -246,7 +246,7 @@ export default function WeekCalendar({ weekStart, sessions, blocked, students, c
                     <td key={dateStr} className="px-1 py-1 border-l border-white/5 align-top">
                       <button
                         onClick={() => handleSlotClick(dateStr, slot, isodow, true)}
-                        className="w-full min-h-[52px] rounded border border-[#ff7a00]/12 bg-[#ff7a00]/5 hover:bg-[#ff7a00]/12 hover:border-[#ff7a00]/30 transition-all group cursor-pointer"
+                        className="w-full min-h-[52px] rounded border border-white/6 bg-transparent hover:bg-[#ff7a00]/8 hover:border-[#ff7a00]/25 transition-all group cursor-pointer"
                         title="Crear clase"
                       >
                         <span className="text-[#ff7a00]/45 group-hover:text-[#ff7a00]/75 text-lg transition-colors">+</span>

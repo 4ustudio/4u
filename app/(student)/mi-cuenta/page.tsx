@@ -28,7 +28,7 @@ const WEEK_DAYS = ['LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB', 'DOM']
 const HOURS = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00']
 
 function normalizeRole(role: unknown) {
-  if (role === 'admin') return 'admin'
+  if (role === 'owner' || role === 'super_admin' || role === 'admin') return 'admin'
   if (role === 'instructor' || role === 'teacher' || role === 'maestro') return 'instructor'
   return 'student'
 }

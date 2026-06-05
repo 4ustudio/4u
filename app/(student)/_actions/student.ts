@@ -344,7 +344,7 @@ export async function loginAction(
   const { data: { user: loggedUser } } = await supabase.auth.getUser()
   if (loggedUser) {
     const role = loggedUser.user_metadata?.role
-    if (role === 'owner' || role === 'admin' || role === 'sales') redirect('/admin')
+    if (role === 'owner' || role === 'super_admin' || role === 'admin' || role === 'sales') redirect('/admin')
     if (role === 'instructor') redirect('/mi-cuenta')
 
     const { data: studentRecord } = await supabase

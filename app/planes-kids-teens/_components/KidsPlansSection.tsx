@@ -74,7 +74,7 @@ export default function KidsPlansSection() {
 
   return (
     <>
-      <div className="plans-frame grid gap-8 lg:grid-cols-2">
+      <div className="plans-frame grid gap-8 max-w-4xl mx-auto w-full">
         {kidsPlans.map((plan) => (
           <KidsPlanCard
             key={plan.label}
@@ -97,7 +97,7 @@ function KidsPlanCard({ plan, onDetails }: { plan: KidsPlan; onDetails: () => vo
 
   return (
     <article
-      className="grid overflow-hidden rounded-2xl bg-white shadow-xl shadow-gray-950/10 ring-1 lg:grid-cols-[45%_55%]"
+      className="grid overflow-hidden rounded-2xl bg-white shadow-xl shadow-gray-950/10 ring-1 lg:grid-cols-[48%_52%]"
       style={{ borderColor: `${color}55` }}
     >
       {/* Imagen lateral — object-[center_35%] prioriza caras en fotos grupales */}

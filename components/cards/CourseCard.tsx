@@ -25,7 +25,7 @@ export default function CourseCard({ course }: CourseCardProps) {
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white shadow-sm"
             style={{ backgroundColor: course.color }}
           >
-            <div className="scale-[0.38] [&_svg]:fill-white [&_svg]:opacity-100">
+            <div className="text-xl [&_svg]:w-5 [&_svg]:h-5 [&_svg]:fill-white">
               {course.icon}
             </div>
           </div>

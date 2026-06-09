@@ -46,6 +46,15 @@ export default function AvailabilityEditor({ initialAvailability }: Props) {
         </button>
       </div>
 
+      {/* Política de asistencia */}
+      <div className="flex gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 mb-4">
+        <svg className="h-4 w-4 shrink-0 mt-0.5 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <p className="text-xs text-amber-800 leading-relaxed">
+          <span className="font-bold">Política de asistencia — </span>
+          Las clases a las que no asististe y que <span className="font-bold">no fueron canceladas con al menos 24 horas de anticipación</span> se contabilizan como clases tomadas y se descuentan de tu plan mensual.
+        </p>
+      </div>
+
       {/* Vista actual */}
       <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2">
         {DAY_NAMES.map((name, i) => {

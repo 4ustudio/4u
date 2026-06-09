@@ -303,6 +303,13 @@ export default function SessionDetailModal({ session, classrooms, instructors, o
               {canInstructorCancel ? (
                 <form action={instCancelAction} className="space-y-3 pt-1">
                   <input type="hidden" name="session_id" value={session.id} />
+                  <div className="flex gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2.5">
+                    <svg className="h-4 w-4 shrink-0 mt-0.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <div className="text-xs text-amber-300/90 leading-relaxed">
+                      <span className="font-bold text-amber-300">Política de asistencia — </span>
+                      Las clases que <span className="font-bold">no fueron canceladas con al menos 24 horas de anticipación</span> se contabilizan como clases tomadas y se descuentan del plan mensual del estudiante.
+                    </div>
+                  </div>
                   <div>
                     <label className="block text-xs text-white/50 mb-1.5">Motivo (opcional)</label>
                     <textarea name="reason" rows={2} disabled={instCancelPending} className={inputClass + ' resize-none'} placeholder="Ej: Problema de salud, emergencia..." />

@@ -6,12 +6,17 @@ import { saveInstructorAvailabilityAction } from '../../_actions/student'
 
 const DAY_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes']
 const DEFAULT_START = '10:00'
-const DEFAULT_END   = '22:00'
+const DEFAULT_END   = '18:00'
 
 interface Slot {
-  day_of_week: number   // 1=Lunes … 7=Domingo
+  day_of_week: number
   start_time: string
   end_time: string
+}
+
+interface TimeRange {
+  start: string
+  end: string
 }
 
 interface Props {
@@ -22,6 +27,9 @@ export default function AvailabilityEditor({ initialAvailability }: Props) {
   const [open, setOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
+
+  // Agrupar slots por día para la vista
+  const slotsByDay = (day: number) => initialAvailability.filter(a => a.day_of_week === day)
 
   return (
     <div id="disponibilidad" className="mt-6 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -39,14 +47,19 @@ export default function AvailabilityEditor({ initialAvailability }: Props) {
       </div>
 
       {/* Vista actual */}
-      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2">
         {DAY_NAMES.map((name, i) => {
-          const slot = initialAvailability.find(a => a.day_of_week === i + 1)
+          const daySlots = slotsByDay(i + 1)
+          const hasSlots = daySlots.length > 0
           return (
-            <div key={name} className={`rounded-xl border p-3 text-xs ${slot ? 'border-[#ff7a00]/25 bg-orange-50/40' : 'border-gray-100 bg-gray-50'}`}>
-              <p className={`font-bold font-poppins mb-1 ${slot ? 'text-gray-900' : 'text-gray-400'}`}>{name.slice(0, 3)}</p>
-              {slot
-                ? <p className="text-[#ff7a00] font-semibold">{slot.start_time.slice(0,5)}<br/>{slot.end_time.slice(0,5)}</p>
+            <div key={name} className={`rounded-xl border p-3 text-xs ${hasSlots ? 'border-[#ff7a00]/25 bg-orange-50/40' : 'border-gray-100 bg-gray-50'}`}>
+              <p className={`font-bold font-poppins mb-1 ${hasSlots ? 'text-gray-900' : 'text-gray-400'}`}>{name.slice(0, 3)}</p>
+              {hasSlots
+                ? daySlots.map((slot, idx) => (
+                    <p key={idx} className="text-[#ff7a00] font-semibold leading-tight">
+                      {slot.start_time.slice(0,5)}–{slot.end_time.slice(0,5)}
+                    </p>
+                  ))
                 : <p className="text-gray-400">No disp.</p>
               }
             </div>
@@ -78,14 +91,14 @@ function AvailabilityModal({ initialSlots, onClose, onSaved }: {
   onClose: () => void
   onSaved: () => void
 }) {
-  // Estado: un objeto por día (1-7), null = no disponible
-  const [slots, setSlots] = useState<Record<number, { start: string; end: string } | null>>(() => {
-    const init: Record<number, { start: string; end: string } | null> = {}
+  // Estado: array de rangos por día (vacío = no disponible)
+  const [slots, setSlots] = useState<Record<number, TimeRange[]>>(() => {
+    const init: Record<number, TimeRange[]> = {}
     for (let d = 1; d <= 5; d++) {
-      const existing = initialSlots.find(s => s.day_of_week === d)
-      init[d] = existing
-        ? { start: existing.start_time.slice(0,5), end: existing.end_time.slice(0,5) }
-        : null
+      const existing = initialSlots.filter(s => s.day_of_week === d)
+      init[d] = existing.length > 0
+        ? existing.map(s => ({ start: s.start_time.slice(0,5), end: s.end_time.slice(0,5) }))
+        : []
     }
     return init
   })
@@ -103,15 +116,28 @@ function AvailabilityModal({ initialSlots, onClose, onSaved }: {
   function toggleDay(day: number) {
     setSlots(prev => ({
       ...prev,
-      [day]: prev[day] ? null : { start: DEFAULT_START, end: DEFAULT_END }
+      [day]: prev[day].length > 0 ? [] : [{ start: DEFAULT_START, end: DEFAULT_END }]
     }))
   }
 
-  function setTime(day: number, field: 'start' | 'end', value: string) {
+  function addSlot(day: number) {
+    setSlots(prev => ({
+      ...prev,
+      [day]: [...prev[day], { start: DEFAULT_START, end: DEFAULT_END }]
+    }))
+  }
+
+  function removeSlot(day: number, idx: number) {
     setSlots(prev => {
-      const current = prev[day]
-      if (!current) return prev
-      return { ...prev, [day]: { ...current, [field]: value } }
+      const next = prev[day].filter((_, i) => i !== idx)
+      return { ...prev, [day]: next }
+    })
+  }
+
+  function setTime(day: number, idx: number, field: 'start' | 'end', value: string) {
+    setSlots(prev => {
+      const ranges = prev[day].map((r, i) => i === idx ? { ...r, [field]: value } : r)
+      return { ...prev, [day]: ranges }
     })
   }
 
@@ -119,13 +145,13 @@ function AvailabilityModal({ initialSlots, onClose, onSaved }: {
     setError(null)
     const payload: Slot[] = []
     for (let d = 1; d <= 5; d++) {
-      const s = slots[d]
-      if (!s) continue
-      if (s.start >= s.end) {
-        setError(`${DAY_NAMES[d-1]}: la hora de inicio debe ser antes de la hora de fin.`)
-        return
+      for (const r of slots[d]) {
+        if (r.start >= r.end) {
+          setError(`${DAY_NAMES[d-1]}: cada rango debe tener inicio antes del fin.`)
+          return
+        }
+        payload.push({ day_of_week: d, start_time: r.start + ':00', end_time: r.end + ':00' })
       }
-      payload.push({ day_of_week: d, start_time: s.start + ':00', end_time: s.end + ':00' })
     }
     startTransition(async () => {
       const result = await saveInstructorAvailabilityAction(payload)
@@ -152,11 +178,11 @@ function AvailabilityModal({ initialSlots, onClose, onSaved }: {
         <div className="px-6 py-4 space-y-3 max-h-[60vh] overflow-y-auto">
           {DAY_NAMES.map((name, i) => {
             const day = i + 1
-            const active = slots[day] !== null
+            const active = slots[day].length > 0
             return (
               <div key={day} className={`rounded-xl border px-4 py-3 transition-colors ${active ? 'border-[#ff7a00]/30 bg-orange-50/30' : 'border-gray-100 bg-gray-50/50'}`}>
-                <div className="flex items-center gap-4 min-w-0">
-                  {/* Switch — tamaño fijo, overflow-hidden evita que el knob se salga */}
+                {/* Fila del día */}
+                <div className="flex items-center gap-3">
                   <button
                     type="button"
                     role="switch"
@@ -167,38 +193,55 @@ function AvailabilityModal({ initialSlots, onClose, onSaved }: {
                   >
                     <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${active ? 'translate-x-5' : 'translate-x-0'}`}/>
                   </button>
-
-                  {/* Etiqueta — ancho fijo para que nunca se mueva */}
                   <span className={`flex-none w-24 font-poppins font-bold text-sm ${active ? 'text-gray-900' : 'text-gray-400'}`}>{name}</span>
-
-                  {/* Horario o "No disponible" */}
-                  {active && slots[day] ? (
-                    <div className="flex items-center gap-2 ml-auto flex-wrap">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs text-gray-500">De</span>
-                        <input
-                          type="time"
-                          value={slots[day]!.start}
-                          min="10:00" max="22:00" step="3600"
-                          onChange={e => setTime(day, 'start', e.target.value)}
-                          className="rounded-lg border border-gray-200 px-2 py-1.5 text-xs font-semibold text-gray-800 focus:border-[#ff7a00]/50 focus:outline-none bg-white w-[88px]"
-                        />
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs text-gray-500">a</span>
-                        <input
-                          type="time"
-                          value={slots[day]!.end}
-                          min="10:00" max="22:00" step="3600"
-                          onChange={e => setTime(day, 'end', e.target.value)}
-                          className="rounded-lg border border-gray-200 px-2 py-1.5 text-xs font-semibold text-gray-800 focus:border-[#ff7a00]/50 focus:outline-none bg-white w-[88px]"
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <span className="ml-auto text-xs text-gray-400">No disponible</span>
+                  {!active && <span className="ml-auto text-xs text-gray-400">No disponible</span>}
+                  {active && (
+                    <button
+                      type="button"
+                      onClick={() => addSlot(day)}
+                      className="ml-auto flex items-center gap-1 text-xs font-semibold text-[#ff7a00] hover:text-orange-600 transition-colors"
+                    >
+                      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                      Agregar franja
+                    </button>
                   )}
                 </div>
+
+                {/* Franjas horarias */}
+                {active && slots[day].map((range, idx) => (
+                  <div key={idx} className="flex items-center gap-2 mt-2 pl-14 flex-wrap">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs text-gray-500">De</span>
+                      <input
+                        type="time"
+                        value={range.start}
+                        min="07:00" max="22:00" step="3600"
+                        onChange={e => setTime(day, idx, 'start', e.target.value)}
+                        className="rounded-lg border border-gray-200 px-2 py-1.5 text-xs font-semibold text-gray-800 focus:border-[#ff7a00]/50 focus:outline-none bg-white w-[88px]"
+                      />
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs text-gray-500">a</span>
+                      <input
+                        type="time"
+                        value={range.end}
+                        min="07:00" max="22:00" step="3600"
+                        onChange={e => setTime(day, idx, 'end', e.target.value)}
+                        className="rounded-lg border border-gray-200 px-2 py-1.5 text-xs font-semibold text-gray-800 focus:border-[#ff7a00]/50 focus:outline-none bg-white w-[88px]"
+                      />
+                    </div>
+                    {slots[day].length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeSlot(day, idx)}
+                        className="ml-1 text-gray-400 hover:text-red-500 transition-colors"
+                        aria-label="Eliminar franja"
+                      >
+                        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                      </button>
+                    )}
+                  </div>
+                ))}
               </div>
             )
           })}

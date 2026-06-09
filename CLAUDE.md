@@ -48,6 +48,9 @@
 * No realizar análisis masivos del repositorio.
 * No ejecutar búsquedas amplias si la tarea es específica.
 * Utiliza la solución más simple posible.
+- Evitar el uso de Task Tool salvo que la tarea sea compleja.
+- Evitar crear subagentes para tareas de frontend, UI o cambios pequeños.
+- Resolver tareas localmente siempre que sea posible.
 
 ## Formato de respuesta
 
@@ -101,3 +104,15 @@ Haz exactamente lo solicitado con la menor cantidad posible de contexto, explica
 * Leer únicamente los archivos necesarios.
 * Mantener respuestas extremadamente breves.
 * Si la tarea es clara, implementar directamente sin generar planes, análisis extensos ni explicaciones detalladas.
+
+## Lectura de archivos
+
+- Antes de leer múltiples archivos, identificar primero el archivo más probable.
+- No leer más de 3 archivos simultáneamente salvo que sea necesario.
+- No recorrer el proyecto completo para resolver tareas simples.
+
+## Seguridad
+
+- Nunca mostrar valores de archivos .env.
+- Nunca imprimir tokens, claves o contraseñas.
+- Referirse a secretos por nombre de variable únicamente.

@@ -6,7 +6,7 @@ export type StudentActivityEventType =
   | 'class_booked' | 'class_completed' | 'class_cancelled'
   | 'class_rescheduled' | 'class_no_show' | 'login'
   | 'portal_activity' | 'follow_up' | 'status_changed'
-  | 'reactivated' | 'archived'
+  | 'reactivated' | 'archived' | 'phone_call'
 export type SessionStatus =
   | 'pending' | 'confirmed' | 'completed'
   | 'cancelled' | 'rescheduled' | 'no_show'

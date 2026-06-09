@@ -5,6 +5,22 @@ import ReactivationRowActions from './_components/ReactivationRowActions'
 
 export const dynamic = 'force-dynamic'
 
+const RISK_REASON_LABEL: Record<string, string> = {
+  no_show_frecuente: '⚠ 3+ no-shows en 60 días',
+  no_show_consecutivo: '⚠ 2 no-shows consecutivos',
+  no_response_frecuente: '⚠ Sin respuesta repetida',
+  sin_actividad_30d: '30+ días sin clase',
+  sin_actividad_60d: '60+ días sin clase',
+  sin_actividad_90d: '90+ días sin clase',
+}
+
+const RISK_LEVEL_CLS: Record<string, string> = {
+  bajo:    'bg-green-500/10 text-green-300',
+  medio:   'bg-yellow-500/10 text-yellow-300',
+  alto:    'bg-orange-500/10 text-orange-300',
+  critico: 'bg-red-500/10 text-red-300',
+}
+
 const STATUS_META: Record<string, { label: string; cls: string }> = {
   lead: { label: 'Lead', cls: 'border-white/12 bg-white/6 text-white/55' },
   matriculado: { label: 'Matriculado', cls: 'border-purple-400/20 bg-[#ff7a00]/10 text-purple-300' },
@@ -89,13 +105,23 @@ export default async function ReactivationPage() {
             ) : highRisk.map((student) => (
               <Link key={student.id} href={`/admin/students/${student.id}`} className="block rounded-lg border border-white/10 bg-black/20 p-3 hover:border-orange-500/30">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-bold text-white">{student.name}</p>
-                    <p className="mt-1 text-xs text-white/35">{student.days_since_activity} días sin actividad</p>
+                    <p className="mt-0.5 text-xs text-white/40">{student.instructor_name ?? 'Sin instructor'} · {student.primary_course_name ?? 'Sin instrumento'}</p>
+                    <p className="mt-0.5 text-xs text-white/30">
+                      Última clase: {student.last_completed_class_at ? formatDate(student.last_completed_class_at) : 'Sin registro'}
+                      {' '}· {student.days_since_activity} días
+                    </p>
+                    {student.risk_reason && (
+                      <p className="mt-1 text-[11px] text-yellow-400/70">{RISK_REASON_LABEL[student.risk_reason] ?? student.risk_reason}</p>
+                    )}
                   </div>
-                  <span className="rounded-full bg-red-500/10 px-2 py-1 text-xs font-bold text-red-300">
-                    {student.retention_score ?? 0}
-                  </span>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className={`rounded-full px-2 py-1 text-xs font-bold ${RISK_LEVEL_CLS[student.risk_level] ?? 'bg-white/5 text-white/45'}`}>
+                      {student.retention_score ?? 0}
+                    </span>
+                    {student.risk_level && <span className="text-[10px] text-white/30">{student.risk_level}</span>}
+                  </div>
                 </div>
               </Link>
             ))}
@@ -119,8 +145,14 @@ export default async function ReactivationPage() {
                     <Link href={`/admin/students/${student.id}`} className="text-sm font-bold text-white hover:text-orange-300">
                       {student.name}
                     </Link>
-                    <p className="mt-1 truncate text-xs text-white/40">{student.email ?? 'Sin correo'} · {student.phone ?? 'Sin telefono'}</p>
-                    <p className="mt-1 text-xs text-white/30">Última actividad: {formatDate(student.last_activity_at)}</p>
+                    <p className="mt-0.5 text-xs text-white/40">{student.instructor_name ?? 'Sin instructor'} · {student.primary_course_name ?? 'Sin instrumento'}</p>
+                    <p className="mt-0.5 truncate text-xs text-white/30">{student.email ?? 'Sin correo'} · {student.phone ?? 'Sin teléfono'}</p>
+                    <p className="mt-0.5 text-xs text-white/25">
+                      Última clase: {student.last_completed_class_at ? formatDate(student.last_completed_class_at) : formatDate(student.last_activity_at)}
+                    </p>
+                    {student.risk_reason && (
+                      <p className="mt-1 text-[11px] text-yellow-400/60">{RISK_REASON_LABEL[student.risk_reason] ?? student.risk_reason}</p>
+                    )}
                   </div>
                   <div>
                     <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-bold ${meta.cls}`}>
@@ -130,7 +162,7 @@ export default async function ReactivationPage() {
                   </div>
                   <div>
                     <p className="text-2xl font-black text-white">{student.retention_score ?? 0}</p>
-                    <p className="text-xs text-white/35">score</p>
+                    <p className="text-xs text-white/35">{student.risk_level ?? 'score'}</p>
                   </div>
                   <ReactivationRowActions studentId={student.id} phone={student.phone} email={student.email} />
                 </div>

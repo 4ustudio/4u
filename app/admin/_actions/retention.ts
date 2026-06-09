@@ -95,17 +95,53 @@ function computeRetentionScore(input: {
   completedRecent: number
   cancelledRecent: number
   noShowRecent: number
+  noShows30d: number
+  noShows60d: number
+  noResponse30d: number
+  consecutiveNoShows: number
   upcoming: number
 }) {
-  const score =
-    100 -
-    Math.min(input.days, 120) * 0.55 -
-    input.cancelledRecent * 5 -
-    input.noShowRecent * 12 +
-    Math.min(input.completedRecent, 8) * 4 +
-    Math.min(input.upcoming, 4) * 5
+  let score = 100
+
+  // Penalización por inactividad (max -60 a los 90 días)
+  score -= Math.min(60, Math.floor(input.days / 1.5))
+
+  // Penalización por comportamiento reciente
+  score -= Math.min(30, input.noShows30d * 10)
+  score -= Math.min(24, input.noResponse30d * 8)
+  score -= Math.min(15, input.cancelledRecent * 5)
+
+  // Patrones de comportamiento (penalización adicional)
+  if (input.consecutiveNoShows >= 2) score -= 15
+  if (input.noShows60d >= 3) score -= 20
+
+  // Bonificaciones por actividad reciente
+  score += Math.min(20, input.completedRecent * 5)
+  if (input.upcoming > 0) score += 5
 
   return clampScore(score)
+}
+
+function computeRiskLevel(score: number): 'bajo' | 'medio' | 'alto' | 'critico' {
+  if (score >= 80) return 'bajo'
+  if (score >= 50) return 'medio'
+  if (score >= 20) return 'alto'
+  return 'critico'
+}
+
+function computeRiskReason(signals: {
+  consecutiveNoShows: number
+  noShows60d: number
+  noResponse30d: number
+}, days: number, status: StudentLifecycleStatus): string | null {
+  if (signals.consecutiveNoShows >= 3 || signals.noShows60d >= 3) return 'no_show_frecuente'
+  if (signals.consecutiveNoShows >= 2) return 'no_show_consecutivo'
+  if (signals.noResponse30d >= 2) return 'no_response_frecuente'
+  if (days >= 90) return 'sin_actividad_90d'
+  if (days >= 60) return 'sin_actividad_60d'
+  if (days >= 30) return 'sin_actividad_30d'
+  if (status === 'activo') return null
+  return null
 }
 
 export async function safeRecordStudentActivity(
@@ -129,29 +165,91 @@ export async function safeRecordStudentActivity(
   }
 }
 
+interface StudentSignals {
+  completedRecent: number
+  cancelledRecent: number
+  noShowRecent: number
+  noShows30d: number
+  noShows60d: number
+  noResponse30d: number
+  upcoming: number
+  lastCompletedDate: string | null
+  consecutiveNoShows: number
+}
+
 async function getSessionSignals(studentIds: string[]) {
-  const signals = new Map<string, { completedRecent: number; cancelledRecent: number; noShowRecent: number; upcoming: number }>()
-  for (const id of studentIds) signals.set(id, { completedRecent: 0, cancelledRecent: 0, noShowRecent: 0, upcoming: 0 })
+  const empty = (): StudentSignals => ({
+    completedRecent: 0,
+    cancelledRecent: 0,
+    noShowRecent: 0,
+    noShows30d: 0,
+    noShows60d: 0,
+    noResponse30d: 0,
+    upcoming: 0,
+    lastCompletedDate: null,
+    consecutiveNoShows: 0,
+  })
+
+  const signals = new Map<string, StudentSignals>()
+  for (const id of studentIds) signals.set(id, empty())
 
   if (studentIds.length === 0) return signals
 
   const since = new Date()
   since.setDate(since.getDate() - 120)
+  const sinceStr = since.toISOString().split('T')[0]
   const today = new Date().toISOString().split('T')[0]
+  const d30 = new Date(); d30.setDate(d30.getDate() - 30); const d30str = d30.toISOString().split('T')[0]
+  const d60 = new Date(); d60.setDate(d60.getDate() - 60); const d60str = d60.toISOString().split('T')[0]
 
   const { data } = await db()
     .from('class_sessions')
-    .select('student_id, status, scheduled_date')
+    .select('student_id, status, attendance_status, scheduled_date')
     .in('student_id', studentIds)
-    .gte('scheduled_date', since.toISOString().split('T')[0])
+    .gte('scheduled_date', sinceStr)
+    .order('scheduled_date', { ascending: false })
 
+  // Agrupar por estudiante (las sesiones ya vienen ordenadas desc)
+  const byStudent = new Map<string, typeof data>()
   for (const session of data ?? []) {
-    const item = signals.get(session.student_id)
+    const arr = byStudent.get(session.student_id) ?? []
+    arr.push(session)
+    byStudent.set(session.student_id, arr)
+  }
+
+  for (const [studentId, sessions] of byStudent) {
+    const item = signals.get(studentId)
     if (!item) continue
-    if (session.status === 'completed') item.completedRecent += 1
-    if (session.status === 'cancelled') item.cancelledRecent += 1
-    if (session.status === 'no_show') item.noShowRecent += 1
-    if (session.scheduled_date >= today && !['cancelled', 'rescheduled', 'no_show'].includes(session.status)) item.upcoming += 1
+
+    let consecutiveNoShows = 0
+    let streakDone = false
+
+    for (const session of sessions) {
+      // Racha de no_shows al inicio (más recientes)
+      if (!streakDone) {
+        if (session.status === 'no_show') consecutiveNoShows++
+        else streakDone = true
+      }
+
+      if (session.status === 'completed') {
+        item.completedRecent++
+        if (!item.lastCompletedDate) item.lastCompletedDate = session.scheduled_date
+      }
+      if (session.status === 'cancelled') item.cancelledRecent++
+      if (session.status === 'no_show') {
+        item.noShowRecent++
+        if (session.scheduled_date >= d30str) item.noShows30d++
+        if (session.scheduled_date >= d60str) item.noShows60d++
+      }
+      if (session.attendance_status === 'no_response' && session.scheduled_date >= d30str) {
+        item.noResponse30d++
+      }
+      if (session.scheduled_date >= today && !['cancelled', 'rescheduled', 'no_show'].includes(session.status)) {
+        item.upcoming++
+      }
+    }
+
+    item.consecutiveNoShows = consecutiveNoShows
   }
 
   return signals
@@ -273,9 +371,14 @@ export async function runRetentionDailyJob(options: { dryRun?: boolean } = {}): 
   }
 
   for (const student of list) {
-    const activityDate = student.last_activity_at ?? student.student_since ?? student.enrolled_at
+    const signal = signals.get(student.id) ?? {
+      completedRecent: 0, cancelledRecent: 0, noShowRecent: 0,
+      noShows30d: 0, noShows60d: 0, noResponse30d: 0,
+      upcoming: 0, lastCompletedDate: null, consecutiveNoShows: 0,
+    }
+    // Fuente de verdad: última clase completada, luego last_activity_at, luego matricula
+    const activityDate = signal.lastCompletedDate ?? student.last_activity_at ?? student.student_since ?? student.enrolled_at
     const days = daysSince(activityDate)
-    const signal = signals.get(student.id) ?? { completedRecent: 0, cancelledRecent: 0, noShowRecent: 0, upcoming: 0 }
     const nextStatus = computeLifecycle(student.student_status, days)
     const score = computeRetentionScore({ days, ...signal })
 
@@ -309,22 +412,81 @@ export async function runRetentionDailyJob(options: { dryRun?: boolean } = {}): 
 
   if (dryRun) return preview
 
-  for (const change of preview.statusChanges) {
+  // Actualizar todos los estudiantes con nuevos campos (score, risk_reason, risk_level, last_completed_class_at)
+  for (const student of list) {
+    const signal = signals.get(student.id) ?? {
+      completedRecent: 0, cancelledRecent: 0, noShowRecent: 0,
+      noShows30d: 0, noShows60d: 0, noResponse30d: 0,
+      upcoming: 0, lastCompletedDate: null, consecutiveNoShows: 0,
+    }
+    const activityDate = signal.lastCompletedDate ?? student.last_activity_at ?? student.student_since ?? student.enrolled_at
+    const days = daysSince(activityDate)
+    const nextStatus = computeLifecycle(student.student_status, days)
+    const score = computeRetentionScore({ days, ...signal })
+    const riskReason = computeRiskReason(signal, days, nextStatus)
+    const riskLevel = computeRiskLevel(score)
+
+    const statusChanged = nextStatus !== student.student_status
+
     await db()
       .from('students')
       .update({
-        student_status: change.to,
-        retention_score: change.retentionScore,
+        student_status: nextStatus,
+        retention_score: score,
+        risk_level: riskLevel,
+        risk_reason: riskReason,
+        last_completed_class_at: signal.lastCompletedDate ?? undefined,
+        ...(signal.lastCompletedDate ? { last_activity_at: new Date(signal.lastCompletedDate + 'T12:00:00').toISOString() } : {}),
+        updated_at: isoNow(),
       })
-      .eq('id', change.student_id)
+      .eq('id', student.id)
 
-    await safeRecordStudentActivity(change.student_id, 'status_changed', `Estado actualizado a ${LIFECYCLE_LABEL[change.to]}`, {
-      from: change.from,
-      to: change.to,
-      daysSinceActivity: change.daysSinceActivity,
-      retentionScore: change.retentionScore,
-    })
+    if (statusChanged) {
+      await db().from('student_status_history').insert({
+        student_id: student.id,
+        old_status: student.student_status,
+        new_status: nextStatus,
+        reason: riskReason,
+        days_inactive: days,
+        retention_score: score,
+      })
+      await safeRecordStudentActivity(student.id, 'status_changed', `Estado actualizado a ${LIFECYCLE_LABEL[nextStatus]}`, {
+        from: student.student_status,
+        to: nextStatus,
+        daysSinceActivity: days,
+        retentionScore: score,
+      })
+    }
   }
+
+  // Snapshot diario
+  const counts = list.reduce(
+    (acc, s) => {
+      const signal = signals.get(s.id) ?? { lastCompletedDate: null, completedRecent: 0, cancelledRecent: 0, noShowRecent: 0, noShows30d: 0, noShows60d: 0, noResponse30d: 0, upcoming: 0, consecutiveNoShows: 0 }
+      const days = daysSince(signal.lastCompletedDate ?? s.last_activity_at ?? s.student_since ?? s.enrolled_at)
+      const st = computeLifecycle(s.student_status, days)
+      acc[st] = (acc[st] ?? 0) + 1
+      return acc
+    },
+    {} as Record<string, number>
+  )
+  const totalNonEx = (counts.activo ?? 0) + (counts.riesgo ?? 0) + (counts.inactivo ?? 0) + (counts.exalumno ?? 0)
+  const reactivatedMonth = list.filter((s) => {
+    const r = (s as any).reactivated_at
+    return r && new Date(r) >= new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+  }).length
+
+  await db().from('retention_snapshots').upsert({
+    snapshot_date: new Date().toISOString().split('T')[0],
+    total_activo:  counts.activo  ?? 0,
+    total_riesgo:  counts.riesgo  ?? 0,
+    total_inactivo: counts.inactivo ?? 0,
+    total_exalumno: counts.exalumno ?? 0,
+    total_reactivated_month: reactivatedMonth,
+    retention_rate:     totalNonEx ? Math.round((counts.activo ?? 0) / totalNonEx * 1000) / 10 : null,
+    churn_rate:         totalNonEx ? Math.round((counts.exalumno ?? 0) / totalNonEx * 1000) / 10 : null,
+    reactivation_rate:  totalNonEx ? Math.round(reactivatedMonth / totalNonEx * 1000) / 10 : null,
+  }, { onConflict: 'snapshot_date' })
 
   if (preview.alerts.length > 0) {
     const { data: openAlerts } = await db()
@@ -469,6 +631,20 @@ export async function recordStudentFollowUpAction(
   return { success: true }
 }
 
+export async function recordPhoneCallAction(
+  _prev: { error?: string; success?: boolean },
+  formData: FormData
+): Promise<{ error?: string; success?: boolean }> {
+  const student_id = formData.get('student_id') as string
+  const note = (formData.get('note') as string | null)?.trim() || 'Llamada registrada desde administración.'
+  if (!student_id) return { error: 'ID de estudiante requerido.' }
+
+  await safeRecordStudentActivity(student_id, 'phone_call', note, { channel: 'phone' })
+  revalidatePath('/admin/reactivacion')
+  revalidatePath(`/admin/students/${student_id}`)
+  return { success: true }
+}
+
 export async function markStudentReactivatedAction(
   _prev: { error?: string; success?: boolean },
   formData: FormData
@@ -499,4 +675,17 @@ export async function markStudentReactivatedAction(
   revalidatePath('/admin/reactivacion')
   revalidatePath(`/admin/students/${student_id}`)
   return { success: true }
+}
+
+export async function getRetentionStats() {
+  try {
+    const [{ data: bySource }, { data: byInstructor }, { data: byInstrument }] = await Promise.all([
+      db().from('v_retention_by_source').select('*'),
+      db().from('v_retention_by_instructor').select('*'),
+      db().from('v_retention_by_instrument').select('*'),
+    ])
+    return { bySource: bySource ?? [], byInstructor: byInstructor ?? [], byInstrument: byInstrument ?? [] }
+  } catch {
+    return { bySource: [], byInstructor: [], byInstrument: [] }
+  }
 }

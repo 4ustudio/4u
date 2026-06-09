@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { createAuthServerClient } from '@/lib/supabase/server'
 import { canAccessSalesDashboard, parseRole } from '@/lib/auth/roles'
 import { getEnrollmentFunnelMetrics } from '@/app/admin/_actions/enrollments'
+import { getRetentionStats } from '@/app/admin/_actions/retention'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Dashboard Ejecutivo — 4U Studio Academy' }
@@ -251,7 +252,10 @@ export default async function VentasPage() {
   const role = parseRole(user?.user_metadata ?? null)
   if (!canAccessSalesDashboard(role)) redirect('/admin')
 
-  const data = await getExecutiveData()
+  const [data, retentionStats] = await Promise.all([
+    getExecutiveData(),
+    getRetentionStats(),
+  ])
 
   return (
     <div className="space-y-6 page-animate">
@@ -439,6 +443,90 @@ export default async function VentasPage() {
         <SupportCard title="Clases programadas" value={String(data.classSessionsMonth)} detail="Sesiones activas del mes" href="/admin/agenda" />
         <SupportCard title="Planes por vencer" value={String(data.plansExpiringWeek)} detail="Seguimiento comercial inmediato" href="/admin/students" />
         <SupportCard title="Sin próximas clases" value={String(data.withoutUpcoming)} detail="Prioridad para retención y reagendamiento" href="/admin/reactivacion" />
+      </section>
+
+      {/* Retención por fuente / instructor / instrumento */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-orange-400">Análisis de retención</p>
+            <h2 className="mt-0.5 text-lg font-bold text-white">Retención por segmento</h2>
+          </div>
+          <Link href="/admin/reactivacion" className="rounded-lg border border-white/10 px-4 py-2 text-xs font-semibold text-white/55 hover:text-white">
+            Ver reactivación →
+          </Link>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-3">
+          {/* Por fuente */}
+          <div className="rounded-[24px] border border-white/10 bg-[#0b0b0b] p-5">
+            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/35">Por fuente de captación</p>
+            <div className="mt-4 space-y-3">
+              {retentionStats.bySource.length === 0 ? (
+                <p className="text-xs text-white/30">Sin datos disponibles.</p>
+              ) : (retentionStats.bySource as any[]).map((row) => (
+                <div key={row.source} className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-white capitalize">{row.source}</span>
+                    <span className="text-white/55">{row.activos}/{row.total_students} activos</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/8">
+                      <div className="h-full rounded-full bg-gradient-to-r from-green-500 to-green-400" style={{ width: `${row.retention_rate_pct ?? 0}%` }} />
+                    </div>
+                    <span className="w-9 text-right text-xs font-bold text-green-300">{row.retention_rate_pct ?? 0}%</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Por instructor */}
+          <div className="rounded-[24px] border border-white/10 bg-[#0b0b0b] p-5">
+            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/35">Por instructor</p>
+            <div className="mt-4 space-y-3">
+              {retentionStats.byInstructor.length === 0 ? (
+                <p className="text-xs text-white/30">Sin datos disponibles.</p>
+              ) : (retentionStats.byInstructor as any[]).map((row) => (
+                <div key={row.instructor_id} className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-white">{row.instructor_name}</span>
+                    <span className="text-white/55">{row.activos}/{row.total_students}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/8">
+                      <div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-400" style={{ width: `${row.retention_rate_pct ?? 0}%` }} />
+                    </div>
+                    <span className="w-9 text-right text-xs font-bold text-blue-300">{row.retention_rate_pct ?? 0}%</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Por instrumento */}
+          <div className="rounded-[24px] border border-white/10 bg-[#0b0b0b] p-5">
+            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/35">Por instrumento</p>
+            <div className="mt-4 space-y-3">
+              {retentionStats.byInstrument.length === 0 ? (
+                <p className="text-xs text-white/30">Sin datos disponibles.</p>
+              ) : (retentionStats.byInstrument as any[]).map((row) => (
+                <div key={row.course_id} className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-white">{row.instrument_name}</span>
+                    <span className="text-white/55">{row.activos}/{row.total_students}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/8">
+                      <div className="h-full rounded-full bg-gradient-to-r from-orange-500 to-orange-400" style={{ width: `${row.retention_rate_pct ?? 0}%` }} />
+                    </div>
+                    <span className="w-9 text-right text-xs font-bold text-orange-300">{row.retention_rate_pct ?? 0}%</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </section>
     </div>
   )

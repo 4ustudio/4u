@@ -1,7 +1,7 @@
 'use client'
 
 import { useActionState, useState } from 'react'
-import { markStudentReactivatedAction, recordStudentFollowUpAction } from '../../_actions/retention'
+import { markStudentReactivatedAction, recordStudentFollowUpAction, recordPhoneCallAction } from '../../_actions/retention'
 
 const initial: { error?: string; success?: boolean } = {}
 
@@ -9,6 +9,7 @@ export default function ReactivationRowActions({ studentId, phone, email }: { st
   const [open, setOpen] = useState(false)
   const [noteState, noteAction, notePending] = useActionState(recordStudentFollowUpAction, initial)
   const [reactState, reactAction, reactPending] = useActionState(markStudentReactivatedAction, initial)
+  const [callState, callAction, callPending] = useActionState(recordPhoneCallAction, initial)
   const whatsapp = phone ? `https://wa.me/${phone.replace(/\D/g, '')}` : null
   const mail = email ? `mailto:${email}` : null
 
@@ -25,6 +26,12 @@ export default function ReactivationRowActions({ studentId, phone, email }: { st
             Correo
           </a>
         )}
+        <form action={callAction}>
+          <input type="hidden" name="student_id" value={studentId} />
+          <button disabled={callPending} className="rounded-lg border border-blue-500/25 px-3 py-1.5 text-xs font-semibold text-blue-300 hover:bg-blue-500/10 disabled:opacity-50">
+            {callPending ? '...' : callState.success ? '✓ Llamada' : 'Llamada'}
+          </button>
+        </form>
         <button type="button" onClick={() => setOpen((v) => !v)} className="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-white/60 hover:text-white">
           Seguimiento
         </button>

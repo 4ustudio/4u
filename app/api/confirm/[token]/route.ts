@@ -26,9 +26,19 @@ export async function GET(
     return NextResponse.redirect(new URL('/confirmar/invalido', process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'))
   }
 
-  // Clase ya cancelada o finalizada
-  if (['cancelled', 'rescheduled', 'completed', 'no_show'].includes(session.status)) {
+  // Bloquear sesiones canceladas o no presentadas
+  if (['cancelled', 'rescheduled', 'no_show'].includes(session.status)) {
     return NextResponse.redirect(new URL(`/confirmar/expirado?date=${session.scheduled_date}`, process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'))
+  }
+
+  // Ventana de gracia para sesiones completadas: permitir confirmar el mismo día
+  // (el instructor puede marcar como completada antes de que el alumno confirme)
+  if (session.status === 'completed') {
+    const today = new Date().toISOString().split('T')[0]
+    const sameDay = session.scheduled_date === today
+    if (!sameDay || session.attendance_status !== 'pending') {
+      return NextResponse.redirect(new URL(`/confirmar/expirado?date=${session.scheduled_date}`, process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'))
+    }
   }
 
   // Ya confirmada previamente

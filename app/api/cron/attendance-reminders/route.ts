@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { runRetentionDailyJob } from '@/app/admin/_actions/retention'
 
 export const dynamic = 'force-dynamic'
 
@@ -141,7 +142,23 @@ async function handler(req: Request) {
     results.no_response_closed = closedSessions?.length ?? 0
   }
 
-  return NextResponse.json(results)
+  // ── Job de retención diario (fusionado) ──────────────────────────────────────
+  let retention: Record<string, unknown> = { skipped: true }
+  if (!dryRun) {
+    try {
+      const r = await runRetentionDailyJob({ dryRun: false })
+      retention = {
+        studentsReviewed: r.studentsReviewed,
+        statusChanges: r.summary.statusChanges,
+        alerts: r.summary.alerts,
+        tasks: r.summary.tasks,
+      }
+    } catch (err) {
+      retention = { error: err instanceof Error ? err.message : 'retention job failed' }
+    }
+  }
+
+  return NextResponse.json({ ...results, retention })
 }
 
 export async function GET(req: Request) { return handler(req) }

@@ -282,6 +282,7 @@ export async function convertEnrollmentToStudent(
       student_since: now,
       last_activity_at: now,
       retention_score: 100,
+      lead_id: enrollmentId,
     })
     .select('id')
     .single()

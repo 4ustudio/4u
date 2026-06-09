@@ -48,8 +48,9 @@ export default function StudentPortalHeader({ userEmail, avatarUrl, firstName }:
   }
 
   const navItems = [
-    { href: '/mi-cuenta', label: 'Dashboard' },
+    { href: '/mi-cuenta',          label: 'Dashboard'   },
     { href: '/mi-cuenta/mis-clases', label: 'Mis Clases' },
+    { href: '/mi-cuenta/music4u',  label: 'Mi Music 4U' },
   ]
 
   return (

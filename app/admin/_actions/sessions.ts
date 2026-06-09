@@ -260,6 +260,86 @@ export async function adminRescheduleAction(
   return { success: true }
 }
 
+// ─── Cancelación por instructor (solo si faltan > 24h) ───────────────────────
+
+export async function cancelByInstructorAction(
+  _prev: { error?: string; success?: boolean },
+  formData: FormData
+): Promise<{ error?: string; success?: boolean }> {
+  const sessionId = formData.get('session_id') as string
+  const reason    = (formData.get('reason') as string | null)?.trim() || null
+
+  const { data: session } = await db()
+    .from('class_sessions')
+    .select('student_id, scheduled_date, start_time, status')
+    .eq('id', sessionId)
+    .maybeSingle()
+
+  if (!session) return { error: 'Clase no encontrada.' }
+  if (['cancelled', 'rescheduled', 'completed', 'no_show'].includes(session.status)) {
+    return { error: 'La clase ya no puede cancelarse.' }
+  }
+
+  const classDateTime = new Date(`${session.scheduled_date}T${session.start_time}`)
+  const hoursUntil    = (classDateTime.getTime() - Date.now()) / (1000 * 60 * 60)
+
+  if (hoursUntil < 24) {
+    return { error: 'No se puede cancelar con menos de 24 horas de anticipación.' }
+  }
+
+  const { error } = await db()
+    .from('class_sessions')
+    .update({
+      status:              'cancelled',
+      cancelled_at:        new Date().toISOString(),
+      cancelled_by:        'instructor',
+      cancellation_reason: reason,
+    })
+    .eq('id', sessionId)
+
+  if (error) return { error: error.message }
+
+  await safeRecordStudentActivity(session.student_id, 'class_cancelled', 'Clase cancelada por instructor.', {
+    session_id: sessionId,
+    reason,
+    scheduled_date: session.scheduled_date,
+    start_time: session.start_time,
+  })
+
+  // TODO: Notificar a estudiante y admin vía email/WhatsApp
+
+  revalidatePath('/admin/agenda')
+  return { success: true }
+}
+
+// ─── Actualizar attendance_status manualmente (admin) ────────────────────────
+
+export async function updateAttendanceStatusAction(
+  _prev: { error?: string; success?: boolean },
+  formData: FormData
+): Promise<{ error?: string; success?: boolean }> {
+  const session_id       = formData.get('session_id') as string
+  const attendance_status = formData.get('attendance_status') as string
+
+  const validStatuses = ['pending', 'confirmed', 'declined', 'rescheduled', 'no_response']
+  if (!validStatuses.includes(attendance_status)) return { error: 'Estado inválido.' }
+
+  const update: Record<string, unknown> = { attendance_status }
+  if (attendance_status === 'confirmed') {
+    update.attendance_confirmed_at = new Date().toISOString()
+  }
+
+  const { error } = await db()
+    .from('class_sessions')
+    .update(update)
+    .eq('id', session_id)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/admin/agenda')
+  return { success: true }
+}
+
 export async function restoreCreditAction(
   _prev: { error?: string; success?: boolean },
   formData: FormData

@@ -10,6 +10,8 @@ export type StudentActivityEventType =
 export type SessionStatus =
   | 'pending' | 'confirmed' | 'completed'
   | 'cancelled' | 'rescheduled' | 'no_show'
+export type AttendanceStatus =
+  | 'pending' | 'confirmed' | 'declined' | 'rescheduled' | 'no_response'
 export type ScheduleStatus = 'active' | 'paused' | 'cancelled'
 export type Frequency = 'weekly' | 'biweekly'
 
@@ -104,7 +106,13 @@ export interface ClassSession {
   rescheduled_to_id: string | null
   cancelled_at: string | null
   cancellation_reason: string | null
+  cancelled_by: 'student' | 'instructor' | 'admin' | null
   late_cancellation: boolean
+  attendance_status: AttendanceStatus
+  attendance_confirmed_at: string | null
+  attendance_confirmation_token: string | null
+  attendance_reminder_sent_at: string | null
+  second_reminder_sent_at: string | null
   notes: string | null
   // Relaciones (joins)
   student?: { name: string; phone: string } | null

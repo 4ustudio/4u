@@ -29,6 +29,8 @@ async function getDashboardStats() {
     { data: todaySessions },
     { count: weekCount },
     { data: rooms },
+    { data: todayAttendance },
+    { data: weekAttendance },
   ] = await Promise.all([
     supabase.from('students').select('*', { count: 'exact', head: true }).eq('status', 'active'),
     supabase.from('class_sessions')
@@ -41,6 +43,13 @@ async function getDashboardStats() {
       .not('status', 'in', '(cancelled,rescheduled)'),
     supabase.from('class_sessions').select('classroom:classrooms(name), classroom_id')
       .eq('scheduled_date', today).not('status', 'in', '(cancelled,rescheduled)'),
+    // Métricas de asistencia hoy
+    supabase.from('class_sessions').select('attendance_status, status, cancelled_by')
+      .eq('scheduled_date', today),
+    // Métricas de asistencia semana
+    supabase.from('class_sessions').select('attendance_status, status')
+      .gte('scheduled_date', week.start)
+      .lte('scheduled_date', week.end),
   ])
 
   const roomMap: Record<string, number> = {}
@@ -50,11 +59,36 @@ async function getDashboardStats() {
   }
   const roomOccupancy = Object.entries(roomMap).map(([name, count]) => ({ name, count }))
 
+  const todayAll = todayAttendance ?? []
+  const weekAll  = weekAttendance  ?? []
+
+  const attendanceToday = {
+    confirmed:   todayAll.filter((s: any) => s.attendance_status === 'confirmed').length,
+    pending:     todayAll.filter((s: any) => s.attendance_status === 'pending' && !['cancelled','rescheduled'].includes(s.status)).length,
+    declined:    todayAll.filter((s: any) => s.attendance_status === 'declined').length,
+    no_response: todayAll.filter((s: any) => s.attendance_status === 'no_response').length,
+    no_show:     todayAll.filter((s: any) => s.status === 'no_show').length,
+    cancelled_by_instructor: todayAll.filter((s: any) => s.cancelled_by === 'instructor').length,
+  }
+
+  const weekTotal = weekAll.filter((s: any) => !['cancelled','rescheduled'].includes(s.status)).length
+  const weekCompleted = weekAll.filter((s: any) => s.status === 'completed').length
+  const weekNoShow    = weekAll.filter((s: any) => s.status === 'no_show').length
+  const weekConfirmed = weekAll.filter((s: any) => s.attendance_status === 'confirmed').length
+
+  const attendanceWeek = {
+    attendance_rate:    weekCompleted > 0 && weekTotal > 0 ? Math.round((weekCompleted / weekTotal) * 100) : null,
+    confirmation_rate:  weekTotal > 0 ? Math.round((weekConfirmed / weekTotal) * 100) : null,
+    no_show_rate:       weekTotal > 0 ? Math.round((weekNoShow / weekTotal) * 100) : null,
+  }
+
   return {
     activeStudents:   activeStudents ?? 0,
     todaySessions:    (todaySessions as ClassSession[]) ?? [],
     weekSessionCount: weekCount ?? 0,
     roomOccupancy,
+    attendanceToday,
+    attendanceWeek,
   }
 }
 
@@ -132,6 +166,48 @@ export default async function AdminDashboard() {
           trend="Con al menos una clase hoy"
           icon={<RoomIcon />}
         />
+      </section>
+
+      {/* Dashboard Operativo — Asistencia */}
+      <section>
+        <DashCard
+          title="Operación académica hoy"
+          subtitle="Estado de confirmaciones y asistencia"
+          action={<Link href="/admin/agenda" className="text-xs text-[#ff9a3b] hover:text-[#ff7a00] font-medium transition-colors">Ver agenda →</Link>}
+        >
+          <div className="mt-4 grid grid-cols-3 sm:grid-cols-6 gap-3">
+            <OpsMetric label="Confirmadas"   value={stats.attendanceToday.confirmed}              tone="green" />
+            <OpsMetric label="Pendientes"    value={stats.attendanceToday.pending}                tone="yellow" />
+            <OpsMetric label="Rechazadas"    value={stats.attendanceToday.declined}               tone="red" />
+            <OpsMetric label="Sin respuesta" value={stats.attendanceToday.no_response}            tone="gray" />
+            <OpsMetric label="No asistió"    value={stats.attendanceToday.no_show}                tone="gray" />
+            <OpsMetric label="Cancel. instructor" value={stats.attendanceToday.cancelled_by_instructor} tone="orange" />
+          </div>
+          {(stats.attendanceWeek.attendance_rate !== null || stats.attendanceWeek.confirmation_rate !== null || stats.attendanceWeek.no_show_rate !== null) && (
+            <div className="mt-4 flex flex-wrap gap-4 pt-4 border-t border-white/5">
+              {stats.attendanceWeek.confirmation_rate !== null && (
+                <div>
+                  <p className="text-[10px] text-white/30 uppercase tracking-wider">Confirmación semanal</p>
+                  <p className="text-lg font-bold text-white">{stats.attendanceWeek.confirmation_rate}%</p>
+                </div>
+              )}
+              {stats.attendanceWeek.attendance_rate !== null && (
+                <div>
+                  <p className="text-[10px] text-white/30 uppercase tracking-wider">Asistencia semanal</p>
+                  <p className="text-lg font-bold text-white">{stats.attendanceWeek.attendance_rate}%</p>
+                </div>
+              )}
+              {stats.attendanceWeek.no_show_rate !== null && (
+                <div>
+                  <p className="text-[10px] text-white/30 uppercase tracking-wider">Tasa No Show semanal</p>
+                  <p className={`text-lg font-bold ${(stats.attendanceWeek.no_show_rate ?? 0) > 20 ? 'text-red-400' : 'text-white'}`}>
+                    {stats.attendanceWeek.no_show_rate}%
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </DashCard>
       </section>
 
       {/* Retención + Mayor riesgo */}
@@ -286,6 +362,22 @@ function MiniRetention({ label, value, tone }: { label: string; value: number; t
     <div className="rounded-2xl border border-white/8 bg-white/[0.02] px-3 py-3">
       <p className={`text-2xl font-black ${colors[tone]}`}>{value}</p>
       <p className="text-[11px] text-white/35 mt-0.5">{label}</p>
+    </div>
+  )
+}
+
+function OpsMetric({ label, value, tone }: { label: string; value: number; tone: 'green' | 'yellow' | 'red' | 'gray' | 'orange' }) {
+  const colors = {
+    green:  'text-green-300',
+    yellow: 'text-yellow-300',
+    red:    'text-red-300',
+    gray:   'text-white/40',
+    orange: 'text-[#ff9a3b]',
+  }
+  return (
+    <div className="rounded-2xl border border-white/8 bg-white/[0.02] px-3 py-3">
+      <p className={`text-2xl font-black ${colors[tone]}`}>{value}</p>
+      <p className="text-[10px] text-white/35 mt-0.5 leading-tight">{label}</p>
     </div>
   )
 }

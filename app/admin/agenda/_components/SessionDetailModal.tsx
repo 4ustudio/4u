@@ -6,12 +6,32 @@ import {
   cancelSessionAction,
   adminRescheduleAction,
   adminUpdateStatusAction,
+  cancelByInstructorAction,
+  updateAttendanceStatusAction,
 } from '../../_actions/sessions'
-import type { ClassSession } from '@/types/admin'
+import type { ClassSession, AttendanceStatus } from '@/types/admin'
 
-const initialCancel     = { error: undefined as string | undefined, success: undefined as boolean | undefined, late: undefined as boolean | undefined }
-const initialReschedule = { error: undefined as string | undefined, success: undefined as boolean | undefined }
-const initialStatus     = { error: undefined as string | undefined, success: undefined as boolean | undefined }
+const initialCancel      = { error: undefined as string | undefined, success: undefined as boolean | undefined, late: undefined as boolean | undefined }
+const initialReschedule  = { error: undefined as string | undefined, success: undefined as boolean | undefined }
+const initialStatus      = { error: undefined as string | undefined, success: undefined as boolean | undefined }
+const initialInstCancel  = { error: undefined as string | undefined, success: undefined as boolean | undefined }
+const initialAttendance  = { error: undefined as string | undefined, success: undefined as boolean | undefined }
+
+const ATTENDANCE_LABEL: Record<AttendanceStatus, string> = {
+  pending:     'Pendiente',
+  confirmed:   'Confirmada',
+  declined:    'Rechazada',
+  rescheduled: 'Reagendada',
+  no_response: 'Sin respuesta',
+}
+
+const ATTENDANCE_COLOR: Record<AttendanceStatus, string> = {
+  pending:     'bg-yellow-900/40 text-yellow-300 border border-yellow-700/30',
+  confirmed:   'bg-green-900/40 text-green-300 border border-green-700/30',
+  declined:    'bg-red-900/40 text-red-300 border border-red-700/30',
+  rescheduled: 'bg-purple-900/40 text-purple-300 border border-purple-700/30',
+  no_response: 'bg-white/5 text-white/40 border border-white/10',
+}
 
 const inputClass = 'w-full bg-[#141414] border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500/30 disabled:opacity-50'
 
@@ -28,7 +48,7 @@ const STATUS_COLOR: Record<string, string> = {
   no_show:     'bg-[#141414]      text-white/40   border border-white/10',
 }
 
-type Action = 'attendance' | 'reschedule' | 'cancel' | null
+type Action = 'attendance' | 'attendance-confirm' | 'reschedule' | 'cancel' | 'cancel-instructor' | null
 
 interface Props {
   session:     ClassSession
@@ -41,22 +61,28 @@ export default function SessionDetailModal({ session, classrooms, instructors, o
   const router   = useRouter()
   const [action, setAction] = useState<Action>(null)
 
-  const [cancelState,  cancelAction,  cancelPending]  = useActionState(cancelSessionAction,    initialCancel)
-  const [reschedState, reschedAction, reschedPending] = useActionState(adminRescheduleAction,   initialReschedule)
-  const [statusState,  statusAction,  statusPending]  = useActionState(adminUpdateStatusAction, initialStatus)
+  const [cancelState,     cancelAction,     cancelPending]     = useActionState(cancelSessionAction,        initialCancel)
+  const [reschedState,    reschedAction,    reschedPending]    = useActionState(adminRescheduleAction,       initialReschedule)
+  const [statusState,     statusAction,     statusPending]     = useActionState(adminUpdateStatusAction,     initialStatus)
+  const [instCancelState, instCancelAction, instCancelPending] = useActionState(cancelByInstructorAction,    initialInstCancel)
+  const [attendanceState, attendanceAction, attendancePending] = useActionState(updateAttendanceStatusAction, initialAttendance)
 
   useEffect(() => {
-    if (cancelState.success || reschedState.success || statusState.success) {
+    if (cancelState.success || reschedState.success || statusState.success || instCancelState.success || attendanceState.success) {
       router.refresh()
       onClose()
     }
-  }, [cancelState.success, reschedState.success, statusState.success, router, onClose])
+  }, [cancelState.success, reschedState.success, statusState.success, instCancelState.success, attendanceState.success, router, onClose])
 
   const dateLabel = new Date(session.scheduled_date + 'T12:00:00').toLocaleDateString('es-CO', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   })
   const isActive = ['pending', 'confirmed'].includes(session.status)
   const isClosed = ['cancelled', 'rescheduled', 'completed', 'no_show'].includes(session.status)
+
+  const classDateTime   = new Date(`${session.scheduled_date}T${session.start_time}`)
+  const hoursUntilClass = (classDateTime.getTime() - Date.now()) / (1000 * 60 * 60)
+  const canInstructorCancel = isActive && hoursUntilClass >= 24
 
   const toggleAction = (a: Action) => setAction(prev => prev === a ? null : a)
 
@@ -98,12 +124,21 @@ export default function SessionDetailModal({ session, classrooms, instructors, o
             )}
           </div>
 
-          {/* Estado actual */}
-          <div className="mt-3 flex items-center gap-2">
-            <span className="text-xs text-white/40">Estado actual:</span>
+          {/* Estado actual + Confirmación de asistencia */}
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="text-xs text-white/40">Estado:</span>
             <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${STATUS_COLOR[session.status] ?? 'bg-[#141414] text-white/40'}`}>
               {STATUS_LABEL[session.status] ?? session.status}
             </span>
+            {!isClosed && session.attendance_status && (
+              <>
+                <span className="text-xs text-white/20">·</span>
+                <span className="text-xs text-white/40">Asistencia:</span>
+                <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${ATTENDANCE_COLOR[session.attendance_status as AttendanceStatus] ?? 'bg-white/5 text-white/40 border border-white/10'}`}>
+                  {ATTENDANCE_LABEL[session.attendance_status as AttendanceStatus] ?? session.attendance_status}
+                </span>
+              </>
+            )}
           </div>
 
           {/* Info de cancelación si aplica */}
@@ -213,7 +248,79 @@ export default function SessionDetailModal({ session, classrooms, instructors, o
             </form>
           </ActionCard>
 
-          {/* Acción 3: Cancelar (solo si activa) */}
+          {/* Acción 3: Confirmación de asistencia manual */}
+          {!isClosed && (
+            <ActionCard
+              icon={
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+                </svg>
+              }
+              title="Confirmación de asistencia"
+              subtitle="Actualizar manualmente el estado de confirmación del estudiante."
+              open={action === 'attendance-confirm'}
+              color="green"
+              onClick={() => toggleAction('attendance-confirm')}
+            >
+              <div className="space-y-2 pt-1">
+                {(['confirmed', 'declined', 'rescheduled', 'no_response', 'pending'] as AttendanceStatus[]).map((s) => (
+                  <form key={s} action={attendanceAction}>
+                    <input type="hidden" name="session_id" value={session.id} />
+                    <input type="hidden" name="attendance_status" value={s} />
+                    <button
+                      type="submit"
+                      disabled={attendancePending || session.attendance_status === s}
+                      className={`w-full text-left px-3 py-2.5 rounded-lg text-xs transition-colors disabled:opacity-40 border
+                        ${session.attendance_status === s
+                          ? 'bg-white/10 text-white/60 border-white/10 cursor-default'
+                          : 'bg-white/5 text-white/80 border-white/10 hover:bg-white/10 hover:text-white'
+                        }`}
+                    >
+                      {ATTENDANCE_LABEL[s]}
+                      {session.attendance_status === s && <span className="ml-2 text-white/40">(estado actual)</span>}
+                    </button>
+                  </form>
+                ))}
+                {attendanceState.error && <p className="text-red-400 text-xs mt-2">{attendanceState.error}</p>}
+              </div>
+            </ActionCard>
+          )}
+
+          {/* Acción 4: Cancelar por instructor (solo si > 24h) */}
+          {isActive && (
+            <ActionCard
+              icon={
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11l-4-4-4 4M18 7v8"/>
+                </svg>
+              }
+              title="Cancelar por instructor"
+              subtitle={canInstructorCancel ? 'El instructor cancela con más de 24h de anticipación.' : 'No disponible — faltan menos de 24 horas para la clase.'}
+              open={action === 'cancel-instructor'}
+              color="red"
+              onClick={() => canInstructorCancel && toggleAction('cancel-instructor')}
+            >
+              {canInstructorCancel ? (
+                <form action={instCancelAction} className="space-y-3 pt-1">
+                  <input type="hidden" name="session_id" value={session.id} />
+                  <div>
+                    <label className="block text-xs text-white/50 mb-1.5">Motivo (opcional)</label>
+                    <textarea name="reason" rows={2} disabled={instCancelPending} className={inputClass + ' resize-none'} placeholder="Ej: Problema de salud, emergencia..." />
+                  </div>
+                  {instCancelState.error && <p className="text-red-400 text-xs">{instCancelState.error}</p>}
+                  <button type="submit" disabled={instCancelPending} className="w-full py-2.5 rounded-lg text-sm font-bold text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 transition-colors">
+                    {instCancelPending ? 'Cancelando…' : 'Cancelar clase (instructor)'}
+                  </button>
+                </form>
+              ) : (
+                <p className="pt-1 text-xs text-red-400/80 bg-red-900/20 border border-red-700/20 rounded-lg px-3 py-2">
+                  No se puede cancelar con menos de 24 horas de anticipación.
+                </p>
+              )}
+            </ActionCard>
+          )}
+
+          {/* Acción 5: Cancelar (admin/estudiante) */}
           {isActive && (
             <ActionCard
               icon={
@@ -221,7 +328,7 @@ export default function SessionDetailModal({ session, classrooms, instructors, o
                   <circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/>
                 </svg>
               }
-              title="Cancelar clase"
+              title="Cancelar clase (admin)"
               subtitle="Liberar este horario. Si faltan menos de 24 h, consume cupo del estudiante."
               open={action === 'cancel'}
               color="red"

@@ -41,6 +41,14 @@ const STATUS_COLOR: Record<string, string> = {
   no_show:     'border-l-gray-500 bg-[#141414]/30 opacity-50',
 }
 
+const ATTENDANCE_DOT: Record<string, string> = {
+  pending:     'bg-yellow-400',
+  confirmed:   'bg-green-400',
+  declined:    'bg-red-400',
+  rescheduled: 'bg-purple-400',
+  no_response: 'bg-gray-500',
+}
+
 function getSlotStatus(
   date: string,
   time: string,
@@ -213,9 +221,17 @@ export default function WeekCalendar({ weekStart, sessions, blocked, students, c
                               onClick={() => setViewSession(s)}
                               className={`w-full text-left px-2 py-1.5 rounded border-l-2 cursor-pointer hover:brightness-125 transition-all ${STATUS_COLOR[s.status] ?? 'bg-[#141414] border-l-gray-500'}`}
                             >
-                              <p className="text-white/90 font-medium truncate text-[11px]">
-                                {(s.student as any)?.name ?? '—'}
-                              </p>
+                              <div className="flex items-center gap-1 mb-0.5">
+                                <p className="text-white/90 font-medium truncate text-[11px] flex-1">
+                                  {(s.student as any)?.name ?? '—'}
+                                </p>
+                                {s.attendance_status && !['cancelled', 'rescheduled', 'completed', 'no_show'].includes(s.status) && (
+                                  <span
+                                    className={`shrink-0 h-1.5 w-1.5 rounded-full ${ATTENDANCE_DOT[s.attendance_status] ?? 'bg-gray-500'}`}
+                                    title={`Asistencia: ${s.attendance_status}`}
+                                  />
+                                )}
+                              </div>
                               <p className="text-white/40 truncate text-[10px]">
                                 {(s.course as any)?.name} · {(s.classroom as any)?.name}
                               </p>

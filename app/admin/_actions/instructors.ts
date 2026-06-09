@@ -75,6 +75,56 @@ export async function createInstructorAction(
   return { success: true }
 }
 
+export async function getInstructorById(id: string) {
+  const { data, error } = await db()
+    .from('instructors')
+    .select('*')
+    .eq('id', id)
+    .single()
+  if (error) throw new Error(error.message)
+  return data
+}
+
+export async function updateInstructorAction(
+  _prev: { error?: string; success?: boolean },
+  formData: FormData
+): Promise<{ error?: string; success?: boolean }> {
+  const id        = (formData.get('id')         as string)?.trim()
+  const firstName = (formData.get('first_name') as string)?.trim()
+  const lastName  = (formData.get('last_name')  as string)?.trim()
+  const phone     = (formData.get('phone')      as string)?.trim() || null
+  const status    = (formData.get('status')     as string)?.trim()
+  const password  = (formData.get('password')   as string)?.trim() || null
+
+  if (!id || !firstName) return { error: 'El nombre es obligatorio.' }
+
+  const fullName = [firstName, lastName].filter(Boolean).join(' ')
+  const adminClient = db()
+
+  // Actualizar tabla instructors
+  const { data: inst, error: dbError } = await adminClient
+    .from('instructors')
+    .update({ name: fullName, phone, status })
+    .eq('id', id)
+    .select('email')
+    .single()
+
+  if (dbError) return { error: dbError.message }
+
+  // Actualizar contraseña si se proporcionó
+  if (password && password.length >= 6) {
+    const { data: users } = await createAdminClient().auth.admin.listUsers()
+    const authUser = users?.users?.find((u: any) => u.email === inst.email)
+    if (authUser) {
+      await createAdminClient().auth.admin.updateUserById(authUser.id, { password })
+    }
+  }
+
+  revalidatePath('/admin/instructors')
+  revalidatePath('/agendar')
+  return { success: true }
+}
+
 export async function deleteInstructorAction(
   instructorId: string,
   email: string

@@ -70,7 +70,15 @@ export default async function InstructorsPage() {
                     </span>
                   </td>
                   <td className="px-5 py-3.5 text-right">
-                    <DeleteInstructorButton id={inst.id} email={inst.email} name={inst.name} />
+                    <div className="flex items-center justify-end gap-2">
+                      <Link
+                        href={`/admin/instructors/${inst.id}/editar`}
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium text-white/50 hover:text-white border border-white/10 hover:border-white/20 transition-colors"
+                      >
+                        Editar
+                      </Link>
+                      <DeleteInstructorButton id={inst.id} email={inst.email} name={inst.name} />
+                    </div>
                   </td>
                 </tr>
               ))}

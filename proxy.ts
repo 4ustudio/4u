@@ -1,6 +1,9 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import { parseRole, hasAdminAccess } from '@/lib/auth/roles'
+import { parseRole, hasAdminAccess, hasAcademicAccess, canAccessSalesDashboard } from '@/lib/auth/roles'
+
+const ACADEMIC_PATHS = ['/admin/students', '/admin/agenda', '/admin/instructors', '/admin/reactivacion']
+const SALES_PATHS    = ['/admin/ventas', '/admin/leads', '/admin/enrollments']
 
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -50,6 +53,18 @@ export async function proxy(request: NextRequest) {
     if (!hasAdminAccess(role)) {
       const url = request.nextUrl.clone()
       url.pathname = '/mi-cuenta'
+      return NextResponse.redirect(url)
+    }
+
+    if (ACADEMIC_PATHS.some((p) => pathname.startsWith(p)) && !hasAcademicAccess(role)) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/admin'
+      return NextResponse.redirect(url)
+    }
+
+    if (SALES_PATHS.some((p) => pathname.startsWith(p)) && !canAccessSalesDashboard(role)) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/admin'
       return NextResponse.redirect(url)
     }
   }

@@ -2,8 +2,8 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { parseRole, hasAdminAccess, hasAcademicAccess, canAccessSalesDashboard } from '@/lib/auth/roles'
 
-const ACADEMIC_PATHS = ['/admin/students', '/admin/agenda', '/admin/instructors', '/admin/reactivacion']
-const SALES_PATHS    = ['/admin/ventas', '/admin/leads', '/admin/enrollments']
+const ACADEMIC_PATHS = ['/admin/students', '/admin/agenda', '/admin/instructors', '/admin/reactivacion', '/admin/enrollments']
+const SALES_PATHS    = ['/admin/ventas', '/admin/leads']
 
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })

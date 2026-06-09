@@ -139,6 +139,14 @@ export default function Footer() {
                 <li className="text-sm text-stone-500 font-roboto tracking-wide">
                   {ACADEMY.address}
                 </li>
+                <li>
+                  <a
+                    href={`mailto:${ACADEMY.email}`}
+                    className="text-sm text-stone-400 hover:text-[#ff7a00] transition-colors duration-300 tracking-wide font-roboto"
+                  >
+                    {ACADEMY.email}
+                  </a>
+                </li>
               </ul>
             </div>
           </div>

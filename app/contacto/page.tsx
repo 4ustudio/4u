@@ -77,10 +77,10 @@ export default function ContactoPage() {
                 <div className="flex flex-col items-center text-center p-7 gap-4">
                   <div>
                     <h2 className="text-white font-semibold text-lg mb-2 font-poppins">
-                      Respuesta inmediata
+                      Respuesta personalizada
                     </h2>
                     <p className="text-white/60 text-sm leading-relaxed font-roboto">
-                      Escríbenos por WhatsApp y te atenderemos de inmediato. Es la forma más rápida.
+                      Escríbenos por WhatsApp y te atenderemos de forma personalizada.
                     </p>
                   </div>
                   <WATracker

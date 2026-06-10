@@ -105,7 +105,7 @@ export default function Footer() {
               </h4>
               <ul className="space-y-3">
                 {[
-                  { label: "Clases de música",    href: "/cursos" },
+                  { label: "Clases de música",    href: "/lecciones" },
                   { label: "Grabación profesional", href: "/contacto" },
                 ].map((s) => (
                   <li key={s.label}>

@@ -5,11 +5,11 @@ import CoursesGrid from "@/components/sections/CoursesGrid";
 import { createAuthServerClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
-  title: "Cursos de Música | 4U Studio Academy",
+  title: "Lecciones de Música | 4U Studio Academy",
   description:
     "Clases de guitarra, piano, canto, batería, bajo y producción musical en Bogotá. Aprende con profesores profesionales en un ambiente creativo y moderno.",
   openGraph: {
-    title: "Cursos de Música | 4U Studio Academy",
+    title: "Lecciones de Música | 4U Studio Academy",
     description:
       "Clases de guitarra, piano, canto, batería, bajo y producción musical en Bogotá.",
   },
@@ -103,7 +103,7 @@ const methodologyCards = [
   },
 ];
 
-export default async function CursosPage() {
+export default async function LeccionesPage() {
   const supabase = await createAuthServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   const isLoggedIn = !!user
@@ -160,7 +160,7 @@ export default async function CursosPage() {
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-7xl font-extrabold leading-[1.05] text-white mb-5 font-poppins">
               Nuestros{" "}
-              <span className="text-[#ff7a00]">Cursos</span>
+              <span className="text-[#ff7a00]">Lecciones</span>
             </h1>
             <p className="text-base md:text-lg text-white/70 max-w-[500px] mb-6 leading-relaxed font-roboto">
               Clases personalizadas para niños, adolescentes y adultos.
@@ -168,10 +168,10 @@ export default async function CursosPage() {
             </p>
             <div className="flex flex-wrap gap-4">
               <a
-                href="#cursos"
+                href="#lecciones"
                 className="inline-flex items-center gap-2.5 bg-[#ff7a00] text-white font-semibold px-7 py-3.5 rounded-full text-sm transition-all duration-300 hover:bg-[#e66e00] hover:-translate-y-0.5 shadow-xl shadow-[#ff7a00]/25 hover:shadow-2xl hover:shadow-[#ff7a00]/40 font-poppins"
               >
-                Ver cursos
+                Ver lecciones
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M7 13l5 5 5-5" />
                   <path d="M7 6l5 5 5-5" />
@@ -191,21 +191,21 @@ export default async function CursosPage() {
         </div>
       </section>
 
-      {/* Grid de cursos */}
-      <section id="cursos" className="relative w-full bg-black py-20 md:py-28">
+      {/* Grid de lecciones */}
+      <section id="lecciones" className="relative w-full bg-black py-20 md:py-28">
         <div className="absolute inset-0 bg-gradient-to-b from-zinc-950 via-black to-black pointer-events-none" />
         <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center mb-14">
             <div className="flex items-center justify-center gap-3 mb-4">
               <span className="h-px w-8 bg-[#ff7a00]/60" />
               <span className="text-[#ff7a00] text-xs font-bold uppercase tracking-[0.2em] font-poppins">
-                Encuentra tu curso
+                Encuentra tu lección
               </span>
               <span className="h-px w-8 bg-[#ff7a00]/60" />
             </div>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white font-poppins leading-tight">
-              Todos nuestros{" "}
-              <span className="text-[#ff7a00]">cursos</span>
+              Todas nuestras{" "}
+              <span className="text-[#ff7a00]">lecciones</span>
             </h2>
             <p className="mt-4 text-white/50 max-w-2xl mx-auto font-roboto text-sm md:text-base">
               Elige el instrumento o disciplina que más te apasione<br />
@@ -217,7 +217,7 @@ export default async function CursosPage() {
         </div>
       </section>
 
-      {/* ¿Para quién son nuestros cursos? */}
+      {/* ¿Para quién son nuestras lecciones? */}
       <section className="relative w-full bg-zinc-950 py-20 md:py-28">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -301,11 +301,11 @@ export default async function CursosPage() {
             <span className="text-[#ff7a00]">camino musical</span>?
           </h2>
           <p className="mt-6 text-white/60 max-w-2xl mx-auto font-roboto text-base md:text-lg leading-relaxed">
-            Escríbenos y te ayudaremos a elegir el curso ideal según tu edad, experiencia y objetivos.
+            Escríbenos y te ayudaremos a elegir la lección ideal según tu edad, experiencia y objetivos.
           </p>
           <div className="mt-10 flex flex-wrap justify-center gap-4">
             <a
-              href={`https://api.whatsapp.com/send/?phone=573170192639&text=Hola%2C%20quiero%20informaci%C3%B3n%20sobre%20los%20cursos%20de%204U%20Studio%20Academy`}
+              href={`https://api.whatsapp.com/send/?phone=573170192639&text=Hola%2C%20quiero%20informaci%C3%B3n%20sobre%20las%20lecciones%20de%204U%20Studio%20Academy`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2.5 bg-[#25D366] text-white font-semibold px-8 py-4 rounded-full text-base transition-all duration-300 hover:bg-[#20bd5a] hover:-translate-y-0.5 shadow-xl shadow-[#25D366]/20 hover:shadow-2xl hover:shadow-[#25D366]/40 font-poppins"

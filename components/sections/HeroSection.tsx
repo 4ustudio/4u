@@ -144,7 +144,7 @@ export default function HeroSection() {
 
             <p className="text-base md:text-lg text-white/80 max-w-[470px] mb-7 leading-snug font-roboto animate-fade-in-up anim-d4">
               Aprende, crea y conecta con tu pasión.<br/>
-              Cursos para niños, adolescentes<br/>
+              Lecciones para niños, adolescentes<br/>
               y adultos de todos los niveles.
             </p>
 
@@ -154,7 +154,7 @@ export default function HeroSection() {
 
             <div className="flex flex-wrap items-center gap-4 animate-fade-in-up anim-d6">
               <Button href="/planes" size="md" className="px-7 py-3.5">
-                Ver Cursos
+                Ver Lecciones
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" aria-hidden>
                   <path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>

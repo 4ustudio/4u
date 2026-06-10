@@ -9,7 +9,7 @@ export const faqs: FAQ[] = [
   {
     question: "¿Qué instrumentos puedo aprender?",
     answer: "Ofrecemos clases de guitarra (acústica y eléctrica), piano, canto, batería y bajo. Además, nuestros planes de producción musical incluyen formación integral en el estudio de grabación.",
-    category: "cursos",
+    category: "lecciones",
   },
   {
     question: "¿Cómo son las clases?",

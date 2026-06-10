@@ -310,6 +310,28 @@ export async function getAvailableSlotsAction(date: string): Promise<Array<{
   return (data ?? []) as any[] // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
+export async function getInstructorForSlotAction(date: string, time: string): Promise<{ id: string; name: string } | null> {
+  const dow = new Date(date + 'T12:00:00').getDay()
+  const isodow = dow === 0 ? 7 : dow
+  const [h] = time.split(':').map(Number)
+  const endTime = `${String(h + 1).padStart(2, '0')}:00:00`
+  const startTime = `${time}:00`
+
+  const { data } = await admin()
+    .from('instructors')
+    .select('id, name, instructor_availability!inner(day_of_week, start_time, end_time)')
+    .eq('status', 'active')
+    .eq('instructor_availability.day_of_week', isodow)
+    .lte('instructor_availability.start_time', startTime)
+    .gte('instructor_availability.end_time', endTime)
+    .order('name')
+    .limit(1)
+    .maybeSingle()
+
+  if (!data) return null
+  return { id: data.id, name: data.name }
+}
+
 export async function getActiveCoursesAction(): Promise<{ id: string; name: string }[]> {
   const { data } = await admin()
     .from('courses')

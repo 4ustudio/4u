@@ -5,7 +5,7 @@ import {
 } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import { createAppointment } from "@/app/agendar/actions";
-import { getAvailableSlotsAction } from "@/app/(student)/_actions/student";
+import { getAvailableSlotsAction, getInstructorForSlotAction } from "@/app/(student)/_actions/student";
 import { getHolidayMapForYears } from "@/lib/calendar/colombia-holidays";
 import type { BookingFormState } from "@/types/booking";
 import { ACADEMY } from "@/lib/constants";
@@ -120,7 +120,8 @@ export default function BookingCalendar({
   const [selectedDate,   setSelectedDate]   = useState<Date | null>(null);
   const [selectedCourse, setSelectedCourse] = useState("");
   const [selectedTime,   setSelectedTime]   = useState<string | null>(null);
-  const selectedInstructorId = "";
+  const [assignedInstructor, setAssignedInstructor] = useState<{ id: string; name: string } | null>(null);
+  const [selectedInstructorId, setSelectedInstructorId] = useState("");
   const [slots,       setSlots]       = useState<SlotRow[]>([]);
   const [slotsLoading,setSlotsLoading] = useState(false);
   const [raceError,   setRaceError]   = useState<string | null>(null);
@@ -145,6 +146,8 @@ export default function BookingCalendar({
     if (!selectedDateIso || mode !== "student") { setSlots([]); return; }
     setSlotsLoading(true);
     setSelectedTime(null);
+    setAssignedInstructor(null);
+    setSelectedInstructorId("");
     setRaceError(null);
     getAvailableSlotsAction(selectedDateIso)
       .then(data => {
@@ -155,6 +158,18 @@ export default function BookingCalendar({
       })
       .catch(() => setSlotsLoading(false));
   }, [selectedDateIso, mode]);
+
+  useEffect(() => {
+    if (!selectedTime || !selectedDateIso || mode !== "student") {
+      setAssignedInstructor(null);
+      setSelectedInstructorId("");
+      return;
+    }
+    getInstructorForSlotAction(selectedDateIso, selectedTime).then(inst => {
+      setAssignedInstructor(inst);
+      setSelectedInstructorId(inst?.id ?? "");
+    });
+  }, [selectedTime, selectedDateIso, mode]);
 
   useEffect(() => {
     if (state.status === "error" && (state as any).isRaceCondition && selectedDateIso) {
@@ -727,6 +742,19 @@ export default function BookingCalendar({
 
             {state.status==="error" && !(state as any).isRaceCondition && (
               <p className="mb-3 text-red-200 text-xs bg-red-500/10 border border-red-400/20 rounded-lg px-3 py-2 font-roboto">{state.message}</p>
+            )}
+
+            {assignedInstructor && canSubmit && (
+              <div className="mb-4 flex items-center gap-3 rounded-xl border border-[#ff7a00]/20 bg-[#ff7a00]/6 px-4 py-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-extrabold text-white" style={{ backgroundColor: ORANGE }}>
+                  {assignedInstructor.name.charAt(0)}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[10px] text-white/40 uppercase tracking-widest font-roboto">Instructor asignado</p>
+                  <p className="text-sm font-bold text-white font-poppins truncate">{assignedInstructor.name}</p>
+                </div>
+                <svg className="ml-auto h-4 w-4 shrink-0 text-[#ff7a00]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </div>
             )}
 
             {isLoggedIn ? (

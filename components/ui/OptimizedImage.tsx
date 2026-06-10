@@ -14,11 +14,12 @@ type OptimizedImageProps = {
   sizes?: string;
   quality?: number;
   fallback?: React.ReactNode;
+  style?: React.CSSProperties;
 };
 
 export default function OptimizedImage({
   src, alt, width, height, fill, className = "",
-  priority = false, sizes, quality = 80, fallback,
+  priority = false, sizes, quality = 80, fallback, style,
 }: OptimizedImageProps) {
   const [error, setError] = useState(false);
 
@@ -38,6 +39,7 @@ export default function OptimizedImage({
       quality={quality}
       sizes={sizes ?? (fill ? "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" : undefined)}
       loading={priority ? undefined : "lazy"}
+      style={style}
       onError={() => setError(true)}
     />
   );

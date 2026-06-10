@@ -134,10 +134,13 @@ export default function AdminSidebar({ role }: { role: AppRole | null }) {
   return (
     <aside className="hidden lg:flex sticky top-0 h-screen w-[250px] shrink-0 border-r border-white/8 bg-[#070707] flex-col">
       <div className="px-7 pt-8 pb-6 border-b border-white/8">
-        <p className="text-[22px] font-black tracking-tight text-white leading-none">
-          <span className="text-[#ff7a00]">4U</span> STUDIO
-        </p>
-        <p className="mt-1 text-[11px] uppercase tracking-[0.42em] text-white/42">Academy</p>
+        <Image
+          src="/images/icons/Recurso 1.png"
+          alt="4U Studio Academy"
+          width={130}
+          height={40}
+          className="object-contain"
+        />
       </div>
 
       <div className="px-4 pt-5">

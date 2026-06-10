@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import { createAuthServerClient } from '@/lib/supabase/server'
 import AdminSidebar, { MobileBottomNav } from './_components/AdminSidebar'
@@ -41,9 +42,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           {/* Header */}
           <header className="sticky top-0 z-30 h-20 shrink-0 flex items-center gap-3 px-4 lg:px-7 border-b border-white/8 bg-[#0a0a0a]/95 backdrop-blur-xl">
             {/* Logo móvil */}
-            <p className="text-sm font-extrabold text-white lg:hidden">
-              <span style={{ color: '#ff7a00' }}>4U</span> STUDIO
-            </p>
+            <Image
+              src="/images/icons/Recurso 1.png"
+              alt="4U Studio Academy"
+              width={90}
+              height={28}
+              className="object-contain lg:hidden"
+            />
 
             <div
               className="hidden lg:grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/[0.03] text-white/65"

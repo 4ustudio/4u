@@ -60,7 +60,7 @@ export interface Testimonial {
 export interface FAQ {
   question: string;
   answer: string;
-  category: "general" | "planes" | "cursos" | "kids";
+  category: "general" | "planes" | "lecciones" | "kids";
 }
 
 export interface Benefit {

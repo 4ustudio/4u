@@ -7,6 +7,7 @@ import GenerateClassesButton from './_components/GenerateClassesButton'
 import DeleteStudentButton from './_components/DeleteStudentButton'
 import StudentSessionsPanel from './_components/StudentSessionsPanel'
 import PasswordSection from './_components/PasswordSection'
+import BirthdayBenefitPanel from './_components/BirthdayBenefitPanel'
 import type { Student, MonthlyUsage, StudentSchedule } from '@/types/admin'
 import { getStudentRetentionProfile } from '../../_actions/retention'
 
@@ -113,6 +114,8 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
           <StudentEditForm student={student} />
 
           <PasswordSection studentId={id} hasAccount={!!student.user_id} email={student.email} />
+
+          <BirthdayBenefitPanel student={student} />
 
           <section className="bg-[#0f0f0f] border border-white/10 rounded-xl p-5 space-y-4">
             <div className="flex items-start justify-between gap-3">

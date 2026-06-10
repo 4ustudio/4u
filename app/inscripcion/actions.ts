@@ -176,6 +176,8 @@ export async function submitEnrollment(
     course_interest: (formData.get('course_interest') as string | null)?.trim() ?? '',
     level:           (formData.get('level') as Level) ?? undefined,
     preferred_time:  (formData.get('preferred_time') as string | null)?.trim() ?? '',
+    payment_method:  (formData.get('payment_method') as string | null)?.trim() || undefined,
+    music_genre:     (formData.get('music_genre') as string | null)?.trim() || undefined,
     notes:           (formData.get('notes') as string | null)?.trim() || undefined,
     source:          'inscripcion',
     terms_accepted:    formData.get('terms') === 'on',

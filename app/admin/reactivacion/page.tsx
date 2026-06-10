@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { getRetentionDashboardData } from '../_actions/retention'
+import { isBirthdayMonth } from '@/lib/students/birthday'
 import RetentionPreviewPanel from './_components/RetentionPreviewPanel'
 import ReactivationRowActions from './_components/ReactivationRowActions'
 
@@ -45,6 +46,8 @@ export default async function ReactivationPage() {
   const highRisk = data.highRisk as any[]
   const alerts = data.alerts as any[]
   const students = data.students as any[]
+  const birthdayThisMonth = data.birthdayThisMonth as number
+  const benefitsGrantedThisMonth = data.benefitsGrantedThisMonth as number
 
   return (
     <div className="space-y-6 w-full page-animate">
@@ -77,6 +80,8 @@ export default async function ReactivationPage() {
         <Metric label="Reactivados este mes" value={dashboard?.reactivated_this_month ?? 0} tone="blue" />
         <Metric label="Tasa reactivación" value={percent(dashboard?.reactivation_rate)} tone="purple" />
         <Metric label="Sin próximas clases" value={dashboard?.without_upcoming_sessions ?? 0} tone="orange" />
+        <Metric label="🎂 Cumpleaños este mes" value={birthdayThisMonth} tone="pink" />
+        <Metric label="Beneficios otorgados" value={benefitsGrantedThisMonth} tone="pink" />
       </section>
 
       {alerts.length > 0 && (
@@ -142,9 +147,16 @@ export default async function ReactivationPage() {
               return (
                 <div key={student.id} className="grid gap-4 px-5 py-4 xl:grid-cols-[1.2fr_160px_110px_1.4fr]">
                   <div className="min-w-0">
-                    <Link href={`/admin/students/${student.id}`} className="text-sm font-bold text-white hover:text-orange-300">
-                      {student.name}
-                    </Link>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Link href={`/admin/students/${student.id}`} className="text-sm font-bold text-white hover:text-orange-300">
+                        {student.name}
+                      </Link>
+                      {isBirthdayMonth(student.birth_date) && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-pink-500/15 text-pink-300 border border-pink-500/20 font-medium">
+                          🎂 Cumpleaños
+                        </span>
+                      )}
+                    </div>
                     <p className="mt-0.5 text-xs text-white/40">{student.instructor_name ?? 'Sin instructor'} · {student.primary_course_name ?? 'Sin instrumento'}</p>
                     <p className="mt-0.5 truncate text-xs text-white/30">{student.email ?? 'Sin correo'} · {student.phone ?? 'Sin teléfono'}</p>
                     <p className="mt-0.5 text-xs text-white/25">
@@ -175,7 +187,7 @@ export default async function ReactivationPage() {
   )
 }
 
-function Metric({ label, value, tone }: { label: string; value: string | number; tone: 'green' | 'yellow' | 'red' | 'white' | 'orange' | 'blue' | 'purple' }) {
+function Metric({ label, value, tone }: { label: string; value: string | number; tone: 'green' | 'yellow' | 'red' | 'white' | 'orange' | 'blue' | 'purple' | 'pink' }) {
   const color: Record<typeof tone, string> = {
     green: 'text-green-300 border-green-400/15 bg-green-400/[0.06]',
     yellow: 'text-yellow-300 border-yellow-400/15 bg-yellow-400/[0.06]',
@@ -184,6 +196,7 @@ function Metric({ label, value, tone }: { label: string; value: string | number;
     orange: 'text-orange-300 border-orange-400/15 bg-orange-400/[0.06]',
     blue: 'text-violet-300 border-violet-400/15 bg-white/40/[0.06]',
     purple: 'text-purple-300 border-purple-400/15 bg-[#ff7a00]/[0.06]',
+    pink: 'text-pink-300 border-pink-400/15 bg-pink-400/[0.06]',
   }
   return (
     <div className={`rounded-xl border px-5 py-4 ${color[tone]}`}>

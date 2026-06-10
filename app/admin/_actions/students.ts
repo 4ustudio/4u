@@ -5,7 +5,8 @@ import { createAuthServerClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type { Student, StudentLifecycleStatus, StudentStatus, StudentType, StudentSchedule, Frequency } from '@/types/admin'
 import { safeRecordStudentActivity } from './retention'
-import { activity } from '@/lib/activity'
+import { activity, logActivity } from '@/lib/activity'
+import { isBirthdayMonth, getBirthdayBenefitStatus } from '@/lib/students/birthday'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function db(): any { return createAdminClient() }
@@ -281,9 +282,11 @@ export async function createStudentAction(
   const music_genre  = (formData.get('music_genre')  as string | null)?.trim() || null
   const document_type   = (formData.get('document_type')   as string | null) || null
   const document_number = (formData.get('document_number') as string | null)?.trim() || null
-  const student_type = (formData.get('student_type') as StudentType) ?? 'new'
-  const notes        = (formData.get('notes')        as string | null)?.trim() || null
-  const lead_id      = (formData.get('lead_id')      as string | null) || null
+  const student_type    = (formData.get('student_type') as StudentType) ?? 'new'
+  const plan_name       = (formData.get('plan_name')    as string | null)?.trim() || null
+  const payment_method  = (formData.get('payment_method') as string | null)?.trim() || null
+  const notes           = (formData.get('notes')        as string | null)?.trim() || null
+  const lead_id         = (formData.get('lead_id')      as string | null) || null
   const now          = new Date().toISOString()
 
   if (!first_name || !phone) {
@@ -306,6 +309,8 @@ export async function createStudentAction(
       document_type,
       document_number,
       student_type,
+      plan_name,
+      payment_method,
       notes,
       lead_id,
       status: 'active',
@@ -525,5 +530,84 @@ export async function updateStudentAction(
 
   revalidatePath('/admin/students')
   revalidatePath(`/admin/students/${id}`)
+  return { success: true }
+}
+
+// ── Beneficio de Cumpleaños ───────────────────────────────────────
+
+export async function grantBirthdayBenefitAction(
+  studentId: string
+): Promise<{ error?: string; success?: boolean }> {
+  const { data: student, error: fetchErr } = await db()
+    .from('students')
+    .select('id, name, birth_date, student_status, birthday_benefit_year, birthday_benefit_used, birthday_discount_percent')
+    .eq('id', studentId)
+    .single()
+
+  if (fetchErr || !student) return { error: 'Estudiante no encontrado.' }
+
+  const status = getBirthdayBenefitStatus(student)
+
+  if (student.student_status !== 'activo') return { error: 'El beneficio aplica solo a estudiantes activos.' }
+  if (!isBirthdayMonth(student.birth_date)) return { error: 'No es el mes de cumpleaños del estudiante.' }
+  if (status === 'granted' || status === 'used') return { error: 'El beneficio ya fue otorgado este año.' }
+
+  const currentYear = new Date().getFullYear()
+  const { error } = await db()
+    .from('students')
+    .update({ birthday_benefit_year: currentYear, birthday_benefit_used: false })
+    .eq('id', studentId)
+
+  if (error) return { error: error.message }
+
+  await logActivity({
+    entity_type:       'student',
+    entity_id:         studentId,
+    action:            'birthday.benefit_granted',
+    description:       `Beneficio de cumpleaños otorgado a ${student.name} (${student.birthday_discount_percent ?? 10}% descuento)`,
+    metadata:          { discount_percent: student.birthday_discount_percent ?? 10, year: currentYear },
+    severity:          'info',
+    created_by_system: false,
+  })
+
+  revalidatePath('/admin/students')
+  revalidatePath(`/admin/students/${studentId}`)
+  return { success: true }
+}
+
+export async function useBirthdayDiscountAction(
+  studentId: string
+): Promise<{ error?: string; success?: boolean }> {
+  const { data: student, error: fetchErr } = await db()
+    .from('students')
+    .select('id, name, birthday_benefit_year, birthday_benefit_used, birthday_discount_percent')
+    .eq('id', studentId)
+    .single()
+
+  if (fetchErr || !student) return { error: 'Estudiante no encontrado.' }
+
+  const currentYear = new Date().getFullYear()
+  if (student.birthday_benefit_year !== currentYear) return { error: 'No hay beneficio otorgado este año.' }
+  if (student.birthday_benefit_used) return { error: 'El descuento ya fue utilizado.' }
+
+  const { error } = await db()
+    .from('students')
+    .update({ birthday_benefit_used: true })
+    .eq('id', studentId)
+
+  if (error) return { error: error.message }
+
+  await logActivity({
+    entity_type:       'student',
+    entity_id:         studentId,
+    action:            'birthday.discount_used',
+    description:       `Descuento de cumpleaños aplicado a ${student.name} (${student.birthday_discount_percent ?? 10}%)`,
+    metadata:          { discount_percent: student.birthday_discount_percent ?? 10, year: currentYear },
+    severity:          'info',
+    created_by_system: false,
+  })
+
+  revalidatePath('/admin/students')
+  revalidatePath(`/admin/students/${studentId}`)
   return { success: true }
 }

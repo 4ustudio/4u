@@ -4,6 +4,13 @@ import { useState, useRef, useActionState, useTransition, useEffect } from 'reac
 import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import { updateProfileAction, uploadAvatarAction } from '../../_actions/student'
+import {
+  getBirthdayBenefitStatus,
+  formatBirthdayLabel,
+  BENEFIT_STATUS_LABEL,
+  BENEFIT_STATUS_CLS,
+  type BirthdayStudent,
+} from '@/lib/students/birthday'
 
 interface Props {
   firstName:  string
@@ -11,12 +18,13 @@ interface Props {
   email:      string
   avatarUrl?: string | null
   userId:     string
+  birthdayBenefit?: { student: BirthdayStudent }
 }
 
 const inputClass =
   'w-full bg-stone-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm placeholder:text-gray-400 font-roboto focus:outline-none focus:ring-2 focus:ring-[#ff7a00]/60 focus:border-[#ff7a00]/40 transition-all disabled:opacity-50'
 
-export default function ProfileModal({ firstName, lastName, email, avatarUrl }: Props) {
+export default function ProfileModal({ firstName, lastName, email, avatarUrl, birthdayBenefit }: Props) {
   const [open, setOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [preview, setPreview] = useState<string | null>(avatarUrl ?? null)
@@ -158,6 +166,28 @@ export default function ProfileModal({ firstName, lastName, email, avatarUrl }: 
             <label className="block text-[10px] text-gray-500 mb-1.5 font-roboto uppercase tracking-wider">Email</label>
             <input value={email} disabled className={inputClass + ' opacity-40 cursor-not-allowed'} />
           </div>
+
+          {birthdayBenefit && (() => {
+            const s = birthdayBenefit.student
+            const bStatus = getBirthdayBenefitStatus(s)
+            const bLabel  = formatBirthdayLabel(s.birth_date)
+            const discount = s.birthday_discount_percent ?? 10
+            if (!bLabel && bStatus === 'expired') return null
+            return (
+              <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 space-y-1">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Beneficio de cumpleaños</p>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full border font-bold ${BENEFIT_STATUS_CLS[bStatus]}`}>
+                    {BENEFIT_STATUS_LABEL[bStatus]}
+                  </span>
+                </div>
+                {bLabel && <p className="text-xs text-gray-600">🎂 {bLabel}</p>}
+                {(bStatus === 'eligible' || bStatus === 'granted') && (
+                  <p className="text-xs font-semibold text-pink-600">{discount}% de descuento en tu mensualidad</p>
+                )}
+              </div>
+            )
+          })()}
 
           {state.error && (
             <p className="text-red-400 text-xs font-roboto bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{state.error}</p>

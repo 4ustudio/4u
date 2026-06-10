@@ -15,6 +15,8 @@ export type ActivityAction =
   | 'retention.status_changed'
   | 'student.reactivated'
   | 'student.profile_updated'
+  | 'birthday.benefit_granted'
+  | 'birthday.discount_used'
 
 export type EntityType =
   | 'enrollment'

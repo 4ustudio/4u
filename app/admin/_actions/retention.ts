@@ -557,7 +557,10 @@ export async function runRetentionPreviewAction(): Promise<{ error?: string; pre
 
 export async function getRetentionDashboardData() {
   try {
-    const [{ data: dashboard }, { data: highRisk }, { data: alerts }, { data: students }] = await Promise.all([
+    const currentMonth = new Date().getMonth() + 1
+    const currentYear  = new Date().getFullYear()
+
+    const [{ data: dashboard }, { data: highRisk }, { data: alerts }, { data: students }, { data: birthdayStudents }, { count: benefitsGrantedCount }] = await Promise.all([
       db().from('v_retention_dashboard').select('*').maybeSingle(),
       db().from('v_high_risk_students').select('*').limit(8),
       db().from('retention_alerts').select('*').eq('status', 'open').order('created_at', { ascending: false }).limit(6),
@@ -567,13 +570,28 @@ export async function getRetentionDashboardData() {
         .or('student_status.in.(riesgo,inactivo,exalumno),retention_score.lte.55,upcoming_classes.eq.0')
         .order('retention_score', { ascending: true })
         .limit(80),
+      db()
+        .from('students')
+        .select('birth_date')
+        .eq('student_status', 'activo')
+        .not('birth_date', 'is', null),
+      db()
+        .from('students')
+        .select('*', { count: 'exact', head: true })
+        .eq('birthday_benefit_year', currentYear),
     ])
+
+    const birthdayCount = (birthdayStudents ?? []).filter(
+      (s: { birth_date: string }) => new Date(s.birth_date + 'T12:00:00').getMonth() + 1 === currentMonth
+    ).length
 
     return {
       dashboard: dashboard ?? null,
       highRisk: highRisk ?? [],
       alerts: alerts ?? [],
       students: students ?? [],
+      birthdayThisMonth: birthdayCount,
+      benefitsGrantedThisMonth: benefitsGrantedCount ?? 0,
       migrationMissing: false,
     }
   } catch (error) {
@@ -582,6 +600,8 @@ export async function getRetentionDashboardData() {
       highRisk: [],
       alerts: [],
       students: [],
+      birthdayThisMonth: 0,
+      benefitsGrantedThisMonth: 0,
       migrationMissing: error instanceof Error ? error.message : 'Migracion pendiente',
     }
   }

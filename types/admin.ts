@@ -47,6 +47,9 @@ export interface Student {
   lead_id: string | null
   notes: string | null
   user_id: string | null
+  birthday_benefit_year?:     number | null
+  birthday_benefit_used?:     boolean | null
+  birthday_discount_percent?: number | null
 }
 
 export interface StudentSchedule {

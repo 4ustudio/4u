@@ -14,6 +14,8 @@ import AvailabilityEditor from './_components/AvailabilityEditor'
 import InstructorCancelSession from './_components/InstructorCancelSession'
 import { InstrumentIcon } from './_components/instruments'
 import { statusMeta } from './_components/statusMeta'
+import BirthdayBenefitCard from './_components/BirthdayBenefitCard'
+import { getBirthdayBenefitStatus, isBirthdayMonth } from '@/lib/students/birthday'
 import { ACADEMY } from '@/lib/constants'
 import { getHolidayMap } from '@/lib/calendar/colombia-holidays'
 import { EVENT_STYLE } from '@/lib/calendar/types'
@@ -104,7 +106,7 @@ function StudentDashboard({ data, monthSessions, user, monthLabel, now }: any) {
             email={student.email ?? user.email}
             badge="Estudiante"
             memberSince={memberSince}
-            action={<ProfileModal firstName={student.first_name ?? student.name ?? ''} lastName={student.last_name ?? ''} email={user.email ?? ''} avatarUrl={avatarUrl} userId={user.id} />}
+            action={<ProfileModal firstName={student.first_name ?? student.name ?? ''} lastName={student.last_name ?? ''} email={user.email ?? ''} avatarUrl={avatarUrl} userId={user.id} birthdayBenefit={{ student }} />}
             right={
               <PlanCard
                 title="Plan Estudiante"
@@ -114,6 +116,11 @@ function StudentDashboard({ data, monthSessions, user, monthLabel, now }: any) {
               />
             }
           />
+
+          {/* Beneficio de cumpleaños — destacado cuando activo */}
+          {(isBirthdayMonth(student.birth_date) || getBirthdayBenefitStatus(student) !== 'expired') && (
+            <BirthdayBenefitCard student={student} />
+          )}
 
           <section>
             <SectionTitle title="Resumen de clases" subtitle="Asi va tu progreso este mes." />

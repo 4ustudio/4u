@@ -124,10 +124,10 @@ export default function StudentEditForm({ student }: { student: Student & { plai
           </select>
         </div>
         <div>
-          <label className="block text-xs text-white/50 mb-1.5">Tipo</label>
+          <label className="block text-xs text-white/50 mb-1.5">Tipo de estudiante</label>
           <select name="student_type" disabled={isPending} defaultValue={student.student_type} className={inputClass + ' appearance-none'}>
-            <option value="new">Nuevo (solo 5PM–10PM)</option>
-            <option value="regular">Regular (10AM–10PM)</option>
+            <option value="new">Prospecto</option>
+            <option value="regular">Estudiante Activo</option>
           </select>
         </div>
       </div>

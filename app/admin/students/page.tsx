@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { getStudents } from '../_actions/students'
 import type { Student } from '@/types/admin'
+import { isBirthdayMonth } from '@/lib/students/birthday'
 
 const ORANGE = '#ff7a00'
 
@@ -45,10 +46,10 @@ const STATUS_LABEL: Record<string, string> = {
   lead: 'Lead', matriculado: 'Matriculado', activo: 'Activo', riesgo: 'Riesgo', inactivo: 'Inactivo', exalumno: 'Exalumno',
   active: 'Activo', inactive: 'Inactivo', suspended: 'Suspendido',
 }
-const TYPE_LABEL: Record<string, string> = { new: 'Nuevo', regular: 'Regular' }
+const TYPE_LABEL: Record<string, string> = { new: 'Prospecto', regular: 'Estudiante Activo' }
 const TYPE_PILL: Record<string, string> = {
   new:     'bg-yellow-500/10 text-yellow-400 border-yellow-500/15',
-  regular: 'bg-white/8 text-white/55 border-white/10',
+  regular: 'bg-green-500/10 text-green-400 border-green-500/15',
 }
 
 const AVATAR_COLORS = [
@@ -229,6 +230,11 @@ export default function StudentsPage() {
                           <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                           </svg>
+                        </span>
+                      )}
+                      {isBirthdayMonth(s.birth_date) && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-pink-500/15 text-pink-300 border border-pink-500/20 font-medium">
+                          🎂 Cumpleaños
                         </span>
                       )}
                     </div>

@@ -293,7 +293,54 @@ export default function InscripcionPage() {
                 {state.errors?.preferred_time && <p className={errorClass}>{state.errors.preferred_time}</p>}
               </fieldset>
 
-              {/* ── 10. Comentarios ── */}
+              {/* ── 10. Forma de pago ── */}
+              <div>
+                <label htmlFor="payment_method" className={labelClass}>
+                  Forma de pago
+                  <span className="text-white/20 font-normal normal-case ml-1">(opcional)</span>
+                </label>
+                <select
+                  id="payment_method"
+                  name="payment_method"
+                  disabled={isPending}
+                  className={inputClass + ' appearance-none'}
+                >
+                  <option value="">Seleccionar…</option>
+                  <option value="Efectivo">Efectivo</option>
+                  <option value="Transferencia bancaria">Transferencia bancaria</option>
+                  <option value="Nequi">Nequi</option>
+                  <option value="Daviplata">Daviplata</option>
+                  <option value="Tarjeta de crédito">Tarjeta de crédito</option>
+                  <option value="Tarjeta de débito">Tarjeta de débito</option>
+                  <option value="PSE">PSE</option>
+                </select>
+              </div>
+
+              {/* ── 11. Género musical favorito ── */}
+              <div>
+                <label htmlFor="music_genre" className={labelClass}>
+                  Género musical favorito
+                  <span className="text-white/20 font-normal normal-case ml-1">(opcional)</span>
+                </label>
+                <select
+                  id="music_genre"
+                  name="music_genre"
+                  disabled={isPending}
+                  className={inputClass + ' appearance-none'}
+                >
+                  <option value="">Seleccionar…</option>
+                  <option value="Rock">Rock</option>
+                  <option value="Pop">Pop</option>
+                  <option value="Romántico">Romántico</option>
+                  <option value="Tropical">Tropical</option>
+                  <option value="Clásica">Clásica</option>
+                  <option value="Regional colombiano">Regional colombiano</option>
+                  <option value="Regional mexicano">Regional mexicano</option>
+                  <option value="Otros">Otros</option>
+                </select>
+              </div>
+
+              {/* ── 11. Comentarios ── */}
               <div>
                 <label htmlFor="notes" className={labelClass}>
                   Comentarios

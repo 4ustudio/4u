@@ -96,11 +96,17 @@ export default function NewStudentForm() {
           </div>
           <div>
             <label className="block text-xs text-white/50 mb-1.5">Género musical favorito</label>
-            <input
-              type="text" name="music_genre" disabled={isPending}
-              className={inputClass}
-              placeholder="opcional"
-            />
+            <select name="music_genre" disabled={isPending} className={inputClass + ' appearance-none'}>
+              <option value="">Seleccionar…</option>
+              <option value="Rock">Rock</option>
+              <option value="Pop">Pop</option>
+              <option value="Romántico">Romántico</option>
+              <option value="Tropical">Tropical</option>
+              <option value="Clásica">Clásica</option>
+              <option value="Regional colombiano">Regional colombiano</option>
+              <option value="Regional mexicano">Regional mexicano</option>
+              <option value="Otros">Otros</option>
+            </select>
           </div>
         </div>
 
@@ -129,9 +135,48 @@ export default function NewStudentForm() {
         <div>
           <label className="block text-xs text-white/50 mb-1.5">Tipo de estudiante</label>
           <select name="student_type" disabled={isPending} className={inputClass + ' appearance-none'}>
-            <option value="new">Nuevo (solo 5PM–10PM de L-V)</option>
-            <option value="regular">Regular (10AM–10PM de L-V)</option>
+            <option value="new">Prospecto</option>
+            <option value="regular">Estudiante Activo</option>
           </select>
+          <p className="text-xs text-white/30 mt-1.5 leading-snug">
+            <span className="text-white/45">Prospecto:</span> persona interesada que aún no ha iniciado clases.{' '}
+            <span className="text-white/45">Estudiante Activo:</span> matriculado con clases asignadas o en curso.
+          </p>
+        </div>
+
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs text-white/50 mb-1.5">Plan escogido</label>
+            <select name="plan_name" disabled={isPending} className={inputClass + ' appearance-none'}>
+              <option value="">Seleccionar…</option>
+              <optgroup label="Jóvenes y Adultos">
+                <option value="Plan New Talent">Plan New Talent — $1.100.000/mes</option>
+                <option value="Plan Fast Talent">Plan Fast Talent — $1.900.000/mes</option>
+                <option value="Plan Bandas">Plan Bandas — $2.500.000/mes</option>
+                <option value="Plan Artista">Plan Artista — $3.500.000/mes</option>
+                <option value="Plan Artista Premium">Plan Artista Premium — $4.500.000/mes</option>
+                <option value="Plan Profesional">Plan Profesional — Cotización</option>
+                <option value="Plan Corporativo">Plan Corporativo — Cotización</option>
+              </optgroup>
+              <optgroup label="Kids &amp; Teens">
+                <option value="Plan Kids &amp; Teens">Plan Kids &amp; Teens</option>
+                <option value="Plan Premium Kids &amp; Teens">Plan Premium Kids &amp; Teens</option>
+              </optgroup>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs text-white/50 mb-1.5">Forma de pago</label>
+            <select name="payment_method" disabled={isPending} className={inputClass + ' appearance-none'}>
+              <option value="">Seleccionar…</option>
+              <option value="Efectivo">Efectivo</option>
+              <option value="Transferencia bancaria">Transferencia bancaria</option>
+              <option value="Nequi">Nequi</option>
+              <option value="Daviplata">Daviplata</option>
+              <option value="Tarjeta de crédito">Tarjeta de crédito</option>
+              <option value="Tarjeta de débito">Tarjeta de débito</option>
+              <option value="PSE">PSE</option>
+            </select>
+          </div>
         </div>
 
         <div>

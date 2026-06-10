@@ -29,6 +29,8 @@ export interface EnrollmentInsert {
   course_interest: string
   level:           Level
   preferred_time:  string
+  payment_method?: string
+  music_genre?:    string
   notes?:          string
   source:          string
   terms_accepted?:    boolean

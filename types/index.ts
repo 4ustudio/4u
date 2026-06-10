@@ -40,6 +40,13 @@ export interface Instructor {
   role: string;
   bio: string;
   photo?: string;
+  photoPosition?: string;
+  instrument: string;
+  instrumentEmoji: string;
+  experience?: string;
+  achievements: string[];
+  filterTags: string[];
+  video_url?: string | null;
   specialties: string[];
   social?: {
     instagram?: string;

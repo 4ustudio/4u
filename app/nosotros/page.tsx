@@ -3,6 +3,8 @@ import Link from "next/link";
 import PageLayout from "@/components/layout/PageLayout";
 import OptimizedImage from "@/components/ui/OptimizedImage";
 import ProcesoSection from "./_components/ProcesoSection";
+import TeamSection from "./_components/TeamSection";
+import { instructors } from "@/data/instructors";
 
 export const metadata: Metadata = {
   title: "Nosotros | 4U Studio Academy",
@@ -69,6 +71,19 @@ const processSteps = [
   "Mostrar",
   "Sentirse artista",
 ];
+
+const personSchema = {
+  "@context": "https://schema.org",
+  "@graph": instructors.map((i) => ({
+    "@type": "Person",
+    name: i.name,
+    jobTitle: i.role,
+    description: i.bio,
+    knowsAbout: i.specialties,
+    worksFor: { "@type": "Organization", name: "4U Studio Academy" },
+    image: `https://4ustudio.co${i.photo}`,
+  })),
+};
 
 export default function NosotrosPage() {
   return (
@@ -315,7 +330,14 @@ export default function NosotrosPage() {
         </div>
       </section>
 
-      {/* ──────── 7. CTA final ──────── */}
+      {/* ──────── 7. Team 4U ──────── */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }}
+      />
+      <TeamSection />
+
+      {/* ──────── 8. CTA final ──────── */}
       <section className="relative w-full bg-zinc-950 py-20 md:py-28 overflow-hidden">
         <div className="absolute inset-0 opacity-[0.04]">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] rounded-full bg-[#ff7a00] blur-[150px]" />

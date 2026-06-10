@@ -15,7 +15,12 @@ export const metadata: Metadata = {
     "Agenda tu clase de música en 4U Studio Academy. Selecciona fecha, instrumento e instructor — Guitarra, Piano, Canto, Batería, Bajo y Producción Musical.",
 }
 
-export default async function AgendarPage() {
+export default async function AgendarPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ instructor?: string }>;
+}) {
+  const { instructor: instructorParam } = await searchParams;
   const supabase = await createAuthServerClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -49,6 +54,14 @@ export default async function AgendarPage() {
   }
 
   const instructorsForCalendar = allInstructors.map(({ id, name }) => ({ id, name }))
+
+  // Preselect instructor from query param (slug → name → Supabase UUID)
+  const matchedStatic = instructorParam
+    ? staticInstructors.find((i) => i.id === instructorParam)
+    : null
+  const initialInstructorId = matchedStatic
+    ? (allInstructors.find((i) => i.name === matchedStatic.name)?.id ?? "")
+    : ""
 
   return (
     <>
@@ -120,6 +133,7 @@ export default async function AgendarPage() {
                 instructors={instructorsForCalendar}
                 activeCourses={activeCourses}
                 studentId={studentId}
+                initialInstructorId={initialInstructorId}
               />
             </div>
 

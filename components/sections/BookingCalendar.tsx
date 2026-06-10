@@ -23,6 +23,7 @@ type BookingCalendarProps = {
   instructors?: { id: string; name: string }[];
   activeCourses?: { id: string; name: string }[];
   studentId?: string;
+  initialInstructorId?: string;
 };
 
 const FALLBACK_COURSES = ["Bajo","Batería","Canto","Guitarra","Piano","Producción Musical","Teclado"];
@@ -102,6 +103,7 @@ export default function BookingCalendar({
   mode = "public",
   isLoggedIn = false,
   instructors = [],
+  initialInstructorId = "",
   activeCourses,
   studentId,
 }: BookingCalendarProps = {}) {
@@ -121,7 +123,7 @@ export default function BookingCalendar({
   const [selectedCourse, setSelectedCourse] = useState("");
   const [selectedTime,   setSelectedTime]   = useState<string | null>(null);
   const [assignedInstructor, setAssignedInstructor] = useState<{ id: string; name: string } | null>(null);
-  const [selectedInstructorId, setSelectedInstructorId] = useState("");
+  const [selectedInstructorId, setSelectedInstructorId] = useState(initialInstructorId);
   const [slots,       setSlots]       = useState<SlotRow[]>([]);
   const [slotsLoading,setSlotsLoading] = useState(false);
   const [raceError,   setRaceError]   = useState<string | null>(null);

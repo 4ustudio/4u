@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import type { BookingFormState } from '@/types/booking'
 import { safeRecordStudentActivity } from '@/app/admin/_actions/retention'
+import { activity } from '@/lib/activity'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function admin(): any { return createAdminClient() }
@@ -287,6 +288,14 @@ export async function studentBookAction(
     start_time: startTime,
   })
 
+  await activity.sessionCreated({
+    session_id:     String((result as any).session_id ?? ''),
+    instructor_name: instructorId ? `Instructor ${instructorId}` : 'Sin asignar',
+    student_name:   (student as any).name ?? 'Estudiante',
+    scheduled_at:   `${selectedDateIso} ${startTime}`,
+    source:         'portal',
+  })
+
   revalidatePath('/mi-cuenta')
   revalidatePath('/agendar')
   return { status: 'success', submittedCourse: (course as any).name }
@@ -515,6 +524,13 @@ export async function updateProfileAction(
     })
   }
 
+  const fullName = [firstName, lastName].filter(Boolean).join(' ')
+  await activity.studentProfileUpdated({
+    student_id:   user.id,
+    student_name: fullName,
+    source:       'portal',
+  })
+
   revalidatePath('/mi-cuenta')
   return { success: true }
 }
@@ -732,6 +748,12 @@ export async function cancelInstructorSessionAction(sessionId: string): Promise<
     `Clase cancelada por instructor${isShortNotice ? ' (menos de 24h de anticipación)' : ''}.`,
     { session_id: sessionId, scheduled_date: session.scheduled_date, start_time: session.start_time }
   )
+
+  await activity.sessionCancelled({
+    session_id:   sessionId,
+    scheduled_at: `${session.scheduled_date} ${session.start_time}`,
+    source:       'instructor-portal',
+  })
 
   revalidatePath('/mi-cuenta')
   return {

@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import type { ClassSession } from '@/types/admin'
 import { safeRecordStudentActivity } from './retention'
+import { activity } from '@/lib/activity'
 
 // El cliente admin no tiene tipos de DB generados — cast a any para RPCs y tablas nuevas
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -108,6 +109,13 @@ export async function bookSessionAction(
     start_time: input.start_time,
   })
 
+  await activity.sessionCreated({
+    session_id:     String(data?.session_id ?? ''),
+    instructor_name: input.instructor_id ? `Instructor ${input.instructor_id}` : 'Sin asignar',
+    scheduled_at:   `${input.date} ${input.start_time}`,
+    source:         'admin',
+  })
+
   revalidatePath('/admin/agenda')
   return { success: true }
 }
@@ -138,6 +146,13 @@ export async function cancelSessionAction(
     reason,
     scheduled_date: session?.scheduled_date,
     start_time: session?.start_time,
+  })
+
+  await activity.sessionCancelled({
+    session_id:   sessionId,
+    reason:       reason ?? undefined,
+    scheduled_at: session ? `${session.scheduled_date} ${session.start_time}` : undefined,
+    source:       'admin',
   })
 
   revalidatePath('/admin/agenda')
@@ -197,15 +212,19 @@ export async function adminUpdateStatusAction(
       scheduled_date: session?.scheduled_date,
       start_time: session?.start_time,
     })
+    await activity.attendanceConfirmed({ session_id, student_name: `Estudiante`, source: 'admin' })
   }
   if (new_status === 'no_show') {
     await safeRecordStudentActivity(session?.student_id, 'class_no_show', 'Clase marcada como no asistio.', { session_id })
+    await activity.attendanceNoShow({ session_id, student_name: `Estudiante`, source: 'admin' })
   }
   if (new_status === 'cancelled') {
     await safeRecordStudentActivity(session?.student_id, 'class_cancelled', 'Clase marcada como cancelada.', { session_id })
+    await activity.sessionCancelled({ session_id, source: 'admin' })
   }
   if (new_status === 'rescheduled') {
     await safeRecordStudentActivity(session?.student_id, 'class_rescheduled', 'Clase marcada como reagendada.', { session_id })
+    await activity.sessionRescheduled({ session_id, source: 'admin' })
   }
 
   revalidatePath('/admin/agenda')
@@ -254,6 +273,12 @@ export async function adminRescheduleAction(
     .eq('id', session_id)
 
   if (error) return { error: error.message }
+
+  await activity.sessionRescheduled({
+    session_id,
+    new_time: `${new_date} ${new_start_time}`,
+    source:   'admin',
+  })
 
   revalidatePath('/admin/agenda')
   revalidatePath('/admin')
@@ -306,6 +331,13 @@ export async function cancelByInstructorAction(
     start_time: session.start_time,
   })
 
+  await activity.sessionCancelled({
+    session_id:   sessionId,
+    reason:       reason ?? undefined,
+    scheduled_at: `${session.scheduled_date} ${session.start_time}`,
+    source:       'instructor',
+  })
+
   // TODO: Notificar a estudiante y admin vía email/WhatsApp
 
   revalidatePath('/admin/agenda')
@@ -335,6 +367,10 @@ export async function updateAttendanceStatusAction(
     .eq('id', session_id)
 
   if (error) return { error: error.message }
+
+  if (attendance_status === 'confirmed') {
+    await activity.attendanceConfirmed({ session_id, student_name: 'Estudiante', source: 'admin' })
+  }
 
   revalidatePath('/admin/agenda')
   return { success: true }

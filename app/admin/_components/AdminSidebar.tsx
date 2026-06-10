@@ -58,6 +58,11 @@ const Icon = {
       <path d="M14 6l4 4" />
     </svg>
   ),
+  activity: (
+    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+    </svg>
+  ),
 }
 
 type NavItem = {
@@ -77,6 +82,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/admin/reactivacion', label: 'Retención',    compactLabel: 'Retención',     icon: Icon.retention,   area: 'academic' },
   { href: '/admin/instructors',  label: 'Instructores', compactLabel: 'Profesores',    icon: Icon.instructors, area: 'academic' },
   { href: '/admin/enrollments',  label: 'Inscripciones',compactLabel: 'Leads nuevos',  icon: Icon.enrollments, area: 'academic' },
+  { href: '/admin/actividad',    label: 'Actividad',    compactLabel: 'Auditoría',     icon: Icon.activity,    area: 'shared' },
 ]
 
 function getVisibleNav(role: AppRole | null): NavItem[] {

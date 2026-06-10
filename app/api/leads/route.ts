@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { activity } from "@/lib/activity";
 
 type LeadBody = {
   name: string;
@@ -45,6 +46,14 @@ export async function POST(request: Request) {
       message: message || "",
       source: source || "web",
       timestamp: new Date().toISOString(),
+    });
+
+    await activity.leadCreated({
+      lead_id:    '',
+      lead_name:  name.trim(),
+      instrument: course || undefined,
+      source:     source || 'api',
+      created_by_system: true,
     });
 
     return NextResponse.json({ ok: true });

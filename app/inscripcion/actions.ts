@@ -4,6 +4,7 @@ import { createServerClient } from '@/lib/supabase/server'
 import { Resend } from 'resend'
 import { ACADEMY, TERMS } from '@/lib/constants'
 import type { EnrollmentFormState, EnrollmentInsert, StudentType, Level } from '@/types/enrollment'
+import { activity } from '@/lib/activity'
 
 const PHONE_RE = /^[+]?[\d\s\-().]{7,20}$/
 
@@ -210,6 +211,13 @@ export async function submitEnrollment(
     await Promise.all([
       sendAdminNotification(raw as EnrollmentInsert),
       sendUserConfirmation(raw as EnrollmentInsert),
+      activity.leadCreated({
+        lead_id:    '',
+        lead_name:  raw.student_name ?? '',
+        instrument: raw.course_interest ?? undefined,
+        source:     'inscripcion',
+        created_by_system: true,
+      }),
     ])
 
     return {

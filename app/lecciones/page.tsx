@@ -159,7 +159,7 @@ export default async function LeccionesPage() {
               </span>
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-7xl font-extrabold leading-[1.05] text-white mb-5 font-poppins">
-              Nuestros{" "}
+              Nuestras{" "}
               <span className="text-[#ff7a00]">Lecciones</span>
             </h1>
             <p className="text-base md:text-lg text-white/70 max-w-[500px] mb-6 leading-relaxed font-roboto">

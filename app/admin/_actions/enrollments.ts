@@ -5,6 +5,7 @@ import { createAuthServerClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type { EnrollmentEvent, EnrollmentEventType, EnrollmentFunnelMetrics } from '@/types/enrollment'
 import { safeRecordStudentActivity } from './retention'
+import { activity } from '@/lib/activity'
 
 // Para lecturas usa el cliente autenticado (JWT del admin + política RLS authenticated)
 // Para escrituras usa el cliente admin (service_role)
@@ -311,6 +312,18 @@ export async function convertEnrollmentToStudent(
 
   await safeRecordStudentActivity(student.id, 'enrolled', 'Inscripcion convertida a estudiante.', {
     enrollment_id: enrollmentId,
+  })
+
+  await activity.enrollmentCompleted({
+    enrollment_id: enrollmentId,
+    student_name:  enrollment.student_name,
+    source:        'admin',
+  })
+  await activity.leadConverted({
+    lead_id:    enrollmentId,
+    lead_name:  enrollment.student_name,
+    student_id: student.id,
+    source:     'admin',
   })
 
   revalidatePath('/admin/enrollments')

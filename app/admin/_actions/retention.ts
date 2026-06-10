@@ -3,6 +3,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import type { StudentActivityEventType, StudentLifecycleStatus } from '@/types/admin'
+import { activity } from '@/lib/activity'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function db(): any { return createAdminClient() }
@@ -456,6 +457,14 @@ export async function runRetentionDailyJob(options: { dryRun?: boolean } = {}): 
         daysSinceActivity: days,
         retentionScore: score,
       })
+      await activity.retentionStatusChanged({
+        student_id:   student.id,
+        student_name: student.name,
+        old_status:   student.student_status ?? undefined,
+        new_status:   nextStatus ?? 'desconocido',
+        created_by_system: true,
+        source:       'cron',
+      })
     }
   }
 
@@ -672,6 +681,14 @@ export async function markStudentReactivatedAction(
     .eq('status', 'pending')
 
   await safeRecordStudentActivity(student_id, 'reactivated', 'Alumno marcado como reactivado desde administracion.')
+
+  const { data: stu } = await db().from('students').select('name').eq('id', student_id).maybeSingle()
+  await activity.studentReactivated({
+    student_id,
+    student_name: stu?.name ?? 'Estudiante',
+    source:       'admin',
+  })
+
   revalidatePath('/admin/reactivacion')
   revalidatePath(`/admin/students/${student_id}`)
   return { success: true }

@@ -5,6 +5,7 @@ import { createAuthServerClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type { Student, StudentLifecycleStatus, StudentStatus, StudentType, StudentSchedule, Frequency } from '@/types/admin'
 import { safeRecordStudentActivity } from './retention'
+import { activity } from '@/lib/activity'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function db(): any { return createAdminClient() }
@@ -515,6 +516,12 @@ export async function updateStudentAction(
     .eq('id', id)
 
   if (error) return { error: error.message }
+
+  await activity.studentProfileUpdated({
+    student_id:   id,
+    student_name: name,
+    source:       'admin',
+  })
 
   revalidatePath('/admin/students')
   revalidatePath(`/admin/students/${id}`)

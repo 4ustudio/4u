@@ -76,13 +76,39 @@ export async function createInstructorAction(
 }
 
 export async function getInstructorById(id: string) {
-  const { data, error } = await db()
+  const adminClient = db()
+  const { data, error } = await adminClient
     .from('instructors')
     .select('*')
     .eq('id', id)
     .single()
   if (error) throw new Error(error.message)
-  return data
+
+  const { data: availability } = await adminClient
+    .from('instructor_availability')
+    .select('day_of_week, start_time, end_time')
+    .eq('instructor_id', id)
+    .order('day_of_week')
+    .order('start_time')
+
+  return { ...data, availability: availability ?? [] }
+}
+
+export async function saveAdminInstructorAvailabilityAction(
+  instructorId: string,
+  slots: Array<{ day_of_week: number; start_time: string; end_time: string }>
+): Promise<{ success?: boolean; error?: string }> {
+  const adminClient = db()
+  await adminClient.from('instructor_availability').delete().eq('instructor_id', instructorId)
+  if (slots.length > 0) {
+    const { error } = await adminClient.from('instructor_availability').insert(
+      slots.map(s => ({ ...s, instructor_id: instructorId }))
+    )
+    if (error) return { error: error.message }
+  }
+  revalidatePath('/admin/instructors')
+  revalidatePath('/agendar')
+  return { success: true }
 }
 
 export async function updateInstructorAction(
@@ -92,8 +118,10 @@ export async function updateInstructorAction(
   const id        = (formData.get('id')         as string)?.trim()
   const firstName = (formData.get('first_name') as string)?.trim()
   const lastName  = (formData.get('last_name')  as string)?.trim()
+  const email     = (formData.get('email')      as string)?.trim()
   const phone     = (formData.get('phone')      as string)?.trim() || null
   const status    = (formData.get('status')     as string)?.trim()
+  const notes     = (formData.get('notes')      as string)?.trim() || null
   const password  = (formData.get('password')   as string)?.trim() || null
 
   if (!id || !firstName) return { error: 'El nombre es obligatorio.' }
@@ -101,22 +129,29 @@ export async function updateInstructorAction(
   const fullName = [firstName, lastName].filter(Boolean).join(' ')
   const adminClient = db()
 
-  // Actualizar tabla instructors
-  const { data: inst, error: dbError } = await adminClient
+  // Obtener email actual antes de actualizar
+  const { data: current } = await adminClient.from('instructors').select('email').eq('id', id).single()
+  const currentEmail = current?.email
+
+  const updatePayload: Record<string, unknown> = { name: fullName, phone, status, notes }
+  if (email && email !== currentEmail) updatePayload.email = email
+
+  const { error: dbError } = await adminClient
     .from('instructors')
-    .update({ name: fullName, phone, status })
+    .update(updatePayload)
     .eq('id', id)
-    .select('email')
-    .single()
 
   if (dbError) return { error: dbError.message }
 
-  // Actualizar contraseña si se proporcionó
-  if (password && password.length >= 6) {
+  // Actualizar usuario auth si cambió el email o la contraseña
+  if ((email && email !== currentEmail) || (password && password.length >= 6)) {
     const { data: users } = await createAdminClient().auth.admin.listUsers()
-    const authUser = users?.users?.find((u: any) => u.email === inst.email)
+    const authUser = users?.users?.find((u: any) => u.email === currentEmail)
     if (authUser) {
-      await createAdminClient().auth.admin.updateUserById(authUser.id, { password })
+      const authUpdate: Record<string, unknown> = {}
+      if (email && email !== currentEmail) authUpdate.email = email
+      if (password && password.length >= 6) authUpdate.password = password
+      await createAdminClient().auth.admin.updateUserById(authUser.id, authUpdate)
     }
   }
 

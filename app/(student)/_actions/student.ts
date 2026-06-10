@@ -649,3 +649,77 @@ export async function updateInstructorProfileAction(
   revalidatePath('/mi-cuenta')
   return { success: true }
 }
+
+// ─── Instructor: cancelar clase ──────────────────────────────────────
+
+export async function cancelInstructorSessionAction(sessionId: string): Promise<{
+  success?: boolean
+  error?: string
+  student?: { name: string; phone: string | null }
+  session?: { date: string; time: string; course: string }
+  lateCancellation?: boolean
+}> {
+  const supabase = await createAuthServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user?.email) return { error: 'Sesión expirada.' }
+
+  const adminClient = admin()
+
+  const { data: instructor } = await adminClient
+    .from('instructors')
+    .select('id')
+    .eq('email', user.email.trim())
+    .maybeSingle()
+
+  if (!instructor) return { error: 'Instructor no encontrado.' }
+
+  const { data: session, error: fetchErr } = await adminClient
+    .from('class_sessions')
+    .select('*, student:students(name, phone), course:courses(name)')
+    .eq('id', sessionId)
+    .eq('instructor_id', instructor.id)
+    .single()
+
+  if (fetchErr || !session) return { error: 'Clase no encontrada.' }
+  if (!['pending', 'confirmed'].includes(session.status)) return { error: 'La clase ya está cancelada o completada.' }
+
+  // late_cancellation SIEMPRE false en cancelaciones por instructor —
+  // el trigger fn_handle_late_cancellation solo descuenta crédito cuando
+  // late_cancellation pasa de false→true; el estudiante nunca es penalizado
+  // por una cancelación que no es su responsabilidad.
+  const classDateTime = new Date(`${session.scheduled_date}T${session.start_time}`)
+  const hoursUntil = (classDateTime.getTime() - Date.now()) / (1000 * 60 * 60)
+  const isShortNotice = hoursUntil < 24  // solo para aviso visual en UI
+
+  const { error: updateErr } = await adminClient
+    .from('class_sessions')
+    .update({
+      status: 'cancelled',
+      cancelled_at: new Date().toISOString(),
+      cancelled_by: 'instructor',
+      late_cancellation: false,
+      cancellation_reason: 'Cancelado por instructor',
+    })
+    .eq('id', sessionId)
+
+  if (updateErr) return { error: updateErr.message }
+
+  await safeRecordStudentActivity(
+    session.student_id,
+    'class_cancelled',
+    `Clase cancelada por instructor${isShortNotice ? ' (menos de 24h de anticipación)' : ''}.`,
+    { session_id: sessionId, scheduled_date: session.scheduled_date, start_time: session.start_time }
+  )
+
+  revalidatePath('/mi-cuenta')
+  return {
+    success: true,
+    lateCancellation: false,
+    student: { name: session.student?.name ?? 'Estudiante', phone: session.student?.phone ?? null },
+    session: {
+      date: session.scheduled_date,
+      time: session.start_time?.slice(0, 5) ?? '',
+      course: session.course?.name ?? 'Clase',
+    },
+  }
+}

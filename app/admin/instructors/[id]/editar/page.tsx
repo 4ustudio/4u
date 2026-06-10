@@ -25,7 +25,7 @@ export default async function EditInstructorPage({ params }: { params: Promise<{
         <h1 className="text-xl font-bold text-white mt-1">Editar instructor</h1>
         <p className="text-sm text-white/40 mt-0.5">{instructor.name}</p>
       </div>
-      <EditInstructorForm instructor={instructor} />
+      <EditInstructorForm instructor={{ ...instructor, availability: instructor.availability ?? [] }} />
     </div>
   )
 }

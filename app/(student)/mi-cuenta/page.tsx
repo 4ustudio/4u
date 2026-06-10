@@ -11,6 +11,7 @@ import SchedulePdfButton from './_components/SchedulePdfButton'
 import ClassesCalendar from './_components/ClassesCalendar'
 import InstructorCalendar from './_components/InstructorCalendar'
 import AvailabilityEditor from './_components/AvailabilityEditor'
+import InstructorCancelSession from './_components/InstructorCancelSession'
 import { InstrumentIcon } from './_components/instruments'
 import { statusMeta } from './_components/statusMeta'
 import { ACADEMY } from '@/lib/constants'
@@ -244,7 +245,8 @@ function InstructorDashboard({ data, user, monthLabel, now }: any) {
             </section>
           )}
 
-          {/* Editor de disponibilidad */}
+          {/* Cancelar clase + Editor de disponibilidad */}
+          <InstructorCancelSession upcomingSessions={upcoming ?? []} />
           <AvailabilityEditor initialAvailability={availability ?? []} />
 
           <SupportBar />

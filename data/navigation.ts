@@ -19,7 +19,6 @@ export const navLinks: NavLink[] = [
     ],
   },
   { href: "/cursos", label: "Cursos" },
-  { href: "/produccion", label: "Producción" },
   { href: "/nosotros", label: "Nosotros" },
   { href: "/contacto", label: "Contacto" },
 ];

@@ -39,6 +39,18 @@ function LoginForm() {
             </div>
             <h1 className="text-4xl font-bold text-white font-poppins">Iniciar sesión</h1>
             <p className="text-sm text-white/65 mt-2 font-roboto">Accede a tu cuenta en 4U Studio Academy</p>
+            <p className="text-xs text-white/45 mt-3 font-roboto leading-relaxed">
+              Login solo para usuarios inscritos en la academia. Solicita tus credenciales de acceso{' '}
+              <a
+                href="https://api.whatsapp.com/send/?phone=573170192639&text=Hola%2C%20quiero%20solicitar%20mis%20credenciales%20de%20acceso%20a%204U%20Studio%20Academy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline text-white/65 hover:text-[#ff7a00] transition-colors"
+              >
+                aquí
+              </a>
+              .
+            </p>
           </div>
 
           {linkError && (

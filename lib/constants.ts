@@ -1,3 +1,9 @@
+export const TERMS = {
+  version:       '2.0',
+  effectiveDate: '2026-06-10',
+  url:           '/terminos',
+} as const
+
 export const ACADEMY = {
   name: '4U Studio Academy',
   phone: '573170192639',

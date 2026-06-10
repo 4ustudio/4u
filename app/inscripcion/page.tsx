@@ -37,6 +37,9 @@ export default function InscripcionPage() {
   const [studentType, setStudentType] = useState<'self' | 'child' | null>(null)
   const [age, setAge] = useState<number | ''>('')
   const [ageError, setAgeError] = useState<string | null>(null)
+  const [termsAccepted, setTermsAccepted]   = useState(false)
+  const [dataConsent,   setDataConsent]     = useState(false)
+  const [imageConsent,  setImageConsent]    = useState(false)
 
   function handleAgeChange(value: string) {
     const num = value === '' ? '' : Number(value)
@@ -63,7 +66,7 @@ export default function InscripcionPage() {
             </div>
             <h1 className="text-3xl font-extrabold text-white font-poppins mb-3">¡Inscripción recibida!</h1>
             <p className="text-white/60 text-sm font-roboto mb-8 leading-relaxed">
-              Gracias por confiar en 4U Studio Academy. Nuestro equipo se pondrá en contacto contigo muy pronto para coordinar los siguientes pasos.
+              Recibirás un mensaje a WhatsApp para programar tu primera sesión.
             </p>
             <Link
               href="/"
@@ -99,7 +102,7 @@ export default function InscripcionPage() {
           {/* Encabezado */}
           <div className="text-center mb-10">
             <h1 className="text-3xl md:text-4xl font-extrabold text-white font-poppins leading-tight">
-              Comienza tu<span style={{ color: ORANGE }}> viaje musical</span>
+              Inscríbete y programa tu<span style={{ color: ORANGE }}> primera sesión de grabación gratis</span>
             </h1>
             <p className="text-white/50 text-sm mt-3 font-roboto max-w-md mx-auto">
               Completa el formulario y nuestro equipo te contactará<br />
@@ -158,7 +161,7 @@ export default function InscripcionPage() {
 
               {/* ── 2. Nombre del estudiante ── */}
               <div>
-                <label htmlFor="student_name" className={labelClass}>Nombre completo del estudiante</label>
+                <label htmlFor="student_name" className={labelClass}>Nombre y apellido completo del principiante</label>
                 <input id="student_name" name="student_name" type="text" placeholder="Ej: Carlos Pérez" autoComplete="name" required disabled={isPending} className={inputClass} />
                 {state.errors?.student_name && <p className={errorClass}>{state.errors.student_name}</p>}
               </div>
@@ -306,6 +309,70 @@ export default function InscripcionPage() {
                 />
               </div>
 
+              {/* ── Consentimientos ── */}
+              <div className="space-y-3 pt-1">
+                {/* 1. Términos y condiciones — obligatorio */}
+                <div className="flex items-start gap-3">
+                  <input
+                    id="terms"
+                    name="terms"
+                    type="checkbox"
+                    checked={termsAccepted}
+                    onChange={(e) => setTermsAccepted(e.target.checked)}
+                    disabled={isPending}
+                    className="mt-0.5 h-4 w-4 shrink-0 rounded border border-white/20 bg-white/[0.06] accent-[#ff7a00] cursor-pointer"
+                  />
+                  <label htmlFor="terms" className="text-xs text-white/50 font-roboto leading-relaxed cursor-pointer">
+                    He leído y acepto los{' '}
+                    <Link
+                      href="/terminos"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline underline-offset-2 text-white/70 hover:text-white transition-colors"
+                    >
+                      términos y condiciones
+                    </Link>
+                    <span className="text-red-400 ml-0.5">*</span>
+                  </label>
+                </div>
+                {state.errors?.terms && <p className={errorClass}>{state.errors.terms}</p>}
+
+                {/* 2. Datos personales — obligatorio · Ley 1581 */}
+                <div className="flex items-start gap-3">
+                  <input
+                    id="data_consent"
+                    name="data_consent"
+                    type="checkbox"
+                    checked={dataConsent}
+                    onChange={(e) => setDataConsent(e.target.checked)}
+                    disabled={isPending}
+                    className="mt-0.5 h-4 w-4 shrink-0 rounded border border-white/20 bg-white/[0.06] accent-[#ff7a00] cursor-pointer"
+                  />
+                  <label htmlFor="data_consent" className="text-xs text-white/50 font-roboto leading-relaxed cursor-pointer">
+                    Autorizo el tratamiento de mis datos personales conforme a la Ley 1581 de 2012
+                    <span className="text-red-400 ml-0.5">*</span>
+                  </label>
+                </div>
+                {state.errors?.data_consent && <p className={errorClass}>{state.errors.data_consent}</p>}
+
+                {/* 3. Uso de imagen — opcional */}
+                <div className="flex items-start gap-3">
+                  <input
+                    id="image_consent"
+                    name="image_consent"
+                    type="checkbox"
+                    checked={imageConsent}
+                    onChange={(e) => setImageConsent(e.target.checked)}
+                    disabled={isPending}
+                    className="mt-0.5 h-4 w-4 shrink-0 rounded border border-white/20 bg-white/[0.06] accent-[#ff7a00] cursor-pointer"
+                  />
+                  <label htmlFor="image_consent" className="text-xs text-white/50 font-roboto leading-relaxed cursor-pointer">
+                    Autorizo el uso de mi imagen, voz y nombre con fines institucionales y promocionales
+                    <span className="text-white/25 ml-1">(opcional)</span>
+                  </label>
+                </div>
+              </div>
+
               {/* Mensaje de error general */}
               {state.status === 'error' && state.message && (
                 <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-roboto text-center">
@@ -316,7 +383,7 @@ export default function InscripcionPage() {
               {/* Submit */}
               <button
                 type="submit"
-                disabled={isPending}
+                disabled={isPending || !termsAccepted || !dataConsent}
                 className="w-full flex items-center justify-center gap-2.5 rounded-xl py-4 text-sm font-bold text-white font-poppins transition-all duration-300 h-14 disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110"
                 style={{ backgroundColor: ORANGE, boxShadow: '0 0 32px rgba(255,122,0,0.3)' }}
               >

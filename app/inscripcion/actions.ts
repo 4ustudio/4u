@@ -2,7 +2,7 @@
 
 import { createServerClient } from '@/lib/supabase/server'
 import { Resend } from 'resend'
-import { ACADEMY } from '@/lib/constants'
+import { ACADEMY, TERMS } from '@/lib/constants'
 import type { EnrollmentFormState, EnrollmentInsert, StudentType, Level } from '@/types/enrollment'
 
 const PHONE_RE = /^[+]?[\d\s\-().]{7,20}$/
@@ -67,7 +67,48 @@ function validate(form: Partial<EnrollmentInsert>): EnrollmentFormState['errors'
     errors.preferred_time = 'Selecciona una hora preferida'
   }
 
+  if (!form.terms_accepted) {
+    errors.terms = 'Debes aceptar los términos y condiciones'
+  }
+
+  if (!form.data_consent) {
+    errors.data_consent = 'Debes autorizar el tratamiento de datos personales'
+  }
+
   return Object.keys(errors).length > 0 ? errors : null
+}
+
+async function sendUserConfirmation(data: EnrollmentInsert) {
+  const apiKey = process.env.RESEND_API_KEY
+  if (!apiKey) return
+
+  try {
+    const resend = new Resend(apiKey)
+    const fromEmail = process.env.RESEND_FROM_EMAIL ?? 'onboarding@resend.dev'
+
+    await resend.emails.send({
+      from: `4U Studio Academy <${fromEmail}>`,
+      to: [data.email],
+      subject: '¡Tu inscripción en 4U Studio Academy fue recibida!',
+      html: `
+        <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;background:#0f0f0f;color:#e5e5e5;border-radius:12px;">
+          <h1 style="font-size:20px;font-weight:800;color:#fff;margin:0 0 12px;">¡Hola, ${data.student_name}!</h1>
+          <p style="font-size:14px;color:#aaa;margin:0 0 20px;line-height:1.6;">
+            Recibimos tu inscripción en <strong style="color:#ff7a00;">4U Studio Academy</strong>.<br/>
+            Pronto recibirás un mensaje a tu WhatsApp (<strong style="color:#fff;">${data.phone}</strong>) para programar tu primera sesión.
+          </p>
+          <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:24px;">
+            <tr><td style="padding:6px 0;color:#888;width:130px;">Curso</td><td style="padding:6px 0;color:#fff;">${data.course_interest}</td></tr>
+            <tr><td style="padding:6px 0;color:#888;">Nivel</td><td style="padding:6px 0;color:#fff;">${LEVEL_LABEL[data.level] ?? data.level}</td></tr>
+            <tr><td style="padding:6px 0;color:#888;">Hora preferida</td><td style="padding:6px 0;color:#fff;font-weight:700;">${data.preferred_time}</td></tr>
+          </table>
+          <p style="font-size:12px;color:#555;margin:0;">¿Tienes dudas? Escríbenos por WhatsApp o a contacto@4ustudioacademy.com</p>
+        </div>
+      `,
+    })
+  } catch (err) {
+    console.error('Error enviando confirmación al usuario:', err)
+  }
 }
 
 async function sendAdminNotification(data: EnrollmentInsert) {
@@ -123,6 +164,7 @@ export async function submitEnrollment(
   _prevState: EnrollmentFormState,
   formData: FormData
 ): Promise<EnrollmentFormState> {
+  const now = new Date().toISOString()
   const raw: Partial<EnrollmentInsert> = {
     student_type:    (formData.get('student_type') as StudentType) ?? undefined,
     student_name:    (formData.get('student_name') as string | null)?.trim() ?? '',
@@ -135,6 +177,11 @@ export async function submitEnrollment(
     preferred_time:  (formData.get('preferred_time') as string | null)?.trim() ?? '',
     notes:           (formData.get('notes') as string | null)?.trim() || undefined,
     source:          'inscripcion',
+    terms_accepted:    formData.get('terms') === 'on',
+    terms_accepted_at: formData.get('terms') === 'on' ? now : undefined,
+    terms_version:     formData.get('terms') === 'on' ? TERMS.version : undefined,
+    data_consent:      formData.get('data_consent') === 'on',
+    image_consent:     formData.get('image_consent') === 'on',
   }
 
   const errors = validate(raw)
@@ -160,7 +207,10 @@ export async function submitEnrollment(
       return { status: 'error', message }
     }
 
-    await sendAdminNotification(raw as EnrollmentInsert)
+    await Promise.all([
+      sendAdminNotification(raw as EnrollmentInsert),
+      sendUserConfirmation(raw as EnrollmentInsert),
+    ])
 
     return {
       status: 'success',

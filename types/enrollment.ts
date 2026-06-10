@@ -31,6 +31,11 @@ export interface EnrollmentInsert {
   preferred_time:  string
   notes?:          string
   source:          string
+  terms_accepted?:    boolean
+  terms_accepted_at?: string
+  terms_version?:     string
+  data_consent?:      boolean
+  image_consent?:     boolean
 }
 
 export interface EnrollmentRow extends EnrollmentInsert {
@@ -46,6 +51,12 @@ export interface EnrollmentRow extends EnrollmentInsert {
   last_contact_at?:      string | null
   next_followup_at?:     string | null
   lost_reason?:          string | null
+  // Consentimientos
+  terms_accepted?:    boolean | null
+  terms_accepted_at?: string | null
+  terms_version?:     string | null
+  data_consent?:      boolean | null
+  image_consent?:     boolean | null
 }
 
 export interface EnrollmentEvent {
@@ -60,7 +71,8 @@ export interface EnrollmentFormState {
   status: 'idle' | 'success' | 'error'
   errors?: Partial<Record<
     | 'student_type' | 'student_name' | 'student_age' | 'guardian_name'
-    | 'phone' | 'email' | 'course_interest' | 'level' | 'preferred_time',
+    | 'phone' | 'email' | 'course_interest' | 'level' | 'preferred_time'
+    | 'terms' | 'data_consent',
     string
   >>
   message?: string

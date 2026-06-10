@@ -40,16 +40,31 @@ async function getStudentData(id: string) {
 
   if (error || !student) return null
 
+  const { data: leadConsent } = student.lead_id
+    ? await db()
+        .from('enrollments')
+        .select('terms_accepted, terms_accepted_at, terms_version, data_consent, image_consent')
+        .eq('id', student.lead_id)
+        .maybeSingle()
+    : { data: null }
+
   const sessionsList = (sessions ?? []) as any[]
   const upcoming = sessionsList.filter(s => s.scheduled_date >= today).slice(0, 10)
   const past     = sessionsList.filter(s => s.scheduled_date < today).slice(0, 20)
 
   return {
-    student:   student as Student,
-    usage:     usageResult.data?.[0] as MonthlyUsage | null,
+    student:     student as Student,
+    usage:       usageResult.data?.[0] as MonthlyUsage | null,
     upcoming,
     past,
-    schedules: (schedules as StudentSchedule[]) ?? [],
+    schedules:   (schedules as StudentSchedule[]) ?? [],
+    leadConsent: leadConsent as {
+      terms_accepted:    boolean | null
+      terms_accepted_at: string | null
+      terms_version:     string | null
+      data_consent:      boolean | null
+      image_consent:     boolean | null
+    } | null,
   }
 }
 
@@ -59,7 +74,7 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
   const data   = await getStudentData(id)
   if (!data) notFound()
 
-  const { student, usage, upcoming, past, schedules } = data
+  const { student, usage, upcoming, past, schedules, leadConsent } = data
   const retention = await getStudentRetentionProfile(id)
   const now = new Date()
   const monthLabel = now.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' })
@@ -222,6 +237,33 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
               <p className="text-xs text-white/40">Sin actividad este mes.</p>
             )}
           </div>
+          {/* Documentación */}
+          <div className="bg-[#0f0f0f] border border-white/10 rounded-xl p-5 space-y-3">
+            <h2 className="text-sm font-semibold text-white">Documentación</h2>
+            {leadConsent ? (
+              <div className="space-y-2.5">
+                <ConsentRow
+                  label="Términos y condiciones"
+                  accepted={leadConsent.terms_accepted}
+                  date={leadConsent.terms_accepted_at}
+                  version={leadConsent.terms_version}
+                />
+                <ConsentRow
+                  label="Datos personales (Ley 1581)"
+                  accepted={leadConsent.data_consent}
+                  date={leadConsent.terms_accepted_at}
+                />
+                <ConsentRow
+                  label="Uso de imagen"
+                  accepted={leadConsent.image_consent}
+                  date={leadConsent.terms_accepted_at}
+                  optional
+                />
+              </div>
+            ) : (
+              <p className="text-xs text-white/30">Sin registro de aceptación (inscripción anterior a v2.0).</p>
+            )}
+          </div>
         </aside>
       </div>
     </div>
@@ -248,6 +290,34 @@ function QuotaRow({ label, value, color, bold }: { label: string; value: number;
     <div className="flex items-center justify-between">
       <span className="text-xs text-white/50">{label}</span>
       <span className={`text-sm ${bold ? 'font-bold' : ''} ${textColor}`}>{value}</span>
+    </div>
+  )
+}
+
+function ConsentRow({
+  label, accepted, date, version, optional,
+}: {
+  label: string
+  accepted: boolean | null
+  date?: string | null
+  version?: string | null
+  optional?: boolean
+}) {
+  const ok = accepted === true
+  return (
+    <div className="flex items-start justify-between gap-2">
+      <div className="min-w-0">
+        <p className={`text-xs font-medium leading-tight ${ok ? 'text-white/80' : optional ? 'text-white/30' : 'text-red-400/80'}`}>
+          {ok ? '✓' : '○'} {label}
+          {optional && !ok && <span className="text-white/25 ml-1">(opcional)</span>}
+        </p>
+        {ok && date && (
+          <p className="text-[11px] text-white/30 mt-0.5">
+            {new Date(date).toLocaleString('es-CO', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+            {version && ` · v${version}`}
+          </p>
+        )}
+      </div>
     </div>
   )
 }

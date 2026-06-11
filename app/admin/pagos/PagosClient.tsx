@@ -9,6 +9,7 @@ import RegisterPaymentModal from './_components/RegisterPaymentModal'
 import GeneratePaymentModal from './_components/GeneratePaymentModal'
 import ApplyDiscountModal from './_components/ApplyDiscountModal'
 import StudentHistoryModal from './_components/StudentHistoryModal'
+import CreateCobroModal from './_components/CreateCobroModal'
 import { getBirthdayBenefitStatus } from '@/lib/students/birthday'
 import WhatsAppButton from '@/components/admin/WhatsAppButton'
 
@@ -416,6 +417,7 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
   const [historyFor,   setHistoryFor]     = useState<{ id: string; name: string } | null>(null)
   const [confirmOverdue, setConfirmOverdue] = useState<PaymentWithStudent | null>(null)
   const [boldDrawer, setBoldDrawer] = useState<PaymentWithStudent | null>(null)
+  const [showCobro, setShowCobro] = useState(false)
   const [boldUrls, setBoldUrls] = useState<Record<string, string>>({})
 
   function handleBoldUrl(paymentId: string, url: string) {
@@ -484,6 +486,13 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
           >
             <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
             {overduePending ? 'Procesando…' : 'Procesar vencidos'}
+          </button>
+          <button
+            onClick={() => setShowCobro(true)}
+            className="flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-xl border border-orange-500/40 text-orange-400 hover:bg-orange-500/10 transition-colors"
+          >
+            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            Crear cobro
           </button>
           <button
             onClick={() => setShowRegister(true)}
@@ -681,6 +690,13 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
       )}
 
       {/* Modales */}
+      {showCobro && (
+        <CreateCobroModal
+          students={students}
+          onClose={() => setShowCobro(false)}
+          onSuccess={reload}
+        />
+      )}
       {showRegister && (
         <RegisterPaymentModal
           students={students}

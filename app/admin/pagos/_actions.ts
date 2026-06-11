@@ -574,6 +574,56 @@ export async function processOverduePayments(): Promise<{ processed: number; err
   }
 }
 
+export interface CreateCobroInput {
+  student_id: string
+  period_year: number
+  period_month: number
+  original_amount: number
+  discount_amount: number
+  discount_percent?: number
+  discount_reason?: string
+  due_date: string
+  plan_name?: string
+  notes?: string
+}
+
+export async function createPendingPayment(input: CreateCobroInput): Promise<{ error: string | null; id?: string }> {
+  try {
+    const actor = await getActorInfo()
+    const final_amount = input.original_amount - input.discount_amount
+    if (final_amount < 0) return { error: 'El descuento no puede superar el valor original.' }
+
+    const { data, error } = await db()
+      .from('payments')
+      .insert({
+        student_id:       input.student_id,
+        period_year:      input.period_year,
+        period_month:     input.period_month,
+        payment_type:     'monthly_fee',
+        original_amount:  input.original_amount,
+        discount_amount:  input.discount_amount,
+        final_amount,
+        discount_percent: input.discount_percent ?? 0,
+        discount_reason:  input.discount_reason ?? null,
+        status:           'pending',
+        due_date:         input.due_date,
+        plan_name:        input.plan_name ?? null,
+        notes:            input.notes ?? null,
+        registered_by:    actor?.actor_user_id ?? null,
+      })
+      .select('id')
+      .single()
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/admin/pagos')
+    revalidatePath(`/admin/students/${input.student_id}`)
+    return { error: null, id: data.id }
+  } catch (e) {
+    return { error: String(e) }
+  }
+}
+
 // ── Bold Checkout ──────────────────────────────────────────────────
 
 export async function generateBoldCheckout(payment_id: string): Promise<{

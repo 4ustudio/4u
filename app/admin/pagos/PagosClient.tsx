@@ -64,7 +64,7 @@ function BoldMetricsStrip({ m }: { m: BoldMetrics }) {
           <p className="text-[10px] text-white/35">Recaudación Bold hoy</p>
         </div>
         <div>
-          <p className="text-lg font-extrabold text-white/70">{fmtTime(m.ultimo_webhook)}</p>
+          <p suppressHydrationWarning className="text-lg font-extrabold text-white/70">{fmtTime(m.ultimo_webhook)}</p>
           <p className="text-[10px] text-white/35">Último webhook</p>
         </div>
         <div>
@@ -614,7 +614,7 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
                         onUrlGenerated={url => handleBoldUrl(p.id, url)}
                       />
                       {days !== null && days > 0 && (
-                        <p className="text-[10px] text-red-400">{days}d mora</p>
+                        <p suppressHydrationWarning className="text-[10px] text-red-400">{days}d mora</p>
                       )}
                       {p.status === 'pending' && (
                         <p className="text-[10px] text-white/30">
@@ -670,7 +670,7 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
                         onUrlGenerated={url => handleBoldUrl(p.id, url)}
                       />
                       {days !== null && days > 0 && (
-                        <p className="text-[11px] text-red-400">{days} días de mora</p>
+                        <p suppressHydrationWarning className="text-[11px] text-red-400">{days} días de mora</p>
                       )}
                     </div>
                     <RowActions

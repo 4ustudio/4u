@@ -38,6 +38,8 @@ export interface EnrollmentInsert {
   terms_version?:     string
   data_consent?:      boolean
   image_consent?:     boolean
+  id_document?:       string
+  city?:              string
 }
 
 export interface EnrollmentRow extends EnrollmentInsert {
@@ -59,6 +61,8 @@ export interface EnrollmentRow extends EnrollmentInsert {
   terms_version?:     string | null
   data_consent?:      boolean | null
   image_consent?:     boolean | null
+  id_document?:       string | null
+  city?:              string | null
 }
 
 export interface EnrollmentEvent {
@@ -74,7 +78,7 @@ export interface EnrollmentFormState {
   errors?: Partial<Record<
     | 'student_type' | 'student_name' | 'student_age' | 'guardian_name'
     | 'phone' | 'email' | 'course_interest' | 'level' | 'preferred_time'
-    | 'terms' | 'data_consent',
+    | 'terms' | 'data_consent' | 'id_document' | 'city' | 'signature',
     string
   >>
   message?: string

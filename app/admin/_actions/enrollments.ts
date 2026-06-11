@@ -283,7 +283,6 @@ export async function convertEnrollmentToStudent(
       student_since: now,
       last_activity_at: now,
       retention_score: 100,
-      lead_id: enrollmentId,
     })
     .select('id')
     .single()
@@ -303,6 +302,13 @@ export async function convertEnrollmentToStudent(
     .eq('id', enrollmentId)
 
   if (updateErr) return { error: updateErr.message }
+
+  // Vincular documentos firmados al student recién creado
+  await db()
+    .from('student_documents')
+    .update({ student_id: student.id })
+    .eq('enrollment_id', enrollmentId)
+    .is('student_id', null)
 
   await db().from('enrollment_events').insert({
     enrollment_id: enrollmentId,

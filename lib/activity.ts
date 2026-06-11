@@ -19,6 +19,7 @@ export type ActivityAction =
   | 'student.profile_updated'
   | 'birthday.benefit_granted'
   | 'birthday.discount_used'
+  | 'contract.signed'
   | 'whatsapp.opened'
   | 'whatsapp.payment_reminder'
   | 'whatsapp.birthday'
@@ -438,6 +439,31 @@ export const activity = {
       actor_user_id: params.actor_user_id,
       actor_role: params.actor_role,
       created_by_system: params.created_by_system,
+    })
+  },
+
+  async contractSigned(params: {
+    enrollment_id: string
+    student_name:  string
+    student_id?:   string
+    document_version: string
+    signed_at:     string
+    document_hash?: string
+  }) {
+    return logActivity({
+      entity_type: 'enrollment',
+      entity_id:   params.enrollment_id,
+      action:      'contract.signed',
+      description: `Contrato firmado: ${params.student_name} — v${params.document_version}`,
+      source:      'inscripcion',
+      created_by_system: true,
+      new_data: {
+        student_id:       params.student_id,
+        enrollment_id:    params.enrollment_id,
+        document_version: params.document_version,
+        signed_at:        params.signed_at,
+        document_hash:    params.document_hash,
+      },
     })
   },
 

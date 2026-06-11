@@ -15,6 +15,7 @@ import InstructorCancelSession from './_components/InstructorCancelSession'
 import { InstrumentIcon } from './_components/instruments'
 import { statusMeta } from './_components/statusMeta'
 import BirthdayBenefitCard from './_components/BirthdayBenefitCard'
+import DocumentsSection from './_components/DocumentsSection'
 import { getBirthdayBenefitStatus, isBirthdayMonth } from '@/lib/students/birthday'
 import { ACADEMY } from '@/lib/constants'
 import { getHolidayMap } from '@/lib/calendar/colombia-holidays'
@@ -147,6 +148,8 @@ function StudentDashboard({ data, monthSessions, user, monthLabel, now }: any) {
               initialMonth={now.getMonth() + 1}
             />
           </section>
+
+          <DocumentsSection studentId={student.id} enrollmentId={student.lead_id ?? null} />
 
           <DisclaimerBar />
           <SupportBar />

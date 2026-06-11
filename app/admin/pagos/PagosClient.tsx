@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { getPayments, markPaymentOverdue, processOverduePayments } from './_actions'
+import { getPayments, markPaymentOverdue, processOverduePayments, generateBoldCheckout } from './_actions'
 import type { PaymentWithStudent, PaymentMetrics, BoldMetrics, PaymentTab, StudentOption } from './_actions'
 import { PaymentStatusPill } from './_components/PaymentStatusPill'
 import RegisterPaymentModal from './_components/RegisterPaymentModal'
@@ -77,9 +77,13 @@ function BoldMetricsStrip({ m }: { m: BoldMetrics }) {
 
 // ── Bold Info Drawer ──────────────────────────────────────────────
 
-function BoldInfoDrawer({ payment, onClose }: { payment: PaymentWithStudent; onClose: () => void }) {
+function BoldInfoDrawer({ payment, sessionUrl, onClose }: {
+  payment: PaymentWithStudent
+  sessionUrl?: string | null
+  onClose: () => void
+}) {
   const [showPayload, setShowPayload] = useState(false)
-  const checkoutUrl = payment.metadata?.bold_checkout_url ?? null
+  const checkoutUrl = sessionUrl ?? payment.metadata?.bold_checkout_url ?? null
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
@@ -160,6 +164,62 @@ function BoldInfoDrawer({ payment, onClose }: { payment: PaymentWithStudent; onC
           </pre>
         )}
       </div>
+    </div>
+  )
+}
+
+// ── Bold Cell ─────────────────────────────────────────────────────
+
+function BoldCell({ payment, sessionUrl, onShowDrawer, onUrlGenerated }: {
+  payment: PaymentWithStudent
+  sessionUrl: string | null
+  onShowDrawer: () => void
+  onUrlGenerated: (url: string) => void
+}) {
+  const [genPending, startGen] = useTransition()
+  const [genError, setGenError] = useState<string | null>(null)
+
+  const isBoldPaid  = payment.payment_method === 'bold'
+  const existingUrl = sessionUrl ?? payment.metadata?.bold_checkout_url ?? null
+  const canGenerate = (payment.status === 'pending' || payment.status === 'overdue') && !existingUrl && !isBoldPaid
+
+  if (isBoldPaid) return (
+    <button onClick={onShowDrawer} className="text-[10px] text-orange-400 font-semibold hover:text-orange-300 transition-colors">
+      Pagado vía Bold ↗
+    </button>
+  )
+
+  if (existingUrl) return (
+    <button onClick={onShowDrawer} className="text-[10px] text-orange-300/80 font-semibold hover:text-orange-300 transition-colors border border-orange-500/30 rounded px-1.5 py-0.5">
+      Link Bold ↗
+    </button>
+  )
+
+  if (!canGenerate) return null
+
+  return (
+    <div className="space-y-0.5">
+      <button
+        disabled={genPending}
+        onClick={() => {
+          setGenError(null)
+          startGen(async () => {
+            const res = await generateBoldCheckout(payment.id)
+            if (res.error) setGenError(res.error)
+            else if (res.url) onUrlGenerated(res.url)
+          })
+        }}
+        className="text-[10px] text-orange-400/70 hover:text-orange-400 font-medium transition-colors disabled:opacity-40 flex items-center gap-1"
+      >
+        {genPending
+          ? <><span className="h-2.5 w-2.5 rounded-full border border-orange-400/50 border-t-orange-400 animate-spin" />Generando…</>
+          : <>
+              <svg className="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              Generar link Bold
+            </>
+        }
+      </button>
+      {genError && <p className="text-[10px] text-red-400">{genError}</p>}
     </div>
   )
 }
@@ -356,6 +416,11 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
   const [historyFor,   setHistoryFor]     = useState<{ id: string; name: string } | null>(null)
   const [confirmOverdue, setConfirmOverdue] = useState<PaymentWithStudent | null>(null)
   const [boldDrawer, setBoldDrawer] = useState<PaymentWithStudent | null>(null)
+  const [boldUrls, setBoldUrls] = useState<Record<string, string>>({})
+
+  function handleBoldUrl(paymentId: string, url: string) {
+    setBoldUrls(prev => ({ ...prev, [paymentId]: url }))
+  }
 
   const reload = useCallback(async (t: PaymentTab = tab, s: string = search) => {
     setLoading(true)
@@ -533,14 +598,12 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
                     <p className="text-sm font-semibold text-white">{formatCOP(p.final_amount)}</p>
                     <div className="space-y-1">
                       <PaymentStatusPill status={p.status} />
-                      {p.payment_method === 'bold' && (
-                        <button
-                          onClick={() => setBoldDrawer(p)}
-                          className="text-[10px] text-orange-400 font-semibold hover:text-orange-300 transition-colors"
-                        >
-                          Pagado vía Bold ↗
-                        </button>
-                      )}
+                      <BoldCell
+                        payment={p}
+                        sessionUrl={boldUrls[p.id] ?? null}
+                        onShowDrawer={() => setBoldDrawer(p)}
+                        onUrlGenerated={url => handleBoldUrl(p.id, url)}
+                      />
                       {days !== null && days > 0 && (
                         <p className="text-[10px] text-red-400">{days}d mora</p>
                       )}
@@ -591,14 +654,12 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
                       {p.discount_amount > 0 && (
                         <p className="text-[11px] text-green-400">−{formatCOP(p.discount_amount)} desc.</p>
                       )}
-                      {p.payment_method === 'bold' && (
-                        <button
-                          onClick={() => setBoldDrawer(p)}
-                          className="text-[10px] text-orange-400 font-semibold hover:text-orange-300 transition-colors"
-                        >
-                          Pagado vía Bold ↗
-                        </button>
-                      )}
+                      <BoldCell
+                        payment={p}
+                        sessionUrl={boldUrls[p.id] ?? null}
+                        onShowDrawer={() => setBoldDrawer(p)}
+                        onUrlGenerated={url => handleBoldUrl(p.id, url)}
+                      />
                       {days !== null && days > 0 && (
                         <p className="text-[11px] text-red-400">{days} días de mora</p>
                       )}
@@ -660,6 +721,7 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
       {boldDrawer && (
         <BoldInfoDrawer
           payment={boldDrawer}
+          sessionUrl={boldUrls[boldDrawer.id] ?? null}
           onClose={() => setBoldDrawer(null)}
         />
       )}

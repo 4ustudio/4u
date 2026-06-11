@@ -1,10 +1,12 @@
 'use client'
 
-import { useState, useTransition, useCallback } from 'react'
+import { useState, useTransition, useCallback, useEffect } from 'react'
 import Link from 'next/link'
 import { getActivityLogs } from './_actions'
 import type { ActivityLogRow, ActivityFilters, ActivityModule, DashboardMetrics } from './_actions'
 import type { Severity } from '@/lib/activity'
+import { getContactPhoneForActivity } from '@/app/admin/_actions/whatsapp'
+import WhatsAppButton from '@/components/admin/WhatsAppButton'
 
 // ── Utils ─────────────────────────────────────────────────────────
 
@@ -202,12 +204,21 @@ function MetaTable({ data, title }: { data: Record<string, unknown>; title: stri
   )
 }
 
+const CONTACTABLE_TYPES = new Set(['student', 'lead', 'enrollment', 'retention', 'payment'])
+
 function Drawer({ row, onClose }: { row: ActivityLogRow; onClose: () => void }) {
   const [showJson, setShowJson] = useState(false)
+  const [contact, setContact] = useState<{ name: string; phone: string } | null>(null)
   const meta = getMeta(row.action)
   const sev = SEVERITY_STYLE[row.severity ?? 'info']
   const entityLink = buildEntityLink(row.entity_type, row.entity_id)
   const hasDiff = row.old_data || row.new_data
+
+  useEffect(() => {
+    setContact(null)
+    if (!row.entity_id || !CONTACTABLE_TYPES.has(row.entity_type)) return
+    getContactPhoneForActivity(row.entity_type, row.entity_id).then(setContact)
+  }, [row.entity_type, row.entity_id])
 
   return (
     <>
@@ -282,15 +293,28 @@ function Drawer({ row, onClose }: { row: ActivityLogRow; onClose: () => void }) 
                 <p className="text-xs text-white/50 capitalize">{row.entity_type}</p>
                 {row.entity_id && <p className="text-[11px] font-mono text-white/25 truncate max-w-[200px]">{row.entity_id}</p>}
               </div>
-              {entityLink && (
-                <Link
-                  href={entityLink}
-                  onClick={onClose}
-                  className="shrink-0 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-white/50 hover:text-white hover:border-white/25 transition-all"
-                >
-                  Ver →
-                </Link>
-              )}
+              <div className="flex items-center gap-2 shrink-0">
+                {contact && (
+                  <WhatsAppButton
+                    phone={contact.phone}
+                    template="general_message"
+                    vars={{ name: contact.name }}
+                    entityType={row.entity_type as 'student' | 'lead' | 'payment' | 'retention'}
+                    entityId={row.entity_id ?? ''}
+                    variant="pill"
+                    label="Contactar"
+                  />
+                )}
+                {entityLink && (
+                  <Link
+                    href={entityLink}
+                    onClick={onClose}
+                    className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-white/50 hover:text-white hover:border-white/25 transition-all"
+                  >
+                    Ver →
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
 

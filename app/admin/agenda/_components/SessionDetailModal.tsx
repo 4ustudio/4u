@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import WhatsAppButton from '@/components/admin/WhatsAppButton'
 import {
   cancelSessionAction,
   adminRescheduleAction,
@@ -123,6 +124,24 @@ export default function SessionDetailModal({ session, classrooms, instructors, o
               <Pill icon="👤">{(session.instructor as any).name}</Pill>
             )}
           </div>
+          {(session.student as any)?.phone && (
+            <div className="mt-3">
+              <WhatsAppButton
+                phone={(session.student as any).phone}
+                template="class_cancelled"
+                vars={{
+                  name:       (session.student as any).name,
+                  course:     (session.course as any)?.name,
+                  instructor: (session.instructor as any)?.name,
+                  date:       dateLabel,
+                }}
+                entityType="student"
+                entityId={session.student_id}
+                variant="pill"
+                label="Notificar al estudiante"
+              />
+            </div>
+          )}
 
           {/* Estado actual + Confirmación de asistencia */}
           <div className="mt-3 flex flex-wrap items-center gap-2">

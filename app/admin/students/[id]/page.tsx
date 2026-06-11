@@ -8,8 +8,10 @@ import DeleteStudentButton from './_components/DeleteStudentButton'
 import StudentSessionsPanel from './_components/StudentSessionsPanel'
 import PasswordSection from './_components/PasswordSection'
 import BirthdayBenefitPanel from './_components/BirthdayBenefitPanel'
+import StudentPaymentsPanel from './_components/StudentPaymentsPanel'
 import type { Student, MonthlyUsage, StudentSchedule } from '@/types/admin'
 import { getStudentRetentionProfile } from '../../_actions/retention'
+import { getStudentPayments } from '@/app/admin/pagos/_actions'
 
 export const dynamic = 'force-dynamic'
 
@@ -76,7 +78,10 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
   if (!data) notFound()
 
   const { student, usage, upcoming, past, schedules, leadConsent } = data
-  const retention = await getStudentRetentionProfile(id)
+  const [retention, studentPayments] = await Promise.all([
+    getStudentRetentionProfile(id),
+    getStudentPayments(id),
+  ])
   const now = new Date()
   const monthLabel = now.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' })
 
@@ -116,6 +121,23 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
           <PasswordSection studentId={id} hasAccount={!!student.user_id} email={student.email} />
 
           <BirthdayBenefitPanel student={student} />
+
+          <StudentPaymentsPanel
+            studentId={id}
+            studentName={student.name}
+            payments={studentPayments}
+            studentAsOption={{
+              id:                        student.id,
+              name:                      student.name,
+              phone:                     student.phone,
+              plan_name:                 student.plan_name ?? null,
+              birth_date:                student.birth_date,
+              birthday_benefit_used:     student.birthday_benefit_used ?? null,
+              birthday_benefit_year:     student.birthday_benefit_year ?? null,
+              birthday_discount_percent: student.birthday_discount_percent ?? null,
+              student_status:            student.student_status ?? null,
+            }}
+          />
 
           <section className="bg-[#0f0f0f] border border-white/10 rounded-xl p-5 space-y-4">
             <div className="flex items-start justify-between gap-3">

@@ -63,6 +63,12 @@ const Icon = {
       <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
     </svg>
   ),
+  pagos: (
+    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+      <rect x="2" y="5" width="20" height="14" rx="2" />
+      <path d="M2 10h20" />
+    </svg>
+  ),
 }
 
 type NavItem = {
@@ -79,6 +85,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/admin/leads',        label: 'Leads',        compactLabel: 'Leads',         icon: Icon.leads,       area: 'executive' },
   { href: '/admin/agenda',       label: 'Clases',       compactLabel: 'Clases',        icon: Icon.agenda,      area: 'academic' },
   { href: '/admin/students',     label: 'Estudiantes',  compactLabel: 'Alumnos',       icon: Icon.students,    area: 'academic' },
+  { href: '/admin/pagos',        label: 'Pagos',        compactLabel: 'Cobros',        icon: Icon.pagos,       area: 'executive' },
   { href: '/admin/reactivacion', label: 'Retención',    compactLabel: 'Retención',     icon: Icon.retention,   area: 'academic' },
   { href: '/admin/instructors',  label: 'Instructores', compactLabel: 'Profesores',    icon: Icon.instructors, area: 'academic' },
   { href: '/admin/enrollments',  label: 'Inscripciones',compactLabel: 'Leads nuevos',  icon: Icon.enrollments, area: 'academic' },

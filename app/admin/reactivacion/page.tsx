@@ -176,7 +176,7 @@ export default async function ReactivationPage() {
                     <p className="text-2xl font-black text-white">{student.retention_score ?? 0}</p>
                     <p className="text-xs text-white/35">{student.risk_level ?? 'score'}</p>
                   </div>
-                  <ReactivationRowActions studentId={student.id} phone={student.phone} email={student.email} />
+                  <ReactivationRowActions studentId={student.id} phone={student.phone} email={student.email} name={student.name} course={student.primary_course_name} />
                 </div>
               )
             })}

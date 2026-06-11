@@ -37,6 +37,7 @@ export interface Student {
   student_status?: StudentLifecycleStatus
   last_activity_at?: string | null
   student_since?: string | null
+  plan_name?: string | null
   plan_expires_at?: string | null
   next_payment_due_at?: string | null
   retention_score?: number | null

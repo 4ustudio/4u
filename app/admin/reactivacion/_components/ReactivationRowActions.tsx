@@ -2,24 +2,38 @@
 
 import { useActionState, useState } from 'react'
 import { markStudentReactivatedAction, recordStudentFollowUpAction, recordPhoneCallAction } from '../../_actions/retention'
+import WhatsAppButton from '@/components/admin/WhatsAppButton'
 
 const initial: { error?: string; success?: boolean } = {}
 
-export default function ReactivationRowActions({ studentId, phone, email }: { studentId: string; phone?: string | null; email?: string | null }) {
+export default function ReactivationRowActions({
+  studentId, phone, email, name, course,
+}: {
+  studentId: string
+  phone?: string | null
+  email?: string | null
+  name?: string
+  course?: string | null
+}) {
   const [open, setOpen] = useState(false)
   const [noteState, noteAction, notePending] = useActionState(recordStudentFollowUpAction, initial)
   const [reactState, reactAction, reactPending] = useActionState(markStudentReactivatedAction, initial)
   const [callState, callAction, callPending] = useActionState(recordPhoneCallAction, initial)
-  const whatsapp = phone ? `https://wa.me/${phone.replace(/\D/g, '')}` : null
   const mail = email ? `mailto:${email}` : null
 
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap gap-2">
-        {whatsapp && (
-          <a href={whatsapp} target="_blank" className="rounded-lg border border-green-500/25 px-3 py-1.5 text-xs font-semibold text-green-300 hover:bg-green-500/10">
-            WhatsApp
-          </a>
+        {phone && (
+          <WhatsAppButton
+            phone={phone}
+            template="student_reactivation"
+            vars={{ name: name ?? 'estudiante', course: course ?? undefined }}
+            entityType="retention"
+            entityId={studentId}
+            logAction="whatsapp.reactivation"
+            variant="pill"
+          />
         )}
         {mail && (
           <a href={mail} className="rounded-lg border border-white/15 px-3 py-1.5 text-xs font-semibold text-white/60 hover:bg-white/8">

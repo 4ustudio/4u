@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { getStudents } from '../_actions/students'
 import type { Student } from '@/types/admin'
 import { isBirthdayMonth } from '@/lib/students/birthday'
+import WhatsAppButton from '@/components/admin/WhatsAppButton'
 
 const ORANGE = '#ff7a00'
 
@@ -245,7 +246,17 @@ export default function StudentsPage() {
 
                   {/* Contacto */}
                   <div className="hidden md:block min-w-0">
-                    <p className="text-xs text-white/60 font-mono truncate">{s.phone}</p>
+                    <div className="flex items-center gap-1.5" onClick={ev => ev.preventDefault()}>
+                      <span className="text-xs text-white/60 font-mono truncate">{s.phone}</span>
+                      <WhatsAppButton
+                        phone={s.phone}
+                        template="general_message"
+                        vars={{ name: s.name }}
+                        entityType="student"
+                        entityId={s.id}
+                        variant="icon"
+                      />
+                    </div>
                     {s.email && <p className="text-xs text-white/30 truncate mt-0.5">{s.email}</p>}
                   </div>
 

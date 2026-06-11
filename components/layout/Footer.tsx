@@ -156,9 +156,17 @@ export default function Footer() {
             <p className="text-sm text-stone-500 font-roboto">
               © {new Date().getFullYear()} 4uStudio Academy. Todos los derechos reservados.
             </p>
-            <p className="text-xs text-stone-600 font-roboto tracking-wide">
-              Hecho con 🎵 en Colombia
-            </p>
+            <div className="flex items-center gap-4">
+              <Link
+                href="/terminos"
+                className="text-xs text-stone-500 hover:text-[#ff7a00] transition-colors duration-300 font-roboto tracking-wide"
+              >
+                Términos y condiciones
+              </Link>
+              <p className="text-xs text-stone-600 font-roboto tracking-wide">
+                Hecho con 🎵 en Colombia
+              </p>
+            </div>
           </div>
         </div>
       </footer>

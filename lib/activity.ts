@@ -7,6 +7,8 @@ export type ActivityAction =
   | 'lead.created'
   | 'lead.converted'
   | 'payment.received'
+  | 'payment.discount_applied'
+  | 'payment.overdue'
   | 'session.created'
   | 'session.cancelled'
   | 'session.rescheduled'
@@ -17,6 +19,10 @@ export type ActivityAction =
   | 'student.profile_updated'
   | 'birthday.benefit_granted'
   | 'birthday.discount_used'
+  | 'whatsapp.opened'
+  | 'whatsapp.payment_reminder'
+  | 'whatsapp.birthday'
+  | 'whatsapp.reactivation'
 
 export type EntityType =
   | 'enrollment'
@@ -34,6 +40,7 @@ const SEVERITY_BY_ACTION: Partial<Record<ActivityAction, Severity>> = {
   'session.cancelled':        'warning',
   'session.rescheduled':      'warning',
   'retention.status_changed': 'warning',
+  'payment.overdue':          'warning',
 }
 
 export interface LogActivityInput {
@@ -174,6 +181,65 @@ export const activity = {
       actor_role: params.actor_role,
       created_by_system: params.created_by_system,
       new_data: { amount: params.amount, currency, method: params.method },
+    })
+  },
+
+  async paymentDiscountApplied(params: {
+    payment_id: string
+    student_name: string
+    discount_amount: number
+    discount_reason?: string
+    currency?: string
+    actor_name?: string
+    actor_user_id?: string
+    actor_role?: string
+    source?: string
+    created_by_system?: boolean
+  }) {
+    const currency = params.currency ?? 'COP'
+    const fmt = new Intl.NumberFormat('es-CO', { style: 'currency', currency, maximumFractionDigits: 0 })
+    return logActivity({
+      entity_type: 'payment',
+      entity_id: params.payment_id,
+      action: 'payment.discount_applied',
+      description: `Descuento aplicado a ${params.student_name}: ${fmt.format(params.discount_amount)}${params.discount_reason ? ` (${params.discount_reason})` : ''}`,
+      source: params.source ?? 'admin',
+      actor_name: params.actor_name,
+      actor_user_id: params.actor_user_id,
+      actor_role: params.actor_role,
+      created_by_system: params.created_by_system,
+      new_data: { discount_amount: params.discount_amount, reason: params.discount_reason },
+    })
+  },
+
+  async paymentOverdue(params: {
+    payment_id: string
+    student_name: string
+    period_year: number
+    period_month: number
+    final_amount: number
+    currency?: string
+    actor_name?: string
+    actor_user_id?: string
+    actor_role?: string
+    source?: string
+    created_by_system?: boolean
+  }) {
+    const currency = params.currency ?? 'COP'
+    const fmt = new Intl.NumberFormat('es-CO', { style: 'currency', currency, maximumFractionDigits: 0 })
+    const period = new Date(params.period_year, params.period_month - 1, 1)
+      .toLocaleDateString('es-CO', { month: 'long', year: 'numeric' })
+    return logActivity({
+      entity_type: 'payment',
+      entity_id: params.payment_id,
+      action: 'payment.overdue',
+      description: `Pago vencido — ${params.student_name} · ${period} · ${fmt.format(params.final_amount)}`,
+      source: params.source ?? 'admin',
+      actor_name: params.actor_name,
+      actor_user_id: params.actor_user_id,
+      actor_role: params.actor_role,
+      created_by_system: params.created_by_system ?? true,
+      new_data: { period_year: params.period_year, period_month: params.period_month, amount: params.final_amount },
     })
   },
 
@@ -325,6 +391,31 @@ export const activity = {
       created_by_system: params.created_by_system,
       old_data: { status: params.old_status },
       new_data: { status: params.new_status },
+    })
+  },
+
+  async whatsappOpened(params: {
+    entity_type:   'student' | 'lead' | 'payment' | 'retention'
+    entity_id:     string
+    contact_name:  string
+    template:      string
+    action?:       ActivityAction
+    actor_name?:   string
+    actor_user_id?: string
+    actor_role?:   string
+    source?:       string
+  }) {
+    const action = params.action ?? 'whatsapp.opened'
+    return logActivity({
+      entity_type:   params.entity_type,
+      entity_id:     params.entity_id,
+      action,
+      description:   `WhatsApp abierto — ${params.contact_name} (${params.template})`,
+      source:        params.source ?? 'admin',
+      actor_name:    params.actor_name,
+      actor_user_id: params.actor_user_id,
+      actor_role:    params.actor_role,
+      new_data:      { template: params.template, contact_name: params.contact_name },
     })
   },
 

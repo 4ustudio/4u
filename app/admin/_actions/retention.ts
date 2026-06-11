@@ -560,7 +560,7 @@ export async function getRetentionDashboardData() {
     const currentMonth = new Date().getMonth() + 1
     const currentYear  = new Date().getFullYear()
 
-    const [{ data: dashboard }, { data: highRisk }, { data: alerts }, { data: students }, { data: birthdayStudents }, { count: benefitsGrantedCount }] = await Promise.all([
+    const [{ data: dashboard }, { data: highRisk }, { data: alerts }, { data: students }, { data: birthdayStudents }, { count: benefitsGrantedCount }, { data: overduePayments }] = await Promise.all([
       db().from('v_retention_dashboard').select('*').maybeSingle(),
       db().from('v_high_risk_students').select('*').limit(8),
       db().from('retention_alerts').select('*').eq('status', 'open').order('created_at', { ascending: false }).limit(6),
@@ -579,11 +579,15 @@ export async function getRetentionDashboardData() {
         .from('students')
         .select('*', { count: 'exact', head: true })
         .eq('birthday_benefit_year', currentYear),
+      db().from('payments').select('final_amount').eq('status', 'overdue'),
     ])
 
     const birthdayCount = (birthdayStudents ?? []).filter(
       (s: { birth_date: string }) => new Date(s.birth_date + 'T12:00:00').getMonth() + 1 === currentMonth
     ).length
+
+    const overdueTotal = (overduePayments ?? []).reduce((sum: number, p: any) => sum + (Number(p.final_amount) || 0), 0)
+    const overdueCount = (overduePayments ?? []).length
 
     return {
       dashboard: dashboard ?? null,
@@ -592,6 +596,8 @@ export async function getRetentionDashboardData() {
       students: students ?? [],
       birthdayThisMonth: birthdayCount,
       benefitsGrantedThisMonth: benefitsGrantedCount ?? 0,
+      overduePaymentsTotal: overdueTotal,
+      overduePaymentsCount: overdueCount,
       migrationMissing: false,
     }
   } catch (error) {

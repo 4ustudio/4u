@@ -67,7 +67,7 @@ export const hasAcademicAccess = (r: AppRole | null): boolean =>
 /** Dashboard de ventas / área ejecutiva.
  *  Desacoplado para migración futura a /business o /executive. */
 export const canAccessSalesDashboard = (r: AppRole | null): boolean =>
-  isSuperAdmin(r) || isSales(r)
+  isSuperAdmin(r) || isSales(r) || isAdmin(r)
 
 /** Pipeline comercial de leads — mismos permisos que el dashboard de ventas. */
 export const canAccessLeads = canAccessSalesDashboard

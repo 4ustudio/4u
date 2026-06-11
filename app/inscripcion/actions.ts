@@ -249,7 +249,8 @@ export async function generateAndSaveEnrollment(
     // ── 4. Insertar enrollment usando admin client para recuperar el ID generado.
     // anon puede INSERT en enrollments pero no SELECT, por lo que insert().select()
     // falla con 42501 si se usa el anon key.
-    const { data: enrollment, error: enrollError } = await admin
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: enrollment, error: enrollError } = await (admin as any)
       .from('enrollments')
       .insert(raw as EnrollmentInsert)
       .select('id')

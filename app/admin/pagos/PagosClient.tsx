@@ -3,7 +3,7 @@
 import { useState, useTransition, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { getPayments, markPaymentOverdue, processOverduePayments } from './_actions'
-import type { PaymentWithStudent, PaymentMetrics, PaymentTab, StudentOption } from './_actions'
+import type { PaymentWithStudent, PaymentMetrics, BoldMetrics, PaymentTab, StudentOption } from './_actions'
 import { PaymentStatusPill } from './_components/PaymentStatusPill'
 import RegisterPaymentModal from './_components/RegisterPaymentModal'
 import GeneratePaymentModal from './_components/GeneratePaymentModal'
@@ -38,6 +38,131 @@ const AVATAR_COLORS = [
   'bg-pink-500/20 text-pink-300',
 ]
 function avatarColor(id: string) { return AVATAR_COLORS[id.charCodeAt(0) % AVATAR_COLORS.length] }
+
+// ── Bold Metrics ──────────────────────────────────────────────────
+
+function BoldMetricsStrip({ m }: { m: BoldMetrics }) {
+  const fmt = (n: number) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n)
+  const fmtTime = (iso: string | null) => iso
+    ? new Date(iso).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+    : '—'
+
+  return (
+    <div className="rounded-xl border border-orange-500/20 bg-orange-500/5 px-4 py-3">
+      <div className="flex items-center gap-2 mb-2.5">
+        <span className="h-1.5 w-1.5 rounded-full bg-orange-500 animate-pulse" />
+        <p className="text-[10px] font-bold uppercase tracking-widest text-orange-400/70">Bold Sandbox</p>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div>
+          <p className="text-lg font-extrabold text-orange-300">{m.pagos_hoy}</p>
+          <p className="text-[10px] text-white/35">Pagos Bold hoy</p>
+        </div>
+        <div>
+          <p className="text-lg font-extrabold text-orange-300">{fmt(m.recaudacion_hoy)}</p>
+          <p className="text-[10px] text-white/35">Recaudación Bold hoy</p>
+        </div>
+        <div>
+          <p className="text-lg font-extrabold text-white/70">{fmtTime(m.ultimo_webhook)}</p>
+          <p className="text-[10px] text-white/35">Último webhook</p>
+        </div>
+        <div>
+          <p className={`text-lg font-extrabold ${m.webhooks_fallidos_hoy > 0 ? 'text-red-400' : 'text-white/30'}`}>{m.webhooks_fallidos_hoy}</p>
+          <p className="text-[10px] text-white/35">Webhooks fallidos hoy</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Bold Info Drawer ──────────────────────────────────────────────
+
+function BoldInfoDrawer({ payment, onClose }: { payment: PaymentWithStudent; onClose: () => void }) {
+  const [showPayload, setShowPayload] = useState(false)
+  const checkoutUrl = payment.metadata?.bold_checkout_url ?? null
+
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-sm bg-[#0f0f0f] border-l border-white/10 h-full overflow-y-auto p-6 space-y-5">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-orange-500" />
+            <p className="text-sm font-bold text-white">Información Bold</p>
+          </div>
+          <button onClick={onClose} className="text-white/30 hover:text-white transition-colors p-1">
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        {/* Datos */}
+        <div className="space-y-3 text-xs">
+          <div className="flex justify-between items-center py-2 border-b border-white/[0.06]">
+            <span className="text-white/40">Estudiante</span>
+            <span className="text-white font-medium">{payment.student_name}</span>
+          </div>
+          <div className="flex justify-between items-center py-2 border-b border-white/[0.06]">
+            <span className="text-white/40">Estado</span>
+            <span className={`font-semibold ${payment.status === 'paid' ? 'text-green-400' : 'text-yellow-300'}`}>
+              {payment.status === 'paid' ? 'Pagado' : payment.status}
+            </span>
+          </div>
+          <div className="flex justify-between items-center py-2 border-b border-white/[0.06]">
+            <span className="text-white/40">Referencia Bold</span>
+            <span className="text-white/70 font-mono text-[11px]">{payment.external_ref ?? '—'}</span>
+          </div>
+          <div className="flex justify-between items-center py-2 border-b border-white/[0.06]">
+            <span className="text-white/40">Fecha de pago</span>
+            <span className="text-white/70">
+              {payment.paid_at
+                ? new Date(payment.paid_at).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                : '—'}
+            </span>
+          </div>
+          <div className="flex justify-between items-center py-2 border-b border-white/[0.06]">
+            <span className="text-white/40">Método</span>
+            <span className="text-orange-300 font-semibold">Bold</span>
+          </div>
+        </div>
+
+        {/* Botones */}
+        <div className="space-y-2">
+          {checkoutUrl ? (
+            <a
+              href={checkoutUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full py-2.5 text-xs font-semibold rounded-xl border border-orange-500/40 text-orange-400 hover:bg-orange-500/10 transition-colors"
+            >
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3"/></svg>
+              Abrir checkout Bold
+            </a>
+          ) : (
+            <p className="text-center text-xs text-white/25 py-1">Sin link de checkout generado</p>
+          )}
+
+          {payment.gateway_response && (
+            <button
+              onClick={() => setShowPayload(!showPayload)}
+              className="flex items-center justify-center gap-2 w-full py-2.5 text-xs font-semibold rounded-xl border border-white/10 text-white/50 hover:bg-white/5 transition-colors"
+            >
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+              {showPayload ? 'Ocultar payload' : 'Ver payload gateway'}
+            </button>
+          )}
+        </div>
+
+        {/* Payload JSON */}
+        {showPayload && payment.gateway_response && (
+          <pre className="text-[10px] text-green-300/80 bg-black/60 border border-white/8 rounded-xl p-3 overflow-x-auto whitespace-pre-wrap break-all">
+            {JSON.stringify(payment.gateway_response, null, 2)}
+          </pre>
+        )}
+      </div>
+    </div>
+  )
+}
 
 // ── Métricas ──────────────────────────────────────────────────────
 
@@ -207,10 +332,11 @@ interface Props {
   initialPayments: PaymentWithStudent[]
   initialTotal:    number
   initialMetrics:  PaymentMetrics
+  boldMetrics:     BoldMetrics
   students:        StudentOption[]
 }
 
-export default function PagosClient({ initialPayments, initialTotal, initialMetrics, students }: Props) {
+export default function PagosClient({ initialPayments, initialTotal, initialMetrics, boldMetrics, students }: Props) {
   const router  = useRouter()
   const [overduePending, startOverdue] = useTransition()
   const [markPending,    startMark]    = useTransition()
@@ -229,6 +355,7 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
   const [discountFor,  setDiscountFor]    = useState<PaymentWithStudent | null>(null)
   const [historyFor,   setHistoryFor]     = useState<{ id: string; name: string } | null>(null)
   const [confirmOverdue, setConfirmOverdue] = useState<PaymentWithStudent | null>(null)
+  const [boldDrawer, setBoldDrawer] = useState<PaymentWithStudent | null>(null)
 
   const reload = useCallback(async (t: PaymentTab = tab, s: string = search) => {
     setLoading(true)
@@ -313,6 +440,9 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
           </button>
         </div>
       )}
+
+      {/* Métricas Bold */}
+      <BoldMetricsStrip m={boldMetrics} />
 
       {/* Métricas */}
       <MetricsStrip m={metrics} />
@@ -403,6 +533,14 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
                     <p className="text-sm font-semibold text-white">{formatCOP(p.final_amount)}</p>
                     <div className="space-y-1">
                       <PaymentStatusPill status={p.status} />
+                      {p.payment_method === 'bold' && (
+                        <button
+                          onClick={() => setBoldDrawer(p)}
+                          className="text-[10px] text-orange-400 font-semibold hover:text-orange-300 transition-colors"
+                        >
+                          Pagado vía Bold ↗
+                        </button>
+                      )}
                       {days !== null && days > 0 && (
                         <p className="text-[10px] text-red-400">{days}d mora</p>
                       )}
@@ -452,6 +590,14 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
                       <p className="text-base font-bold text-white">{formatCOP(p.final_amount)}</p>
                       {p.discount_amount > 0 && (
                         <p className="text-[11px] text-green-400">−{formatCOP(p.discount_amount)} desc.</p>
+                      )}
+                      {p.payment_method === 'bold' && (
+                        <button
+                          onClick={() => setBoldDrawer(p)}
+                          className="text-[10px] text-orange-400 font-semibold hover:text-orange-300 transition-colors"
+                        >
+                          Pagado vía Bold ↗
+                        </button>
                       )}
                       {days !== null && days > 0 && (
                         <p className="text-[11px] text-red-400">{days} días de mora</p>
@@ -509,6 +655,12 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
           onConfirm={handleOverdueConfirm}
           onCancel={() => setConfirmOverdue(null)}
           pending={markPending}
+        />
+      )}
+      {boldDrawer && (
+        <BoldInfoDrawer
+          payment={boldDrawer}
+          onClose={() => setBoldDrawer(null)}
         />
       )}
     </div>

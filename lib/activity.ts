@@ -9,6 +9,9 @@ export type ActivityAction =
   | 'payment.received'
   | 'payment.discount_applied'
   | 'payment.overdue'
+  | 'payment.bold_link_created'
+  | 'payment.bold_webhook_received'
+  | 'payment.bold_webhook_failed'
   | 'session.created'
   | 'session.cancelled'
   | 'session.rescheduled'
@@ -41,7 +44,8 @@ const SEVERITY_BY_ACTION: Partial<Record<ActivityAction, Severity>> = {
   'session.cancelled':        'warning',
   'session.rescheduled':      'warning',
   'retention.status_changed': 'warning',
-  'payment.overdue':          'warning',
+  'payment.overdue':               'warning',
+  'payment.bold_webhook_failed':   'warning',
 }
 
 export interface LogActivityInput {
@@ -464,6 +468,64 @@ export const activity = {
         signed_at:        params.signed_at,
         document_hash:    params.document_hash,
       },
+    })
+  },
+
+  // Bold
+  async boldLinkCreated(params: {
+    payment_id: string
+    student_name: string
+    amount: number
+    checkout_url?: string
+    actor_name?: string
+    actor_user_id?: string
+    actor_role?: string
+  }) {
+    const fmt = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })
+    return logActivity({
+      entity_type: 'payment',
+      entity_id: params.payment_id,
+      action: 'payment.bold_link_created',
+      description: `Link Bold generado — ${params.student_name}: ${fmt.format(params.amount)}`,
+      source: 'admin',
+      actor_name: params.actor_name,
+      actor_user_id: params.actor_user_id,
+      actor_role: params.actor_role,
+      new_data: { checkout_url: params.checkout_url, amount: params.amount },
+    })
+  },
+
+  async boldWebhookReceived(params: {
+    payment_id: string
+    bold_event: string
+    bold_payment_id?: string
+    amount?: number
+  }) {
+    return logActivity({
+      entity_type: 'payment',
+      entity_id: params.payment_id,
+      action: 'payment.bold_webhook_received',
+      description: `Webhook Bold recibido: ${params.bold_event}${params.bold_payment_id ? ` — ${params.bold_payment_id}` : ''}`,
+      source: 'bold_webhook',
+      created_by_system: true,
+      new_data: { event: params.bold_event, bold_payment_id: params.bold_payment_id, amount: params.amount },
+    })
+  },
+
+  async boldWebhookFailed(params: {
+    payment_id?: string
+    reason: string
+    bold_event?: string
+  }) {
+    return logActivity({
+      entity_type: 'payment',
+      entity_id: params.payment_id,
+      action: 'payment.bold_webhook_failed',
+      description: `Webhook Bold fallido: ${params.reason}${params.bold_event ? ` (${params.bold_event})` : ''}`,
+      source: 'bold_webhook',
+      created_by_system: true,
+      severity: 'warning',
+      new_data: { reason: params.reason, event: params.bold_event },
     })
   },
 

@@ -5,6 +5,7 @@ import { createAuthServerClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { activity } from '@/lib/activity'
 import { getBirthdayBenefitStatus } from '@/lib/students/birthday'
+import { createBoldPaymentLink } from '@/lib/bold/client'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function db(): any { return createAdminClient() }
@@ -13,7 +14,7 @@ function db(): any { return createAdminClient() }
 
 export type PaymentStatus   = 'pending' | 'paid' | 'overdue' | 'waived' | 'partial' | 'voided'
 export type PaymentType     = 'monthly_fee' | 'partial_payment' | 'adjustment' | 'scholarship' | 'refund'
-export type PaymentMethod   = 'efectivo' | 'transferencia' | 'nequi' | 'daviplata' | 'wompi' | 'pse' | 'tarjeta' | 'otro'
+export type PaymentMethod   = 'efectivo' | 'transferencia' | 'nequi' | 'daviplata' | 'wompi' | 'pse' | 'tarjeta' | 'bold' | 'otro'
 export type PaymentTab      = 'all' | 'pending' | 'paid' | 'overdue'
 
 export interface PaymentWithStudent {
@@ -37,6 +38,8 @@ export interface PaymentWithStudent {
   external_ref: string | null
   plan_name: string | null
   notes: string | null
+  metadata: { bold_checkout_url?: string; bold_link_id?: string } | null
+  gateway_response: unknown | null
   // joined from students
   student_name: string
   student_phone: string
@@ -54,6 +57,13 @@ export interface PaymentMetrics {
   vencidos:   number
   descuentos: number
   mora_total: number
+}
+
+export interface BoldMetrics {
+  pagos_hoy:       number
+  recaudacion_hoy: number
+  ultimo_webhook:  string | null
+  webhooks_fallidos_hoy: number
 }
 
 export interface RegisterPaymentInput {
@@ -231,6 +241,40 @@ export async function getPaymentMetrics(): Promise<PaymentMetrics> {
     }
   } catch {
     return { recaudado: 0, pendientes: 0, vencidos: 0, descuentos: 0, mora_total: 0 }
+  }
+}
+
+export async function getBoldMetrics(): Promise<BoldMetrics> {
+  try {
+    const today = new Date().toISOString().split('T')[0]
+
+    const [pagosHoyRes, lastWebhookRes, failedRes] = await Promise.all([
+      db().from('payments')
+        .select('final_amount')
+        .eq('payment_method', 'bold')
+        .eq('status', 'paid')
+        .gte('paid_at', `${today}T00:00:00`),
+      db().from('system_activity_log')
+        .select('created_at')
+        .eq('action', 'payment.bold_webhook_received')
+        .order('created_at', { ascending: false })
+        .limit(1),
+      db().from('system_activity_log')
+        .select('id', { count: 'exact', head: true })
+        .eq('action', 'payment.bold_webhook_failed')
+        .gte('created_at', `${today}T00:00:00`),
+    ])
+
+    const recaudacion_hoy = (pagosHoyRes.data ?? []).reduce((s: number, r: any) => s + (r.final_amount ?? 0), 0)
+
+    return {
+      pagos_hoy:            (pagosHoyRes.data ?? []).length,
+      recaudacion_hoy,
+      ultimo_webhook:       lastWebhookRes.data?.[0]?.created_at ?? null,
+      webhooks_fallidos_hoy: failedRes.count ?? 0,
+    }
+  } catch {
+    return { pagos_hoy: 0, recaudacion_hoy: 0, ultimo_webhook: null, webhooks_fallidos_hoy: 0 }
   }
 }
 
@@ -527,5 +571,61 @@ export async function processOverduePayments(): Promise<{ processed: number; err
     return { processed, error: null }
   } catch (e) {
     return { processed: 0, error: String(e) }
+  }
+}
+
+// ── Bold Checkout ──────────────────────────────────────────────────
+
+export async function generateBoldCheckout(payment_id: string): Promise<{
+  url: string | null
+  error: string | null
+}> {
+  try {
+    const { data: payment, error: fetchError } = await db()
+      .from('payments')
+      .select('id, student_id, final_amount, status, period_year, period_month, students(name)')
+      .eq('id', payment_id)
+      .single()
+
+    if (fetchError || !payment) return { url: null, error: 'Pago no encontrado.' }
+    if (payment.status === 'paid') return { url: null, error: 'El pago ya fue registrado.' }
+
+    const studentName = (payment.students as any)?.name ?? ''
+    const mes = new Date(payment.period_year, payment.period_month - 1).toLocaleString('es-CO', { month: 'long' })
+    const description = `Mensualidad ${mes} ${payment.period_year}${studentName ? ` — ${studentName}` : ''}`
+
+    const boldRes = await createBoldPaymentLink({
+      paymentId:   payment_id,
+      amount:      payment.final_amount,
+      description,
+    })
+
+    const checkoutUrl = boldRes.payload?.url
+    if (!checkoutUrl) return { url: null, error: 'Bold no retornó URL de pago.' }
+
+    // Guardar link en metadata para trazabilidad
+    await db()
+      .from('payments')
+      .update({
+        metadata:   { bold_checkout_url: checkoutUrl, bold_link_id: boldRes.payload.payment_link },
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', payment_id)
+
+    // Activity log
+    const actor = await getActorInfo()
+    await activity.boldLinkCreated({
+      payment_id,
+      student_name: studentName,
+      amount: payment.final_amount,
+      checkout_url: checkoutUrl,
+      actor_name: actor?.actor_name,
+      actor_user_id: actor?.actor_user_id,
+      actor_role: actor?.actor_role,
+    })
+
+    return { url: checkoutUrl, error: null }
+  } catch (e) {
+    return { url: null, error: String(e) }
   }
 }

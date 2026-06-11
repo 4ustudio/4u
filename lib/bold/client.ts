@@ -4,7 +4,11 @@ const BOLD_API_BASE = 'https://integrations.api.bold.co'
 
 // Usa llaves de test mientras BOLD_SANDBOX=true
 function getApiKey(): string {
+  console.log('[Bold] BOLD_SANDBOX=', process.env.BOLD_SANDBOX)
+  console.log('[Bold] BOLD_PUBLIC_KEY_TEST=', process.env.BOLD_PUBLIC_KEY_TEST ? '***SET***' : 'UNDEFINED')
+  console.log('[Bold] BOLD_PUBLIC_KEY=', process.env.BOLD_PUBLIC_KEY ? '***SET***' : 'UNDEFINED')
   const isSandbox = process.env.BOLD_SANDBOX === 'true'
+  console.log('[Bold] isSandbox=', isSandbox)
   const key = isSandbox ? process.env.BOLD_PUBLIC_KEY_TEST : process.env.BOLD_PUBLIC_KEY
   if (!key) throw new Error(`Bold API key no configurada (sandbox=${isSandbox})`)
   return key

@@ -21,14 +21,16 @@ export async function POST(req: NextRequest) {
   // 1. Leer raw body como texto (necesario para HMAC)
   const rawBody = await req.text()
 
-  // 2. Validar firma
-  const signature = req.headers.get('x-bold-signature') ?? ''
-  const secret    = getWebhookSecret()
-
-  if (!verifyBoldSignature(rawBody, signature, secret)) {
-    console.warn('[bold-webhook] Firma inválida')
-    await activity.boldWebhookFailed({ reason: 'firma_invalida' })
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  // 2. Validar firma (sandbox no firma webhooks — skip)
+  const isSandboxEnv = process.env.BOLD_SANDBOX === 'true'
+  if (!isSandboxEnv) {
+    const signature = req.headers.get('x-bold-signature') ?? ''
+    const secret    = getWebhookSecret()
+    if (!verifyBoldSignature(rawBody, signature, secret)) {
+      console.warn('[bold-webhook] Firma inválida')
+      await activity.boldWebhookFailed({ reason: 'firma_invalida' })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
   }
 
   // 3. Parsear payload
@@ -44,6 +46,7 @@ export async function POST(req: NextRequest) {
   const ourPaymentId    = data.metadata?.reference  // Nuestro payments.id
 
   console.info(`[bold-webhook] Evento=${type} bold_id=${boldPaymentId} ref=${ourPaymentId}`)
+  console.info('[bold-webhook] payload completo:', JSON.stringify(payload))
 
   // Solo procesamos eventos de venta; VOID_* se ignoran por ahora
   if (type !== 'SALE_APPROVED' && type !== 'SALE_REJECTED') {

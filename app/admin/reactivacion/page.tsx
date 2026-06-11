@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { getRetentionDashboardData } from '../_actions/retention'
 import { isBirthdayMonth } from '@/lib/students/birthday'
-import RetentionPreviewPanel from './_components/RetentionPreviewPanel'
 import ReactivationRowActions from './_components/ReactivationRowActions'
 
 export const dynamic = 'force-dynamic'
@@ -122,8 +121,6 @@ export default async function ReactivationPage() {
           )}
         </div>
       </section>
-
-      <RetentionPreviewPanel />
 
       <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
         {/* Prioridades de hoy */}

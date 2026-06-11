@@ -11,6 +11,18 @@ const MONTHS = [
   'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre',
 ]
 
+const PLAN_OPTIONS = [
+  'Plan New Talent',
+  'Plan Fast Talent',
+  'Plan Bandas',
+  'Plan Artista',
+  'Plan Artista Premium',
+  'Plan Profesional',
+  'Plan Corporativo',
+  'Plan Kids & Teens',
+  'Plan Premium Kids & Teens',
+]
+
 function formatCOP(n: number) {
   return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n)
 }
@@ -142,12 +154,14 @@ export default function CreateCobroModal({ preselectedStudentId, students, onClo
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] uppercase tracking-wider text-white/35 mb-1.5">Plan</label>
-              <input
+              <select
                 value={planName}
                 onChange={e => setPlanName(e.target.value)}
-                placeholder="Piano Premium"
-                className="w-full px-3 py-2 text-sm bg-white/[0.04] border border-white/10 rounded-lg text-white placeholder:text-white/20 focus:outline-none focus:ring-1 focus:ring-orange-500/40"
-              />
+                className="w-full px-3 py-2 text-sm bg-white/[0.04] border border-white/10 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-orange-500/40"
+              >
+                <option value="">Seleccionar…</option>
+                {PLAN_OPTIONS.map(p => <option key={p} value={p}>{p}</option>)}
+              </select>
             </div>
             <div>
               <label className="block text-[11px] uppercase tracking-wider text-white/35 mb-1.5">Mes</label>

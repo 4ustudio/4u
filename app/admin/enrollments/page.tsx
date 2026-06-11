@@ -9,8 +9,10 @@ import {
   addEnrollmentEvent,
   saveInternalNotes,
   convertEnrollmentToStudent,
+  getEnrollmentContract,
 } from '../_actions/enrollments'
 import type { EnrollmentRow, EnrollmentEvent } from '@/types/enrollment'
+import type { EnrollmentContractDoc } from '../_actions/enrollments'
 
 const ORANGE = '#ff7a00'
 
@@ -137,6 +139,8 @@ interface DrawerProps {
   converting: boolean
   convertedStudentId: string | null
   convertError: string | null
+  contractDoc: EnrollmentContractDoc | null
+  loadingContract: boolean
   onClose: () => void
   onStatusChange: (id: string, status: string) => void
   onQuickAction: (type: 'whatsapp_sent' | 'called' | 'email_sent', desc: string, href: string) => void
@@ -148,6 +152,7 @@ interface DrawerProps {
 function Drawer({
   enrollment: e, open, events, loadingEvents,
   notesText, savingNotes, notesSaved, converting, convertedStudentId, convertError,
+  contractDoc, loadingContract,
   onClose, onStatusChange, onQuickAction, onNotesChange, onSaveNotes, onConvert,
 }: DrawerProps) {
   // Bloquear scroll del body y escuchar Escape
@@ -257,6 +262,63 @@ function Drawer({
                     <p className="text-sm text-white/50 leading-relaxed bg-white/[0.02] rounded-xl px-3 py-2.5 border border-white/[0.06] italic">{e.notes}</p>
                   </section>
                 )}
+
+                {/* Documentación Legal */}
+                <section>
+                  <p className="text-[10px] uppercase tracking-widest text-white/25 font-semibold mb-3">Documentación legal</p>
+                  {loadingContract ? (
+                    <p className="text-xs text-white/30 py-2">Verificando contrato…</p>
+                  ) : contractDoc ? (
+                    <div className="rounded-xl border border-green-500/20 bg-green-500/5 px-4 py-3 space-y-2.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-green-400 bg-green-500/10 border border-green-500/20 px-2.5 py-1 rounded-full">
+                          <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                          Contrato firmado
+                        </span>
+                        {contractDoc.document_version && (
+                          <span className="text-[11px] text-white/30">v{contractDoc.document_version}</span>
+                        )}
+                      </div>
+                      {contractDoc.signed_at && (
+                        <p className="text-xs text-white/40">
+                          Firmado el {new Date(contractDoc.signed_at).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' })}
+                        </p>
+                      )}
+                      {(contractDoc.viewUrl || contractDoc.downloadUrl) && (
+                        <div className="flex gap-2 pt-0.5">
+                          {contractDoc.viewUrl && (
+                            <a
+                              href={contractDoc.viewUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1.5 text-xs font-medium text-white/60 border border-white/10 rounded-lg px-3 py-1.5 hover:text-white hover:border-white/20 hover:bg-white/5 transition-all"
+                            >
+                              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                              Ver PDF
+                            </a>
+                          )}
+                          {contractDoc.downloadUrl && (
+                            <a
+                              href={contractDoc.downloadUrl}
+                              download
+                              className="flex items-center gap-1.5 text-xs font-medium text-white/60 border border-white/10 rounded-lg px-3 py-1.5 hover:text-white hover:border-white/20 hover:bg-white/5 transition-all"
+                            >
+                              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                              Descargar
+                            </a>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-4 py-3">
+                      <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-white/30 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full">
+                        <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        Sin contrato
+                      </span>
+                    </div>
+                  )}
+                </section>
 
                 {/* Acciones rápidas */}
                 <section>
@@ -450,6 +512,8 @@ export default function AdminEnrollmentsPage() {
   const [convertedStudentId, setConvertedStudentId] = useState<string | null>(null)
   const [convertError, setConvertError] = useState<string | null>(null)
   const [flash, setFlash]             = useState<string | null>(null)
+  const [contractDoc, setContractDoc] = useState<EnrollmentContractDoc | null>(null)
+  const [loadingContract, setLoadingContract] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -544,6 +608,12 @@ export default function AdminEnrollmentsPage() {
     setConvertedStudentId(e.converted_student_id ?? null)
     setConvertError(null)
     setDrawerOpen(true)
+    setContractDoc(null)
+    setLoadingContract(true)
+    getEnrollmentContract(e.id).then(doc => {
+      setContractDoc(doc)
+      setLoadingContract(false)
+    }).catch(() => setLoadingContract(false))
   }
 
   function closeDrawer() { setDrawerOpen(false) }
@@ -758,6 +828,8 @@ export default function AdminEnrollmentsPage() {
         converting={converting}
         convertedStudentId={convertedStudentId}
         convertError={convertError}
+        contractDoc={contractDoc}
+        loadingContract={loadingContract}
         onClose={closeDrawer}
         onStatusChange={handleStatusChange}
         onQuickAction={handleQuickAction}

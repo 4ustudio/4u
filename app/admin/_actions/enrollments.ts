@@ -337,3 +337,37 @@ export async function convertEnrollmentToStudent(
   revalidatePath('/admin/students')
   return { studentId: student.id }
 }
+
+export interface EnrollmentContractDoc {
+  id:               string
+  document_type:    string
+  document_version: string | null
+  signed_at:        string | null
+  pdf_url:          string | null
+  document_hash:    string | null
+  viewUrl:          string | null
+  downloadUrl:      string | null
+}
+
+export async function getEnrollmentContract(enrollmentId: string): Promise<EnrollmentContractDoc | null> {
+  const { getSignedUrl } = await import('@/lib/storage')
+  const { data } = await db()
+    .from('student_documents')
+    .select('id, document_type, document_version, signed_at, pdf_url, document_hash')
+    .eq('enrollment_id', enrollmentId)
+    .eq('document_type', 'terms_and_conditions')
+    .order('signed_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (!data) return null
+
+  let viewUrl:     string | null = null
+  let downloadUrl: string | null = null
+  if (data.pdf_url) {
+    try { viewUrl     = await getSignedUrl(data.pdf_url, 3600) }    catch { /* no existe */ }
+    try { downloadUrl = await getSignedUrl(data.pdf_url, 86400) }   catch { /* no existe */ }
+  }
+
+  return { ...data, viewUrl, downloadUrl }
+}

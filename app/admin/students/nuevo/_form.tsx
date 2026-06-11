@@ -179,6 +179,21 @@ export default function NewStudentForm() {
           </div>
         </div>
 
+        <div className="grid sm:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-xs text-white/50 mb-1.5">EPS</label>
+            <input type="text" name="eps" disabled={isPending} className={inputClass} placeholder="Sura, Nueva EPS…" />
+          </div>
+          <div>
+            <label className="block text-xs text-white/50 mb-1.5">Contacto emergencia</label>
+            <input type="text" name="emergency_contact_name" disabled={isPending} className={inputClass} placeholder="Nombre" />
+          </div>
+          <div>
+            <label className="block text-xs text-white/50 mb-1.5">Tel. emergencia</label>
+            <input type="tel" name="emergency_contact_phone" disabled={isPending} className={inputClass} placeholder="3001234567" />
+          </div>
+        </div>
+
         <div>
           <label className="block text-xs text-white/50 mb-1.5">Notas internas</label>
           <textarea

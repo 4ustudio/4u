@@ -40,6 +40,9 @@ export interface EnrollmentInsert {
   image_consent?:     boolean
   id_document?:       string
   city?:              string
+  eps?:               string
+  emergency_contact_name?:  string
+  emergency_contact_phone?: string
 }
 
 export interface EnrollmentRow extends EnrollmentInsert {
@@ -63,6 +66,9 @@ export interface EnrollmentRow extends EnrollmentInsert {
   image_consent?:     boolean | null
   id_document?:       string | null
   city?:              string | null
+  eps?:               string | null
+  emergency_contact_name?:  string | null
+  emergency_contact_phone?: string | null
 }
 
 export interface EnrollmentEvent {

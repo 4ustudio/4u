@@ -72,6 +72,12 @@ export default async function InstructorsPage() {
                   <td className="px-5 py-3.5 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <Link
+                        href={`/admin/instructors/${inst.id}/disponibilidad`}
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium text-white/50 hover:text-white border border-white/10 hover:border-white/20 transition-colors"
+                      >
+                        Disponibilidad
+                      </Link>
+                      <Link
                         href={`/admin/instructors/${inst.id}/editar`}
                         className="px-3 py-1.5 rounded-lg text-xs font-medium text-white/50 hover:text-white border border-white/10 hover:border-white/20 transition-colors"
                       >

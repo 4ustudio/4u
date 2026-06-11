@@ -287,6 +287,9 @@ export async function createStudentAction(
   const payment_method  = (formData.get('payment_method') as string | null)?.trim() || null
   const notes           = (formData.get('notes')        as string | null)?.trim() || null
   const lead_id         = (formData.get('lead_id')      as string | null) || null
+  const eps             = (formData.get('eps')          as string | null)?.trim() || null
+  const emergency_contact_name  = (formData.get('emergency_contact_name')  as string | null)?.trim() || null
+  const emergency_contact_phone = (formData.get('emergency_contact_phone') as string | null)?.trim() || null
   const now          = new Date().toISOString()
 
   if (!first_name || !phone) {
@@ -313,6 +316,9 @@ export async function createStudentAction(
       payment_method,
       notes,
       lead_id,
+      eps,
+      emergency_contact_name,
+      emergency_contact_phone,
       status: 'active',
       student_status: 'activo',
       student_since: now,
@@ -486,6 +492,9 @@ export async function updateStudentAction(
   const next_payment_due_at = (formData.get('next_payment_due_at') as string | null)?.trim() || null
   const retention_score_raw = (formData.get('retention_score') as string | null)?.trim()
   const notes        = (formData.get('notes')        as string | null)?.trim() || null
+  const eps             = (formData.get('eps')          as string | null)?.trim() || null
+  const emergency_contact_name  = (formData.get('emergency_contact_name')  as string | null)?.trim() || null
+  const emergency_contact_phone = (formData.get('emergency_contact_phone') as string | null)?.trim() || null
 
   if (!first_name || !phone) {
     return { error: 'Nombre y WhatsApp son obligatorios.' }
@@ -507,6 +516,9 @@ export async function updateStudentAction(
     status,
     student_type,
     notes,
+    eps,
+    emergency_contact_name,
+    emergency_contact_phone,
   }
 
   if (student_status) update.student_status = student_status

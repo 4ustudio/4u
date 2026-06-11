@@ -225,6 +225,9 @@ export async function generateAndSaveEnrollment(
     image_consent:     formData.get('image_consent') === 'on',
     id_document:       (formData.get('id_document') as string | null)?.trim() || undefined,
     city:              (formData.get('city') as string | null)?.trim() || undefined,
+    eps:               (formData.get('eps') as string | null)?.trim() || undefined,
+    emergency_contact_name:  (formData.get('emergency_contact_name') as string | null)?.trim() || undefined,
+    emergency_contact_phone: (formData.get('emergency_contact_phone') as string | null)?.trim() || undefined,
   }
 
   const errors = validate(raw)

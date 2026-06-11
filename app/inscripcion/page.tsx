@@ -55,6 +55,9 @@ interface FormSnapshot {
   terms:           string
   data_consent:    string
   image_consent:   string
+  eps:                     string
+  emergency_contact_name:  string
+  emergency_contact_phone: string
 }
 
 export default function InscripcionPage() {
@@ -108,6 +111,9 @@ export default function InscripcionPage() {
       terms:           fd.get('terms') as string ?? '',
       data_consent:    fd.get('data_consent') as string ?? '',
       image_consent:   fd.get('image_consent') as string ?? '',
+      eps:                     fd.get('eps') as string ?? '',
+      emergency_contact_name:  fd.get('emergency_contact_name') as string ?? '',
+      emergency_contact_phone: fd.get('emergency_contact_phone') as string ?? '',
     }
 
     setSnapshot(snap)
@@ -418,6 +424,23 @@ export default function InscripcionPage() {
                       <option value="Regional mexicano">Regional mexicano</option>
                       <option value="Otros">Otros</option>
                     </select>
+                  </div>
+
+                  {/* ── EPS y Contacto de Emergencia ── */}
+                  <div>
+                    <label htmlFor="eps" className={labelClass}>EPS <span className="text-white/20 font-normal normal-case ml-1">(opcional)</span></label>
+                    <input id="eps" name="eps" type="text" placeholder="Ej: Sura, Nueva EPS, Sanitas…" className={inputClass} />
+                  </div>
+
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="emergency_contact_name" className={labelClass}>Contacto de emergencia <span className="text-white/20 font-normal normal-case ml-1">(opcional)</span></label>
+                      <input id="emergency_contact_name" name="emergency_contact_name" type="text" placeholder="Nombre completo" className={inputClass} />
+                    </div>
+                    <div>
+                      <label htmlFor="emergency_contact_phone" className={labelClass}>Teléfono emergencia <span className="text-white/20 font-normal normal-case ml-1">(opcional)</span></label>
+                      <input id="emergency_contact_phone" name="emergency_contact_phone" type="tel" placeholder="3001234567" className={inputClass} />
+                    </div>
                   </div>
 
                   {/* ── Comentarios ── */}

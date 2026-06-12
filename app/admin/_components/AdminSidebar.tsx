@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import type { ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -192,30 +193,95 @@ export default function AdminSidebar({ role }: { role: AppRole | null }) {
   )
 }
 
-export function MobileBottomNav({ role }: { role: AppRole | null }) {
+export function MobileMenuDrawer({ role }: { role: AppRole | null }) {
   const pathname = usePathname()
-  const nav = getVisibleNav(role).slice(0, 5)
+  const nav = getVisibleNav(role)
+  const [open, setOpen] = React.useState(false)
+
+  // Cerrar al cambiar de ruta
+  React.useEffect(() => { setOpen(false) }, [pathname])
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 bg-[#0b0b0b]/95 backdrop-blur-xl flex safe-area-pb">
-      {nav.map((item) => {
-        const active = item.href === '/admin'
-          ? pathname === '/admin'
-          : pathname.startsWith(item.href)
+    <>
+      {/* Botón hamburguesa — solo móvil */}
+      <button
+        className="lg:hidden grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/[0.03] text-white/65 hover:text-white transition-colors"
+        onClick={() => setOpen(true)}
+        aria-label="Abrir menú"
+      >
+        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+          <path d="M4 7h16M4 12h16M4 17h16" />
+        </svg>
+      </button>
 
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`flex-1 flex flex-col items-center gap-1 py-3 text-center transition-colors ${
-              active ? 'text-[#ff7a00]' : 'text-white/40 hover:text-white'
-            }`}
+      {/* Overlay */}
+      {open && (
+        <div
+          className="lg:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+          onClick={() => setOpen(false)}
+        />
+      )}
+
+      {/* Drawer */}
+      <div className={[
+        'lg:hidden fixed inset-y-0 left-0 z-50 w-[280px] flex flex-col bg-[#070707] border-r border-white/8 transition-transform duration-300',
+        open ? 'translate-x-0' : '-translate-x-full',
+      ].join(' ')}>
+        {/* Header del drawer */}
+        <div className="flex items-center justify-between px-6 pt-7 pb-5 border-b border-white/8">
+          <Image
+            src="/images/icons/Recurso 1.png"
+            alt="4U Studio Academy"
+            width={110}
+            height={34}
+            className="object-contain"
+          />
+          <button
+            onClick={() => setOpen(false)}
+            className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-white/[0.03] text-white/65 hover:text-white transition-colors"
+            aria-label="Cerrar menú"
           >
-            {item.icon}
-            <span className="text-[10px] font-medium">{item.compactLabel}</span>
-          </Link>
-        )
-      })}
-    </nav>
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Nav items */}
+        <nav className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
+          {nav.map((item) => {
+            const active = item.href === '/admin'
+              ? pathname === '/admin'
+              : pathname.startsWith(item.href)
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={[
+                  'flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm transition-all',
+                  active
+                    ? 'border-[#ff7a00]/20 bg-[#2a1b12] text-[#ff8a1d]'
+                    : 'border-transparent text-white/78 hover:border-white/10 hover:bg-white/[0.04] hover:text-white',
+                ].join(' ')}
+              >
+                <span className={[
+                  'grid h-9 w-9 place-items-center rounded-xl border transition-colors shrink-0',
+                  active
+                    ? 'border-[#ff7a00]/25 bg-[#ff7a00]/12 text-[#ff8a1d]'
+                    : 'border-white/10 bg-white/[0.03] text-white/65',
+                ].join(' ')}>
+                  {item.icon}
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate font-medium">{item.label}</p>
+                  <p className="truncate text-[11px] text-white/32">{item.compactLabel}</p>
+                </div>
+              </Link>
+            )
+          })}
+        </nav>
+      </div>
+    </>
   )
 }

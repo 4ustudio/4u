@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import { createAuthServerClient } from '@/lib/supabase/server'
-import AdminSidebar, { MobileBottomNav } from './_components/AdminSidebar'
+import AdminSidebar, { MobileMenuDrawer } from './_components/AdminSidebar'
 import { RealtimeProvider } from '@/components/admin/RealtimeProvider'
 import NotificationBell from '@/components/admin/NotificationBell'
 import PageWrapper from './_components/PageWrapper'
@@ -41,7 +41,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <div className="flex-1 flex flex-col min-w-0">
           {/* Header */}
           <header className="sticky top-0 z-30 h-20 shrink-0 flex items-center gap-3 px-4 lg:px-7 border-b border-white/8 bg-[#0a0a0a]/95 backdrop-blur-xl">
-            {/* Logo móvil */}
+            {/* Hamburguesa móvil + drawer */}
+            <MobileMenuDrawer role={role} />
+
+            {/* Logo móvil (solo cuando el drawer no está) */}
             <Image
               src="/images/icons/Recurso 1.png"
               alt="4U Studio Academy"
@@ -49,15 +52,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               height={28}
               className="object-contain lg:hidden"
             />
-
-            <div
-              className="hidden lg:grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/[0.03] text-white/65"
-              aria-hidden="true"
-            >
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-                <path d="M4 7h16M4 12h16M4 17h16" />
-              </svg>
-            </div>
 
             <div className="ml-auto flex items-center gap-3">
               <NotificationBell />
@@ -71,13 +65,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </header>
 
           {/* Contenido principal */}
-          <main className="flex-1 p-4 lg:p-7 overflow-auto pb-20 lg:pb-7">
+          <main className="flex-1 p-4 lg:p-7 overflow-auto">
             <PageWrapper>{children}</PageWrapper>
           </main>
         </div>
 
-        {/* Nav inferior móvil */}
-        <MobileBottomNav role={role} />
       </div>
     </RealtimeProvider>
   )

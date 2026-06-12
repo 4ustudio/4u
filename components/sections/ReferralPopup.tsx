@@ -88,9 +88,7 @@ function AgendamientoPopup({ onClose, ctaLink }: { onClose: () => void; ctaLink:
 
         <div className="mt-5 flex flex-col gap-2">
           <Link
-            href={ctaLink}
-            target="_blank"
-            rel="noopener noreferrer"
+            href="/inscripcion"
             onClick={onClose}
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#ff7a00] px-5 py-3 text-center font-poppins text-sm font-bold text-white shadow-[0_8px_30px_rgba(255,122,0,0.35)] transition hover:-translate-y-0.5 hover:bg-[#ff8b26]"
           >

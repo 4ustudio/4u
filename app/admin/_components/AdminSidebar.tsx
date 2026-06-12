@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { createPortal } from 'react-dom'
 import type { ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -197,34 +198,24 @@ export function MobileMenuDrawer({ role }: { role: AppRole | null }) {
   const pathname = usePathname()
   const nav = getVisibleNav(role)
   const [open, setOpen] = React.useState(false)
+  const [mounted, setMounted] = React.useState(false)
 
-  // Cerrar al cambiar de ruta
+  React.useEffect(() => { setMounted(true) }, [])
   React.useEffect(() => { setOpen(false) }, [pathname])
 
-  return (
+  const portal = mounted ? (
     <>
-      {/* Botón hamburguesa — solo móvil */}
-      <button
-        className="lg:hidden grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/[0.03] text-white/65 hover:text-white transition-colors"
-        onClick={() => setOpen(true)}
-        aria-label="Abrir menú"
-      >
-        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-          <path d="M4 7h16M4 12h16M4 17h16" />
-        </svg>
-      </button>
-
-      {/* Overlay */}
+      {/* Overlay — fuera del header para evitar el stacking context de backdrop-blur */}
       {open && (
         <div
-          className="lg:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm lg:hidden"
           onClick={() => setOpen(false)}
         />
       )}
 
       {/* Drawer */}
       <div className={[
-        'lg:hidden fixed inset-y-0 left-0 z-50 w-[280px] flex flex-col bg-[#070707] border-r border-white/8 transition-transform duration-300',
+        'fixed inset-y-0 left-0 z-[101] w-[280px] flex flex-col bg-[#070707] border-r border-white/8 transition-transform duration-300 lg:hidden',
         open ? 'translate-x-0' : '-translate-x-full',
       ].join(' ')}>
         {/* Header del drawer */}
@@ -314,6 +305,24 @@ export function MobileMenuDrawer({ role }: { role: AppRole | null }) {
           </div>
         </div>
       </div>
+    </>
+  ) : null
+
+  return (
+    <>
+      {/* Botón hamburguesa — solo móvil, va en el header */}
+      <button
+        className="lg:hidden grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/[0.03] text-white/65 hover:text-white transition-colors"
+        onClick={() => setOpen(true)}
+        aria-label="Abrir menú"
+      >
+        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+          <path d="M4 7h16M4 12h16M4 17h16" />
+        </svg>
+      </button>
+
+      {/* Portal: overlay + drawer fuera del header para evitar stacking context */}
+      {mounted && createPortal(portal, document.body)}
     </>
   )
 }

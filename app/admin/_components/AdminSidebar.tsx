@@ -168,20 +168,20 @@ export default function AdminSidebar({ role }: { role: AppRole | null }) {
       </nav>
 
       <div className="mt-auto px-4 pb-5 pt-3">
-        <div className="overflow-hidden rounded-[26px] border border-white/12 bg-[#0d0d0d]">
-          <div className="relative h-44">
+        <div className="overflow-hidden rounded-[22px] border border-white/12 bg-[#0d0d0d] flex">
+          <div className="relative w-28 shrink-0">
             <Image
               src="/images/hero/Banner-principal-2.jpg.jpeg"
               alt="4U Studio Academy"
               fill
               className="object-cover object-[48%_35%] opacity-85"
-              sizes="250px"
+              sizes="112px"
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/20 to-black/75" />
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#0d0d0d]/60" />
           </div>
-          <div className="px-5 py-4">
-            <p className="text-[11px] uppercase tracking-[0.24em] text-[#ff7a00]/80">4U Studio Academy</p>
-            <p className="mt-2 text-sm leading-6 text-white/88">
+          <div className="px-4 py-4">
+            <p className="text-[10px] uppercase tracking-[0.24em] text-[#ff7a00]/80">4U Studio Academy</p>
+            <p className="mt-1.5 text-xs leading-5 text-white/88">
               {isSuperAdmin(role)
                 ? 'Vista ejecutiva para seguir ventas, retención y reactivación.'
                 : 'Seguimiento claro para la operación académica y comercial.'}
@@ -247,8 +247,16 @@ export function MobileMenuDrawer({ role }: { role: AppRole | null }) {
           </button>
         </div>
 
+        {/* Rol */}
+        <div className="px-4 pt-4">
+          <div className="rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.28em] text-white/35">Acceso</p>
+            <p className="mt-1 text-sm font-semibold text-white">{getRoleLabel(role)}</p>
+          </div>
+        </div>
+
         {/* Nav items */}
-        <nav className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
+        <nav className="flex-1 overflow-y-auto px-4 py-3 space-y-1">
           {nav.map((item) => {
             const active = item.href === '/admin'
               ? pathname === '/admin'
@@ -281,6 +289,30 @@ export function MobileMenuDrawer({ role }: { role: AppRole | null }) {
             )
           })}
         </nav>
+
+        {/* Card inferior horizontal */}
+        <div className="px-4 pb-5 pt-3 border-t border-white/8">
+          <div className="overflow-hidden rounded-[18px] border border-white/12 bg-[#0d0d0d] flex">
+            <div className="relative w-24 shrink-0">
+              <Image
+                src="/images/hero/Banner-principal-2.jpg.jpeg"
+                alt="4U Studio Academy"
+                fill
+                className="object-cover object-[48%_35%] opacity-85"
+                sizes="96px"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#0d0d0d]/60" />
+            </div>
+            <div className="px-3 py-3">
+              <p className="text-[10px] uppercase tracking-[0.22em] text-[#ff7a00]/80">4U Studio Academy</p>
+              <p className="mt-1 text-[11px] leading-[1.45] text-white/80">
+                {isSuperAdmin(role)
+                  ? 'Vista ejecutiva para ventas, retención y reactivación.'
+                  : 'Seguimiento claro para la operación académica.'}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </>
   )

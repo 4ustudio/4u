@@ -52,11 +52,11 @@ function AgendamientoPopup({ onClose, ctaLink }: { onClose: () => void; ctaLink:
           <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
             <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2Zm0 16H5V9h14v11ZM7 11h5v5H7z" />
           </svg>
-          <span className="font-poppins text-sm font-semibold">Primera sesión</span>
+          <span className="font-poppins text-sm font-semibold">Primera sesión de prueba</span>
         </div>
 
         <h2 className="font-poppins text-2xl font-extrabold leading-tight text-white sm:text-3xl">
-          Programa tu <span className="text-[#ff7a00]">primera clase</span> con nosotros
+          Programa tu <span className="text-[#ff7a00]">primera sesión gratis</span> con nosotros
         </h2>
 
         <p className="mt-2 font-poppins text-sm font-semibold text-white/90 sm:text-base">
@@ -94,10 +94,10 @@ function AgendamientoPopup({ onClose, ctaLink }: { onClose: () => void; ctaLink:
             onClick={onClose}
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#ff7a00] px-5 py-3 text-center font-poppins text-sm font-bold text-white shadow-[0_8px_30px_rgba(255,122,0,0.35)] transition hover:-translate-y-0.5 hover:bg-[#ff8b26]"
           >
-            Agendar clase de prueba
+            Agendar sesión de prueba
           </Link>
           <Link
-            href="/inscripcion"
+            href="/planes"
             onClick={onClose}
             className="text-center text-xs text-white/60 underline underline-offset-4 transition hover:text-white"
           >

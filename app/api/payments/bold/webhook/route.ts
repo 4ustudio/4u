@@ -46,7 +46,6 @@ export async function POST(req: NextRequest) {
   const ourPaymentId    = data.metadata?.reference  // Nuestro payments.id
 
   console.info(`[bold-webhook] Evento=${type} bold_id=${boldPaymentId} ref=${ourPaymentId}`)
-  console.info('[bold-webhook] payload completo:', JSON.stringify(payload))
 
   // Solo procesamos eventos de venta; VOID_* se ignoran por ahora
   if (type !== 'SALE_APPROVED' && type !== 'SALE_REJECTED') {

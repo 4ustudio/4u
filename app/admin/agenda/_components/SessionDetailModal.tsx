@@ -10,6 +10,7 @@ import {
   cancelByInstructorAction,
   updateAttendanceStatusAction,
 } from '../../_actions/sessions'
+import { registerAttendanceAction } from '../../_actions/academic'
 import type { ClassSession, AttendanceStatus } from '@/types/admin'
 
 const initialCancel      = { error: undefined as string | undefined, success: undefined as boolean | undefined, late: undefined as boolean | undefined }
@@ -24,6 +25,9 @@ const ATTENDANCE_LABEL: Record<AttendanceStatus, string> = {
   declined:    'Rechazada',
   rescheduled: 'Reagendada',
   no_response: 'Sin respuesta',
+  attended:    'Asistió',
+  absent:      'Ausente',
+  no_show:     'No se presentó',
 }
 
 const ATTENDANCE_COLOR: Record<AttendanceStatus, string> = {
@@ -32,6 +36,9 @@ const ATTENDANCE_COLOR: Record<AttendanceStatus, string> = {
   declined:    'bg-red-900/40 text-red-300 border border-red-700/30',
   rescheduled: 'bg-purple-900/40 text-purple-300 border border-purple-700/30',
   no_response: 'bg-white/5 text-white/40 border border-white/10',
+  attended:    'bg-green-900/40 text-green-300 border border-green-700/30',
+  absent:      'bg-red-900/40 text-red-300 border border-red-700/30',
+  no_show:     'bg-red-900/40 text-red-300 border border-red-700/30',
 }
 
 const inputClass = 'w-full bg-[#141414] border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500/30 disabled:opacity-50'
@@ -49,7 +56,7 @@ const STATUS_COLOR: Record<string, string> = {
   no_show:     'bg-[#141414]      text-white/40   border border-white/10',
 }
 
-type Action = 'attendance' | 'attendance-confirm' | 'reschedule' | 'cancel' | 'cancel-instructor' | null
+type Action = 'attendance' | 'attendance-simple' | 'attendance-confirm' | 'reschedule' | 'cancel' | 'cancel-instructor' | null
 
 interface Props {
   session:     ClassSession
@@ -67,13 +74,14 @@ export default function SessionDetailModal({ session, classrooms, instructors, o
   const [statusState,     statusAction,     statusPending]     = useActionState(adminUpdateStatusAction,     initialStatus)
   const [instCancelState, instCancelAction, instCancelPending] = useActionState(cancelByInstructorAction,    initialInstCancel)
   const [attendanceState, attendanceAction, attendancePending] = useActionState(updateAttendanceStatusAction, initialAttendance)
+  const [regAttendanceState, regAttendanceAction, regAttendancePending] = useActionState(registerAttendanceAction, initialAttendance)
 
   useEffect(() => {
-    if (cancelState.success || reschedState.success || statusState.success || instCancelState.success || attendanceState.success) {
+    if (cancelState.success || reschedState.success || statusState.success || instCancelState.success || attendanceState.success || regAttendanceState.success) {
       router.refresh()
       onClose()
     }
-  }, [cancelState.success, reschedState.success, statusState.success, instCancelState.success, attendanceState.success, router, onClose])
+  }, [cancelState.success, reschedState.success, statusState.success, instCancelState.success, attendanceState.success, regAttendanceState.success, router, onClose])
 
   const dateLabel = new Date(session.scheduled_date + 'T12:00:00').toLocaleDateString('es-CO', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
@@ -218,6 +226,47 @@ export default function SessionDetailModal({ session, classrooms, instructors, o
                 </form>
               ))}
               {statusState.error && <p className="text-red-400 text-xs mt-2">{statusState.error}</p>}
+            </div>
+          </ActionCard>
+
+          {/* Acción 1b: Registrar asistencia (nuevo sistema simplificado) */}
+          <ActionCard
+            icon={
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/>
+              </svg>
+            }
+            title="Registrar asistencia (simple)"
+            subtitle="Marca si el estudiante asistió, faltó o no se presentó."
+            open={action === 'attendance-simple'}
+            color="green"
+            onClick={() => toggleAction('attendance-simple')}
+          >
+            <div className="space-y-2 pt-1">
+              {([
+                { value: 'attended', label: '✅  Asistió — el estudiante tomó la clase' },
+                { value: 'absent',   label: '❌  Ausente — el estudiante faltó' },
+                { value: 'no_show',  label: '🚫  No se presentó — no vino sin avisar' },
+                { value: 'cancelled', label: '🗑  Cancelar — liberar este horario' },
+              ] as const).map(({ value, label }) => (
+                <form key={value} action={regAttendanceAction}>
+                  <input type="hidden" name="session_id" value={session.id} />
+                  <input type="hidden" name="attendance" value={value} />
+                  <button
+                    type="submit"
+                    disabled={regAttendancePending}
+                      className={`w-full text-left px-3 py-2.5 rounded-lg text-xs transition-colors disabled:opacity-40 border
+                        ${(session.attendance_status as string) === value
+                        ? 'bg-white/10 text-white/60 border-white/10 cursor-default'
+                        : 'bg-white/5 text-white/80 border-white/10 hover:bg-white/10 hover:text-white'
+                      }`}
+                  >
+                    {label}
+                    {(session.attendance_status as string) === value && <span className="ml-2 text-white/40">(actual)</span>}
+                  </button>
+                </form>
+              ))}
+              {regAttendanceState.error && <p className="text-red-400 text-xs mt-2">{regAttendanceState.error}</p>}
             </div>
           </ActionCard>
 

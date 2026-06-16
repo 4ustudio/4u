@@ -12,6 +12,7 @@ export type SessionStatus =
   | 'cancelled' | 'rescheduled' | 'no_show'
 export type AttendanceStatus =
   | 'pending' | 'confirmed' | 'declined' | 'rescheduled' | 'no_response'
+  | 'attended' | 'absent' | 'no_show'
 export type ScheduleStatus = 'active' | 'paused' | 'cancelled'
 export type Frequency = 'weekly' | 'biweekly'
 

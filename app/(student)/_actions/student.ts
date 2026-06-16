@@ -158,7 +158,7 @@ export async function getInstructorDashboardData(userId: string, email?: string 
 
   if (!instructor) return null
 
-  const [{ data: sessions }, { data: availability }] = await Promise.all([
+  const [{ data: sessions }, { data: availability }, { count: blockCount }, { data: lastLog }] = await Promise.all([
     adminClient
       .from('class_sessions')
       .select('*, student:students(name, phone), course:courses(name), classroom:classrooms(name), instructor:instructors(name)')
@@ -173,6 +173,17 @@ export async function getInstructorDashboardData(userId: string, email?: string 
       .eq('instructor_id', instructor.id)
       .order('day_of_week')
       .order('start_time'),
+    adminClient
+      .from('instructor_availability_blocks')
+      .select('id', { count: 'exact', head: true })
+      .eq('instructor_id', instructor.id),
+    adminClient
+      .from('instructor_availability_log')
+      .select('created_at')
+      .eq('instructor_id', instructor.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ])
 
   const monthSessions = (sessions ?? []) as any[] // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -184,12 +195,22 @@ export async function getInstructorDashboardData(userId: string, email?: string 
     .slice(0, 8)
   const uniqueStudents = new Set(monthSessions.map(s => s.student_id).filter(Boolean))
 
+  const lastMod = lastLog ? (lastLog as any).created_at : null
+
   return {
     instructor,
     sessions: monthSessions,
     availability: availability ?? [],
     upcoming,
     cancelled,
+    blocksCount: blockCount ?? 0,
+    lastModification: lastMod,
+    availabilitySummary: {
+      totalSlots: (availability ?? []).length,
+      activeDays: new Set((availability ?? []).map((a: any) => a.day_of_week)).size,
+      blockedDates: blockCount ?? 0,
+      lastModified: lastMod,
+    },
     stats: {
       weekScheduled: upcoming.length,
       completed: monthSessions.filter(s => s.status === 'completed').length,
@@ -608,35 +629,389 @@ export async function getInstructorMonthSessions(year: number, month: number) {
   return (sessions ?? []) as any[] // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
-// ─── Instructor: guardar disponibilidad ─────────────────────────────
+// ─── Helpers de sesión para instructor ──────────────────────────────
+
+async function getInstructorFromSession() {
+  const supabase = await createAuthServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user?.email) return null
+  const adminClient = admin()
+  const { data: instructor } = await adminClient
+    .from('instructors')
+    .select('id, name')
+    .eq('email', user.email.trim())
+    .maybeSingle()
+  if (!instructor) return null
+  return {
+    instructor,
+    userEmail: user.email,
+    userName: user.user_metadata?.full_name ?? user.user_metadata?.name ?? instructor.name ?? 'Instructor',
+  }
+}
+
+async function logAvailabilityAction(
+  params: {
+    instructorId: string
+    availabilityId?: string | null
+    action: string
+    dayOfWeek?: number | null
+    startTime?: string | null
+    endTime?: string | null
+    status?: string | null
+    validFrom?: string | null
+    validUntil?: string | null
+    notes?: string | null
+    blockedDate?: string | null
+    blockReason?: string | null
+    blockStartTime?: string | null
+    blockEndTime?: string | null
+    prevValues?: Record<string, unknown>
+    changedBy: string
+    changedByName: string
+  }
+) {
+  await (admin().from('instructor_availability_log').insert({
+    instructor_id: params.instructorId,
+    availability_id: params.availabilityId ?? null,
+    action: params.action,
+    day_of_week: params.dayOfWeek ?? null,
+    start_time: params.startTime ?? null,
+    end_time: params.endTime ?? null,
+    status: params.status ?? null,
+    valid_from: params.validFrom ?? null,
+    valid_until: params.validUntil ?? null,
+    notes: params.notes ?? null,
+    blocked_date: params.blockedDate ?? null,
+    block_reason: params.blockReason ?? null,
+    block_start_time: params.blockStartTime ?? null,
+    block_end_time: params.blockEndTime ?? null,
+    changed_by: params.changedBy,
+    changed_by_name: params.changedByName,
+    prev_values: params.prevValues ?? {},
+  } as never))
+}
+
+// ─── Instructor: guardar disponibilidad (batch — compatible con UI actual) ─
 
 export async function saveInstructorAvailabilityAction(
   slots: Array<{ day_of_week: number; start_time: string; end_time: string }>
 ): Promise<{ success?: boolean; error?: string }> {
-  const supabase = await createAuthServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user?.email) return { error: 'Sesión expirada.' }
-
+  const session = await getInstructorFromSession()
+  if (!session) return { error: 'Sesión expirada.' }
+  const { instructor, userEmail, userName } = session
   const adminClient = admin()
-  const { data: instructor } = await adminClient
-    .from('instructors')
-    .select('id')
-    .eq('email', user.email.trim())
-    .maybeSingle()
 
-  if (!instructor) return { error: 'Instructor no encontrado.' }
+  // Obtener valores anteriores para el log
+  const { data: oldSlots } = await adminClient
+    .from('instructor_availability')
+    .select('*')
+    .eq('instructor_id', instructor.id)
 
   await adminClient.from('instructor_availability').delete().eq('instructor_id', instructor.id)
 
+  // Registrar eliminación de cada slot anterior
+  if (oldSlots) {
+    for (const slot of oldSlots as any[]) {
+      await logAvailabilityAction({
+        instructorId: instructor.id,
+        availabilityId: slot.id,
+        action: 'deleted',
+        dayOfWeek: slot.day_of_week,
+        startTime: slot.start_time,
+        endTime: slot.end_time,
+        status: slot.status ?? 'available',
+        validFrom: slot.valid_from ?? null,
+        validUntil: slot.valid_until ?? null,
+        notes: slot.notes ?? null,
+        changedBy: userEmail,
+        changedByName: userName,
+        prevValues: slot,
+      })
+    }
+  }
+
   if (slots.length > 0) {
-    const { error } = await adminClient.from('instructor_availability').insert(
+    const { error, data: newSlots } = await adminClient.from('instructor_availability').insert(
       slots.map(s => ({ ...s, instructor_id: instructor.id }))
-    )
+    ).select()
+
     if (error) return { error: error.message }
+
+    // Registrar creación de cada nuevo slot
+    if (newSlots) {
+      for (const slot of newSlots as any[]) {
+        await logAvailabilityAction({
+          instructorId: instructor.id,
+          availabilityId: slot.id,
+          action: 'created',
+          dayOfWeek: slot.day_of_week,
+          startTime: slot.start_time,
+          endTime: slot.end_time,
+          status: slot.status ?? 'available',
+          validFrom: slot.valid_from ?? null,
+          validUntil: slot.valid_until ?? null,
+          notes: slot.notes ?? null,
+          changedBy: userEmail,
+          changedByName: userName,
+        })
+      }
+    }
   }
 
   revalidatePath('/mi-cuenta')
   return { success: true }
+}
+
+// ─── Instructor: crear disponibilidad individual ────────────────────
+
+export async function createInstructorAvailabilityAction(
+  slot: { day_of_week: number; start_time: string; end_time: string; status?: string; notes?: string; valid_from?: string; valid_until?: string }
+): Promise<{ success?: boolean; error?: string }> {
+  const session = await getInstructorFromSession()
+  if (!session) return { error: 'Sesión expirada.' }
+  const { instructor, userEmail, userName } = session
+
+  const { error, data: newSlot } = await admin().from('instructor_availability').insert({
+    instructor_id: instructor.id,
+    day_of_week: slot.day_of_week,
+    start_time: slot.start_time,
+    end_time: slot.end_time,
+    status: slot.status ?? 'available',
+    notes: slot.notes ?? null,
+    valid_from: slot.valid_from ?? new Date().toISOString().slice(0, 10),
+    valid_until: slot.valid_until ?? null,
+  }).select().single()
+
+  if (error) return { error: error.message }
+
+  await logAvailabilityAction({
+    instructorId: instructor.id,
+    availabilityId: newSlot?.id,
+    action: 'created',
+    dayOfWeek: slot.day_of_week,
+    startTime: slot.start_time,
+    endTime: slot.end_time,
+    status: slot.status ?? 'available',
+    changedBy: userEmail,
+    changedByName: userName,
+  })
+
+  revalidatePath('/mi-cuenta')
+  return { success: true }
+}
+
+// ─── Instructor: actualizar disponibilidad individual ───────────────
+
+export async function updateInstructorAvailabilityAction(
+  id: string,
+  updates: { day_of_week?: number; start_time?: string; end_time?: string; status?: string; notes?: string; valid_from?: string; valid_until?: string }
+): Promise<{ success?: boolean; error?: string }> {
+  const session = await getInstructorFromSession()
+  if (!session) return { error: 'Sesión expirada.' }
+  const { instructor, userEmail, userName } = session
+
+  // Obtener valor anterior
+  const { data: old } = await admin().from('instructor_availability').select('*').eq('id', id).single()
+  if (!old) return { error: 'Horario no encontrado.' }
+
+  const { error } = await admin().from('instructor_availability').update({
+    ...updates,
+    updated_at: new Date().toISOString(),
+  }).eq('id', id).eq('instructor_id', instructor.id)
+
+  if (error) return { error: error.message }
+
+  await logAvailabilityAction({
+    instructorId: instructor.id,
+    availabilityId: id,
+    action: 'updated',
+    dayOfWeek: updates.day_of_week ?? (old as any).day_of_week,
+    startTime: updates.start_time ?? (old as any).start_time,
+    endTime: updates.end_time ?? (old as any).end_time,
+    status: updates.status ?? (old as any).status,
+    validFrom: updates.valid_from ?? (old as any).valid_from,
+    validUntil: updates.valid_until ?? (old as any).valid_until,
+    notes: updates.notes ?? (old as any).notes,
+    changedBy: userEmail,
+    changedByName: userName,
+    prevValues: old as Record<string, unknown>,
+  })
+
+  revalidatePath('/mi-cuenta')
+  return { success: true }
+}
+
+// ─── Instructor: eliminar disponibilidad individual ─────────────────
+
+export async function deleteInstructorAvailabilityAction(
+  id: string
+): Promise<{ success?: boolean; error?: string }> {
+  const session = await getInstructorFromSession()
+  if (!session) return { error: 'Sesión expirada.' }
+  const { instructor, userEmail, userName } = session
+
+  const { data: old } = await admin().from('instructor_availability').select('*').eq('id', id).single()
+  if (!old) return { error: 'Horario no encontrado.' }
+
+  const { error } = await admin().from('instructor_availability').delete().eq('id', id).eq('instructor_id', instructor.id)
+  if (error) return { error: error.message }
+
+  await logAvailabilityAction({
+    instructorId: instructor.id,
+    availabilityId: id,
+    action: 'deleted',
+    dayOfWeek: (old as any).day_of_week,
+    startTime: (old as any).start_time,
+    endTime: (old as any).end_time,
+    status: (old as any).status,
+    validFrom: (old as any).valid_from ?? null,
+    validUntil: (old as any).valid_until ?? null,
+    notes: (old as any).notes ?? null,
+    changedBy: userEmail,
+    changedByName: userName,
+    prevValues: old as Record<string, unknown>,
+  })
+
+  revalidatePath('/mi-cuenta')
+  return { success: true }
+}
+
+// ─── Instructor: ampliar horario ────────────────────────────────────
+
+export async function extendInstructorAvailabilityAction(
+  id: string,
+  newEndTime: string
+): Promise<{ success?: boolean; error?: string }> {
+  const session = await getInstructorFromSession()
+  if (!session) return { error: 'Sesión expirada.' }
+  const { instructor, userEmail, userName } = session
+
+  const { data: old } = await admin().from('instructor_availability').select('*').eq('id', id).single()
+  if (!old) return { error: 'Horario no encontrado.' }
+
+  if (newEndTime <= (old as any).end_time) {
+    return { error: 'El nuevo horario debe ser mayor al actual.' }
+  }
+
+  const { error } = await admin().from('instructor_availability').update({
+    end_time: newEndTime,
+    updated_at: new Date().toISOString(),
+  }).eq('id', id).eq('instructor_id', instructor.id)
+
+  if (error) return { error: error.message }
+
+  await logAvailabilityAction({
+    instructorId: instructor.id,
+    availabilityId: id,
+    action: 'extended',
+    dayOfWeek: (old as any).day_of_week,
+    startTime: (old as any).start_time,
+    endTime: newEndTime,
+    status: (old as any).status,
+    notes: `Ampliado de ${(old as any).end_time?.slice(0, 5)} a ${newEndTime.slice(0, 5)}`,
+    changedBy: userEmail,
+    changedByName: userName,
+    prevValues: old as Record<string, unknown>,
+  })
+
+  revalidatePath('/mi-cuenta')
+  return { success: true }
+}
+
+// ─── Instructor: bloquear fecha específica ──────────────────────────
+
+export async function blockDateForInstructorAction(params: {
+  blocked_date: string
+  start_time: string
+  end_time: string
+  reason: string
+}): Promise<{ success?: boolean; error?: string }> {
+  const session = await getInstructorFromSession()
+  if (!session) return { error: 'Sesión expirada.' }
+  const { instructor, userEmail, userName } = session
+
+  const { error, data: block } = await admin().from('instructor_availability_blocks').insert({
+    instructor_id: instructor.id,
+    blocked_date: params.blocked_date,
+    start_time: params.start_time,
+    end_time: params.end_time,
+    reason: params.reason,
+    created_by: userEmail,
+    created_by_name: userName,
+  } as never).select().single()
+
+  if (error) return { error: error.message }
+
+  await logAvailabilityAction({
+    instructorId: instructor.id,
+    action: 'blocked',
+    changedBy: userEmail,
+    changedByName: userName,
+    blockedDate: params.blocked_date,
+    blockStartTime: params.start_time,
+    blockEndTime: params.end_time,
+    blockReason: params.reason,
+  })
+
+  revalidatePath('/mi-cuenta')
+  return { success: true, ...(block ? { blockId: (block as any).id } : {}) }
+}
+
+// ─── Instructor: desbloquear fecha específica ───────────────────────
+
+export async function unblockDateForInstructorAction(
+  blockId: string
+): Promise<{ success?: boolean; error?: string }> {
+  const session = await getInstructorFromSession()
+  if (!session) return { error: 'Sesión expirada.' }
+  const { instructor, userEmail, userName } = session
+
+  const { data: old } = await admin().from('instructor_availability_blocks').select('*').eq('id', blockId).single()
+  if (!old) return { error: 'Bloqueo no encontrado.' }
+
+  const { error } = await admin().from('instructor_availability_blocks').delete().eq('id', blockId).eq('instructor_id', instructor.id)
+  if (error) return { error: error.message }
+
+  await logAvailabilityAction({
+    instructorId: instructor.id,
+    action: 'unblocked',
+    changedBy: userEmail,
+    changedByName: userName,
+    blockedDate: (old as any).blocked_date,
+    blockStartTime: (old as any).start_time,
+    blockEndTime: (old as any).end_time,
+    blockReason: (old as any).reason,
+    prevValues: old as Record<string, unknown>,
+  })
+
+  revalidatePath('/mi-cuenta')
+  return { success: true }
+}
+
+// ─── Instructor: obtener bloqueos ───────────────────────────────────
+
+export async function getInstructorBlocksAction(): Promise<any[]> {
+  const session = await getInstructorFromSession()
+  if (!session) return []
+  const { data } = await admin().from('instructor_availability_blocks')
+    .select('*')
+    .eq('instructor_id', session.instructor.id)
+    .order('blocked_date', { ascending: false })
+    .limit(50)
+  return data ?? []
+}
+
+// ─── Instructor: obtener historial de cambios ───────────────────────
+
+export async function getInstructorAvailabilityLogAction(): Promise<any[]> {
+  const session = await getInstructorFromSession()
+  if (!session) return []
+  const { data } = await admin().from('instructor_availability_log')
+    .select('*')
+    .eq('instructor_id', session.instructor.id)
+    .order('created_at', { ascending: false })
+    .limit(100)
+  return data ?? []
 }
 
 // ─── Instructor: actualizar perfil (nombre, email, foto) ─────────────

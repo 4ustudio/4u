@@ -59,6 +59,9 @@ export default async function MiCuentaPage() {
       availability: [],
       upcoming: [],
       cancelled: [],
+      blocksCount: 0,
+      lastModification: null,
+      availabilitySummary: { totalSlots: 0, activeDays: 0, blockedDates: 0, lastModified: null },
       stats: { weekScheduled: 0, completed: 0, cancelled: 0, activeStudents: 0, todayUpcoming: 0 },
     }
     return <InstructorDashboard data={data} user={user} monthLabel={monthLabel} now={now} />
@@ -160,7 +163,7 @@ function StudentDashboard({ data, monthSessions, user, monthLabel, now }: any) {
 }
 
 function InstructorDashboard({ data, user, monthLabel, now }: any) {
-  const { instructor, sessions, availability, upcoming, cancelled, stats } = data
+  const { instructor, sessions, availability, upcoming, cancelled, stats, blocksCount, lastModification, availabilitySummary } = data
   const avatarUrl = (user.user_metadata?.avatar_url as string | undefined) ?? null
   const name = instructor.name ?? user.user_metadata?.name ?? 'Instructor 4U'
   const initials = (name[0] ?? 'I').toUpperCase()
@@ -190,6 +193,7 @@ function InstructorDashboard({ data, user, monthLabel, now }: any) {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <ActionCard icon="calendar" title="Ver horarios"     text="Tu disponibilidad"        href="#disponibilidad" />
             <ActionCard icon="briefcase" title="Gestionar clases" text="Ver tus clases del mes"  href="#calendario" />
+            <ActionCard icon="lock"     title="Bloquear fechas"  text="Fechas específicas"     href="#disponibilidad" />
             <ActionCard icon="users"    title="Mis alumnos"      text="Ver estudiantes activos"   href="#alumnos" />
             <ActionCard icon="report"   title="Reportes"         text="Tu actividad mensual"     href="/mi-cuenta/clases-mes" />
           </div>
@@ -254,6 +258,40 @@ function InstructorDashboard({ data, user, monthLabel, now }: any) {
               </div>
             </section>
           )}
+
+          {/* Resumen de disponibilidad */}
+          <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+            <SectionTitle title="Disponibilidad" subtitle="Resumen de tu horario semanal." />
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-xl bg-orange-50 border border-orange-100 p-4">
+                <p className="text-2xl font-extrabold font-poppins text-[#ff7a00]">{availabilitySummary?.totalSlots ?? availability?.length ?? 0}</p>
+                <p className="text-sm font-semibold text-gray-700 mt-1">Franjas activas</p>
+                <p className="text-xs text-gray-500">horarios configurados</p>
+              </div>
+              <div className="rounded-xl bg-blue-50 border border-blue-100 p-4">
+                <p className="text-2xl font-extrabold font-poppins text-blue-600">{availabilitySummary?.activeDays ?? 0}</p>
+                <p className="text-sm font-semibold text-gray-700 mt-1">Días activos</p>
+                <p className="text-xs text-gray-500">días con disponibilidad</p>
+              </div>
+              <div className="rounded-xl bg-red-50 border border-red-100 p-4">
+                <p className="text-2xl font-extrabold font-poppins text-red-500">{blocksCount ?? 0}</p>
+                <p className="text-sm font-semibold text-gray-700 mt-1">Fechas bloqueadas</p>
+                <p className="text-xs text-gray-500">bloqueos activos</p>
+              </div>
+              <div className="rounded-xl bg-gray-50 border border-gray-100 p-4">
+                <p className="text-2xl font-extrabold font-poppins text-gray-600">
+                  {lastModification
+                    ? (() => {
+                        const diff = Math.floor((Date.now() - new Date(lastModification).getTime()) / (1000 * 60 * 60 * 24))
+                        return diff === 0 ? 'Hoy' : diff === 1 ? 'Ayer' : `${diff} días`
+                      })()
+                    : '—'}
+                </p>
+                <p className="text-sm font-semibold text-gray-700 mt-1">Última modificación</p>
+                <p className="text-xs text-gray-500">cambio de horario</p>
+              </div>
+            </div>
+          </section>
 
           {/* Cancelar clase + Editor de disponibilidad */}
           <InstructorCancelSession upcomingSessions={upcoming ?? []} />
@@ -692,6 +730,7 @@ function Icon({ name, className }: { name: string; className?: string }) {
     briefcase: <><rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" /></>,
     report: <><path d="M8 3h8l4 4v14H4V3z" /><path d="M14 3v5h5M8 13h8M8 17h5" /></>,
     clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 3" /></>,
+    lock: <><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></>,
   }
   return <svg {...common}>{paths[name] ?? paths.calendar}</svg>
 }

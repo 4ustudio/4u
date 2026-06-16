@@ -1,7 +1,20 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
+import { createAuthServerClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { parseRole, hasAcademicAccess } from '@/lib/auth/roles'
+
+async function assertAdmin(): Promise<{ error: string; userEmail?: string; userName?: string } | { userEmail: string; userName: string; error?: undefined }> {
+  const supabase = await createAuthServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const role = parseRole(user?.user_metadata ?? null)
+  if (!hasAcademicAccess(role)) return { error: 'No autorizado.' }
+  return {
+    userEmail: user!.email ?? 'admin@4ustudio.com',
+    userName: (user!.user_metadata?.name as string) ?? user!.user_metadata?.full_name as string ?? 'Admin',
+  }
+}
 
 
 export interface InstructorAvailability {
@@ -32,6 +45,13 @@ export interface AvailabilityLog {
   notes: string | null
   changed_at: string
   changed_by: string | null
+  changed_by_name: string | null
+  prev_values: Record<string, unknown>
+  blocked_date: string | null
+  block_reason: string | null
+  block_start_time: string | null
+  block_end_time: string | null
+  created_at: string
 }
 
 export async function getInstructorAvailability(instructorId: string): Promise<InstructorAvailability[]> {
@@ -60,6 +80,9 @@ export async function createAvailabilityAction(
   _prev: { error?: string; success?: boolean },
   formData: FormData
 ): Promise<{ error?: string; success?: boolean }> {
+  const auth = await assertAdmin()
+  if (auth?.error) return { error: auth.error }
+
   const instructor_id = formData.get('instructor_id') as string
   const day_of_week   = Number(formData.get('day_of_week'))
   const start_time    = formData.get('start_time') as string
@@ -92,8 +115,9 @@ export async function createAvailabilityAction(
     valid_from,
     valid_until,
     notes,
-    changed_by: 'admin',
-  })
+    changed_by: auth!.userEmail,
+    changed_by_name: auth!.userName,
+  } as never)
 
   revalidatePath(`/admin/instructors/${instructor_id}/disponibilidad`)
   return { success: true }
@@ -103,6 +127,9 @@ export async function updateAvailabilityAction(
   _prev: { error?: string; success?: boolean },
   formData: FormData
 ): Promise<{ error?: string; success?: boolean }> {
+  const auth = await assertAdmin()
+  if (auth?.error) return { error: auth.error }
+
   const id            = formData.get('id') as string
   const instructor_id = formData.get('instructor_id') as string
   const day_of_week   = Number(formData.get('day_of_week'))
@@ -116,6 +143,13 @@ export async function updateAvailabilityAction(
   if (!id || !instructor_id || !start_time || !end_time || !valid_from) {
     return { error: 'Completa todos los campos obligatorios.' }
   }
+
+  // Obtener valor anterior
+  const { data: old } = await createAdminClient()
+    .from('instructor_availability')
+    .select('*')
+    .eq('id', id)
+    .single()
 
   const { error } = await createAdminClient()
     .from('instructor_availability')
@@ -135,8 +169,10 @@ export async function updateAvailabilityAction(
     valid_from,
     valid_until,
     notes,
-    changed_by: 'admin',
-  })
+    changed_by: auth!.userEmail,
+    changed_by_name: auth!.userName,
+    prev_values: old ?? {},
+  } as never)
 
   revalidatePath(`/admin/instructors/${instructor_id}/disponibilidad`)
   return { success: true }
@@ -146,6 +182,9 @@ export async function deleteAvailabilityAction(
   _prev: { error?: string; success?: boolean },
   formData: FormData
 ): Promise<{ error?: string; success?: boolean }> {
+  const auth = await assertAdmin()
+  if (auth?.error) return { error: auth.error }
+
   const id            = formData.get('id') as string
   const instructor_id = formData.get('instructor_id') as string
 
@@ -177,8 +216,10 @@ export async function deleteAvailabilityAction(
       valid_from: row.valid_from,
       valid_until: row.valid_until,
       notes: row.notes,
-      changed_by: 'admin',
-    })
+      changed_by: auth!.userEmail,
+      changed_by_name: auth!.userName,
+      prev_values: row as unknown as Record<string, unknown>,
+    } as never)
   }
 
   revalidatePath(`/admin/instructors/${instructor_id}/disponibilidad`)

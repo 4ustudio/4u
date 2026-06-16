@@ -3,7 +3,7 @@
 import React, { useState, useTransition } from 'react'
 import type { AutomationJob, AutomationJobStatus, AutomationCategory } from '@/app/admin/_actions/automations'
 import { getAutomationJobs } from '@/app/admin/_actions/automations'
-import { JOB_CATEGORY } from '@/app/admin/_actions/automations'
+import { JOB_CATEGORY } from './constants'
 
 const STATUS_LABEL: Record<AutomationJobStatus, string> = {
   pending:    'Pendiente',

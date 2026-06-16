@@ -3,10 +3,9 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import type { StudentActivityEventType, StudentLifecycleStatus } from '@/types/admin'
+import type { Json } from '@/types/supabase'
 import { activity } from '@/lib/activity'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function db(): any { return createAdminClient() }
 
 type Severity = 'info' | 'warning' | 'critical'
 type TaskPriority = 'low' | 'medium' | 'high'
@@ -154,12 +153,12 @@ export async function safeRecordStudentActivity(
   if (!studentId) return
 
   try {
-    await db().rpc('fn_record_student_activity', {
+    await createAdminClient().rpc('fn_record_student_activity', {
       p_student_id: studentId,
       p_event_type: eventType,
       p_source: 'system',
       p_description: description ?? null,
-      p_metadata: metadata ?? {},
+      p_metadata: (metadata ?? {}) as Json,
     })
   } catch {
     // La app no debe romper flujos existentes si la migracion de retencion aun no fue aplicada.
@@ -203,7 +202,7 @@ async function getSessionSignals(studentIds: string[]) {
   const d30 = new Date(); d30.setDate(d30.getDate() - 30); const d30str = d30.toISOString().split('T')[0]
   const d60 = new Date(); d60.setDate(d60.getDate() - 60); const d60str = d60.toISOString().split('T')[0]
 
-  const { data } = await db()
+  const { data } = await createAdminClient()
     .from('class_sessions')
     .select('student_id, status, attendance_status, scheduled_date')
     .in('student_id', studentIds)
@@ -339,7 +338,7 @@ export async function runRetentionDailyJob(options: { dryRun?: boolean } = {}): 
   const dryRun = !!options.dryRun
   const generatedAt = isoNow()
 
-  const { data: students, error } = await db()
+  const { data: students, error } = await createAdminClient()
     .from('students')
     .select('id, name, email, phone, student_status, last_activity_at, student_since, enrolled_at, retention_score, archived_at')
     .is('archived_at', null)
@@ -429,7 +428,7 @@ export async function runRetentionDailyJob(options: { dryRun?: boolean } = {}): 
 
     const statusChanged = nextStatus !== student.student_status
 
-    await db()
+    await createAdminClient()
       .from('students')
       .update({
         student_status: nextStatus,
@@ -443,7 +442,7 @@ export async function runRetentionDailyJob(options: { dryRun?: boolean } = {}): 
       .eq('id', student.id)
 
     if (statusChanged) {
-      await db().from('student_status_history').insert({
+      await createAdminClient().from('student_status_history').insert({
         student_id: student.id,
         old_status: student.student_status,
         new_status: nextStatus,
@@ -481,11 +480,11 @@ export async function runRetentionDailyJob(options: { dryRun?: boolean } = {}): 
   )
   const totalNonEx = (counts.activo ?? 0) + (counts.riesgo ?? 0) + (counts.inactivo ?? 0) + (counts.exalumno ?? 0)
   const reactivatedMonth = list.filter((s) => {
-    const r = (s as any).reactivated_at
+    const r = (s as Record<string, unknown>).reactivated_at as string | null
     return r && new Date(r) >= new Date(new Date().getFullYear(), new Date().getMonth(), 1)
   }).length
 
-  await db().from('retention_snapshots').upsert({
+  await createAdminClient().from('retention_snapshots').upsert({
     snapshot_date: new Date().toISOString().split('T')[0],
     total_activo:  counts.activo  ?? 0,
     total_riesgo:  counts.riesgo  ?? 0,
@@ -498,7 +497,7 @@ export async function runRetentionDailyJob(options: { dryRun?: boolean } = {}): 
   }, { onConflict: 'snapshot_date' })
 
   if (preview.alerts.length > 0) {
-    const { data: openAlerts } = await db()
+    const { data: openAlerts } = await createAdminClient()
       .from('retention_alerts')
       .select('student_id, alert_type, status')
       .eq('status', 'open')
@@ -509,11 +508,11 @@ export async function runRetentionDailyJob(options: { dryRun?: boolean } = {}): 
       .filter((a) => !existing.has(`${a.student_id}:${a.alert_type}`))
       .map((a) => ({ ...a, status: 'open' }))
 
-    if (inserts.length) await db().from('retention_alerts').insert(inserts)
+    if (inserts.length) await createAdminClient().from('retention_alerts').insert(inserts)
   }
 
   if (preview.tasks.length > 0) {
-    const { data: pendingTasks } = await db()
+    const { data: pendingTasks } = await createAdminClient()
       .from('reactivation_tasks')
       .select('student_id, task_type, status')
       .eq('status', 'pending')
@@ -524,11 +523,11 @@ export async function runRetentionDailyJob(options: { dryRun?: boolean } = {}): 
       .filter((t) => !existing.has(`${t.student_id}:${t.task_type}`))
       .map((t) => ({ ...t, status: 'pending' }))
 
-    if (inserts.length) await db().from('reactivation_tasks').insert(inserts)
+    if (inserts.length) await createAdminClient().from('reactivation_tasks').insert(inserts)
   }
 
   if (preview.campaignDrafts.length > 0) {
-    const { data: drafts } = await db()
+    const { data: drafts } = await createAdminClient()
       .from('campaign_messages')
       .select('student_id, campaign_key, channel')
       .in('student_id', preview.campaignDrafts.map((c) => c.student_id))
@@ -536,9 +535,9 @@ export async function runRetentionDailyJob(options: { dryRun?: boolean } = {}): 
     const existing = new Set((drafts ?? []).map((c: any) => `${c.student_id}:${c.campaign_key}:${c.channel}`))
     const inserts = preview.campaignDrafts
       .filter((c) => !existing.has(`${c.student_id}:${c.campaign_key}:${c.channel}`))
-      .map((c) => ({ ...c, status: 'draft', scheduled_for: null }))
+      .map((c) => ({ ...c, status: 'draft' }))
 
-    if (inserts.length) await db().from('campaign_messages').insert(inserts)
+    if (inserts.length) await createAdminClient().from('campaign_messages').insert(inserts as never)
   }
 
   revalidatePath('/admin')
@@ -561,25 +560,25 @@ export async function getRetentionDashboardData() {
     const currentYear  = new Date().getFullYear()
 
     const [{ data: dashboard }, { data: highRisk }, { data: alerts }, { data: students }, { data: birthdayStudents }, { count: benefitsGrantedCount }, { data: overduePayments }] = await Promise.all([
-      db().from('v_retention_dashboard').select('*').maybeSingle(),
-      db().from('v_high_risk_students').select('*').limit(8),
-      db().from('retention_alerts').select('*').eq('status', 'open').order('created_at', { ascending: false }).limit(6),
-      db()
+      createAdminClient().from('v_retention_dashboard').select('*').maybeSingle(),
+      createAdminClient().from('v_high_risk_students').select('*').limit(8),
+      createAdminClient().from('retention_alerts').select('*').eq('status', 'open').order('created_at', { ascending: false }).limit(6),
+      createAdminClient()
         .from('v_retention_students')
         .select('*')
         .or('student_status.in.(riesgo,inactivo,exalumno),retention_score.lte.55,upcoming_classes.eq.0')
         .order('retention_score', { ascending: true })
         .limit(80),
-      db()
+      createAdminClient()
         .from('students')
         .select('birth_date')
         .eq('student_status', 'activo')
         .not('birth_date', 'is', null),
-      db()
+      createAdminClient()
         .from('students')
         .select('*', { count: 'exact', head: true })
         .eq('birthday_benefit_year', currentYear),
-      db().from('payments').select('final_amount').eq('status', 'overdue'),
+      createAdminClient().from('payments').select('final_amount').eq('status', 'overdue'),
     ])
 
     const birthdayCount = (birthdayStudents ?? []).filter(
@@ -616,10 +615,10 @@ export async function getRetentionDashboardData() {
 export async function getStudentRetentionProfile(studentId: string) {
   try {
     const [{ data: events }, { data: notes }, { data: instruments }, { data: tasks }] = await Promise.all([
-      db().from('student_activity_events').select('*').eq('student_id', studentId).order('occurred_at', { ascending: false }).limit(30),
-      db().from('student_admin_notes').select('*').eq('student_id', studentId).order('created_at', { ascending: false }).limit(20),
-      db().from('v_student_instruments_history').select('*').eq('student_id', studentId).order('last_session_at', { ascending: false }),
-      db().from('reactivation_tasks').select('*').eq('student_id', studentId).order('created_at', { ascending: false }).limit(10),
+      createAdminClient().from('student_activity_events').select('*').eq('student_id', studentId).order('occurred_at', { ascending: false }).limit(30),
+      createAdminClient().from('student_admin_notes').select('*').eq('student_id', studentId).order('created_at', { ascending: false }).limit(20),
+      createAdminClient().from('v_student_instruments_history').select('*').eq('student_id', studentId).order('last_session_at', { ascending: false }),
+      createAdminClient().from('reactivation_tasks').select('*').eq('student_id', studentId).order('created_at', { ascending: false }).limit(10),
     ])
 
     return {
@@ -651,7 +650,7 @@ export async function recordStudentFollowUpAction(
 
   if (!student_id || !note) return { error: 'Escribe una observacion para guardar el seguimiento.' }
 
-  const { error } = await db().from('student_admin_notes').insert({
+  const { error } = await createAdminClient().from('student_admin_notes').insert({
     student_id,
     note,
     outcome,
@@ -688,7 +687,7 @@ export async function markStudentReactivatedAction(
   if (!student_id) return { error: 'ID de estudiante requerido.' }
 
   const now = isoNow()
-  const { error } = await db()
+  const { error } = await createAdminClient()
     .from('students')
     .update({
       student_status: 'activo',
@@ -700,7 +699,7 @@ export async function markStudentReactivatedAction(
 
   if (error) return { error: error.message }
 
-  await db()
+  await createAdminClient()
     .from('reactivation_tasks')
     .update({ status: 'done', completed_at: now })
     .eq('student_id', student_id)
@@ -708,7 +707,7 @@ export async function markStudentReactivatedAction(
 
   await safeRecordStudentActivity(student_id, 'reactivated', 'Alumno marcado como reactivado desde administracion.')
 
-  const { data: stu } = await db().from('students').select('name').eq('id', student_id).maybeSingle()
+  const { data: stu } = await createAdminClient().from('students').select('name').eq('id', student_id).maybeSingle()
   await activity.studentReactivated({
     student_id,
     student_name: stu?.name ?? 'Estudiante',
@@ -723,9 +722,9 @@ export async function markStudentReactivatedAction(
 export async function getRetentionStats() {
   try {
     const [{ data: bySource }, { data: byInstructor }, { data: byInstrument }] = await Promise.all([
-      db().from('v_retention_by_source').select('*'),
-      db().from('v_retention_by_instructor').select('*'),
-      db().from('v_retention_by_instrument').select('*'),
+      createAdminClient().from('v_retention_by_source').select('*'),
+      createAdminClient().from('v_retention_by_instructor').select('*'),
+      createAdminClient().from('v_retention_by_instrument').select('*'),
     ])
     return { bySource: bySource ?? [], byInstructor: byInstructor ?? [], byInstrument: byInstrument ?? [] }
   } catch {

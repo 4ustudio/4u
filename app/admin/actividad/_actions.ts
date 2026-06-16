@@ -72,8 +72,7 @@ export async function getActivityLogs(filters: ActivityFilters = {}): Promise<{
   error: string | null
 }> {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const db = createAdminClient() as any
+    const db = createAdminClient()
     const page = filters.page ?? 1
     const from = (page - 1) * PAGE_SIZE
     const to   = from + PAGE_SIZE - 1
@@ -136,8 +135,7 @@ function buildMetrics(rows: { action: string }[], label: string): PeriodMetrics 
 
 export async function getDashboardMetrics(): Promise<DashboardMetrics> {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const db = createAdminClient() as any
+    const db = createAdminClient()
 
     const todayStart = new Date()
     todayStart.setHours(0, 0, 0, 0)
@@ -173,8 +171,7 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
 
 export async function getActivityActors(): Promise<{ id: string; name: string }[]> {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const db = createAdminClient() as any
+    const db = createAdminClient()
     const { data } = await db
       .from('system_activity_log')
       .select('actor_user_id, actor_name')

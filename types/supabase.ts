@@ -167,6 +167,13 @@ export type Database = {
             referencedRelation: "v_retention_students"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "campaign_messages_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_student_risk"
+            referencedColumns: ["id"]
+          },
         ]
       }
       class_history: {
@@ -212,8 +219,13 @@ export type Database = {
       }
       class_sessions: {
         Row: {
+          attendance_confirmation_token: string | null
+          attendance_confirmed_at: string | null
+          attendance_reminder_sent_at: string | null
+          attendance_status: string
           cancellation_reason: string | null
           cancelled_at: string | null
+          cancelled_by: string | null
           classroom_id: string
           course_id: string
           created_at: string
@@ -225,14 +237,20 @@ export type Database = {
           rescheduled_to_id: string | null
           schedule_id: string | null
           scheduled_date: string
+          second_reminder_sent_at: string | null
           start_time: string
           status: Database["public"]["Enums"]["session_status_t"]
           student_id: string
           updated_at: string
         }
         Insert: {
+          attendance_confirmation_token?: string | null
+          attendance_confirmed_at?: string | null
+          attendance_reminder_sent_at?: string | null
+          attendance_status?: string
           cancellation_reason?: string | null
           cancelled_at?: string | null
+          cancelled_by?: string | null
           classroom_id: string
           course_id: string
           created_at?: string
@@ -244,14 +262,20 @@ export type Database = {
           rescheduled_to_id?: string | null
           schedule_id?: string | null
           scheduled_date: string
+          second_reminder_sent_at?: string | null
           start_time: string
           status?: Database["public"]["Enums"]["session_status_t"]
           student_id: string
           updated_at?: string
         }
         Update: {
+          attendance_confirmation_token?: string | null
+          attendance_confirmed_at?: string | null
+          attendance_reminder_sent_at?: string | null
+          attendance_status?: string
           cancellation_reason?: string | null
           cancelled_at?: string | null
+          cancelled_by?: string | null
           classroom_id?: string
           course_id?: string
           created_at?: string
@@ -263,6 +287,7 @@ export type Database = {
           rescheduled_to_id?: string | null
           schedule_id?: string | null
           scheduled_date?: string
+          second_reminder_sent_at?: string | null
           start_time?: string
           status?: Database["public"]["Enums"]["session_status_t"]
           student_id?: string
@@ -284,11 +309,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "class_sessions_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "v_retention_by_instrument"
+            referencedColumns: ["course_id"]
+          },
+          {
             foreignKeyName: "class_sessions_instructor_id_fkey"
             columns: ["instructor_id"]
             isOneToOne: false
             referencedRelation: "instructors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_sessions_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "v_retention_by_instructor"
+            referencedColumns: ["instructor_id"]
           },
           {
             foreignKeyName: "class_sessions_original_session_id_fkey"
@@ -332,6 +371,13 @@ export type Database = {
             referencedRelation: "v_retention_students"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "class_sessions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_student_risk"
+            referencedColumns: ["id"]
+          },
         ]
       }
       classroom_courses: {
@@ -361,6 +407,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "courses"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "classroom_courses_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "v_retention_by_instrument"
+            referencedColumns: ["course_id"]
           },
         ]
       }
@@ -466,6 +519,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "credit_adjustments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_student_risk"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "fk_credit_adj_session"
             columns: ["session_id"]
             isOneToOne: false
@@ -509,19 +569,28 @@ export type Database = {
       enrollments: {
         Row: {
           assigned_to: string | null
+          city: string | null
           converted_at: string | null
           converted_student_id: string | null
           course_interest: string
           created_at: string
+          data_consent: boolean
           email: string
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          eps: string | null
           guardian_name: string | null
           id: string
+          id_document: string | null
+          image_consent: boolean
           internal_notes: string | null
           last_contact_at: string | null
           level: string
           lost_reason: string | null
+          music_genre: string | null
           next_followup_at: string | null
           notes: string | null
+          payment_method: string | null
           phone: string
           preferred_time: string | null
           source: string
@@ -529,22 +598,34 @@ export type Database = {
           student_age: number
           student_name: string
           student_type: string
+          terms_accepted: boolean
+          terms_accepted_at: string | null
+          terms_version: string | null
         }
         Insert: {
           assigned_to?: string | null
+          city?: string | null
           converted_at?: string | null
           converted_student_id?: string | null
           course_interest: string
           created_at?: string
+          data_consent?: boolean
           email: string
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          eps?: string | null
           guardian_name?: string | null
           id?: string
+          id_document?: string | null
+          image_consent?: boolean
           internal_notes?: string | null
           last_contact_at?: string | null
           level: string
           lost_reason?: string | null
+          music_genre?: string | null
           next_followup_at?: string | null
           notes?: string | null
+          payment_method?: string | null
           phone: string
           preferred_time?: string | null
           source?: string
@@ -552,22 +633,34 @@ export type Database = {
           student_age: number
           student_name: string
           student_type: string
+          terms_accepted?: boolean
+          terms_accepted_at?: string | null
+          terms_version?: string | null
         }
         Update: {
           assigned_to?: string | null
+          city?: string | null
           converted_at?: string | null
           converted_student_id?: string | null
           course_interest?: string
           created_at?: string
+          data_consent?: boolean
           email?: string
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          eps?: string | null
           guardian_name?: string | null
           id?: string
+          id_document?: string | null
+          image_consent?: boolean
           internal_notes?: string | null
           last_contact_at?: string | null
           level?: string
           lost_reason?: string | null
+          music_genre?: string | null
           next_followup_at?: string | null
           notes?: string | null
+          payment_method?: string | null
           phone?: string
           preferred_time?: string | null
           source?: string
@@ -575,8 +668,40 @@ export type Database = {
           student_age?: number
           student_name?: string
           student_type?: string
+          terms_accepted?: boolean
+          terms_accepted_at?: string | null
+          terms_version?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_enrollments_converted_student"
+            columns: ["converted_student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_enrollments_converted_student"
+            columns: ["converted_student_id"]
+            isOneToOne: false
+            referencedRelation: "v_high_risk_students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_enrollments_converted_student"
+            columns: ["converted_student_id"]
+            isOneToOne: false
+            referencedRelation: "v_retention_students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_enrollments_converted_student"
+            columns: ["converted_student_id"]
+            isOneToOne: false
+            referencedRelation: "v_student_risk"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       instructor_availability: {
         Row: {
@@ -608,6 +733,83 @@ export type Database = {
             referencedRelation: "instructors"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "instructor_availability_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "v_retention_by_instructor"
+            referencedColumns: ["instructor_id"]
+          },
+        ]
+      }
+      instructor_availability_log: {
+        Row: {
+          action: string
+          availability_id: string | null
+          changed_at: string
+          changed_by: string | null
+          day_of_week: number | null
+          end_time: string | null
+          id: string
+          instructor_id: string
+          notes: string | null
+          start_time: string | null
+          status: string | null
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          action: string
+          availability_id?: string | null
+          changed_at?: string
+          changed_by?: string | null
+          day_of_week?: number | null
+          end_time?: string | null
+          id?: string
+          instructor_id: string
+          notes?: string | null
+          start_time?: string | null
+          status?: string | null
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          action?: string
+          availability_id?: string | null
+          changed_at?: string
+          changed_by?: string | null
+          day_of_week?: number | null
+          end_time?: string | null
+          id?: string
+          instructor_id?: string
+          notes?: string | null
+          start_time?: string | null
+          status?: string | null
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instructor_availability_log_availability_id_fkey"
+            columns: ["availability_id"]
+            isOneToOne: false
+            referencedRelation: "instructor_availability"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instructor_availability_log_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "instructors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instructor_availability_log_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "v_retention_by_instructor"
+            referencedColumns: ["instructor_id"]
+          },
         ]
       }
       instructor_courses: {
@@ -632,11 +834,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "instructor_courses_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "v_retention_by_instrument"
+            referencedColumns: ["course_id"]
+          },
+          {
             foreignKeyName: "instructor_courses_instructor_id_fkey"
             columns: ["instructor_id"]
             isOneToOne: false
             referencedRelation: "instructors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instructor_courses_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "v_retention_by_instructor"
+            referencedColumns: ["instructor_id"]
           },
         ]
       }
@@ -761,6 +977,13 @@ export type Database = {
             referencedRelation: "v_retention_students"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "monthly_quotas_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_student_risk"
+            referencedColumns: ["id"]
+          },
         ]
       }
       music_journeys: {
@@ -801,6 +1024,113 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      payments: {
+        Row: {
+          created_at: string
+          currency: string
+          discount_amount: number
+          discount_percent: number | null
+          discount_reason: string | null
+          due_date: string
+          external_ref: string | null
+          final_amount: number
+          gateway_response: Json | null
+          id: string
+          metadata: Json | null
+          notes: string | null
+          original_amount: number
+          paid_at: string | null
+          payment_method: string | null
+          payment_type: string
+          period_month: number
+          period_year: number
+          plan_name: string | null
+          registered_by: string | null
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          discount_amount?: number
+          discount_percent?: number | null
+          discount_reason?: string | null
+          due_date: string
+          external_ref?: string | null
+          final_amount: number
+          gateway_response?: Json | null
+          id?: string
+          metadata?: Json | null
+          notes?: string | null
+          original_amount: number
+          paid_at?: string | null
+          payment_method?: string | null
+          payment_type?: string
+          period_month: number
+          period_year: number
+          plan_name?: string | null
+          registered_by?: string | null
+          status?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          discount_amount?: number
+          discount_percent?: number | null
+          discount_reason?: string | null
+          due_date?: string
+          external_ref?: string | null
+          final_amount?: number
+          gateway_response?: Json | null
+          id?: string
+          metadata?: Json | null
+          notes?: string | null
+          original_amount?: number
+          paid_at?: string | null
+          payment_method?: string | null
+          payment_type?: string
+          period_month?: number
+          period_year?: number
+          plan_name?: string | null
+          registered_by?: string | null
+          status?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_high_risk_students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_retention_students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_student_risk"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reactivation_tasks: {
         Row: {
@@ -870,6 +1200,13 @@ export type Database = {
             referencedRelation: "v_retention_students"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "reactivation_tasks_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_student_risk"
+            referencedColumns: ["id"]
+          },
         ]
       }
       retention_alerts: {
@@ -934,7 +1271,56 @@ export type Database = {
             referencedRelation: "v_retention_students"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "retention_alerts_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_student_risk"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      retention_snapshots: {
+        Row: {
+          churn_rate: number | null
+          created_at: string | null
+          id: string
+          reactivation_rate: number | null
+          retention_rate: number | null
+          snapshot_date: string
+          total_activo: number | null
+          total_exalumno: number | null
+          total_inactivo: number | null
+          total_reactivated_month: number | null
+          total_riesgo: number | null
+        }
+        Insert: {
+          churn_rate?: number | null
+          created_at?: string | null
+          id?: string
+          reactivation_rate?: number | null
+          retention_rate?: number | null
+          snapshot_date: string
+          total_activo?: number | null
+          total_exalumno?: number | null
+          total_inactivo?: number | null
+          total_reactivated_month?: number | null
+          total_riesgo?: number | null
+        }
+        Update: {
+          churn_rate?: number | null
+          created_at?: string | null
+          id?: string
+          reactivation_rate?: number | null
+          retention_rate?: number | null
+          snapshot_date?: string
+          total_activo?: number | null
+          total_exalumno?: number | null
+          total_inactivo?: number | null
+          total_reactivated_month?: number | null
+          total_riesgo?: number | null
+        }
+        Relationships: []
       }
       student_activity_events: {
         Row: {
@@ -990,6 +1376,13 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "v_retention_students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_activity_events_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_student_risk"
             referencedColumns: ["id"]
           },
         ]
@@ -1051,6 +1444,162 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "v_retention_students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_admin_notes_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_student_risk"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_documents: {
+        Row: {
+          created_at: string | null
+          document_hash: string | null
+          document_type: string
+          document_version: string
+          enrollment_id: string | null
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          pdf_url: string | null
+          signature_url: string | null
+          signed_at: string
+          student_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          document_hash?: string | null
+          document_type: string
+          document_version: string
+          enrollment_id?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          pdf_url?: string | null
+          signature_url?: string | null
+          signed_at?: string
+          student_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          document_hash?: string | null
+          document_type?: string
+          document_version?: string
+          enrollment_id?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          pdf_url?: string | null
+          signature_url?: string | null
+          signed_at?: string
+          student_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_documents_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "enrollments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_documents_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_documents_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_high_risk_students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_documents_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_retention_students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_documents_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_student_risk"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_followups: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          followup_type: string
+          id: string
+          next_action_date: string | null
+          notes: string | null
+          result: string | null
+          status: string
+          student_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          followup_type: string
+          id?: string
+          next_action_date?: string | null
+          notes?: string | null
+          result?: string | null
+          status?: string
+          student_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          followup_type?: string
+          id?: string
+          next_action_date?: string | null
+          notes?: string | null
+          result?: string | null
+          status?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_followups_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_followups_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_high_risk_students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_followups_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_retention_students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_followups_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_student_risk"
             referencedColumns: ["id"]
           },
         ]
@@ -1117,11 +1666,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "student_schedules_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "v_retention_by_instrument"
+            referencedColumns: ["course_id"]
+          },
+          {
             foreignKeyName: "student_schedules_instructor_id_fkey"
             columns: ["instructor_id"]
             isOneToOne: false
             referencedRelation: "instructors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_schedules_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "v_retention_by_instructor"
+            referencedColumns: ["instructor_id"]
           },
           {
             foreignKeyName: "student_schedules_student_id_fkey"
@@ -1144,6 +1707,78 @@ export type Database = {
             referencedRelation: "v_retention_students"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "student_schedules_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_student_risk"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_status_history: {
+        Row: {
+          changed_at: string | null
+          changed_by: string | null
+          days_inactive: number | null
+          id: string
+          new_status: string
+          old_status: string | null
+          reason: string | null
+          retention_score: number | null
+          student_id: string
+        }
+        Insert: {
+          changed_at?: string | null
+          changed_by?: string | null
+          days_inactive?: number | null
+          id?: string
+          new_status: string
+          old_status?: string | null
+          reason?: string | null
+          retention_score?: number | null
+          student_id: string
+        }
+        Update: {
+          changed_at?: string | null
+          changed_by?: string | null
+          days_inactive?: number | null
+          id?: string
+          new_status?: string
+          old_status?: string | null
+          reason?: string | null
+          retention_score?: number | null
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_status_history_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_status_history_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_high_risk_students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_status_history_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_retention_students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_status_history_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_student_risk"
+            referencedColumns: ["id"]
+          },
         ]
       }
       students: {
@@ -1152,28 +1787,39 @@ export type Database = {
           archived_at: string | null
           archived_reason: string | null
           birth_date: string | null
+          birthday_benefit_used: boolean
+          birthday_benefit_year: number | null
+          birthday_discount_percent: number
           city: string | null
           created_at: string
           document_number: string | null
           document_type: string | null
           email: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
           enrolled_at: string
+          eps: string | null
           first_name: string | null
           id: string
           last_activity_at: string | null
+          last_completed_class_at: string | null
           last_name: string | null
           lead_id: string | null
           music_genre: string | null
           name: string
           next_payment_due_at: string | null
           notes: string | null
+          payment_method: string | null
           phone: string
           plain_password: string | null
           plan_expires_at: string | null
+          plan_name: string | null
           primary_course_id: string | null
           profession: string | null
           reactivated_at: string | null
           retention_score: number
+          risk_level: string | null
+          risk_reason: string | null
           status: Database["public"]["Enums"]["student_status_t"]
           student_since: string | null
           student_status: string
@@ -1186,28 +1832,39 @@ export type Database = {
           archived_at?: string | null
           archived_reason?: string | null
           birth_date?: string | null
+          birthday_benefit_used?: boolean
+          birthday_benefit_year?: number | null
+          birthday_discount_percent?: number
           city?: string | null
           created_at?: string
           document_number?: string | null
           document_type?: string | null
           email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
           enrolled_at?: string
+          eps?: string | null
           first_name?: string | null
           id?: string
           last_activity_at?: string | null
+          last_completed_class_at?: string | null
           last_name?: string | null
           lead_id?: string | null
           music_genre?: string | null
           name: string
           next_payment_due_at?: string | null
           notes?: string | null
+          payment_method?: string | null
           phone: string
           plain_password?: string | null
           plan_expires_at?: string | null
+          plan_name?: string | null
           primary_course_id?: string | null
           profession?: string | null
           reactivated_at?: string | null
           retention_score?: number
+          risk_level?: string | null
+          risk_reason?: string | null
           status?: Database["public"]["Enums"]["student_status_t"]
           student_since?: string | null
           student_status?: string
@@ -1220,28 +1877,39 @@ export type Database = {
           archived_at?: string | null
           archived_reason?: string | null
           birth_date?: string | null
+          birthday_benefit_used?: boolean
+          birthday_benefit_year?: number | null
+          birthday_discount_percent?: number
           city?: string | null
           created_at?: string
           document_number?: string | null
           document_type?: string | null
           email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
           enrolled_at?: string
+          eps?: string | null
           first_name?: string | null
           id?: string
           last_activity_at?: string | null
+          last_completed_class_at?: string | null
           last_name?: string | null
           lead_id?: string | null
           music_genre?: string | null
           name?: string
           next_payment_due_at?: string | null
           notes?: string | null
+          payment_method?: string | null
           phone?: string
           plain_password?: string | null
           plan_expires_at?: string | null
+          plan_name?: string | null
           primary_course_id?: string | null
           profession?: string | null
           reactivated_at?: string | null
           retention_score?: number
+          risk_level?: string | null
+          risk_reason?: string | null
           status?: Database["public"]["Enums"]["student_status_t"]
           student_since?: string | null
           student_status?: string
@@ -1264,7 +1932,68 @@ export type Database = {
             referencedRelation: "courses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "students_primary_course_id_fkey"
+            columns: ["primary_course_id"]
+            isOneToOne: false
+            referencedRelation: "v_retention_by_instrument"
+            referencedColumns: ["course_id"]
+          },
         ]
+      }
+      system_activity_log: {
+        Row: {
+          action: string
+          actor_name: string | null
+          actor_role: string | null
+          actor_user_id: string | null
+          created_at: string | null
+          created_by_system: boolean | null
+          description: string | null
+          entity_id: string | null
+          entity_type: string
+          id: string
+          metadata: Json | null
+          new_data: Json | null
+          old_data: Json | null
+          severity: string
+          source: string | null
+        }
+        Insert: {
+          action: string
+          actor_name?: string | null
+          actor_role?: string | null
+          actor_user_id?: string | null
+          created_at?: string | null
+          created_by_system?: boolean | null
+          description?: string | null
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          metadata?: Json | null
+          new_data?: Json | null
+          old_data?: Json | null
+          severity?: string
+          source?: string | null
+        }
+        Update: {
+          action?: string
+          actor_name?: string | null
+          actor_role?: string | null
+          actor_user_id?: string | null
+          created_at?: string | null
+          created_by_system?: boolean | null
+          description?: string | null
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          metadata?: Json | null
+          new_data?: Json | null
+          old_data?: Json | null
+          severity?: string
+          source?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {
@@ -1277,12 +2006,18 @@ export type Database = {
           days_since_activity: number | null
           email: string | null
           enrolled_at: string | null
+          first_name: string | null
           id: string | null
+          instructor_name: string | null
           instructors_count: number | null
           instruments_count: number | null
           last_activity_at: string | null
+          last_completed_class_at: string | null
+          last_name: string | null
           name: string | null
           next_payment_due_at: string | null
+          no_response_30d: number | null
+          no_shows_30d: number | null
           operational_status:
             | Database["public"]["Enums"]["student_status_t"]
             | null
@@ -1292,6 +2027,8 @@ export type Database = {
           primary_course_name: string | null
           reactivated_at: string | null
           retention_score: number | null
+          risk_level: string | null
+          risk_reason: string | null
           student_since: string | null
           student_status: string | null
           upcoming_classes: number | null
@@ -1304,6 +2041,13 @@ export type Database = {
             referencedRelation: "courses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "students_primary_course_id_fkey"
+            columns: ["primary_course_id"]
+            isOneToOne: false
+            referencedRelation: "v_retention_by_instrument"
+            referencedColumns: ["course_id"]
+          },
         ]
       }
       v_journey_funnel: {
@@ -1315,6 +2059,46 @@ export type Database = {
           cta_clicks: number | null
           feature: string | null
           total_journeys: number | null
+        }
+        Relationships: []
+      }
+      v_retention_by_instructor: {
+        Row: {
+          activos: number | null
+          avg_score: number | null
+          en_riesgo: number | null
+          instructor_id: string | null
+          instructor_name: string | null
+          perdidos: number | null
+          retention_rate_pct: number | null
+          total_students: number | null
+        }
+        Relationships: []
+      }
+      v_retention_by_instrument: {
+        Row: {
+          activos: number | null
+          avg_score: number | null
+          course_id: string | null
+          en_riesgo: number | null
+          instrument_name: string | null
+          perdidos: number | null
+          retention_rate_pct: number | null
+          total_students: number | null
+        }
+        Relationships: []
+      }
+      v_retention_by_source: {
+        Row: {
+          activos: number | null
+          avg_lifetime_days: number | null
+          en_riesgo: number | null
+          exalumnos: number | null
+          inactivos: number | null
+          reactivados: number | null
+          retention_rate_pct: number | null
+          source: string | null
+          total_students: number | null
         }
         Relationships: []
       }
@@ -1342,12 +2126,18 @@ export type Database = {
           days_since_activity: number | null
           email: string | null
           enrolled_at: string | null
+          first_name: string | null
           id: string | null
+          instructor_name: string | null
           instructors_count: number | null
           instruments_count: number | null
           last_activity_at: string | null
+          last_completed_class_at: string | null
+          last_name: string | null
           name: string | null
           next_payment_due_at: string | null
+          no_response_30d: number | null
+          no_shows_30d: number | null
           operational_status:
             | Database["public"]["Enums"]["student_status_t"]
             | null
@@ -1357,6 +2147,8 @@ export type Database = {
           primary_course_name: string | null
           reactivated_at: string | null
           retention_score: number | null
+          risk_level: string | null
+          risk_reason: string | null
           student_since: string | null
           student_status: string | null
           upcoming_classes: number | null
@@ -1368,6 +2160,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "courses"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "students_primary_course_id_fkey"
+            columns: ["primary_course_id"]
+            isOneToOne: false
+            referencedRelation: "v_retention_by_instrument"
+            referencedColumns: ["course_id"]
           },
         ]
       }
@@ -1392,6 +2191,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "class_sessions_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "v_retention_by_instrument"
+            referencedColumns: ["course_id"]
+          },
+          {
             foreignKeyName: "class_sessions_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
@@ -1412,10 +2218,43 @@ export type Database = {
             referencedRelation: "v_retention_students"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "class_sessions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_student_risk"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      v_student_risk: {
+        Row: {
+          computed_risk_level: string | null
+          days_since_last_activity: number | null
+          days_since_last_class: number | null
+          email: string | null
+          full_name: string | null
+          id: string | null
+          last_activity_at: string | null
+          last_completed_class_at: string | null
+          next_payment_due_at: string | null
+          overdue_amount: number | null
+          overdue_payments_count: number | null
+          pending_amount: number | null
+          pending_payments_count: number | null
+          phone: string | null
+          plan_expires_at: string | null
+          plan_name: string | null
+          retention_score: number | null
+          risk_level: string | null
+          risk_reason: string | null
+          student_status: string | null
+        }
+        Relationships: []
       }
     }
     Functions: {
+      compute_overdue_payments: { Args: never; Returns: number }
       fn_available_slots: {
         Args: {
           p_date: string
@@ -1526,6 +2365,10 @@ export type Database = {
       fn_validate_schedule_rules: {
         Args: { p_date: string; p_start_time: string; p_student_id: string }
         Returns: string
+      }
+      sync_student_payment_fields: {
+        Args: { p_student_id: string }
+        Returns: undefined
       }
     }
     Enums: {

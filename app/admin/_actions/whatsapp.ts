@@ -6,8 +6,6 @@ import { activity } from '@/lib/activity'
 import type { ActivityAction } from '@/lib/activity'
 import type { WhatsAppTemplate } from '@/lib/whatsapp'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function db(): any { return createAdminClient() }
 
 async function getActorInfo() {
   try {
@@ -57,7 +55,7 @@ export async function getContactPhoneForActivity(
 ): Promise<{ name: string; phone: string } | null> {
   try {
     if (entity_type === 'student' || entity_type === 'retention') {
-      const { data } = await db()
+      const { data } = await createAdminClient()
         .from('students')
         .select('name, phone')
         .eq('id', entity_id)
@@ -66,7 +64,7 @@ export async function getContactPhoneForActivity(
     }
 
     if (entity_type === 'lead' || entity_type === 'enrollment') {
-      const { data } = await db()
+      const { data } = await createAdminClient()
         .from('enrollments')
         .select('student_name, phone')
         .eq('id', entity_id)
@@ -75,12 +73,12 @@ export async function getContactPhoneForActivity(
     }
 
     if (entity_type === 'payment') {
-      const { data } = await db()
+      const { data } = await createAdminClient()
         .from('payments')
         .select('student_id, students(name, phone)')
         .eq('id', entity_id)
         .single()
-      const s = (data?.students as any)
+      const s = (data?.students as { phone?: string | null; name?: string | null } | null)
       if (s?.phone) return { name: s.name, phone: s.phone }
     }
 

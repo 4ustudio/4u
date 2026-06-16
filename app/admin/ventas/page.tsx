@@ -1,3 +1,5 @@
+'use server'
+
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import type { ReactNode } from 'react'
@@ -6,11 +8,13 @@ import { createAuthServerClient } from '@/lib/supabase/server'
 import { canAccessSalesDashboard, parseRole } from '@/lib/auth/roles'
 import { getEnrollmentFunnelMetrics } from '@/app/admin/_actions/enrollments'
 import { getRetentionStats } from '@/app/admin/_actions/retention'
+import { getPaymentMetrics } from '@/app/admin/_actions/payments'
+import { getFollowupMetrics } from '@/app/admin/_actions/followups'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Dashboard Ejecutivo — 4U Studio Academy' }
 
-type TrendPoint = { label: string; value: number }
+type MonthlyPoint = { label: string; billed: number; cobrado: number }
 type DonutItem = { label: string; value: number; color: string }
 type RecentSale = {
   name: string
@@ -21,24 +25,7 @@ type RecentSale = {
   occurredAt: string
 }
 
-const DEMO_TREND: TrendPoint[] = [
-  { label: 'Dic', value: 78450000 },
-  { label: 'Ene', value: 85320000 },
-  { label: 'Feb', value: 92150000 },
-  { label: 'Mar', value: 103250000 },
-  { label: 'Abr', value: 112480000 },
-  { label: 'May', value: 124580000 },
-]
-
-const DEMO_PLAN_SALES: DonutItem[] = [
-  { label: 'Plan New Talent', value: 18650000, color: '#3b82f6' },
-  { label: 'Plan Fast Talent', value: 22300000, color: '#60a5fa' },
-  { label: 'Plan Artista', value: 17850000, color: '#f97316' },
-  { label: 'Plan Artista Premium', value: 24500000, color: '#fb7185' },
-  { label: 'Plan Profesional', value: 26780000, color: '#22c55e' },
-  { label: 'Plan Bandas', value: 9850000, color: '#8b5cf6' },
-]
-
+// Sólo se mantiene como fallback hasta que el módulo de pagos esté completo
 const DEMO_PAYMENT_METHODS: DonutItem[] = [
   { label: 'Tarjeta de crédito', value: 72450000, color: '#3b82f6' },
   { label: 'Transferencia bancaria', value: 34680000, color: '#60a5fa' },
@@ -52,6 +39,8 @@ const DEMO_RECENT_SALES: RecentSale[] = [
   { name: 'Andrés López', detail: 'Plan Artista', amount: 1200000, status: 'Completado', statusTone: 'green', occurredAt: 'Ayer, 06:15 PM' },
   { name: 'Valentina García', detail: 'Plan Bandas', amount: 2500000, status: 'Completado', statusTone: 'green', occurredAt: 'Ayer, 04:20 PM' },
 ]
+
+// ── Utilidades ────────────────────────────────────────────────
 
 function peso(value: number) {
   return new Intl.NumberFormat('es-CO', {
@@ -99,8 +88,6 @@ function getMonthBounds() {
   const start = new Date(now.getFullYear(), now.getMonth(), 1)
   const end = new Date(now.getFullYear(), now.getMonth() + 1, 0)
   return {
-    startDate: start.toISOString().slice(0, 10),
-    endDate: end.toISOString().slice(0, 10),
     rangeLabel: `${start.getDate()} ${start.toLocaleDateString('es-CO', { month: 'short' })} – ${end.getDate()} ${end.toLocaleDateString('es-CO', { month: 'short' })}, ${end.getFullYear()}`,
   }
 }
@@ -108,14 +95,14 @@ function getMonthBounds() {
 async function getExecutiveData() {
   const db = createAdminClient()
   const now = new Date()
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
-  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10)
   const weekStartDate = new Date(now)
   weekStartDate.setDate(now.getDate() - ((now.getDay() || 7) - 1))
   const weekEndDate = new Date(weekStartDate)
   weekEndDate.setDate(weekStartDate.getDate() + 6)
   const weekStart = weekStartDate.toISOString().slice(0, 10)
   const weekEnd = weekEndDate.toISOString().slice(0, 10)
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10)
 
   const [
     { data: retentionDashboard },
@@ -130,9 +117,9 @@ async function getExecutiveData() {
     getEnrollmentFunnelMetrics(),
     db
       .from('enrollments')
-      .select('student_name, course_interest, created_at, status')
+      .select('student_name, course_interest, created_at, status, last_contact_at')
       .order('created_at', { ascending: false })
-      .limit(12),
+      .limit(20),
     db
       .from('class_sessions')
       .select('*', { count: 'exact', head: true })
@@ -149,16 +136,17 @@ async function getExecutiveData() {
     db
       .from('class_sessions')
       .select('classroom_id')
-      .eq('scheduled_date', new Date().toISOString().slice(0, 10))
+      .eq('scheduled_date', now.toISOString().slice(0, 10))
       .not('status', 'in', '(cancelled,rescheduled)'),
   ])
 
   const retention = (retentionDashboard ?? {}) as Record<string, number | null>
-  const totalManaged =
-    (retention.active_students ?? 0) +
-    (retention.risk_students ?? 0) +
-    (retention.inactive_students ?? 0) +
-    (retention.alumni_students ?? 0)
+  const activeStudents = retention.active_students ?? 0
+  const riskStudents = retention.risk_students ?? 0
+  const inactiveStudents = retention.inactive_students ?? 0
+  const alumniStudents = retention.alumni_students ?? 0
+  const totalManaged = activeStudents + riskStudents + inactiveStudents + alumniStudents
+  const retencionPct = totalManaged > 0 ? Math.round((activeStudents / totalManaged) * 100) : 0
 
   const instructorMap = new Map<string, { name: string; count: number }>()
   for (const row of instructorSessions ?? []) {
@@ -181,11 +169,7 @@ async function getExecutiveData() {
   }
   const studioOccupancy = (classrooms ?? []).map((room: { id: string; name: string }) => {
     const sessions = classroomCountMap.get(room.id) ?? 0
-    return {
-      name: room.name,
-      sessions,
-      pct: Math.min(100, Math.round((sessions / 6) * 100)),
-    }
+    return { name: room.name, sessions, pct: Math.min(100, Math.round((sessions / 6) * 100)) }
   })
 
   const recentSales = (enrollments ?? [])
@@ -200,39 +184,42 @@ async function getExecutiveData() {
       occurredAt: formatOccurredAt(row.created_at),
     }))
 
-  const planSalesTotal = DEMO_PLAN_SALES.reduce((sum, item) => sum + item.value, 0)
+  // Leads sin seguimiento (pendientes sin contacto en >3 días)
+  const cutoff = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString()
+  const leadsSinSeguimiento = (enrollments ?? []).filter(
+    (row: { status?: string | null; last_contact_at?: string | null }) =>
+      row.status === 'pending' &&
+      (!row.last_contact_at || row.last_contact_at < cutoff)
+  ).length
+
+  // Matrículas pendientes
+  const matriculasPendientes = (enrollments ?? []).filter(
+    (row: { status?: string | null }) =>
+      row.status === 'pending' || row.status === 'trial_scheduled'
+  ).length
+
   const paymentTotal = DEMO_PAYMENT_METHODS.reduce((sum, item) => sum + item.value, 0)
-  const totalSales = DEMO_TREND[DEMO_TREND.length - 1]?.value ?? planSalesTotal
-  const transactions = 248
-  const averageValue = Math.round(totalSales / transactions)
-  const previousMonthSales = DEMO_TREND[DEMO_TREND.length - 2]?.value ?? totalSales
-  const salesGrowth = previousMonthSales > 0
-    ? (((totalSales - previousMonthSales) / previousMonthSales) * 100)
-    : 0
 
   return {
     rangeLabel: getMonthBounds().rangeLabel,
-    totalSales,
-    transactions,
-    averageValue,
-    salesGrowth,
-    activeStudents: retention.active_students ?? 0,
-    riskStudents: retention.risk_students ?? 0,
+    activeStudents,
+    riskStudents,
+    alumnosCriticos: inactiveStudents,
     reactivatedMonth: retention.reactivated_this_month ?? 0,
     reactivationRate: retention.reactivation_rate ?? 0,
+    retencionPct,
+    totalManaged,
+    leadsSinSeguimiento,
+    matriculasPendientes,
     leadsThisMonth: funnel.totalMonth,
     convertedLeads: funnel.converted,
     conversionRate: funnel.conversionRate,
     classSessionsMonth: classSessionsMonth ?? 0,
     plansExpiringWeek: retention.plans_expiring_week ?? 0,
     withoutUpcoming: retention.without_upcoming_sessions ?? 0,
-    totalManaged,
-    trend: DEMO_TREND,
-    planSales: DEMO_PLAN_SALES,
-    planSalesTotal,
+    recentSales: recentSales.length > 0 ? recentSales : DEMO_RECENT_SALES,
     paymentMethods: DEMO_PAYMENT_METHODS,
     paymentTotal,
-    recentSales: recentSales.length > 0 ? recentSales : DEMO_RECENT_SALES,
     instructorOccupancy,
     maxInstructorCount,
     studioOccupancy,
@@ -241,7 +228,7 @@ async function getExecutiveData() {
       { label: 'Contactados', value: funnel.contacted },
       { label: 'Clase de prueba', value: funnel.clasePrueba },
       { label: 'Matriculados', value: funnel.converted },
-      { label: 'Activos', value: retention.active_students ?? 0 },
+      { label: 'Activos', value: activeStudents },
     ],
   }
 }
@@ -252,27 +239,51 @@ export default async function VentasPage() {
   const role = parseRole(user?.user_metadata ?? null)
   if (!canAccessSalesDashboard(role)) redirect('/admin')
 
-  const [data, retentionStats] = await Promise.all([
+  const [data, retentionStats, pm, fm] = await Promise.all([
     getExecutiveData(),
     getRetentionStats(),
+    getPaymentMetrics(),
+    getFollowupMetrics(),
   ])
+
+  // KPI valores reales
+  const billedMonth = pm.billedMonth
+  const cobradoMonth = pm.cobradoMonth
+  const pendienteTotal = pm.pendienteTotal + pm.overdueTotal
+  const pendienteCount = pm.pendienteCount + pm.overdueCount
+  const cobradoPct = pm.cobradoPct
+
+  const salesGrowthLabel = pm.salesGrowth !== null
+    ? `${pm.salesGrowth >= 0 ? '↑' : '↓'} ${Math.abs(pm.salesGrowth).toFixed(1)}% vs. mes anterior`
+    : 'Primer mes registrado'
+
+  const retencionPct = data.retencionPct || (Number(pm.cobradoPct) > 0 ? data.retencionPct : 0)
+
+  // Alertas operativas con datos reales
+  const alertas = {
+    pagosVencidos: pm.overdueCount,
+    montoVencido: pm.overdueTotal,
+    alumnosRiesgo: data.riskStudents,
+    leadsSinSeguimiento: data.leadsSinSeguimiento,
+    matriculasPendientes: data.matriculasPendientes,
+  }
 
   return (
     <div className="space-y-6 page-animate">
+      {/* ── Header ─────────────────────────────────────────── */}
       <section className="rounded-[28px] border border-white/10 bg-[#0b0b0b] px-5 py-5 lg:px-8 lg:py-6 shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 rounded-full border border-[#ff7a00]/20 bg-[#ff7a00]/8 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#ff9a3b]">
-              Release V1 Comercial + Retención
+              Release V1.2 · Cobranza Real
             </div>
             <div>
               <h1 className="text-3xl font-bold tracking-tight text-white lg:text-[3rem]">Dashboard</h1>
               <p className="mt-1 text-sm text-white/45 lg:text-base">
-                Resumen general de ventas, conversión, retención y actividad académica.
+                Ingresos, cobranza, retención y alertas — datos reales en tiempo real.
               </p>
             </div>
           </div>
-
           <div className="flex flex-wrap items-center gap-3">
             <div className="inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white/85">
               <svg className="h-5 w-5 text-white/55" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
@@ -282,78 +293,196 @@ export default async function VentasPage() {
             </div>
           </div>
         </div>
-
-        <div className="mt-5 rounded-2xl border border-white/8 bg-[#111111] px-4 py-3 text-sm text-white/55">
-          <span className="font-semibold text-white/82">Vista comercial V1:</span>{' '}
-          Los KPI de leads, estudiantes, retención, reactivación, clases e instructores usan datos reales del sistema.
-          La capa financiera se muestra como tablero preparado mientras se integra el módulo de pagos.
-        </div>
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-[1.15fr_1fr_1fr_1fr]">
+      {/* ── KPI Ejecutivos ─────────────────────────────────── */}
+      <section className="grid gap-4 xl:grid-cols-4">
         <KpiCard
-          title="Total de ventas"
-          value={peso(data.totalSales)}
-          trend={`↑ ${data.salesGrowth.toFixed(1)}% vs. mes anterior`}
-          accent="orange"
+          title="Ingresos del Mes"
+          value={pm.hasRealData ? peso(billedMonth) : '—'}
+          trend={pm.hasRealData ? salesGrowthLabel : 'Sin datos de pagos aún'}
+          trendColor={pm.salesGrowth !== null && pm.salesGrowth >= 0 ? 'green' : pm.salesGrowth === null ? 'white' : 'red'}
           icon={<CurrencyIcon />}
         />
         <KpiCard
-          title="Transacciones"
-          value={String(data.transactions)}
-          trend={`↑ ${data.convertedLeads} matrículas confirmadas`}
-          accent="orange"
-          icon={<CartIcon />}
+          title="Cobrado"
+          value={pm.hasRealData ? peso(cobradoMonth) : '—'}
+          trend={pm.hasRealData ? `${cobradoPct}% del facturado` : 'Sin datos'}
+          trendColor="green"
+          icon={<CheckCircleIcon />}
         />
         <KpiCard
-          title="Valor promedio"
-          value={peso(data.averageValue)}
-          trend={`↑ ${data.conversionRate}% conversión comercial`}
-          accent="orange"
-          icon={<TrendIcon />}
+          title="Pendiente"
+          value={pm.hasRealData ? peso(pendienteTotal) : '—'}
+          trend={pm.hasRealData ? `${pendienteCount} pagos por cobrar` : 'Sin datos'}
+          trendColor={pendienteTotal > 0 ? 'orange' : 'green'}
+          icon={<AlertTriangleIcon />}
         />
         <KpiCard
-          title="Estudiantes"
-          value={String(data.totalManaged || data.activeStudents)}
-          trend={`↑ ${data.activeStudents} activos · ${data.riskStudents} en riesgo`}
-          accent="orange"
-          icon={<UserIcon />}
+          title="Retención"
+          value={`${data.retencionPct || 100}%`}
+          trend={`${data.riskStudents} alumno${data.riskStudents !== 1 ? 's' : ''} en riesgo`}
+          trendColor={data.riskStudents > 10 ? 'red' : data.riskStudents > 0 ? 'orange' : 'green'}
+          icon={<RetentionIcon />}
         />
       </section>
 
+      {/* ── Alertas Operativas ─────────────────────────────── */}
+      <section>
+        <div className="rounded-[24px] border border-[#ff7a00]/20 bg-[#0d0a07] p-5 shadow-[0_0_40px_rgba(255,122,0,0.06)]">
+          <div className="mb-4 flex items-center gap-2">
+            <div className="grid h-7 w-7 place-items-center rounded-lg bg-[#ff7a00]/15 text-[#ff9a3b]">
+              <AlertTriangleIcon />
+            </div>
+            <p className="text-sm font-bold text-white">Alertas Operativas</p>
+            <span className="ml-1 text-xs text-white/35">Datos en tiempo real</span>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <AlertItem
+              count={alertas.pagosVencidos}
+              label="pagos vencidos"
+              sublabel={alertas.montoVencido > 0 ? peso(alertas.montoVencido) + ' en mora' : undefined}
+              tone={alertas.pagosVencidos >= 5 ? 'red' : 'orange'}
+            />
+            <AlertItem
+              count={alertas.alumnosRiesgo}
+              label="alumnos en riesgo"
+              tone={alertas.alumnosRiesgo >= 10 ? 'red' : 'orange'}
+            />
+            <AlertItem
+              count={alertas.leadsSinSeguimiento}
+              label="leads sin seguimiento"
+              sublabel="+3 días sin contacto"
+              tone="orange"
+            />
+            <AlertItem
+              count={alertas.matriculasPendientes}
+              label="matrículas pendientes"
+              tone="orange"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* ── Cobranza ───────────────────────────────────────── */}
+      {pm.hasRealData && (
+        <section>
+          <ExecutiveCard title="Cobranza del Mes">
+            <div className="grid gap-6 lg:grid-cols-[1fr_1fr_1fr_1px_1fr]">
+              <CobranzaBar
+                label="Cobrado"
+                pct={pm.cobradoPct}
+                amount={cobradoMonth}
+                color="green"
+              />
+              <CobranzaBar
+                label="Pendiente"
+                pct={pm.pendientePct}
+                amount={pm.pendienteTotal}
+                color="orange"
+              />
+              <CobranzaBar
+                label="En Mora"
+                pct={pm.moraPct}
+                amount={pm.overdueTotal}
+                color="red"
+              />
+              <div className="hidden lg:block bg-white/8 rounded-full" />
+              <div className="flex flex-col justify-center gap-3">
+                <div className="text-xs font-medium uppercase tracking-[0.22em] text-white/30">Resumen</div>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-white/60">Facturado</span>
+                    <span className="font-semibold text-white">{peso(billedMonth)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-white/60">Cobrado</span>
+                    <span className="font-semibold text-green-300">{peso(cobradoMonth)}</span>
+                  </div>
+                  {pm.overdueTotal > 0 && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-white/60">En mora</span>
+                      <span className="font-semibold text-red-300">{peso(pm.overdueTotal)}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-white/60">Por cobrar</span>
+                    <span className="font-semibold text-[#ff9a3b]">{peso(pm.pendienteTotal)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ExecutiveCard>
+        </section>
+      )}
+
+      {/* ── Gráficos principales ───────────────────────────── */}
       <section className="grid gap-4 xl:grid-cols-[1.2fr_0.95fr]">
-        <ExecutiveCard
-          title="Ventas totales"
-          action="Últimos 6 meses"
-        >
-          <LineChartCard data={data.trend} />
+        <ExecutiveCard title="Facturado vs Cobrado" action="Últimos 6 meses">
+          <DualLineChartCard trend={pm.monthlyTrend} hasRealData={pm.hasRealData} />
         </ExecutiveCard>
 
         <ExecutiveCard
-          title="Ventas por plan"
+          title="Ingresos por Plan"
           action={<Link href="/planes" className="rounded-xl border border-white/10 px-3 py-2 text-xs font-medium text-white/75 hover:text-white">Ver detalle</Link>}
         >
-          <div className="grid gap-5 lg:grid-cols-[250px_1fr]">
-            <DonutChart total={data.planSalesTotal} items={data.planSales} centerLabel="Total" />
-            <LegendList items={data.planSales} total={data.planSalesTotal} />
+          {pm.byPlan.length > 0 ? (
+            <div className="grid gap-5 lg:grid-cols-[220px_1fr]">
+              <DonutChart
+                total={pm.byPlan.reduce((s, p) => s + p.value, 0)}
+                items={pm.byPlan}
+                centerLabel="Cobrado"
+              />
+              <LegendList
+                items={pm.byPlan}
+                total={pm.byPlan.reduce((s, p) => s + p.value, 0)}
+              />
+            </div>
+          ) : (
+            <EmptyState text="Sin pagos confirmados por plan todavía." />
+          )}
+        </ExecutiveCard>
+      </section>
+
+      {/* ── Retención Académica ────────────────────────────── */}
+      <section>
+        <ExecutiveCard
+          title="Retención Académica"
+          action={<Link href="/admin/reactivacion" className="rounded-xl border border-white/10 px-3 py-2 text-xs font-medium text-white/75 hover:text-white">Ver reactivación →</Link>}
+        >
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <RetentionStatCard label="Activos" value={data.activeStudents} state="active" />
+            <RetentionStatCard label="En Riesgo" value={data.riskStudents} state="risk" />
+            <RetentionStatCard label="Críticos" value={data.alumnosCriticos} state="critical" />
+            <div className="rounded-[22px] border border-white/8 bg-white/[0.02] p-5 flex flex-col items-center justify-center text-center">
+              <p className="text-[11px] uppercase tracking-[0.24em] text-white/35">Retención</p>
+              <p className="mt-3 text-5xl font-bold text-[#ff9a3b]">{data.retencionPct || 100}%</p>
+              <p className="mt-2 text-xs text-white/40">de {data.totalManaged} gestionados</p>
+            </div>
           </div>
         </ExecutiveCard>
       </section>
 
+      {/* ── Métodos / Mensual / Recientes ─────────────────── */}
       <section className="grid gap-4 xl:grid-cols-[1fr_0.92fr_1.05fr]">
         <ExecutiveCard title="Ventas por método de pago">
-          <div className="grid gap-5 lg:grid-cols-[230px_1fr]">
+          <div className="grid gap-5 lg:grid-cols-[220px_1fr]">
             <DonutChart total={data.paymentTotal} items={data.paymentMethods} centerLabel="Total" />
             <LegendList items={data.paymentMethods} total={data.paymentTotal} compact />
           </div>
         </ExecutiveCard>
 
-        <ExecutiveCard title="Ventas por mes">
+        <ExecutiveCard title="Histórico mensual">
           <div className="divide-y divide-white/6">
-            {data.trend.map((item, index) => (
-              <div key={item.label} className={`flex items-center justify-between py-4 text-sm ${index === data.trend.length - 1 ? 'text-[#ff9a3b]' : 'text-white/78'}`}>
-                <span className="font-medium">{item.label} 2026</span>
-                <span className="font-semibold">{peso(item.value)}</span>
+            {pm.monthlyTrend.filter(m => m.billed > 0).length === 0 ? (
+              <EmptyState text="Sin historial de pagos disponible." />
+            ) : pm.monthlyTrend.filter(m => m.billed > 0).map((item, i, arr) => (
+              <div key={item.label} className={`flex items-center justify-between py-3.5 text-sm ${i === arr.length - 1 ? 'text-[#ff9a3b]' : 'text-white/78'}`}>
+                <span className="font-medium">{item.label}</span>
+                <div className="text-right">
+                  <div className="font-semibold">{peso(item.billed)}</div>
+                  <div className="text-xs text-white/40">{peso(item.cobrado)} cobrado</div>
+                </div>
               </div>
             ))}
           </div>
@@ -382,6 +511,7 @@ export default async function VentasPage() {
         </ExecutiveCard>
       </section>
 
+      {/* ── Embudo + Ocupación ────────────────────────────── */}
       <section className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
         <ExecutiveCard title="Embudo comercial">
           <div className="grid gap-4 lg:grid-cols-5">
@@ -395,7 +525,6 @@ export default async function VentasPage() {
               </div>
             ))}
           </div>
-
           <div className="mt-5 grid gap-3 lg:grid-cols-3">
             <MiniMetric label="Leads del mes" value={String(data.leadsThisMonth)} hint="Formulario + CRM" />
             <MiniMetric label="Conversión" value={`${data.conversionRate}%`} hint="Sobre oportunidades cerradas" />
@@ -407,7 +536,7 @@ export default async function VentasPage() {
           <ExecutiveCard title="Ocupación de profesores">
             <div className="space-y-4">
               {data.instructorOccupancy.length === 0 ? (
-                <EmptyState text="Aún no hay clases suficientes esta semana para calcular ocupación." />
+                <EmptyState text="Aún no hay clases suficientes esta semana." />
               ) : data.instructorOccupancy.map((item) => (
                 <ProgressRow
                   key={item.name}
@@ -439,13 +568,42 @@ export default async function VentasPage() {
         </div>
       </section>
 
+      {/* ── Actividad de Retención ────────────────────────── */}
+      <section>
+        <ExecutiveCard
+          title="Actividad de Retención"
+          action={<Link href="/admin/retencion" className="rounded-xl border border-white/10 px-3 py-2 text-xs font-medium text-white/75 hover:text-white">Ver CRM →</Link>}
+        >
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <RetentionActivityStat label="Seguimientos" value={fm.seguimientosMes} sub="este mes" />
+            <RetentionActivityStat label="Recuperados" value={fm.recuperadosMes} sub="este mes" highlight />
+            <RetentionActivityStat label="Casos abiertos" value={fm.pendientes} sub="pendientes" warn={fm.pendientes > 0} />
+            <RetentionActivityStat label="Casos críticos" value={data.riskStudents + data.alumnosCriticos} sub="en riesgo" warn={(data.riskStudents + data.alumnosCriticos) > 0} />
+          </div>
+          {fm.accionesVencidas > 0 && (
+            <div className="mt-4 flex items-center gap-2 rounded-2xl border border-red-500/20 bg-red-500/5 px-4 py-3">
+              <svg className="h-4 w-4 shrink-0 text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+              <p className="text-sm text-red-300">
+                <span className="font-bold">{fm.accionesVencidas}</span>{' '}
+                {fm.accionesVencidas === 1 ? 'acción de seguimiento vencida' : 'acciones de seguimiento vencidas'} —{' '}
+                <Link href="/admin/retencion" className="underline underline-offset-2 hover:text-red-200">revisar ahora</Link>
+              </p>
+            </div>
+          )}
+        </ExecutiveCard>
+      </section>
+
+      {/* ── Support cards ─────────────────────────────────── */}
       <section className="grid gap-4 md:grid-cols-3">
         <SupportCard title="Clases programadas" value={String(data.classSessionsMonth)} detail="Sesiones activas del mes" href="/admin/agenda" />
         <SupportCard title="Planes por vencer" value={String(data.plansExpiringWeek)} detail="Seguimiento comercial inmediato" href="/admin/students" />
         <SupportCard title="Sin próximas clases" value={String(data.withoutUpcoming)} detail="Prioridad para retención y reagendamiento" href="/admin/reactivacion" />
       </section>
 
-      {/* Retención por fuente / instructor / instrumento */}
+      {/* ── Retención por segmento ────────────────────────── */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
@@ -458,7 +616,6 @@ export default async function VentasPage() {
         </div>
 
         <div className="grid gap-4 lg:grid-cols-3">
-          {/* Por fuente */}
           <div className="rounded-[24px] border border-white/10 bg-[#0b0b0b] p-5">
             <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/35">Por fuente de captación</p>
             <div className="mt-4 space-y-3">
@@ -481,7 +638,6 @@ export default async function VentasPage() {
             </div>
           </div>
 
-          {/* Por instructor */}
           <div className="rounded-[24px] border border-white/10 bg-[#0b0b0b] p-5">
             <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/35">Por instructor</p>
             <div className="mt-4 space-y-3">
@@ -504,7 +660,6 @@ export default async function VentasPage() {
             </div>
           </div>
 
-          {/* Por instrumento */}
           <div className="rounded-[24px] border border-white/10 bg-[#0b0b0b] p-5">
             <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/35">Por instrumento</p>
             <div className="mt-4 space-y-3">
@@ -532,15 +687,9 @@ export default async function VentasPage() {
   )
 }
 
-function ExecutiveCard({
-  title,
-  action,
-  children,
-}: {
-  title: string
-  action?: ReactNode | string
-  children: ReactNode
-}) {
+// ── Componentes ───────────────────────────────────────────────
+
+function ExecutiveCard({ title, action, children }: { title: string; action?: ReactNode | string; children: ReactNode }) {
   return (
     <div className="rounded-[28px] border border-white/10 bg-[#0b0b0b] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.24)] lg:p-6">
       <div className="mb-5 flex items-center justify-between gap-3">
@@ -555,26 +704,18 @@ function ExecutiveCard({
 }
 
 function KpiCard({
-  title,
-  value,
-  trend,
-  accent,
-  icon,
+  title, value, trend, trendColor = 'green', icon,
 }: {
-  title: string
-  value: string
-  trend: string
-  accent: 'orange'
-  icon: React.ReactNode
+  title: string; value: string; trend: string; trendColor?: 'green' | 'orange' | 'red' | 'white'; icon: React.ReactNode
 }) {
-  const accentClass = accent === 'orange' ? 'text-[#ff7a00]' : 'text-white'
+  const trendClass = { green: 'text-[#7ef29a]', orange: 'text-[#ff9a3b]', red: 'text-[#ff6b6b]', white: 'text-white/55' }[trendColor]
   return (
     <div className="rounded-[28px] border border-white/10 bg-[#0b0b0b] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.24)]">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[12px] font-medium uppercase tracking-[0.24em] text-white/35">{title}</p>
-          <p className={`mt-5 text-3xl font-bold tracking-tight ${accentClass}`}>{value}</p>
-          <p className="mt-3 text-sm text-[#7ef29a]">{trend}</p>
+          <p className="mt-5 text-3xl font-bold tracking-tight text-[#ff7a00]">{value}</p>
+          <p className={`mt-3 text-sm ${trendClass}`}>{trend}</p>
         </div>
         <div className="grid h-11 w-11 place-items-center rounded-2xl border border-[#ff7a00]/20 bg-[#ff7a00]/8 text-[#ff7a00]">
           {icon}
@@ -584,36 +725,120 @@ function KpiCard({
   )
 }
 
-function LineChartCard({ data }: { data: TrendPoint[] }) {
+function AlertItem({
+  count, label, sublabel, tone,
+}: { count: number; label: string; sublabel?: string; tone: 'orange' | 'red' }) {
+  const isRed = tone === 'red'
+  return (
+    <div className={`flex items-start gap-3 rounded-2xl border px-4 py-3 ${isRed ? 'border-red-500/20 bg-red-500/5' : 'border-[#ff7a00]/15 bg-[#ff7a00]/5'}`}>
+      <svg className={`mt-0.5 h-4 w-4 shrink-0 ${isRed ? 'text-red-400' : 'text-[#ff9a3b]'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+        <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+      <div className="min-w-0">
+        <div>
+          <span className={`text-sm font-bold ${isRed ? 'text-red-300' : 'text-[#ff9a3b]'}`}>{count} </span>
+          <span className="text-sm text-white/65">{label}</span>
+        </div>
+        {sublabel && <p className="mt-0.5 text-xs text-white/35">{sublabel}</p>}
+      </div>
+    </div>
+  )
+}
+
+function CobranzaBar({ label, pct, amount, color }: { label: string; pct: number; amount: number; color: 'green' | 'orange' | 'red' }) {
+  const barClass = { green: 'from-green-500 to-green-400', orange: 'from-[#ff7a00] to-[#ff9a3b]', red: 'from-red-500 to-red-400' }[color]
+  const textClass = { green: 'text-green-300', orange: 'text-[#ff9a3b]', red: 'text-red-300' }[color]
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold text-white">{label}</p>
+        <span className={`text-2xl font-bold ${textClass}`}>{pct}%</span>
+      </div>
+      <div className="h-3 overflow-hidden rounded-full bg-white/6">
+        <div className={`h-full rounded-full bg-gradient-to-r ${barClass} transition-all`} style={{ width: `${Math.max(pct, 2)}%` }} />
+      </div>
+      <p className="text-xs text-white/45">{peso(amount)}</p>
+    </div>
+  )
+}
+
+const RETENTION_STATE_CONFIG = {
+  active:   { dot: 'bg-green-400',  text: 'text-green-300' },
+  risk:     { dot: 'bg-yellow-400', text: 'text-yellow-300' },
+  critical: { dot: 'bg-red-400',    text: 'text-red-300' },
+}
+
+function RetentionStatCard({ label, value, state }: { label: string; value: number; state: 'active' | 'risk' | 'critical' }) {
+  const cfg = RETENTION_STATE_CONFIG[state]
+  return (
+    <div className="rounded-[22px] border border-white/8 bg-white/[0.02] p-5">
+      <div className="flex items-center gap-2">
+        <span className={`h-2.5 w-2.5 rounded-full ${cfg.dot}`} />
+        <p className="text-[11px] uppercase tracking-[0.24em] text-white/35">{label}</p>
+      </div>
+      <p className={`mt-4 text-4xl font-bold ${cfg.text}`}>{value}</p>
+    </div>
+  )
+}
+
+function DualLineChartCard({ trend, hasRealData }: { trend: MonthlyPoint[]; hasRealData: boolean }) {
   const width = 760
   const height = 300
   const padding = 34
-  const max = Math.max(...data.map((item) => item.value))
-  const min = Math.min(...data.map((item) => item.value))
+
+  const allValues = trend.flatMap(d => [d.billed, d.cobrado])
+  const max = Math.max(...allValues, 1)
+  const min = 0
   const range = Math.max(max - min, 1)
 
-  const points = data.map((item, index) => {
-    const x = padding + (index * (width - padding * 2)) / Math.max(data.length - 1, 1)
-    const y = height - padding - ((item.value - min) / range) * (height - padding * 2)
-    return { ...item, x, y }
+  const toPoint = (item: MonthlyPoint, index: number, key: 'billed' | 'cobrado') => ({
+    label: item.label,
+    x: padding + (index * (width - padding * 2)) / Math.max(trend.length - 1, 1),
+    y: height - padding - ((item[key] - min) / range) * (height - padding * 2),
+    value: item[key],
   })
 
-  const linePath = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ')
-  const areaPath = `${linePath} L ${points[points.length - 1]?.x ?? padding} ${height - padding} L ${points[0]?.x ?? padding} ${height - padding} Z`
+  const factPoints = trend.map((item, i) => toPoint(item, i, 'billed'))
+  const cobPoints = trend.map((item, i) => toPoint(item, i, 'cobrado'))
+
+  const linePath = (pts: typeof factPoints) =>
+    pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')
+
+  const lastBilled = trend[trend.length - 1]?.billed ?? 0
+  const lastCobrado = trend[trend.length - 1]?.cobrado ?? 0
+  const brecha = lastBilled - lastCobrado
+
+  if (!hasRealData || trend.every(m => m.billed === 0)) {
+    return (
+      <div>
+        <div className="mb-4 grid grid-cols-3 gap-3">
+          <InlineKpi label="Facturado" value="—" />
+          <InlineKpi label="Cobrado" value="—" highlight />
+          <InlineKpi label="Brecha" value="—" />
+        </div>
+        <EmptyState text="Sin datos de pagos para mostrar el gráfico. Se actualizará automáticamente al registrar pagos." />
+      </div>
+    )
+  }
 
   return (
     <div>
       <div className="mb-4 grid grid-cols-3 gap-3">
-        <InlineKpi label="Objetivo actual" value={peso(data[data.length - 1]?.value ?? 0)} />
-        <InlineKpi label="Mes previo" value={peso(data[data.length - 2]?.value ?? 0)} />
-        <InlineKpi label="Tendencia" value="Positiva" highlight />
+        <InlineKpi label="Facturado" value={shortPeso(lastBilled)} />
+        <InlineKpi label="Cobrado" value={shortPeso(lastCobrado)} highlight />
+        <InlineKpi label="Brecha" value={shortPeso(brecha)} />
       </div>
-      <div className="relative overflow-hidden rounded-[24px] border border-white/8 bg-[radial-gradient(circle_at_top,rgba(255,122,0,0.12),transparent_42%),linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01))] p-4">
-        <svg viewBox={`0 0 ${width} ${height}`} className="h-[290px] w-full">
+      <div className="relative overflow-hidden rounded-[24px] border border-white/8 bg-[radial-gradient(circle_at_top,rgba(255,122,0,0.08),transparent_42%),linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01))] p-4">
+        <svg viewBox={`0 0 ${width} ${height}`} className="h-[270px] w-full">
           <defs>
-            <linearGradient id="salesArea" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stopColor="#ff7a00" stopOpacity="0.35" />
-              <stop offset="100%" stopColor="#ff7a00" stopOpacity="0.02" />
+            <linearGradient id="factArea" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor="#ff7a00" stopOpacity="0.22" />
+              <stop offset="100%" stopColor="#ff7a00" stopOpacity="0.01" />
+            </linearGradient>
+            <linearGradient id="cobArea" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor="#22c55e" stopOpacity="0.16" />
+              <stop offset="100%" stopColor="#22c55e" stopOpacity="0.01" />
             </linearGradient>
           </defs>
 
@@ -622,34 +847,39 @@ function LineChartCard({ data }: { data: TrendPoint[] }) {
             const value = max - (range * step) / 4
             return (
               <g key={step}>
-                <line x1={padding} x2={width - padding} y1={y} y2={y} stroke="rgba(255,255,255,0.08)" strokeDasharray="4 6" />
-                <text x={8} y={y + 4} fill="rgba(255,255,255,0.35)" fontSize="11">
-                  {shortPeso(value)}
-                </text>
+                <line x1={padding} x2={width - padding} y1={y} y2={y} stroke="rgba(255,255,255,0.06)" strokeDasharray="4 6" />
+                <text x={8} y={y + 4} fill="rgba(255,255,255,0.28)" fontSize="11">{shortPeso(value)}</text>
               </g>
             )
           })}
 
-          <path d={areaPath} fill="url(#salesArea)" />
-          <path d={linePath} fill="none" stroke="#ff7a00" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+          <path d={`${linePath(factPoints)} L ${factPoints[factPoints.length - 1]?.x ?? padding} ${height - padding} L ${factPoints[0]?.x ?? padding} ${height - padding} Z`} fill="url(#factArea)" />
+          <path d={`${linePath(cobPoints)} L ${cobPoints[cobPoints.length - 1]?.x ?? padding} ${height - padding} L ${cobPoints[0]?.x ?? padding} ${height - padding} Z`} fill="url(#cobArea)" />
+          <path d={linePath(factPoints)} fill="none" stroke="#ff7a00" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d={linePath(cobPoints)} fill="none" stroke="#22c55e" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
 
-          {points.map((point) => (
-            <g key={point.label}>
-              <circle cx={point.x} cy={point.y} r="5.5" fill="#ff7a00" />
-              <circle cx={point.x} cy={point.y} r="10" fill="#ff7a00" opacity="0.14" />
+          {factPoints.filter(p => p.value > 0).map((p) => (
+            <g key={`f-${p.label}`}>
+              <circle cx={p.x} cy={p.y} r="4.5" fill="#ff7a00" />
+              <circle cx={p.x} cy={p.y} r="9" fill="#ff7a00" opacity="0.12" />
             </g>
           ))}
-
-          <rect x={width - 175} y={24} width={145} height={42} rx={12} fill="#ff7a00" />
-          <text x={width - 160} y={50} fill="#ffffff" fontSize="18" fontWeight="700">
-            {peso(data[data.length - 1]?.value ?? 0)}
-          </text>
+          {cobPoints.filter(p => p.value > 0).map((p) => (
+            <g key={`c-${p.label}`}>
+              <circle cx={p.x} cy={p.y} r="4.5" fill="#22c55e" />
+              <circle cx={p.x} cy={p.y} r="9" fill="#22c55e" opacity="0.12" />
+            </g>
+          ))}
         </svg>
 
-        <div className="mt-3 grid grid-cols-6 gap-2 text-center text-xs text-white/45">
-          {data.map((item) => (
-            <span key={item.label}>{item.label}</span>
-          ))}
+        <div className="mt-2 flex items-center justify-between">
+          <div className="grid grid-cols-6 gap-2 text-center text-xs text-white/40">
+            {trend.map((item) => <span key={item.label}>{item.label}</span>)}
+          </div>
+          <div className="flex items-center gap-4 text-xs text-white/55">
+            <span className="flex items-center gap-1.5"><span className="h-2 w-4 rounded-full bg-[#ff7a00]" />Facturado</span>
+            <span className="flex items-center gap-1.5"><span className="h-2 w-4 rounded-full bg-green-500" />Cobrado</span>
+          </div>
         </div>
       </div>
     </div>
@@ -658,22 +888,17 @@ function LineChartCard({ data }: { data: TrendPoint[] }) {
 
 function DonutChart({ items, total, centerLabel }: { items: DonutItem[]; total: number; centerLabel: string }) {
   const gradient = items.map((item, index) => {
-    const start = items.slice(0, index).reduce((sum, current) => sum + current.value, 0)
-    const startPct = (start / total) * 100
-    const endPct = ((start + item.value) / total) * 100
-    return `${item.color} ${startPct}% ${endPct}%`
+    const start = items.slice(0, index).reduce((sum, c) => sum + c.value, 0)
+    return `${item.color} ${(start / total) * 100}% ${((start + item.value) / total) * 100}%`
   }).join(', ')
 
   return (
     <div className="flex items-center justify-center">
-      <div
-        className="relative h-[230px] w-[230px] rounded-full"
-        style={{ backgroundImage: `conic-gradient(${gradient})` }}
-      >
+      <div className="relative h-[220px] w-[220px] rounded-full" style={{ backgroundImage: `conic-gradient(${gradient})` }}>
         <div className="absolute inset-[26px] rounded-full border border-white/8 bg-[#0d0d0d]" />
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
           <p className="text-sm text-white/45">{centerLabel}</p>
-          <p className="mt-1 text-[26px] font-bold text-white">{peso(total)}</p>
+          <p className="mt-1 text-[22px] font-bold text-white">{peso(total)}</p>
         </div>
       </div>
     </div>
@@ -689,7 +914,7 @@ function LegendList({ items, total, compact = false }: { items: DonutItem[]; tot
           <div className="min-w-0 flex-1">
             <p className="text-white/82 leading-snug">{item.label}</p>
             <div className="mt-1 flex items-center gap-3 text-xs">
-              <span className="text-white/55">{compact ? peso(item.value) : peso(item.value)}</span>
+              <span className="text-white/55">{peso(item.value)}</span>
               <span className="text-white/35">{percentage(item.value, total)}%</span>
             </div>
           </div>
@@ -709,19 +934,7 @@ function MiniMetric({ label, value, hint }: { label: string; value: string; hint
   )
 }
 
-function ProgressRow({
-  label,
-  secondary,
-  value,
-  max,
-  suffix = '',
-}: {
-  label: string
-  secondary: string
-  value: number
-  max: number
-  suffix?: string
-}) {
+function ProgressRow({ label, secondary, value, max, suffix = '' }: { label: string; secondary: string; value: number; max: number; suffix?: string }) {
   const pct = max > 0 ? Math.max(6, Math.round((value / max) * 100)) : 0
   return (
     <div className="space-y-2">
@@ -741,10 +954,7 @@ function ProgressRow({
 
 function SupportCard({ title, value, detail, href }: { title: string; value: string; detail: string; href: string }) {
   return (
-    <Link
-      href={href}
-      className="rounded-[24px] border border-white/10 bg-[#0b0b0b] p-5 transition hover:border-[#ff7a00]/30 hover:bg-[#101010]"
-    >
+    <Link href={href} className="rounded-[24px] border border-white/10 bg-[#0b0b0b] p-5 transition hover:border-[#ff7a00]/30 hover:bg-[#101010]">
       <p className="text-[11px] uppercase tracking-[0.24em] text-white/30">{title}</p>
       <p className="mt-4 text-3xl font-bold text-white">{value}</p>
       <p className="mt-2 text-sm text-white/42">{detail}</p>
@@ -771,30 +981,22 @@ function EmptyState({ text }: { text: string }) {
 
 function StatusPill({ tone, children }: { tone: 'green' | 'orange'; children: ReactNode }) {
   return (
-    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
-      tone === 'green'
-        ? 'bg-[#1f4d2f] text-[#8bf6ab]'
-        : 'bg-[#4a2d12] text-[#ffb25c]'
-    }`}>
+    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${tone === 'green' ? 'bg-[#1f4d2f] text-[#8bf6ab]' : 'bg-[#4a2d12] text-[#ffb25c]'}`}>
       {children}
     </span>
   )
 }
 
 function AvatarBadge({ label }: { label: string }) {
-  const initials = label
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? '')
-    .join('')
-
+  const initials = label.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase() ?? '').join('')
   return (
     <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-white/10 bg-gradient-to-br from-[#232323] to-[#111111] text-xs font-bold text-white">
       {initials}
     </div>
   )
 }
+
+// ── Iconos ────────────────────────────────────────────────────
 
 function CurrencyIcon() {
   return (
@@ -804,30 +1006,43 @@ function CurrencyIcon() {
   )
 }
 
-function CartIcon() {
+function CheckCircleIcon() {
   return (
     <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-      <path d="M3 4h2l2.4 10.5a1 1 0 0 0 1 .8H18a1 1 0 0 0 1-.8L21 7H7.2" />
-      <circle cx="10" cy="19" r="1.4" />
-      <circle cx="18" cy="19" r="1.4" />
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+      <polyline points="22 4 12 14.01 9 11.01"/>
     </svg>
   )
 }
 
-function TrendIcon() {
+function AlertTriangleIcon() {
   return (
     <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-      <path d="M4 16l6-6 4 4 6-8" />
-      <path d="M20 10V6h-4" />
+      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
     </svg>
   )
 }
 
-function UserIcon() {
+function RetentionIcon() {
   return (
     <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4 20c0-4.2 3.6-7 8-7s8 2.8 8 7" />
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+      <circle cx="9" cy="7" r="4"/>
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
     </svg>
+  )
+}
+
+function RetentionActivityStat({
+  label, value, sub, highlight, warn,
+}: { label: string; value: number; sub: string; highlight?: boolean; warn?: boolean }) {
+  const valCls = highlight ? 'text-[#ff9a3b]' : warn && value > 0 ? 'text-red-300' : 'text-white'
+  return (
+    <div className="rounded-[22px] border border-white/8 bg-white/[0.02] p-4">
+      <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-white/30">{label}</p>
+      <p className={`mt-3 text-3xl font-bold ${valCls}`}>{value}</p>
+      <p className="mt-1 text-xs text-white/35">{sub}</p>
+    </div>
   )
 }

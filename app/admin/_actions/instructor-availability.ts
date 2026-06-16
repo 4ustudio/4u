@@ -3,8 +3,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function db(): any { return createAdminClient() }
 
 export interface InstructorAvailability {
   id: string
@@ -37,25 +35,25 @@ export interface AvailabilityLog {
 }
 
 export async function getInstructorAvailability(instructorId: string): Promise<InstructorAvailability[]> {
-  const { data, error } = await db()
+  const { data, error } = await createAdminClient()
     .from('instructor_availability')
     .select('*')
     .eq('instructor_id', instructorId)
     .order('day_of_week')
     .order('start_time')
   if (error) throw new Error(error.message)
-  return data ?? []
+  return (data ?? []) as unknown as InstructorAvailability[]
 }
 
 export async function getAvailabilityLog(instructorId: string): Promise<AvailabilityLog[]> {
-  const { data, error } = await db()
+  const { data, error } = await createAdminClient()
     .from('instructor_availability_log')
     .select('*')
     .eq('instructor_id', instructorId)
     .order('changed_at', { ascending: false })
     .limit(50)
   if (error) throw new Error(error.message)
-  return data ?? []
+  return (data ?? []) as unknown as AvailabilityLog[]
 }
 
 export async function createAvailabilityAction(
@@ -75,15 +73,15 @@ export async function createAvailabilityAction(
     return { error: 'Completa todos los campos obligatorios.' }
   }
 
-  const { data: row, error } = await db()
+  const { data: row, error } = await createAdminClient()
     .from('instructor_availability')
-    .insert({ instructor_id, day_of_week, start_time, end_time, status, valid_from, valid_until, notes })
+    .insert({ instructor_id, day_of_week, start_time, end_time, status, valid_from, valid_until, notes } as never)
     .select('id')
     .single()
 
   if (error) return { error: error.message }
 
-  await db().from('instructor_availability_log').insert({
+  await createAdminClient().from('instructor_availability_log').insert({
     instructor_id,
     availability_id: row?.id,
     action: 'created',
@@ -119,14 +117,14 @@ export async function updateAvailabilityAction(
     return { error: 'Completa todos los campos obligatorios.' }
   }
 
-  const { error } = await db()
+  const { error } = await createAdminClient()
     .from('instructor_availability')
-    .update({ day_of_week, start_time, end_time, status, valid_from, valid_until, notes, updated_at: new Date().toISOString() })
+    .update({ day_of_week, start_time, end_time, status, valid_from, valid_until, notes, updated_at: new Date().toISOString() } as never)
     .eq('id', id)
 
   if (error) return { error: error.message }
 
-  await db().from('instructor_availability_log').insert({
+  await createAdminClient().from('instructor_availability_log').insert({
     instructor_id,
     availability_id: id,
     action: 'updated',
@@ -153,13 +151,14 @@ export async function deleteAvailabilityAction(
 
   if (!id || !instructor_id) return { error: 'ID requerido.' }
 
-  const { data: row } = await db()
+  const { data: rowRaw } = await createAdminClient()
     .from('instructor_availability')
     .select('*')
     .eq('id', id)
     .single()
+  const row = rowRaw as unknown as InstructorAvailability | null
 
-  const { error } = await db()
+  const { error } = await createAdminClient()
     .from('instructor_availability')
     .delete()
     .eq('id', id)
@@ -167,7 +166,7 @@ export async function deleteAvailabilityAction(
   if (error) return { error: error.message }
 
   if (row) {
-    await db().from('instructor_availability_log').insert({
+    await createAdminClient().from('instructor_availability_log').insert({
       instructor_id,
       availability_id: id,
       action: 'deleted',

@@ -88,7 +88,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/admin/agenda',       label: 'Clases',       compactLabel: 'Clases',        icon: Icon.agenda,      area: 'academic' },
   { href: '/admin/students',     label: 'Estudiantes',  compactLabel: 'Alumnos',       icon: Icon.students,    area: 'academic' },
   { href: '/admin/pagos',        label: 'Pagos',        compactLabel: 'Cobros',        icon: Icon.pagos,       area: 'executive' },
-  { href: '/admin/reactivacion', label: 'Retención',    compactLabel: 'Retención',     icon: Icon.retention,   area: 'academic' },
+  { href: '/admin/retencion',    label: 'Retención',    compactLabel: 'Retención',     icon: Icon.retention,   area: 'academic' },
   { href: '/admin/instructors',  label: 'Instructores', compactLabel: 'Profesores',    icon: Icon.instructors, area: 'academic' },
   { href: '/admin/enrollments',  label: 'Inscripciones',compactLabel: 'Leads nuevos',  icon: Icon.enrollments, area: 'academic' },
   { href: '/admin/actividad',    label: 'Actividad',    compactLabel: 'Auditoría',     icon: Icon.activity,    area: 'shared' },

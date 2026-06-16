@@ -7,8 +7,6 @@ import { activity } from '@/lib/activity'
 import { getBirthdayBenefitStatus } from '@/lib/students/birthday'
 import { createBoldPaymentLink } from '@/lib/bold/client'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function db(): any { return createAdminClient() }
 
 // ── Tipos ──────────────────────────────────────────────────────────
 
@@ -147,7 +145,7 @@ async function getActorInfo(): Promise<{ actor_name: string; actor_user_id: stri
 }
 
 async function updateStudentRiskFromOverdue(student_id: string): Promise<void> {
-  const { count } = await db()
+  const { count } = await createAdminClient()
     .from('payments')
     .select('id', { count: 'exact', head: true })
     .eq('student_id', student_id)
@@ -159,7 +157,7 @@ async function updateStudentRiskFromOverdue(student_id: string): Promise<void> {
   else if (overdue >= 2) risk_level = 'alto'
   else if (overdue >= 1) risk_level = 'medio'
 
-  await db().from('students').update({ risk_level, updated_at: new Date().toISOString() }).eq('id', student_id)
+  await createAdminClient().from('students').update({ risk_level, updated_at: new Date().toISOString() }).eq('id', student_id)
 }
 
 // ── Queries ────────────────────────────────────────────────────────
@@ -174,7 +172,7 @@ export async function getPayments(tab: PaymentTab = 'all', search = '', page = 1
     const from = (page - 1) * PAGE_SIZE
     const to   = from + PAGE_SIZE - 1
 
-    let query = db()
+    let query = createAdminClient()
       .from('payments')
       .select(`
         *,
@@ -222,11 +220,11 @@ export async function getPaymentMetrics(): Promise<PaymentMetrics> {
     const month = now.getMonth() + 1
 
     const [recaudadoRes, pendientesRes, vencidosRes, descuentosRes, moraRes] = await Promise.all([
-      db().from('payments').select('final_amount').eq('status', 'paid').eq('period_year', year).eq('period_month', month),
-      db().from('payments').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
-      db().from('payments').select('id', { count: 'exact', head: true }).eq('status', 'overdue'),
-      db().from('payments').select('id', { count: 'exact', head: true }).gt('discount_amount', 0),
-      db().from('payments').select('final_amount').eq('status', 'overdue'),
+      createAdminClient().from('payments').select('final_amount').eq('status', 'paid').eq('period_year', year).eq('period_month', month),
+      createAdminClient().from('payments').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+      createAdminClient().from('payments').select('id', { count: 'exact', head: true }).eq('status', 'overdue'),
+      createAdminClient().from('payments').select('id', { count: 'exact', head: true }).gt('discount_amount', 0),
+      createAdminClient().from('payments').select('final_amount').eq('status', 'overdue'),
     ])
 
     const recaudado  = (recaudadoRes.data ?? []).reduce((s: number, r: any) => s + (r.final_amount ?? 0), 0)
@@ -249,17 +247,17 @@ export async function getBoldMetrics(): Promise<BoldMetrics> {
     const today = new Date().toISOString().split('T')[0]
 
     const [pagosHoyRes, lastWebhookRes, failedRes] = await Promise.all([
-      db().from('payments')
+      createAdminClient().from('payments')
         .select('final_amount')
         .eq('payment_method', 'bold')
         .eq('status', 'paid')
         .gte('paid_at', `${today}T00:00:00`),
-      db().from('system_activity_log')
+      createAdminClient().from('system_activity_log')
         .select('created_at')
         .eq('action', 'payment.bold_webhook_received')
         .order('created_at', { ascending: false })
         .limit(1),
-      db().from('system_activity_log')
+      createAdminClient().from('system_activity_log')
         .select('id', { count: 'exact', head: true })
         .eq('action', 'payment.bold_webhook_failed')
         .gte('created_at', `${today}T00:00:00`),
@@ -280,7 +278,7 @@ export async function getBoldMetrics(): Promise<BoldMetrics> {
 
 export async function getStudentPayments(student_id: string): Promise<StudentPaymentRow[]> {
   try {
-    const { data: payments, error } = await db()
+    const { data: payments, error } = await createAdminClient()
       .from('payments')
       .select('id, period_year, period_month, status, final_amount, original_amount, discount_amount, payment_method, paid_at, due_date, plan_name')
       .eq('student_id', student_id)
@@ -291,7 +289,7 @@ export async function getStudentPayments(student_id: string): Promise<StudentPay
     if (error || !payments?.length) return []
 
     const paymentIds = payments.map((p: any) => p.id)
-    const { data: logEntries } = await db()
+    const { data: logEntries } = await createAdminClient()
       .from('system_activity_log')
       .select('entity_id')
       .eq('entity_type', 'payment')
@@ -305,7 +303,7 @@ export async function getStudentPayments(student_id: string): Promise<StudentPay
 
 export async function getStudentPaymentDefaults(student_id: string): Promise<StudentPaymentDefaults | null> {
   try {
-    const { data: student } = await db()
+    const { data: student } = await createAdminClient()
       .from('students')
       .select('id, name, plan_name, birth_date, birthday_benefit_used, birthday_benefit_year, birthday_discount_percent, student_status')
       .eq('id', student_id)
@@ -336,7 +334,7 @@ export async function getStudentPaymentDefaults(student_id: string): Promise<Stu
 
 export async function getStudentsForSearch(): Promise<StudentOption[]> {
   try {
-    const { data } = await db()
+    const { data } = await createAdminClient()
       .from('students')
       .select('id, name, phone, plan_name, birth_date, birthday_benefit_used, birthday_benefit_year, birthday_discount_percent, student_status')
       .is('archived_at', null)
@@ -357,7 +355,7 @@ export async function registerPayment(input: RegisterPaymentInput): Promise<{ er
     const paid_at = input.paid_at ?? new Date().toISOString()
     const status: PaymentStatus = 'paid'
 
-    const { data, error } = await db()
+    const { data, error } = await createAdminClient()
       .from('payments')
       .insert({
         student_id:      input.student_id,
@@ -383,11 +381,11 @@ export async function registerPayment(input: RegisterPaymentInput): Promise<{ er
     if (error) return { error: error.message }
 
     // Sincronizar campos en students
-    await db().rpc('sync_student_payment_fields', { p_student_id: input.student_id })
+    await createAdminClient().rpc('sync_student_payment_fields', { p_student_id: input.student_id })
 
     // Aplicar beneficio de cumpleaños si corresponde
     if (input.apply_birthday_benefit) {
-      await db().from('students').update({
+      await createAdminClient().from('students').update({
         birthday_benefit_used:  true,
         birthday_benefit_year:  new Date().getFullYear(),
         updated_at:             new Date().toISOString(),
@@ -395,7 +393,7 @@ export async function registerPayment(input: RegisterPaymentInput): Promise<{ er
     }
 
     // Activity log
-    const { data: student } = await db().from('students').select('name').eq('id', input.student_id).single()
+    const { data: student } = await createAdminClient().from('students').select('name').eq('id', input.student_id).single()
     await activity.paymentReceived({
       payment_id:   data.id,
       student_name: student?.name ?? '—',
@@ -431,7 +429,7 @@ export async function applyDiscount(payment_id: string, input: ApplyDiscountInpu
   try {
     const actor = await getActorInfo()
 
-    const { data: payment } = await db()
+    const { data: payment } = await createAdminClient()
       .from('payments')
       .select('student_id, original_amount, status, students(name)')
       .eq('id', payment_id)
@@ -444,7 +442,7 @@ export async function applyDiscount(payment_id: string, input: ApplyDiscountInpu
     const final_amount = payment.original_amount - input.discount_amount
     if (final_amount < 0) return { error: 'El descuento supera el valor original.' }
 
-    const { error } = await db()
+    const { error } = await createAdminClient()
       .from('payments')
       .update({
         discount_amount: input.discount_amount,
@@ -460,7 +458,7 @@ export async function applyDiscount(payment_id: string, input: ApplyDiscountInpu
 
     // Marcar beneficio de cumpleaños si aplica
     if (input.discount_reason === 'cumpleaños') {
-      await db().from('students').update({
+      await createAdminClient().from('students').update({
         birthday_benefit_used:  true,
         birthday_benefit_year:  new Date().getFullYear(),
         updated_at:             new Date().toISOString(),
@@ -490,7 +488,7 @@ export async function markPaymentOverdue(payment_id: string): Promise<{ error: s
   try {
     const actor = await getActorInfo()
 
-    const { data: payment } = await db()
+    const { data: payment } = await createAdminClient()
       .from('payments')
       .select('student_id, final_amount, period_year, period_month, status, students(name)')
       .eq('id', payment_id)
@@ -499,7 +497,7 @@ export async function markPaymentOverdue(payment_id: string): Promise<{ error: s
     if (!payment) return { error: 'Pago no encontrado.' }
     if (payment.status !== 'pending') return { error: 'Solo los pagos pendientes pueden marcarse como vencidos.' }
 
-    const { error } = await db()
+    const { error } = await createAdminClient()
       .from('payments')
       .update({ status: 'overdue', updated_at: new Date().toISOString() })
       .eq('id', payment_id)
@@ -535,7 +533,7 @@ export async function processOverduePayments(): Promise<{ processed: number; err
     const today = new Date().toISOString().split('T')[0]
 
     // Capturar los que serán afectados antes de actualizarlos
-    const { data: toProcess } = await db()
+    const { data: toProcess } = await createAdminClient()
       .from('payments')
       .select('id, student_id, final_amount, period_year, period_month, students(name)')
       .eq('status', 'pending')
@@ -544,20 +542,20 @@ export async function processOverduePayments(): Promise<{ processed: number; err
     if (!toProcess?.length) return { processed: 0, error: null }
 
     // Llamar función DB (UPDATE masivo)
-    await db().rpc('compute_overdue_payments')
+    await createAdminClient().rpc('compute_overdue_payments')
 
     // Procesar cada uno: risk + log
     const processed = toProcess.length
-    const studentIds = [...new Set(toProcess.map((p: any) => p.student_id))]
+    const studentIds = [...new Set(toProcess.map(p => p.student_id as string))]
 
     await Promise.all([
       // Actualizar risk_level por estudiante
-      ...studentIds.map((sid: string) => updateStudentRiskFromOverdue(sid)),
+      ...studentIds.map(sid => updateStudentRiskFromOverdue(sid)),
       // Registrar eventos
-      ...toProcess.map((p: any) =>
+      ...toProcess.map(p =>
         activity.paymentOverdue({
           payment_id:        p.id,
-          student_name:      (p.students as any)?.name ?? '—',
+          student_name:      (p.students as { name?: string | null } | null)?.name ?? '—',
           period_year:       p.period_year,
           period_month:      p.period_month,
           final_amount:      p.final_amount,
@@ -593,7 +591,7 @@ export async function createPendingPayment(input: CreateCobroInput): Promise<{ e
     const final_amount = input.original_amount - input.discount_amount
     if (final_amount < 0) return { error: 'El descuento no puede superar el valor original.' }
 
-    const { data, error } = await db()
+    const { data, error } = await createAdminClient()
       .from('payments')
       .insert({
         student_id:       input.student_id,
@@ -631,7 +629,7 @@ export async function generateBoldCheckout(payment_id: string): Promise<{
   error: string | null
 }> {
   try {
-    const { data: payment, error: fetchError } = await db()
+    const { data: payment, error: fetchError } = await createAdminClient()
       .from('payments')
       .select('id, student_id, final_amount, status, period_year, period_month, students(name)')
       .eq('id', payment_id)
@@ -654,7 +652,7 @@ export async function generateBoldCheckout(payment_id: string): Promise<{
     if (!checkoutUrl) return { url: null, error: 'Bold no retornó URL de pago.' }
 
     // Guardar link en metadata para trazabilidad
-    await db()
+    await createAdminClient()
       .from('payments')
       .update({
         metadata:   { bold_checkout_url: checkoutUrl, bold_link_id: boldRes.payload.payment_link },

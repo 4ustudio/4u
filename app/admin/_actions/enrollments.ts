@@ -9,8 +9,6 @@ import { activity } from '@/lib/activity'
 
 // Para lecturas usa el cliente autenticado (JWT del admin + política RLS authenticated)
 // Para escrituras usa el cliente admin (service_role)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function db(): any { return createAdminClient() }
 
 const STATUS_NAMES: Record<string, string> = {
   pending:      'Nuevo',
@@ -36,7 +34,7 @@ export async function getEnrollments(): Promise<{ data: any[]; error: string | n
 
     if (error) {
       // Fallback a admin client si el cliente auth falla
-      const { data: d2, error: e2 } = await db()
+      const { data: d2, error: e2 } = await createAdminClient()
         .from('enrollments')
         .select('*')
         .order('created_at', { ascending: false })
@@ -60,7 +58,7 @@ export async function getEnrollment(id: string) {
       .single()
 
     if (error) {
-      const { data: d2, error: e2 } = await db()
+      const { data: d2, error: e2 } = await createAdminClient()
         .from('enrollments')
         .select('*')
         .eq('id', id)
@@ -97,7 +95,7 @@ export async function addEnrollmentEvent(
   type: EnrollmentEventType,
   description: string
 ): Promise<void> {
-  await db()
+  await createAdminClient()
     .from('enrollment_events')
     .insert({ enrollment_id: enrollmentId, type, description })
 }
@@ -111,14 +109,14 @@ export async function updateEnrollmentStatusAction(
 
   if (!id || !status) return { error: 'Faltan datos.' }
 
-  const { error } = await db()
+  const { error } = await createAdminClient()
     .from('enrollments')
     .update({ status })
     .eq('id', id)
 
   if (error) return { error: error.message }
 
-  await db().from('enrollment_events').insert({
+  await createAdminClient().from('enrollment_events').insert({
     enrollment_id: id,
     type:         'status_changed',
     description:  `Estado cambiado a ${STATUS_NAMES[status] ?? status}`,
@@ -132,14 +130,14 @@ export async function saveInternalNotes(
   enrollmentId: string,
   notes: string
 ): Promise<{ error?: string }> {
-  const { error } = await db()
+  const { error } = await createAdminClient()
     .from('enrollments')
     .update({ internal_notes: notes || null })
     .eq('id', enrollmentId)
 
   if (error) return { error: error.message }
 
-  await db().from('enrollment_events').insert({
+  await createAdminClient().from('enrollment_events').insert({
     enrollment_id: enrollmentId,
     type:         'note_added',
     description:  'Nota interna actualizada',
@@ -158,7 +156,7 @@ export async function updateEnrollmentFieldsAction(
     lost_reason?: string | null
   }
 ): Promise<{ error?: string }> {
-  const { error } = await db()
+  const { error } = await createAdminClient()
     .from('enrollments')
     .update(fields)
     .eq('id', enrollmentId)
@@ -175,7 +173,7 @@ export async function getEnrollmentFunnelMetrics(): Promise<EnrollmentFunnelMetr
     startOfMonth.setDate(1)
     startOfMonth.setHours(0, 0, 0, 0)
 
-    const { data, error } = await db()
+    const { data, error } = await createAdminClient()
       .from('enrollments')
       .select('id, status, course_interest, source, created_at, converted_at')
 
@@ -196,7 +194,7 @@ export async function getEnrollmentFunnelMetrics(): Promise<EnrollmentFunnelMetr
     const sourceMap: Record<string, number> = {}
     const conversionDays: number[] = []
 
-    for (const r of data as any[]) {
+    for (const r of data as Array<Record<string, unknown>>) {
       const s = r.status
       if (s === 'pending')                         counts.pending++
       else if (s === 'contacted')                  counts.contacted++
@@ -204,12 +202,12 @@ export async function getEnrollmentFunnelMetrics(): Promise<EnrollmentFunnelMetr
       else if (s === 'converted')                  counts.converted++
       else if (s === 'perdido' || s === 'cancelled') counts.perdido++
 
-      if (r.course_interest) courseMap[r.course_interest] = (courseMap[r.course_interest] ?? 0) + 1
-      if (r.source)          sourceMap[r.source]           = (sourceMap[r.source]           ?? 0) + 1
+      if (r.course_interest) { const ci = String(r.course_interest); courseMap[ci] = (courseMap[ci] ?? 0) + 1 }
+      if (r.source)          { const src = String(r.source); sourceMap[src] = (sourceMap[src] ?? 0) + 1 }
 
       if (s === 'converted' && r.converted_at && r.created_at) {
         const days = Math.round(
-          (new Date(r.converted_at).getTime() - new Date(r.created_at).getTime()) / 86400000
+          (new Date(String(r.converted_at)).getTime() - new Date(String(r.created_at)).getTime()) / 86400000
         )
         if (days >= 0) conversionDays.push(days)
       }
@@ -267,7 +265,7 @@ export async function convertEnrollmentToStudent(
   const last_name  = parts.slice(1).join(' ') || ''
   const now = new Date().toISOString()
 
-  const { data: student, error: studentErr } = await db()
+  const { data: student, error: studentErr } = await createAdminClient()
     .from('students')
     .insert({
       name:         enrollment.student_name,
@@ -292,7 +290,7 @@ export async function convertEnrollmentToStudent(
     return { error: studentErr.message }
   }
 
-  const { error: updateErr } = await db()
+  const { error: updateErr } = await createAdminClient()
     .from('enrollments')
     .update({
       status:               'converted',
@@ -304,13 +302,13 @@ export async function convertEnrollmentToStudent(
   if (updateErr) return { error: updateErr.message }
 
   // Vincular documentos firmados al student recién creado
-  await db()
+  await createAdminClient()
     .from('student_documents')
     .update({ student_id: student.id })
     .eq('enrollment_id', enrollmentId)
     .is('student_id', null)
 
-  await db().from('enrollment_events').insert({
+  await createAdminClient().from('enrollment_events').insert({
     enrollment_id: enrollmentId,
     type:         'converted',
     description:  'Convertido a estudiante activo',
@@ -351,7 +349,7 @@ export interface EnrollmentContractDoc {
 
 export async function getEnrollmentContract(enrollmentId: string): Promise<EnrollmentContractDoc | null> {
   const { getSignedUrl } = await import('@/lib/storage')
-  const { data } = await db()
+  const { data } = await createAdminClient()
     .from('student_documents')
     .select('id, document_type, document_version, signed_at, pdf_url, document_hash')
     .eq('enrollment_id', enrollmentId)

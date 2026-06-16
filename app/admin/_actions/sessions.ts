@@ -1,14 +1,20 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
+import { createAuthServerClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type { ClassSession } from '@/types/admin'
 import { safeRecordStudentActivity } from './retention'
 import { activity } from '@/lib/activity'
+import { parseRole, hasAcademicAccess } from '@/lib/auth/roles'
 
-// El cliente admin no tiene tipos de DB generados — cast a any para RPCs y tablas nuevas
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function db(): any { return createAdminClient() }
+async function assertAdmin(): Promise<{ error: string } | null> {
+  const supabase = await createAuthServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const role = parseRole(user?.user_metadata ?? null)
+  if (!hasAcademicAccess(role)) return { error: 'No autorizado.' }
+  return null
+}
 
 // ─── Lectura ────────────────────────────────────────────────
 
@@ -17,7 +23,7 @@ export async function getWeekSessions(weekStart: string): Promise<ClassSession[]
   const end   = new Date(weekStart)
   end.setDate(end.getDate() + 6)
 
-  const { data, error } = await db()
+  const { data, error } = await createAdminClient()
     .from('class_sessions')
     .select(`
       *,
@@ -40,7 +46,7 @@ export async function getBlockedDates(weekStart: string) {
   const end   = new Date(weekStart)
   end.setDate(end.getDate() + 6)
 
-  const { data, error } = await db()
+  const { data, error } = await createAdminClient()
     .from('blocked_dates')
     .select('*')
     .gte('blocked_date', start.toISOString().split('T')[0])
@@ -51,7 +57,7 @@ export async function getBlockedDates(weekStart: string) {
 }
 
 export async function getAvailableSlots(date: string, studentId?: string) {
-  const { data, error } = await db().rpc('fn_available_slots', {
+  const { data, error } = await createAdminClient().rpc('fn_available_slots', {
     p_date:       date,
     p_student_id: studentId ?? null,
   })
@@ -76,6 +82,9 @@ export async function bookSessionAction(
   _prev: { error?: string; success?: boolean },
   formData: FormData
 ): Promise<{ error?: string; success?: boolean }> {
+  const authErr = await assertAdmin()
+  if (authErr) return authErr
+
   const input: BookInput = {
     student_id:    formData.get('student_id')   as string,
     classroom_id:  formData.get('classroom_id') as string,
@@ -90,7 +99,7 @@ export async function bookSessionAction(
     return { error: 'Completa todos los campos obligatorios.' }
   }
 
-  const { data, error } = await db().rpc('fn_book_session', {
+  const { data: rpcData, error } = await createAdminClient().rpc('fn_book_session', {
     p_student_id:    input.student_id,
     p_classroom_id:  input.classroom_id,
     p_course_id:     input.course_id,
@@ -99,6 +108,7 @@ export async function bookSessionAction(
     p_instructor_id: input.instructor_id ?? null,
     p_notes:         input.notes ?? null,
   })
+  const data = rpcData as { success: boolean; error?: string; session_id?: string } | null
 
   if (error) return { error: error.message }
   if (!data?.success) return { error: data?.error ?? 'No se pudo crear la clase.' }
@@ -124,19 +134,23 @@ export async function cancelSessionAction(
   _prev: { error?: string; success?: boolean; late?: boolean },
   formData: FormData
 ): Promise<{ error?: string; success?: boolean; late?: boolean }> {
+  const authErr = await assertAdmin()
+  if (authErr) return authErr
+
   const sessionId = formData.get('session_id') as string
   const reason    = (formData.get('reason') as string | null)?.trim() || null
 
-  const { data: session } = await db()
+  const { data: session } = await createAdminClient()
     .from('class_sessions')
     .select('student_id, scheduled_date, start_time')
     .eq('id', sessionId)
     .maybeSingle()
 
-  const { data, error } = await db().rpc('fn_cancel_session', {
+  const { data: cancelData, error } = await createAdminClient().rpc('fn_cancel_session', {
     p_session_id: sessionId,
     p_reason:     reason,
   })
+  const data = cancelData as { success: boolean; error?: string; late_cancellation?: boolean } | null
 
   if (error) return { error: error.message }
   if (!data?.success) return { error: data?.error ?? 'No se pudo cancelar la clase.' }
@@ -163,12 +177,13 @@ export async function rescheduleSessionAction(
   _prev: { error?: string; success?: boolean },
   formData: FormData
 ): Promise<{ error?: string; success?: boolean }> {
-  const { data, error } = await db().rpc('fn_reschedule_session', {
+  const { data: rData, error } = await createAdminClient().rpc('fn_reschedule_session', {
     p_session_id:       formData.get('session_id')       as string,
     p_new_classroom_id: formData.get('new_classroom_id') as string,
     p_new_date:         formData.get('new_date')         as string,
     p_new_start_time:   formData.get('new_start_time')   as string,
   })
+  const data = rData as { success: boolean; error?: string } | null
 
   if (error) return { error: error.message }
   if (!data?.success) return { error: data?.error ?? 'No se pudo reagendar.' }
@@ -183,13 +198,16 @@ export async function adminUpdateStatusAction(
   _prev: { error?: string; success?: boolean },
   formData: FormData
 ): Promise<{ error?: string; success?: boolean }> {
+  const authErr = await assertAdmin()
+  if (authErr) return authErr
+
   const session_id = formData.get('session_id') as string
   const new_status = formData.get('new_status') as string
   const notes      = (formData.get('notes') as string | null)?.trim() || undefined
 
   if (!session_id || !new_status) return { error: 'Faltan datos.' }
 
-  const { data: session } = await db()
+  const { data: session } = await createAdminClient()
     .from('class_sessions')
     .select('student_id, scheduled_date, start_time, course_id')
     .eq('id', session_id)
@@ -198,9 +216,9 @@ export async function adminUpdateStatusAction(
   const update: Record<string, unknown> = { status: new_status }
   if (notes !== undefined) update.notes = notes
 
-  const { error } = await db()
+  const { error } = await createAdminClient()
     .from('class_sessions')
-    .update(update)
+    .update(update as never)
     .eq('id', session_id)
 
   if (error) return { error: error.message }
@@ -236,6 +254,9 @@ export async function adminRescheduleAction(
   _prev: { error?: string; success?: boolean },
   formData: FormData
 ): Promise<{ error?: string; success?: boolean }> {
+  const authErr = await assertAdmin()
+  if (authErr) return authErr
+
   const session_id      = formData.get('session_id')      as string
   const new_date        = formData.get('new_date')        as string
   const new_start_time  = formData.get('new_start_time')  as string
@@ -247,7 +268,7 @@ export async function adminRescheduleAction(
   }
 
   // Verificar que el salón esté libre en esa fecha/hora (excluyendo la sesión actual)
-  const { data: conflict } = await db()
+  const { data: conflict } = await createAdminClient()
     .from('class_sessions')
     .select('id')
     .eq('classroom_id', new_classroom_id)
@@ -261,7 +282,7 @@ export async function adminRescheduleAction(
     return { error: 'El salón ya está ocupado en esa fecha y hora.' }
   }
 
-  const { error } = await db()
+  const { error } = await createAdminClient()
     .from('class_sessions')
     .update({
       scheduled_date: new_date,
@@ -294,7 +315,7 @@ export async function cancelByInstructorAction(
   const sessionId = formData.get('session_id') as string
   const reason    = (formData.get('reason') as string | null)?.trim() || null
 
-  const { data: session } = await db()
+  const { data: session } = await createAdminClient()
     .from('class_sessions')
     .select('student_id, scheduled_date, start_time, status')
     .eq('id', sessionId)
@@ -312,7 +333,7 @@ export async function cancelByInstructorAction(
     return { error: 'No se puede cancelar con menos de 24 horas de anticipación.' }
   }
 
-  const { error } = await db()
+  const { error } = await createAdminClient()
     .from('class_sessions')
     .update({
       status:              'cancelled',
@@ -361,9 +382,9 @@ export async function updateAttendanceStatusAction(
     update.attendance_confirmed_at = new Date().toISOString()
   }
 
-  const { error } = await db()
+  const { error } = await createAdminClient()
     .from('class_sessions')
-    .update(update)
+    .update(update as never)
     .eq('id', session_id)
 
   if (error) return { error: error.message }
@@ -380,7 +401,7 @@ export async function restoreCreditAction(
   _prev: { error?: string; success?: boolean },
   formData: FormData
 ): Promise<{ error?: string; success?: boolean; message?: string }> {
-  const { data, error } = await db().rpc('fn_restore_credit', {
+  const { data, error } = await createAdminClient().rpc('fn_restore_credit', {
     p_student_id: formData.get('student_id') as string,
     p_year:       Number(formData.get('year')),
     p_month:      Number(formData.get('month')),
@@ -390,9 +411,10 @@ export async function restoreCreditAction(
     p_notes:      (formData.get('notes')      as string | null)?.trim() || null,
   })
 
+  const restoreResult = data as { success: boolean; error?: string; message?: string } | null
   if (error) return { error: error.message }
-  if (!data?.success) return { error: data?.error ?? 'Error al restaurar crédito.' }
+  if (!restoreResult?.success) return { error: restoreResult?.error ?? 'Error al restaurar crédito.' }
 
   revalidatePath(`/admin/students/${formData.get('student_id')}`)
-  return { success: true, message: data.message }
+  return { success: true, message: restoreResult?.message }
 }

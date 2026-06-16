@@ -8,8 +8,6 @@ import { safeRecordStudentActivity } from './retention'
 import { activity, logActivity } from '@/lib/activity'
 import { isBirthdayMonth, getBirthdayBenefitStatus } from '@/lib/students/birthday'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function db(): any { return createAdminClient() }
 
 function calculateAge(birthDate: string): number {
   const today = new Date()
@@ -21,7 +19,7 @@ function calculateAge(birthDate: string): number {
 }
 
 async function validateKidsAge(studentId: string): Promise<string | null> {
-  const { data: student } = await db()
+  const { data: student } = await createAdminClient()
     .from('students')
     .select('birth_date, first_name, last_name')
     .eq('id', studentId)
@@ -60,13 +58,13 @@ export async function getStudents(): Promise<Student[]> {
     }
 
     if (error) {
-      let { data: d2, error: e2 } = await db()
+      let { data: d2, error: e2 } = await createAdminClient()
         .from('students')
         .select('*')
         .is('archived_at', null)
         .order('created_at', { ascending: false })
       if (e2?.message?.includes('archived_at')) {
-        const retry = await db()
+        const retry = await createAdminClient()
           .from('students')
           .select('*')
           .order('created_at', { ascending: false })
@@ -74,9 +72,9 @@ export async function getStudents(): Promise<Student[]> {
         e2 = retry.error
       }
       if (e2) throw new Error(e2.message)
-      return d2 ?? []
+      return (d2 ?? []) as unknown as Student[]
     }
-    return data ?? []
+    return (data ?? []) as unknown as Student[]
   } catch (e) {
     throw new Error(e instanceof Error ? e.message : 'Error cargando estudiantes')
   }
@@ -84,21 +82,21 @@ export async function getStudents(): Promise<Student[]> {
 
 export async function getStudent(id: string) {
   const [{ data: student, error }, usageResult] = await Promise.all([
-    db().from('students').select('*').eq('id', id).single(),
-    db().rpc('fn_monthly_usage', {
+    createAdminClient().from('students').select('*').eq('id', id).single(),
+    createAdminClient().rpc('fn_monthly_usage', {
       p_student_id: id,
       p_year:  new Date().getFullYear(),
       p_month: new Date().getMonth() + 1,
     }),
   ])
 
-  if (error) throw new Error((error as any).message)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return { student, usage: (usageResult as any).data?.[0] ?? null }
+  if (error) throw new Error(error.message)
+  const usageData = usageResult.data as Array<Record<string, unknown>> | null
+  return { student, usage: usageData?.[0] ?? null }
 }
 
 export async function getLeads() {
-  const { data, error } = await db()
+  const { data, error } = await createAdminClient()
     .from('appointments')
     .select('*')
     .order('created_at', { ascending: false })
@@ -111,7 +109,7 @@ export async function getLeads() {
 // ─── Horarios fijos ─────────────────────────────────────────
 
 export async function getStudentSchedules(studentId: string): Promise<StudentSchedule[]> {
-  const { data, error } = await db()
+  const { data, error } = await createAdminClient()
     .from('student_schedules')
     .select('*, course:courses(name), classroom:classrooms(name), instructor:instructors(name)')
     .eq('student_id', studentId)
@@ -142,13 +140,14 @@ export async function createScheduleAction(
   }
 
   // Validar edad mínima para cursos Kids
-  const { data: course } = await db().from('courses').select('category').eq('id', course_id).single()
+  const { data: courseRaw } = await createAdminClient().from('courses').select('name').eq('id', course_id).single()
+  const course = courseRaw as { category?: string } | null
   if (course?.category === 'kids') {
     const kidError = await validateKidsAge(student_id)
     if (kidError) return { error: kidError }
   }
 
-  const { error } = await db().from('student_schedules').insert({
+  const { error } = await createAdminClient().from('student_schedules').insert({
     student_id,
     course_id,
     classroom_id,
@@ -159,7 +158,7 @@ export async function createScheduleAction(
     active_until: active_until || null,
     instructor_id: instructor_id || null,
     notes,
-  })
+  } as never)
 
   if (error) return { error: error.message }
 
@@ -189,13 +188,14 @@ export async function updateScheduleAction(
   }
 
   // Validar edad mínima para cursos Kids
-  const { data: course } = await db().from('courses').select('category').eq('id', course_id).single()
+  const { data: courseRaw } = await createAdminClient().from('courses').select('name').eq('id', course_id).single()
+  const course = courseRaw as { category?: string } | null
   if (course?.category === 'kids') {
     const kidError = await validateKidsAge(student_id)
     if (kidError) return { error: kidError }
   }
 
-  const { error } = await db()
+  const { error } = await createAdminClient()
     .from('student_schedules')
     .update({
       course_id,
@@ -208,7 +208,7 @@ export async function updateScheduleAction(
       instructor_id: instructor_id || null,
       status,
       notes,
-    })
+    } as never)
     .eq('id', id)
 
   if (error) return { error: error.message }
@@ -224,7 +224,7 @@ export async function deleteScheduleAction(
   const id         = formData.get('id')         as string
   const student_id = formData.get('student_id') as string
 
-  const { error } = await db()
+  const { error } = await createAdminClient()
     .from('student_schedules')
     .update({ status: 'cancelled' })
     .eq('id', id)
@@ -247,7 +247,7 @@ export async function generateMonthlyClassesAction(
     return { error: 'Faltan datos: estudiante, año y mes.' }
   }
 
-  const { data, error } = await db().rpc('fn_generate_monthly_sessions', {
+  const { data, error } = await createAdminClient().rpc('fn_generate_monthly_sessions', {
     p_student_id: student_id,
     p_year:       year,
     p_month:      month,
@@ -255,12 +255,13 @@ export async function generateMonthlyClassesAction(
 
   if (error) return { error: error.message }
   if (!data) return { error: 'No se obtuvo respuesta de la función.' }
+  const rpcResult = data as { generated?: number; skipped?: number; errors?: string[] }
 
   revalidatePath(`/admin/students/${student_id}`)
   return {
-    generated: data.generated ?? 0,
-    skipped:   data.skipped ?? 0,
-    errors:    data.errors ?? [],
+    generated: rpcResult.generated ?? 0,
+    skipped:   rpcResult.skipped ?? 0,
+    errors:    rpcResult.errors ?? [],
   }
 }
 
@@ -296,7 +297,7 @@ export async function createStudentAction(
     return { error: 'Nombre y WhatsApp son obligatorios.' }
   }
 
-  const { data: student, error } = await db()
+  const { data: student, error } = await createAdminClient()
     .from('students')
     .insert({
       name,
@@ -345,7 +346,7 @@ export async function inviteStudentAction(
   const student_id = formData.get('student_id') as string
   if (!student_id) return { error: 'ID de estudiante requerido.' }
 
-  const { data: student } = await db()
+  const { data: student } = await createAdminClient()
     .from('students')
     .select('id, email, user_id, name')
     .eq('id', student_id)
@@ -357,7 +358,7 @@ export async function inviteStudentAction(
   const alreadyInvited = !!student.user_id
 
   // Invitar o reenviar invitación
-  const { data: inviteData, error: inviteError } = await db()
+  const { data: inviteData, error: inviteError } = await createAdminClient()
     .auth.admin.inviteUserByEmail(student.email, {
       data: { role: 'student' },
       redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://4ustudioacademy.com'}/auth/callback`,
@@ -373,7 +374,7 @@ export async function inviteStudentAction(
 
   // Guardar user_id si es primera invitación
   if (!alreadyInvited && inviteData?.user?.id) {
-    await db()
+    await createAdminClient()
       .from('students')
       .update({ user_id: inviteData.user.id })
       .eq('id', student_id)
@@ -390,7 +391,7 @@ export async function deleteStudentAction(
   const id = formData.get('id') as string
   if (!id) return { error: 'ID de estudiante requerido.' }
 
-  const client = db()
+  const client = createAdminClient()
   const now = new Date().toISOString()
   const reason = (formData.get('archived_reason') as string | null)?.trim() || 'Archivado desde administracion'
 
@@ -425,7 +426,7 @@ export async function setStudentPasswordAction(
   if (password.length < 6) return { error: 'La contraseña debe tener al menos 6 caracteres.' }
   if (password !== confirm) return { error: 'Las contraseñas no coinciden.' }
 
-  const { data: student, error: fetchErr } = await db()
+  const { data: student, error: fetchErr } = await createAdminClient()
     .from('students')
     .select('id, email, user_id')
     .eq('id', student_id)
@@ -435,10 +436,10 @@ export async function setStudentPasswordAction(
   if (!student.email) return { error: 'El estudiante no tiene email. Agrégalo primero.' }
 
   if (student.user_id) {
-    const { error } = await db().auth.admin.updateUserById(student.user_id, { password })
+    const { error } = await createAdminClient().auth.admin.updateUserById(student.user_id, { password })
     if (error) return { error: error.message }
   } else {
-    const { data: newUser, error } = await db().auth.admin.createUser({
+    const { data: newUser, error } = await createAdminClient().auth.admin.createUser({
       email: student.email,
       password,
       email_confirm: true,
@@ -450,7 +451,7 @@ export async function setStudentPasswordAction(
       }
       return { error: error.message }
     }
-    const { error: linkErr } = await db()
+    const { error: linkErr } = await createAdminClient()
       .from('students')
       .update({ user_id: newUser.user.id })
       .eq('id', student_id)
@@ -458,7 +459,7 @@ export async function setStudentPasswordAction(
   }
 
   // Persistir contraseña en plain_password para consulta del admin
-  await db()
+  await createAdminClient()
     .from('students')
     .update({ plain_password: password })
     .eq('id', student_id)
@@ -527,9 +528,9 @@ export async function updateStudentAction(
   if (next_payment_due_at !== null) update.next_payment_due_at = next_payment_due_at || null
   if (retention_score_raw) update.retention_score = Math.max(0, Math.min(100, Number(retention_score_raw)))
 
-  const { error } = await db()
+  const { error } = await createAdminClient()
     .from('students')
-    .update(update)
+    .update(update as never)
     .eq('id', id)
 
   if (error) return { error: error.message }
@@ -550,7 +551,7 @@ export async function updateStudentAction(
 export async function grantBirthdayBenefitAction(
   studentId: string
 ): Promise<{ error?: string; success?: boolean }> {
-  const { data: student, error: fetchErr } = await db()
+  const { data: student, error: fetchErr } = await createAdminClient()
     .from('students')
     .select('id, name, birth_date, student_status, birthday_benefit_year, birthday_benefit_used, birthday_discount_percent')
     .eq('id', studentId)
@@ -565,7 +566,7 @@ export async function grantBirthdayBenefitAction(
   if (status === 'granted' || status === 'used') return { error: 'El beneficio ya fue otorgado este año.' }
 
   const currentYear = new Date().getFullYear()
-  const { error } = await db()
+  const { error } = await createAdminClient()
     .from('students')
     .update({ birthday_benefit_year: currentYear, birthday_benefit_used: false })
     .eq('id', studentId)
@@ -590,7 +591,7 @@ export async function grantBirthdayBenefitAction(
 export async function useBirthdayDiscountAction(
   studentId: string
 ): Promise<{ error?: string; success?: boolean }> {
-  const { data: student, error: fetchErr } = await db()
+  const { data: student, error: fetchErr } = await createAdminClient()
     .from('students')
     .select('id, name, birthday_benefit_year, birthday_benefit_used, birthday_discount_percent')
     .eq('id', studentId)
@@ -602,7 +603,7 @@ export async function useBirthdayDiscountAction(
   if (student.birthday_benefit_year !== currentYear) return { error: 'No hay beneficio otorgado este año.' }
   if (student.birthday_benefit_used) return { error: 'El descuento ya fue utilizado.' }
 
-  const { error } = await db()
+  const { error } = await createAdminClient()
     .from('students')
     .update({ birthday_benefit_used: true })
     .eq('id', studentId)

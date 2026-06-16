@@ -1,13 +1,20 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
+import { createAuthServerClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { parseRole, hasAcademicAccess } from '@/lib/auth/roles'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function db(): any { return createAdminClient() }
+async function assertAdmin(): Promise<{ error: string } | null> {
+  const supabase = await createAuthServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const role = parseRole(user?.user_metadata ?? null)
+  if (!hasAcademicAccess(role)) return { error: 'No autorizado.' }
+  return null
+}
 
 export async function getInstructors() {
-  const { data, error } = await db()
+  const { data, error } = await createAdminClient()
     .from('instructors')
     .select('*')
     .order('name')
@@ -19,6 +26,9 @@ export async function createInstructorAction(
   _prev: { error?: string; success?: boolean },
   formData: FormData
 ): Promise<{ error?: string; success?: boolean }> {
+  const authErr = await assertAdmin()
+  if (authErr) return authErr
+
   const firstName = (formData.get('first_name') as string)?.trim()
   const lastName  = (formData.get('last_name')  as string)?.trim()
   const email     = (formData.get('email')      as string)?.trim()
@@ -33,7 +43,7 @@ export async function createInstructorAction(
   }
 
   const fullName = [firstName, lastName].filter(Boolean).join(' ')
-  const adminClient = db()
+  const adminClient = createAdminClient()
 
   // Verificar email no duplicado en instructors
   const { data: existing } = await adminClient
@@ -76,7 +86,7 @@ export async function createInstructorAction(
 }
 
 export async function getInstructorById(id: string) {
-  const adminClient = db()
+  const adminClient = createAdminClient()
   const { data, error } = await adminClient
     .from('instructors')
     .select('*')
@@ -98,7 +108,7 @@ export async function saveAdminInstructorAvailabilityAction(
   instructorId: string,
   slots: Array<{ day_of_week: number; start_time: string; end_time: string }>
 ): Promise<{ success?: boolean; error?: string }> {
-  const adminClient = db()
+  const adminClient = createAdminClient()
   await adminClient.from('instructor_availability').delete().eq('instructor_id', instructorId)
   if (slots.length > 0) {
     const { error } = await adminClient.from('instructor_availability').insert(
@@ -115,6 +125,9 @@ export async function updateInstructorAction(
   _prev: { error?: string; success?: boolean },
   formData: FormData
 ): Promise<{ error?: string; success?: boolean }> {
+  const authErr = await assertAdmin()
+  if (authErr) return authErr
+
   const id        = (formData.get('id')         as string)?.trim()
   const firstName = (formData.get('first_name') as string)?.trim()
   const lastName  = (formData.get('last_name')  as string)?.trim()
@@ -127,14 +140,13 @@ export async function updateInstructorAction(
   if (!id || !firstName) return { error: 'El nombre es obligatorio.' }
 
   const fullName = [firstName, lastName].filter(Boolean).join(' ')
-  const adminClient = db()
+  const adminClient = createAdminClient()
 
   // Obtener email actual antes de actualizar
   const { data: current } = await adminClient.from('instructors').select('email').eq('id', id).single()
   const currentEmail = current?.email
 
-  const updatePayload: Record<string, unknown> = { name: fullName, phone, status, notes }
-  if (email && email !== currentEmail) updatePayload.email = email
+  const updatePayload = { name: fullName, phone, status, notes, ...(email && email !== currentEmail ? { email } : {}) }
 
   const { error: dbError } = await adminClient
     .from('instructors')
@@ -146,9 +158,9 @@ export async function updateInstructorAction(
   // Actualizar usuario auth si cambió el email o la contraseña
   if ((email && email !== currentEmail) || (password && password.length >= 6)) {
     const { data: users } = await createAdminClient().auth.admin.listUsers()
-    const authUser = users?.users?.find((u: any) => u.email === currentEmail)
+    const authUser = (users?.users as Array<{ email?: string; id: string }> ?? []).find(u => u.email === currentEmail)
     if (authUser) {
-      const authUpdate: Record<string, unknown> = {}
+      const authUpdate: { email?: string; password?: string } = {}
       if (email && email !== currentEmail) authUpdate.email = email
       if (password && password.length >= 6) authUpdate.password = password
       await createAdminClient().auth.admin.updateUserById(authUser.id, authUpdate)
@@ -164,11 +176,14 @@ export async function deleteInstructorAction(
   instructorId: string,
   email: string
 ): Promise<{ error?: string; success?: boolean }> {
-  const adminClient = db()
+  const authErr = await assertAdmin()
+  if (authErr) return authErr
+
+  const adminClient = createAdminClient()
 
   // Buscar y borrar usuario auth por email
   const { data: users } = await createAdminClient().auth.admin.listUsers()
-  const authUser = users?.users?.find((u: any) => u.email === email)
+  const authUser = (users?.users as Array<{ email?: string; id: string }> ?? []).find(u => u.email === email)
   if (authUser) {
     await createAdminClient().auth.admin.deleteUser(authUser.id)
   }

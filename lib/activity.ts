@@ -27,6 +27,10 @@ export type ActivityAction =
   | 'whatsapp.payment_reminder'
   | 'whatsapp.birthday'
   | 'whatsapp.reactivation'
+  | 'automation.rules_ran'
+  | 'automation.job_created'
+  | 'automation.job_completed'
+  | 'automation.job_failed'
 
 export type EntityType =
   | 'enrollment'

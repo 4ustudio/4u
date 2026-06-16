@@ -97,9 +97,9 @@ export default function BookSessionModal({ date, time, students, courses, classr
               </select>
             </div>
             <div>
-              <label className="block text-xs text-white/50 mb-1.5">Instructor</label>
-              <select name="instructor_id" disabled={isPending} className={inputClass + ' appearance-none'} defaultValue="">
-                <option value="">Sin asignar</option>
+              <label className="block text-xs text-white/50 mb-1.5">Instructor *</label>
+              <select name="instructor_id" required disabled={isPending} className={inputClass + ' appearance-none'} defaultValue="">
+                <option value="" disabled>Selecciona un instructor</option>
                 {instructors.map((i) => (
                   <option key={i.id} value={i.id}>{i.name}</option>
                 ))}

@@ -98,6 +98,9 @@ export async function bookSessionAction(
   if (!input.student_id || !input.classroom_id || !input.course_id || !input.date || !input.start_time) {
     return { error: 'Completa todos los campos obligatorios.' }
   }
+  if (!input.instructor_id) {
+    return { error: 'Debes asignar un instructor a la clase.' }
+  }
 
   const { data: rpcData, error } = await createAdminClient().rpc('fn_book_session', {
     p_student_id:    input.student_id,
@@ -170,7 +173,7 @@ export async function cancelSessionAction(
   })
 
   revalidatePath('/admin/agenda')
-  return { success: true, late: data.late_cancellation }
+  return { success: true, late: data?.late_cancellation }
 }
 
 export async function rescheduleSessionAction(
@@ -374,7 +377,7 @@ export async function updateAttendanceStatusAction(
   const session_id       = formData.get('session_id') as string
   const attendance_status = formData.get('attendance_status') as string
 
-  const validStatuses = ['pending', 'confirmed', 'declined', 'rescheduled', 'no_response']
+  const validStatuses = ['pending', 'confirmed', 'declined', 'rescheduled', 'no_response', 'attended', 'absent', 'no_show']
   if (!validStatuses.includes(attendance_status)) return { error: 'Estado inválido.' }
 
   const update: Record<string, unknown> = { attendance_status }

@@ -478,7 +478,7 @@ export async function runRetentionDailyJob(options: { dryRun?: boolean } = {}): 
     },
     {} as Record<string, number>
   )
-  const totalNonEx = (counts.activo ?? 0) + (counts.riesgo ?? 0) + (counts.inactivo ?? 0) + (counts.exalumno ?? 0)
+  const totalNonEx = (counts.activo ?? 0) + (counts.riesgo ?? 0) + (counts.inactivo ?? 0) + (counts.exalumno ?? 0) + (counts.matriculado ?? 0)
   const reactivatedMonth = list.filter((s) => {
     const r = (s as Record<string, unknown>).reactivated_at as string | null
     return r && new Date(r) >= new Date(new Date().getFullYear(), new Date().getMonth(), 1)

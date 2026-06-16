@@ -73,7 +73,10 @@ export async function getAcademicDashboardData(): Promise<AcademicDashboardData>
   const year = now.getFullYear()
   const month = now.getMonth() + 1
 
-  // KPIs en paralelo
+  // KPIs en paralelo — queries optimizadas con límites
+  const ninetyDaysAgo = new Date(Date.now() - 90 * 86400000).toISOString().split('T')[0]
+  const monthSessionsLimit = today.slice(0, 7) + '-01'
+
   const [
     { count: todayCount },
     { count: weekCount },
@@ -82,8 +85,8 @@ export async function getAcademicDashboardData(): Promise<AcademicDashboardData>
     { data: classrooms },
     { data: studentsActive },
     { data: schedules },
-    { data: sessions30d },
-    { data: riskData },
+    { data: monthSessions },
+    { data: riskSessions },
   ] = await Promise.all([
     admin.from('class_sessions').select('id', { count: 'exact', head: true })
       .eq('scheduled_date', today).not('status', 'in', '(cancelled,rescheduled)'),
@@ -96,19 +99,23 @@ export async function getAcademicDashboardData(): Promise<AcademicDashboardData>
     admin.from('instructors').select('id, name, email').eq('status', 'active'),
     admin.from('classrooms').select('id, name').eq('is_active', true),
     admin.from('students').select('id').eq('status', 'active'),
-    admin.from('student_schedules').select('id, student_id, course_id, instructor_id, day_of_week, start_time, student:students!inner(name), course:courses(name)').eq('status', 'active'),
-    admin.from('class_sessions').select('id, status, attendance_status, instructor_id, course_id, instructor:instructors(name), course:courses(name)')
-      .gte('scheduled_date', today.slice(0, 7) + '-01').lt('scheduled_date', monthEnd).limit(2000),
-    admin.from('class_sessions').select('student_id, status, attendance_status')
-      .gte('scheduled_date', new Date(Date.now() - 90 * 86400000).toISOString().split('T')[0])
-      .in('status', ['completed', 'no_show']).limit(3000),
+    admin.from('student_schedules')
+      .select('id, student_id, instructor_id, day_of_week, start_time, student:students!inner(name), course:courses(name)')
+      .eq('status', 'active'),
+    admin.from('class_sessions')
+      .select('id, status, attendance_status, student_id, instructor_id, course_id, instructor:instructors(name), course:courses(name)')
+      .gte('scheduled_date', monthSessionsLimit).lt('scheduled_date', monthEnd).limit(500),
+    admin.from('class_sessions')
+      .select('student_id, status')
+      .gte('scheduled_date', ninetyDaysAgo)
+      .in('status', ['completed', 'no_show']).limit(1000),
   ])
 
   const instructorCount = instructors?.length ?? 0
   const classroomCount = classrooms?.length ?? 0
   const activeStudentCount = studentsActive?.length ?? 0
   const activeSchedules = schedules ?? []
-  const recentSessions = sessions30d ?? []
+  const recentSessions = monthSessions ?? []
 
   // Ocupación
   const sessionCount = recentSessions.length
@@ -161,8 +168,8 @@ export async function getAcademicDashboardData(): Promise<AcademicDashboardData>
     .map(([name, v]) => ({ name, total: v.total, attended: v.attended, rate: Math.round((v.attended / v.total) * 100) }))
     .sort((a, b) => b.total - a.total)
 
-  // Estudiantes en riesgo (desde la vista o computado)
-  const riskStudents = await computeRiskStudents(riskData ?? [], activeSchedules, admin)
+  // Estudiantes en riesgo (desde 90 días de datos)
+  const riskStudents = await computeRiskStudents(riskSessions ?? [], activeSchedules, admin)
 
   // Matching: horarios sin instructor
   const unmatchedSchedules = activeSchedules

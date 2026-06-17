@@ -331,11 +331,9 @@ export async function getAvailableSlotsAction(date: string): Promise<Array<{
   is_available: boolean
 }>> {
   const student = await getAuthenticatedStudent()
-  if (!student) return []
-
   const { data } = await admin().rpc('fn_available_slots', {
     p_date: date,
-    p_student_id: student.id,
+    p_student_id: student?.id ?? null,
   })
   return (data ?? []) as any[] // eslint-disable-line @typescript-eslint/no-explicit-any
 }

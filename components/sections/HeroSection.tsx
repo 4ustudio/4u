@@ -91,7 +91,7 @@ export default function HeroSection() {
               loop
               playsInline
               preload={i === 0 ? 'auto' : 'metadata'}
-              className="absolute inset-0 h-full w-full object-cover object-[60%_50%]"
+              className="absolute inset-0 h-full w-full object-cover object-center sm:object-[60%_50%]"
               // NO usamos src directo — usamos <source> con type explícito
               // para que todos los navegadores reconozcan el MIME type correcto
             >

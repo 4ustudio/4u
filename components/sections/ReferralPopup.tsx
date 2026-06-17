@@ -31,11 +31,10 @@ function AgendamientoPopup({ onClose, ctaLink }: { onClose: () => void; ctaLink:
   return (
     <div
       className="relative grid w-full max-w-[780px] overflow-hidden rounded-2xl border border-white/10 bg-[#050505] shadow-[0_20px_80px_rgba(0,0,0,0.7)] animate-scale-in sm:grid-cols-[1fr_1fr]"
-      style={{ maxHeight: "min(90vh, 520px)" }}
     >
       <CloseButton onClick={onClose} />
 
-      <div className="relative min-h-[200px] sm:min-h-0">
+      <div className="relative min-h-[160px] sm:min-h-[320px]">
         <OptimizedImage
           src="/images/offers/popup-agendamiento.png"
           alt="Programa tu primera sesión - 4U Studio Academy"
@@ -47,7 +46,7 @@ function AgendamientoPopup({ onClose, ctaLink }: { onClose: () => void; ctaLink:
         />
       </div>
 
-      <div className="flex flex-col justify-center bg-[radial-gradient(circle_at_bottom_right,rgba(255,122,0,0.18),transparent_30%),linear-gradient(180deg,#0b0b0b_0%,#050505_100%)] px-5 py-6 sm:px-7 sm:py-7">
+      <div className="flex flex-col justify-center overflow-y-auto bg-[radial-gradient(circle_at_bottom_right,rgba(255,122,0,0.18),transparent_30%),linear-gradient(180deg,#0b0b0b_0%,#050505_100%)] px-5 py-5 sm:px-7 sm:py-7">
         <div className="mb-2 inline-flex items-center gap-2 text-[#ff7a00]">
           <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
             <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2Zm0 16H5V9h14v11ZM7 11h5v5H7z" />
@@ -55,21 +54,21 @@ function AgendamientoPopup({ onClose, ctaLink }: { onClose: () => void; ctaLink:
           <span className="font-poppins text-sm font-semibold">Primera sesión de prueba</span>
         </div>
 
-        <h2 className="font-poppins text-2xl font-extrabold leading-tight text-white sm:text-3xl">
+        <h2 className="font-poppins text-xl font-extrabold leading-tight text-white sm:text-3xl">
           Programa tu <span className="text-[#ff7a00]">primera sesión gratis</span> con nosotros
         </h2>
 
-        <p className="mt-2 font-poppins text-sm font-semibold text-white/90 sm:text-base">
+        <p className="mt-2 font-poppins text-sm font-semibold text-white/90">
           Descubre tu potencial musical.
         </p>
         <div className="mt-2 h-[2px] w-12 rounded-full bg-[#ff7a00]" />
 
-        <p className="mt-3 text-sm leading-6 text-white/75">
+        <p className="mt-2 text-sm leading-5 text-white/75 hidden sm:block">
           Agenda una clase de prueba y vive la experiencia 4U Studio Academy{" "}
           <span className="text-[#ff7a00] font-semibold">sin compromisos</span>.
         </p>
 
-        <ul className="mt-3 space-y-2 text-sm text-white/80">
+        <ul className="mt-2 space-y-1.5 text-sm text-white/80">
           {[
             "Clase personalizada con un instructor profesional",
             "Todos los niveles y edades bienvenidos",
@@ -86,7 +85,7 @@ function AgendamientoPopup({ onClose, ctaLink }: { onClose: () => void; ctaLink:
           ))}
         </ul>
 
-        <div className="mt-5 flex flex-col gap-2">
+        <div className="mt-4 flex flex-col gap-2">
           <Link
             href="/inscripcion"
             onClick={onClose}
@@ -111,11 +110,10 @@ function ReferidosPopup({ onClose, ctaLink }: { onClose: () => void; ctaLink: st
   return (
     <div
       className="relative grid w-full max-w-[780px] overflow-hidden rounded-2xl border border-white/10 bg-[#050505] shadow-[0_20px_80px_rgba(0,0,0,0.7)] animate-scale-in sm:grid-cols-[1fr_1fr]"
-      style={{ maxHeight: "min(90vh, 520px)" }}
     >
       <CloseButton onClick={onClose} />
 
-      <div className="relative min-h-[200px] sm:min-h-0">
+      <div className="relative min-h-[160px] sm:min-h-[320px]">
         <OptimizedImage
           src="/images/offers/popupreferidos.jpeg"
           alt="Estudiantes de 4U Studio Academy tocando y cantando en estudio"
@@ -127,7 +125,7 @@ function ReferidosPopup({ onClose, ctaLink }: { onClose: () => void; ctaLink: st
         />
       </div>
 
-      <div className="flex flex-col justify-center bg-[radial-gradient(circle_at_bottom_right,rgba(255,122,0,0.18),transparent_30%),linear-gradient(180deg,#0b0b0b_0%,#050505_100%)] px-5 py-6 sm:px-7 sm:py-7">
+      <div className="flex flex-col justify-center overflow-y-auto bg-[radial-gradient(circle_at_bottom_right,rgba(255,122,0,0.18),transparent_30%),linear-gradient(180deg,#0b0b0b_0%,#050505_100%)] px-5 py-5 sm:px-7 sm:py-7">
         <div className="mb-2 inline-flex items-center gap-2 text-[#ff7a00]">
           <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
             <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3Zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3Zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13Zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.96 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5Z" />
@@ -135,21 +133,21 @@ function ReferidosPopup({ onClose, ctaLink }: { onClose: () => void; ctaLink: st
           <span className="font-poppins text-sm font-semibold">Plan de referidos</span>
         </div>
 
-        <h2 className="font-poppins text-2xl font-extrabold leading-tight text-white sm:text-3xl">
+        <h2 className="font-poppins text-xl font-extrabold leading-tight text-white sm:text-3xl">
           10% para el <span className="text-[#ff7a00]">próximo mes</span>
         </h2>
 
-        <p className="mt-2 font-poppins text-sm font-semibold text-white/90 sm:text-base">
+        <p className="mt-2 font-poppins text-sm font-semibold text-white/90">
           Comparte el talento. Comparte la experiencia.
         </p>
         <div className="mt-2 h-[2px] w-12 rounded-full bg-[#ff7a00]" />
 
-        <p className="mt-3 text-sm leading-6 text-white/75">
+        <p className="mt-2 text-sm leading-5 text-white/75 hidden sm:block">
           Por cada amigo que se inscriba gracias a ti, recibe un{" "}
           <span className="text-[#ff7a00] font-semibold">10% de descuento</span>.
         </p>
 
-        <ul className="mt-3 space-y-2 text-sm text-white/80">
+        <ul className="mt-2 space-y-1.5 text-sm text-white/80">
           {[
             "10% de descuento por cada referido efectivo",
             "Sin sorteos ni acumulación de puntos",
@@ -166,7 +164,7 @@ function ReferidosPopup({ onClose, ctaLink }: { onClose: () => void; ctaLink: st
           ))}
         </ul>
 
-        <div className="mt-5 flex flex-col gap-2">
+        <div className="mt-4 flex flex-col gap-2">
           <Link
             href={ctaLink}
             target="_blank"
@@ -225,12 +223,12 @@ export default function ReferralPopup() {
 
   return (
     <div
-      className="fixed inset-0 z-[10010] flex items-center justify-center bg-black/70 px-4 py-4 backdrop-blur-md"
+      className="fixed inset-0 z-[10010] flex items-center justify-center overflow-y-auto bg-black/70 px-4 py-6 backdrop-blur-md"
       role="dialog"
       aria-modal="true"
       onClick={() => setIsOpen(false)}
     >
-      <div onClick={(e) => e.stopPropagation()}>
+      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-[780px] mx-auto">
         {isLoggedIn ? (
           <ReferidosPopup onClose={() => setIsOpen(false)} ctaLink={ctaLink} />
         ) : (

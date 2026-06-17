@@ -276,7 +276,7 @@ export default async function VentasPage() {
               Release V1.2 · Cobranza Real
             </div>
             <div>
-              <h1 className="text-3xl font-bold tracking-tight text-white lg:text-[3rem]">Dashboard</h1>
+              <h1 className="text-3xl font-bold tracking-tight text-white lg:text-[3rem]">Panel Comercial</h1>
               <p className="mt-1 text-sm text-white/45 lg:text-base">
                 Ingresos, cobranza, retención y alertas — datos reales en tiempo real.
               </p>

@@ -90,28 +90,38 @@ const Icon = {
   ),
 }
 
+type NavGroup = 'general' | 'comercial' | 'academico' | 'sistema'
+
 type NavItem = {
   href: string
   label: string
   compactLabel: string
   icon: ReactNode
   area: 'academic' | 'executive' | 'shared'
+  group: NavGroup
+}
+
+const GROUP_LABELS: Record<NavGroup, string> = {
+  general:   '',
+  comercial: 'Comercial',
+  academico: 'Académico',
+  sistema:   'Sistema',
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { href: '/admin',              label: 'Dashboard',    compactLabel: 'Inicio',        icon: Icon.dashboard,   area: 'shared' },
-  { href: '/admin/ventas',       label: 'Ventas',       compactLabel: 'Ventas',        icon: Icon.ventas,      area: 'executive' },
-  { href: '/admin/leads',        label: 'Leads',        compactLabel: 'Leads',         icon: Icon.leads,       area: 'executive' },
-  { href: '/admin/agenda',       label: 'Clases',       compactLabel: 'Clases',        icon: Icon.agenda,      area: 'academic' },
-  { href: '/admin/students',     label: 'Estudiantes',  compactLabel: 'Alumnos',       icon: Icon.students,    area: 'academic' },
-  { href: '/admin/pagos',        label: 'Pagos',        compactLabel: 'Cobros',        icon: Icon.pagos,       area: 'executive' },
-  { href: '/admin/retencion',       label: 'Retención',      compactLabel: 'Retención',    icon: Icon.retention,     area: 'academic' },
-  { href: '/admin/reactivacion',    label: 'Reactivación',   compactLabel: 'Reactivar',    icon: Icon.reactivacion,  area: 'academic' },
-  { href: '/admin/academico',       label: 'Métricas',       compactLabel: 'Indicadores',  icon: Icon.metrics,       area: 'academic' },
-  { href: '/admin/instructors',     label: 'Instructores',   compactLabel: 'Profesores',   icon: Icon.instructors,   area: 'academic' },
-  { href: '/admin/enrollments',     label: 'Inscripciones',  compactLabel: 'Matrículas',   icon: Icon.enrollments,   area: 'academic' },
-  { href: '/admin/automatizaciones', label: 'Automatizaciones', compactLabel: 'Automático', icon: Icon.automations, area: 'shared' },
-  { href: '/admin/actividad',        label: 'Actividad',        compactLabel: 'Auditoría',  icon: Icon.activity,    area: 'shared' },
+  { href: '/admin',                   label: 'Dashboard',      compactLabel: 'Inicio',       icon: Icon.dashboard,    area: 'shared',     group: 'general' },
+  { href: '/admin/ventas',            label: 'Comercial',      compactLabel: 'Ingresos',     icon: Icon.ventas,       area: 'executive',  group: 'comercial' },
+  { href: '/admin/leads',             label: 'Leads',          compactLabel: 'Prospectos',   icon: Icon.leads,        area: 'executive',  group: 'comercial' },
+  { href: '/admin/enrollments',       label: 'Inscripciones',  compactLabel: 'Matrículas',   icon: Icon.enrollments,  area: 'academic',   group: 'comercial' },
+  { href: '/admin/pagos',             label: 'Pagos',          compactLabel: 'Cobros',       icon: Icon.pagos,        area: 'executive',  group: 'comercial' },
+  { href: '/admin/agenda',            label: 'Clases',         compactLabel: 'Agenda',       icon: Icon.agenda,       area: 'academic',   group: 'academico' },
+  { href: '/admin/students',          label: 'Estudiantes',    compactLabel: 'Alumnos',      icon: Icon.students,     area: 'academic',   group: 'academico' },
+  { href: '/admin/instructors',       label: 'Instructores',   compactLabel: 'Profesores',   icon: Icon.instructors,  area: 'academic',   group: 'academico' },
+  { href: '/admin/retencion',         label: 'Retención',      compactLabel: 'En riesgo',    icon: Icon.retention,    area: 'academic',   group: 'academico' },
+  { href: '/admin/reactivacion',      label: 'Recuperación',   compactLabel: 'Inactivos',    icon: Icon.reactivacion, area: 'academic',   group: 'academico' },
+  { href: '/admin/academico',         label: 'Indicadores',    compactLabel: 'Métricas',     icon: Icon.metrics,      area: 'academic',   group: 'academico' },
+  { href: '/admin/automatizaciones',  label: 'Automatizaciones', compactLabel: 'Automático', icon: Icon.automations,  area: 'shared',     group: 'sistema' },
+  { href: '/admin/actividad',         label: 'Actividad',      compactLabel: 'Auditoría',    icon: Icon.activity,     area: 'shared',     group: 'sistema' },
 ]
 
 function getVisibleNav(role: AppRole | null): NavItem[] {
@@ -182,10 +192,21 @@ export default function AdminSidebar({ role }: { role: AppRole | null }) {
         </div>
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-4 py-5 space-y-2">
-        {nav.map((item) => (
-          <NavLink key={item.href} item={item} pathname={pathname} />
-        ))}
+      <nav className="flex-1 overflow-y-auto px-4 py-5 space-y-1">
+        {nav.map((item, i) => {
+          const prevGroup = i > 0 ? nav[i - 1].group : null
+          const showHeader = item.group !== 'general' && item.group !== prevGroup
+          return (
+            <div key={item.href}>
+              {showHeader && (
+                <p className="px-2 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/25">
+                  {GROUP_LABELS[item.group]}
+                </p>
+              )}
+              <NavLink item={item} pathname={pathname} />
+            </div>
+          )
+        })}
       </nav>
 
       <div className="mt-auto px-4 pb-5 pt-3">
@@ -268,14 +289,21 @@ export function MobileMenuDrawer({ role }: { role: AppRole | null }) {
 
         {/* Nav items */}
         <nav className="flex-1 overflow-y-auto px-4 py-3 space-y-1">
-          {nav.map((item) => {
+          {nav.map((item, i) => {
             const active = item.href === '/admin'
               ? pathname === '/admin'
               : pathname.startsWith(item.href)
+            const prevGroup = i > 0 ? nav[i - 1].group : null
+            const showHeader = item.group !== 'general' && item.group !== prevGroup
 
             return (
+              <div key={item.href}>
+              {showHeader && (
+                <p className="px-2 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/25">
+                  {GROUP_LABELS[item.group]}
+                </p>
+              )}
               <Link
-                key={item.href}
                 href={item.href}
                 className={[
                   'flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm transition-all',
@@ -297,6 +325,7 @@ export function MobileMenuDrawer({ role }: { role: AppRole | null }) {
                   <p className="truncate text-[11px] text-white/32">{item.compactLabel}</p>
                 </div>
               </Link>
+              </div>
             )
           })}
         </nav>

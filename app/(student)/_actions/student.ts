@@ -227,9 +227,14 @@ export async function studentBookAction(
   _prev: BookingFormState,
   formData: FormData
 ): Promise<BookingFormState> {
+  const supabase = await createAuthServerClient()
+  const { data: { user: authUser } } = await supabase.auth.getUser()
+  if (!authUser) {
+    return { status: 'error', message: 'Debes iniciar sesión para agendar una clase.' }
+  }
   const student = await getAuthenticatedStudent()
   if (!student) {
-    return { status: 'error', message: 'Sesión expirada. Por favor inicia sesión nuevamente.' }
+    return { status: 'error', message: 'No tienes una cuenta de estudiante activa. Contacta a 4U Studio.' }
   }
 
   const selectedDateIso  = (formData.get('selected_date_iso')      as string)?.trim()

@@ -129,7 +129,7 @@ export default async function AgendarPage({
               <BookingCalendar
                 serverAction={studentBookAction}
                 mode="student"
-                isLoggedIn={true}
+                isLoggedIn={!!user}
                 instructors={instructorsForCalendar}
                 activeCourses={activeCourses}
                 studentId={studentId}

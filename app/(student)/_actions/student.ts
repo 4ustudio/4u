@@ -232,7 +232,12 @@ export async function studentBookAction(
   if (!authUser) {
     return { status: 'error', message: 'Debes iniciar sesión para agendar una clase.' }
   }
-  const student = await getAuthenticatedStudent()
+  // Usar admin client para el lookup de student: evita RLS en contexto server action
+  const { data: student } = await admin()
+    .from('students')
+    .select('id, name, email, phone, student_type, status, enrolled_at, user_id')
+    .eq('user_id', authUser.id)
+    .single()
   if (!student) {
     return { status: 'error', message: 'No tienes una cuenta de estudiante activa. Contacta a 4U Studio.' }
   }

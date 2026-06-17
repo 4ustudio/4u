@@ -322,26 +322,35 @@ export default function BookingCalendar({
   const selectedTimeLabel = selectedTime ? fmtSlotTime(selectedTime+":00") : null;
   const currentStep = !selectedDate ? 1 : !selectedCourse ? 2 : !selectedTime ? 3 : 4;
 
-  // ─── SUCCESS ─────────────────────────────────────────────────────
-  if (state.status === "success" && mode === "student") {
-    return (
-      <div className="rounded-2xl border border-[#ff7a00]/20 bg-white shadow-lg p-10 flex flex-col items-center text-center gap-4"
-        style={{ boxShadow:"0 4px 32px rgba(255,122,0,0.08)" }}>
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
-          <svg className="h-7 w-7 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+  // ─── SUCCESS MODAL (student) ─────────────────────────────────────
+  const successModal = state.status === "success" && mode === "student" && (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+      style={{ backgroundColor: "rgba(0,0,0,0.72)", backdropFilter: "blur(4px)" }}>
+      <div className="relative w-full max-w-sm rounded-3xl bg-white p-10 flex flex-col items-center text-center gap-5 shadow-2xl"
+        style={{ boxShadow: "0 32px 80px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,122,0,0.12)" }}>
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+          <svg className="h-8 w-8 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
         </div>
         <div>
-          <h3 className="font-poppins text-xl font-extrabold text-gray-900">¡Clase agendada!</h3>
-          <p className="text-gray-500 text-sm mt-1">
-            {state.submittedCourse ? `Tu clase de ${state.submittedCourse}` : "Tu clase"} ha sido reservada.
+          <h3 className="font-poppins text-2xl font-extrabold text-gray-900">¡Clase agendada!</h3>
+          <p className="text-gray-500 text-sm mt-2 leading-relaxed">
+            {state.submittedCourse ? `Tu clase de ${state.submittedCourse}` : "Tu clase"} ha sido reservada exitosamente.
           </p>
         </div>
-        <a href="/mi-cuenta" className="px-6 py-2.5 rounded-xl bg-[#ff7a00] text-white text-sm font-bold font-poppins hover:brightness-110 transition-all">
-          Ver mis clases
-        </a>
+        <div className="flex flex-col gap-3 w-full">
+          <a href="/mi-cuenta/mis-clases"
+            className="w-full py-3 rounded-xl text-white text-sm font-bold font-poppins text-center transition-all hover:brightness-110 hover:scale-[1.02]"
+            style={{ backgroundColor: "#ff7a00", boxShadow: "0 4px 20px rgba(255,122,0,0.4)" }}>
+            Ver mis clases
+          </a>
+          <a href="/agendar"
+            className="w-full py-3 rounded-xl text-sm font-semibold font-roboto text-center border border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-800 transition-colors">
+            Agendar otra clase
+          </a>
+        </div>
       </div>
-    );
-  }
+    </div>
+  );
   if (state.status === "success") {
     return (
       <div className="rounded-2xl border border-[#ff7a00]/20 bg-white shadow-lg p-10 flex flex-col items-center text-center gap-4"
@@ -388,6 +397,7 @@ export default function BookingCalendar({
 
   // ─── MAIN FORM ───────────────────────────────────────────────────
   return (
+    <>
     <form action={formAction} noValidate>
       <input type="hidden" name="course"                value={selectedCourse}/>
       <input type="hidden" name="modality"              value="presencial"/>
@@ -809,5 +819,7 @@ export default function BookingCalendar({
         </div>
       )}
     </form>
+    {successModal}
+    </>
   );
 }

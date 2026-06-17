@@ -14,13 +14,11 @@ function admin(): any { return createAdminClient() }
 // ─── Helpers ────────────────────────────────────────────────────────
 
 async function getAuthenticatedStudent() {
-  // Usar cliente autenticado (anon key + sesión + RLS) para el lookup
-  // Evita depender del service_role key para queries del portal estudiante
   const supabase = await createAuthServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data: student } = await supabase
+  const { data: student } = await admin()
     .from('students')
     .select('id, name, email, phone, student_type, status, enrolled_at, user_id')
     .eq('user_id', user.id)
@@ -42,10 +40,7 @@ export async function getMyDashboardData(userId?: string) {
     uid = user.id
   }
 
-  // Usar cliente autenticado (anon key + sesión) para respetar RLS
-  // Esto funciona gracias a la policy: SELECT WHERE auth.uid() = user_id
-  const authClient = await createAuthServerClient()
-  const { data: student } = await authClient
+  const { data: student } = await admin()
     .from('students')
     .select('*')
     .eq('user_id', uid)
@@ -405,7 +400,7 @@ export async function loginAction(
     if (role === 'owner' || role === 'super_admin' || role === 'admin' || role === 'sales') redirect('/admin')
     if (role === 'instructor') redirect('/mi-cuenta')
 
-    const { data: studentRecord } = await supabase
+    const { data: studentRecord } = await admin()
       .from('students')
       .select('id')
       .eq('user_id', loggedUser.id)

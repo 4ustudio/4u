@@ -13,7 +13,7 @@ export default async function MisClasesPage() {
   if (!user) redirect('/mi-cuenta/login')
 
   const data = await getMyDashboardData(user.id)
-  if (!data) redirect('/admin')
+  if (!data) redirect('/planes')
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { student, schedules } = data as any

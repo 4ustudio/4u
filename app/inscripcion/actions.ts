@@ -1,19 +1,15 @@
 'use server'
 
-import { headers } from 'next/headers'
-import { createServerClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { Resend } from 'resend'
 import { ACADEMY, TERMS } from '@/lib/constants'
 import { activity } from '@/lib/activity'
-import { generateAndStoreContract } from '@/lib/pdf/generateContract'
 import type {
   EnrollmentFormState,
   EnrollmentInsert,
   StudentType,
   Level,
 } from '@/types/enrollment'
-import type { StudentDocumentInsert } from '@/types/documents'
 
 const PHONE_RE = /^[+]?[\d\s\-().]{7,20}$/
 
@@ -78,16 +74,8 @@ function validate(form: Partial<EnrollmentInsert>): EnrollmentFormState['errors'
   return Object.keys(errors).length > 0 ? errors : null
 }
 
-function validateSignatureStep(idDocument: string, city: string): string | null {
-  if (!idDocument.trim()) return 'El número de documento de identidad es obligatorio'
-  if (idDocument.trim().length < 5) return 'Ingresa un número de documento válido'
-  if (!city.trim()) return 'La ciudad es obligatoria'
-  return null
-}
-
 async function sendUserConfirmation(
   data: EnrollmentInsert,
-  pdfBuffer?: Buffer,
 ) {
   const apiKey = process.env.RESEND_API_KEY
   if (!apiKey) return
@@ -100,9 +88,6 @@ async function sendUserConfirmation(
       from:    `4U Studio Academy <${fromEmail}>`,
       to:      [data.email],
       subject: '¡Tu inscripción en 4U Studio Academy fue recibida!',
-      attachments: pdfBuffer
-        ? [{ filename: `Contrato_4UStudio_${data.student_name.replace(/\s+/g, '_')}.pdf`, content: pdfBuffer }]
-        : [],
       html: `
         <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;background:#0f0f0f;color:#e5e5e5;border-radius:12px;">
           <h1 style="font-size:20px;font-weight:800;color:#fff;margin:0 0 12px;">¡Hola, ${data.student_name}!</h1>
@@ -115,7 +100,6 @@ async function sendUserConfirmation(
             <tr><td style="padding:6px 0;color:#888;">Nivel</td><td style="padding:6px 0;color:#fff;">${LEVEL_LABEL[data.level] ?? data.level}</td></tr>
             <tr><td style="padding:6px 0;color:#888;">Hora preferida</td><td style="padding:6px 0;color:#fff;font-weight:700;">${data.preferred_time}</td></tr>
           </table>
-          ${pdfBuffer ? '<p style="font-size:12px;color:#666;margin:0 0 8px;">Tu contrato firmado está adjunto a este correo.</p>' : ''}
           <p style="font-size:12px;color:#555;margin:0;">¿Tienes dudas? Escríbenos por WhatsApp o a contacto@4ustudioacademy.com</p>
         </div>
       `,
@@ -127,7 +111,6 @@ async function sendUserConfirmation(
 
 async function sendAdminNotification(
   data: EnrollmentInsert,
-  pdfBuffer?: Buffer,
 ) {
   const apiKey = process.env.RESEND_API_KEY
   if (!apiKey) return
@@ -140,9 +123,6 @@ async function sendAdminNotification(
       from:    `4U Studio Academy <${fromEmail}>`,
       to:      [ACADEMY.email],
       subject: `Nueva inscripción: ${data.student_name} — ${data.course_interest}`,
-      attachments: pdfBuffer
-        ? [{ filename: `Contrato_4UStudio_${data.student_name.replace(/\s+/g, '_')}.pdf`, content: pdfBuffer }]
-        : [],
       html: `
         <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;background:#0f0f0f;color:#e5e5e5;border-radius:12px;">
           <div style="margin-bottom:20px;">
@@ -179,29 +159,11 @@ async function sendAdminNotification(
   }
 }
 
-// ── Acción orquestadora principal ─────────────────────────────────────────────
-// Recibe todos los datos del formulario + firma digital.
-// Garantiza consistencia: no existe enrollment sin student_document asociado.
-
 export async function generateAndSaveEnrollment(
   _prevState: EnrollmentFormState,
   formData: FormData,
 ): Promise<EnrollmentFormState> {
-  const now     = new Date().toISOString()
-  const signedAt = now
-
-  // Capturar IP y User-Agent del server
-  let ip_address: string | undefined
-  let user_agent: string | undefined
-  try {
-    const hdrs = await headers()
-    ip_address = hdrs.get('x-forwarded-for')?.split(',')[0]?.trim()
-               ?? hdrs.get('x-real-ip')
-               ?? undefined
-    user_agent = hdrs.get('user-agent') ?? undefined
-  } catch {
-    // headers() puede fallar fuera de contexto de request
-  }
+  const signedAt = new Date().toISOString()
 
   // ── 1. Validar datos del formulario principal ──
   const raw: Partial<EnrollmentInsert> = {
@@ -233,25 +195,10 @@ export async function generateAndSaveEnrollment(
   const errors = validate(raw)
   if (errors) return { status: 'error', errors }
 
-  // ── 2. Validar campos del paso de firma ──
-  const id_document  = raw.id_document ?? ''
-  const city         = raw.city ?? ''
-  const sigError = validateSignatureStep(id_document, city)
-  if (sigError) return { status: 'error', message: sigError }
-
-  // ── 3. Validar firma digital ──
-  const signaturePng = (formData.get('signature_png') as string | null) ?? ''
-  if (!signaturePng || !signaturePng.startsWith('data:image/png;base64,')) {
-    return { status: 'error', message: 'La firma digital es obligatoria. Por favor firma en el recuadro.' }
-  }
-
   try {
-    const supabase = createServerClient()
-    const admin    = createAdminClient()
+    const admin = createAdminClient()
 
-    // ── 4. Insertar enrollment usando admin client para recuperar el ID generado.
-    // anon puede INSERT en enrollments pero no SELECT, por lo que insert().select()
-    // falla con 42501 si se usa el anon key.
+    // ── 2. Insertar enrollment ──
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: enrollment, error: enrollError } = await (admin as any)
       .from('enrollments')
@@ -271,59 +218,7 @@ export async function generateAndSaveEnrollment(
 
     const enrollmentId = enrollment.id
 
-    // ── 5. Generar PDF + subir firma y PDF a Storage ──
-    let contractResult: Awaited<ReturnType<typeof generateAndStoreContract>> | null = null
-    try {
-      contractResult = await generateAndStoreContract({
-        enrollmentId,
-        studentName:      raw.student_name!,
-        idDocument:       id_document,
-        phone:            raw.phone!,
-        city,
-        signedAt,
-        termsVersion:     TERMS.version,
-        courseInterest:   raw.course_interest!,
-        signaturePngBase64: signaturePng,
-      })
-    } catch (pdfErr) {
-      // Si el PDF falla: eliminar enrollment para mantener consistencia
-      await admin.from('enrollments').delete().eq('id', enrollmentId)
-      console.error('PDF generation failed, enrollment rolled back:', pdfErr)
-      return { status: 'error', message: 'Error generando el contrato digital. Intenta de nuevo.' }
-    }
-
-    // ── 6. Insertar student_document ──
-    const docInsert: StudentDocumentInsert = {
-      enrollment_id:    enrollmentId,
-      document_type:    'terms_and_conditions',
-      document_version: TERMS.version,
-      signed_at:        signedAt,
-      pdf_url:          contractResult.pdfUrl,
-      signature_url:    contractResult.signatureUrl,
-      document_hash:    contractResult.documentHash,
-      ip_address,
-      user_agent,
-      metadata: {
-        student_name:   raw.student_name,
-        course_interest: raw.course_interest,
-        data_consent:   raw.data_consent,
-        image_consent:  raw.image_consent,
-      },
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: docError } = await (admin as any)
-      .from('student_documents')
-      .insert(docInsert)
-
-    if (docError) {
-      // Documento falló: revertir enrollment + storage
-      await admin.from('enrollments').delete().eq('id', enrollmentId)
-      console.error('student_documents insert failed:', docError.message)
-      return { status: 'error', message: 'Error registrando el documento firmado. Intenta de nuevo.' }
-    }
-
-    // ── 7. Activity log + Correos (en paralelo, no bloquean) ──
+    // ── 3. Activity log + Correos (en paralelo, no bloquean) ──
     await Promise.all([
       activity.leadCreated({
         lead_id:    enrollmentId,
@@ -332,15 +227,8 @@ export async function generateAndSaveEnrollment(
         source:     'inscripcion',
         created_by_system: true,
       }),
-      activity.contractSigned({
-        enrollment_id:    enrollmentId,
-        student_name:     raw.student_name ?? '',
-        document_version: TERMS.version,
-        signed_at:        signedAt,
-        document_hash:    contractResult.documentHash,
-      }),
-      sendAdminNotification(raw as EnrollmentInsert, contractResult.pdfBuffer),
-      sendUserConfirmation(raw as EnrollmentInsert, contractResult.pdfBuffer),
+      sendAdminNotification(raw as EnrollmentInsert),
+      sendUserConfirmation(raw as EnrollmentInsert),
     ])
 
     return {

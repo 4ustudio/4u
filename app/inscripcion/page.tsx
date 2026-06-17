@@ -1,13 +1,12 @@
 'use client'
 
-import { useActionState, useState, useRef } from 'react'
+import { useActionState, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { generateAndSaveEnrollment } from './actions'
 import type { EnrollmentFormState } from '@/types/enrollment'
 import { ACADEMY } from '@/lib/constants'
 import PageLayout from '@/components/layout/PageLayout'
-import SignatureCanvas, { type SignatureCanvasHandle } from './_components/SignatureCanvas'
 
 const ORANGE = '#ff7a00'
 
@@ -33,52 +32,15 @@ const radioCardClass =
 
 const initialState: EnrollmentFormState = { status: 'idle' }
 
-// Formulario paso 1: datos personales y académicos
-// Formulario paso 2: datos del contrato + firma
-// Los datos del paso 1 se guardan en estado local y se incluyen como hidden inputs en el submit del paso 2
-
-type Step = 'form' | 'signature'
-
-interface FormSnapshot {
-  student_type:    string
-  student_name:    string
-  student_age:     string
-  guardian_name:   string
-  phone:           string
-  email:           string
-  course_interest: string
-  level:           string
-  preferred_time:  string
-  payment_method:  string
-  music_genre:     string
-  notes:           string
-  terms:           string
-  data_consent:    string
-  image_consent:   string
-  eps:                     string
-  emergency_contact_name:  string
-  emergency_contact_phone: string
-}
-
 export default function InscripcionPage() {
   const [state, action, isPending] = useActionState(generateAndSaveEnrollment, initialState)
-  const [step, setStep]            = useState<Step>('form')
-  const [snapshot, setSnapshot]    = useState<FormSnapshot | null>(null)
 
-  // Step 1 state
   const [studentType,   setStudentType]   = useState<'self' | 'child' | null>(null)
   const [age,           setAge]           = useState<number | ''>('')
   const [ageError,      setAgeError]      = useState<string | null>(null)
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [dataConsent,   setDataConsent]   = useState(false)
   const [imageConsent,  setImageConsent]  = useState(false)
-
-  // Step 2 state
-  const [idDocument,    setIdDocument]    = useState('')
-  const [city,          setCity]          = useState('')
-  const [sigError,      setSigError]      = useState<string | null>(null)
-  const signatureRef = useRef<SignatureCanvasHandle>(null)
-  const hiddenFormRef = useRef<HTMLFormElement>(null)
 
   function handleAgeChange(value: string) {
     const num = value === '' ? '' : Number(value)
@@ -90,72 +52,9 @@ export default function InscripcionPage() {
     }
   }
 
-  function handleStep1Submit(e: React.FormEvent<HTMLFormElement>) {
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
-
-    // Capturar todos los campos del paso 1
-    const snap: FormSnapshot = {
-      student_type:    fd.get('student_type') as string ?? '',
-      student_name:    fd.get('student_name') as string ?? '',
-      student_age:     fd.get('student_age') as string ?? '',
-      guardian_name:   fd.get('guardian_name') as string ?? '',
-      phone:           fd.get('phone') as string ?? '',
-      email:           fd.get('email') as string ?? '',
-      course_interest: fd.get('course_interest') as string ?? '',
-      level:           fd.get('level') as string ?? '',
-      preferred_time:  fd.get('preferred_time') as string ?? '',
-      payment_method:  fd.get('payment_method') as string ?? '',
-      music_genre:     fd.get('music_genre') as string ?? '',
-      notes:           fd.get('notes') as string ?? '',
-      terms:           fd.get('terms') as string ?? '',
-      data_consent:    fd.get('data_consent') as string ?? '',
-      image_consent:   fd.get('image_consent') as string ?? '',
-      eps:                     fd.get('eps') as string ?? '',
-      emergency_contact_name:  fd.get('emergency_contact_name') as string ?? '',
-      emergency_contact_phone: fd.get('emergency_contact_phone') as string ?? '',
-    }
-
-    setSnapshot(snap)
-    setStep('signature')
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-
-  function handleSignatureSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setSigError(null)
-
-    if (!idDocument.trim()) {
-      setSigError('El número de documento de identidad es obligatorio')
-      return
-    }
-    if (idDocument.trim().length < 5) {
-      setSigError('Ingresa un número de documento válido')
-      return
-    }
-    if (!city.trim()) {
-      setSigError('La ciudad es obligatoria')
-      return
-    }
-    if (!signatureRef.current || signatureRef.current.isEmpty()) {
-      setSigError('La firma digital es obligatoria. Por favor firma en el recuadro.')
-      return
-    }
-
-    const signaturePng = signatureRef.current.toDataURL()
-    const fd = new FormData()
-
-    // Incluir datos del paso 1
-    if (snapshot) {
-      for (const [key, value] of Object.entries(snapshot)) {
-        fd.append(key, value)
-      }
-    }
-    // Datos del paso 2
-    fd.append('id_document', idDocument.trim())
-    fd.append('city', city.trim())
-    fd.append('signature_png', signaturePng)
-
     action(fd)
   }
 
@@ -212,33 +111,8 @@ export default function InscripcionPage() {
 
         <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-14 md:py-20 [&_*]:relative [&_*]:z-auto" style={{ isolation: 'isolate' }}>
 
-          {/* Indicador de pasos */}
-          <div className="flex items-center justify-center gap-3 mb-8">
-            {(['form', 'signature'] as const).map((s, i) => (
-              <div key={s} className="flex items-center gap-3">
-                <div className={`flex items-center justify-center h-7 w-7 rounded-full text-xs font-bold transition-all ${
-                  step === s
-                    ? 'text-white ring-2 ring-offset-2 ring-offset-transparent ring-[#ff7a00]'
-                    : (i === 0 && step === 'signature')
-                      ? 'bg-green-500/20 text-green-400'
-                      : 'bg-white/10 text-white/30'
-                }`} style={step === s ? { backgroundColor: ORANGE } : {}}>
-                  {i === 0 && step === 'signature' ? (
-                    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
-                  ) : (
-                    i + 1
-                  )}
-                </div>
-                <span className={`text-xs font-roboto font-medium ${step === s ? 'text-white' : 'text-white/30'}`}>
-                  {i === 0 ? 'Datos de inscripción' : 'Firma del contrato'}
-                </span>
-                {i === 0 && <div className="h-px w-6 bg-white/15" />}
-              </div>
-            ))}
-          </div>
-
-          {/* ── PASO 1: FORMULARIO ── */}
-          {step === 'form' && (
+          {/* ── FORMULARIO ── */}
+          {true && (
             <>
               <div className="text-center mb-10">
                 <h1 className="text-3xl md:text-4xl font-extrabold text-white font-poppins leading-tight">
@@ -253,7 +127,7 @@ export default function InscripcionPage() {
               <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-lg p-6 sm:p-8">
                 <div className="pointer-events-none absolute -inset-20 opacity-50" style={{ background: "radial-gradient(ellipse 60% 50% at 50% 40%, rgba(255,122,0,0.08), transparent 70%)" }} aria-hidden="true" />
 
-                <form onSubmit={handleStep1Submit} noValidate className="space-y-6 relative">
+                <form onSubmit={handleSubmit} noValidate className="space-y-6 relative">
                   <input type="hidden" name="student_type" value={studentType ?? ''} />
 
                   {/* ── 1. ¿Para quién? ── */}
@@ -395,21 +269,6 @@ export default function InscripcionPage() {
                     {state.errors?.preferred_time && <p className={errorClass}>{state.errors.preferred_time}</p>}
                   </fieldset>
 
-                  {/* ── Forma de pago ── */}
-                  <div>
-                    <label htmlFor="payment_method" className={labelClass}>Forma de pago <span className="text-white/20 font-normal normal-case ml-1">(opcional)</span></label>
-                    <select id="payment_method" name="payment_method" className={inputClass + ' appearance-none'}>
-                      <option value="">Seleccionar…</option>
-                      <option value="Efectivo">Efectivo</option>
-                      <option value="Transferencia bancaria">Transferencia bancaria</option>
-                      <option value="Nequi">Nequi</option>
-                      <option value="Daviplata">Daviplata</option>
-                      <option value="Tarjeta de crédito">Tarjeta de crédito</option>
-                      <option value="Tarjeta de débito">Tarjeta de débito</option>
-                      <option value="PSE">PSE</option>
-                    </select>
-                  </div>
-
                   {/* ── Género musical ── */}
                   <div>
                     <label htmlFor="music_genre" className={labelClass}>Género musical favorito <span className="text-white/20 font-normal normal-case ml-1">(opcional)</span></label>
@@ -481,163 +340,44 @@ export default function InscripcionPage() {
                     </div>
                   </div>
 
-                  {/* Submit paso 1 */}
+                  {/* Error general */}
+                  {state.status === 'error' && state.message && (
+                    <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-roboto text-center">
+                      {state.message}
+                    </div>
+                  )}
+
+                  {/* Submit */}
                   <button
                     type="submit"
-                    disabled={!termsAccepted || !dataConsent}
+                    disabled={!termsAccepted || !dataConsent || isPending}
                     className="w-full flex items-center justify-center gap-2.5 rounded-xl py-4 text-sm font-bold text-white font-poppins transition-all duration-300 h-14 disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110"
                     style={{ backgroundColor: ORANGE, boxShadow: '0 0 32px rgba(255,122,0,0.3)' }}
                   >
-                    Continuar al contrato
-                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M5 12h14M12 5l7 7-7 7" />
-                    </svg>
+                    {isPending ? (
+                      <>
+                        <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z" />
+                        </svg>
+                        Enviando…
+                      </>
+                    ) : (
+                      <>
+                        Enviar inscripción
+                        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <path d="M5 12h14M12 5l7 7-7 7" />
+                        </svg>
+                      </>
+                    )}
                   </button>
                 </form>
               </div>
             </>
           )}
 
-          {/* ── PASO 2: FIRMA ── */}
-          {step === 'signature' && (
-            <>
-              <div className="text-center mb-10">
-                <h1 className="text-2xl md:text-3xl font-extrabold text-white font-poppins leading-tight mb-2">
-                  Firma tu <span style={{ color: ORANGE }}>contrato digital</span>
-                </h1>
-                <p className="text-white/50 text-sm font-roboto max-w-md mx-auto">
-                  Este documento tiene validez legal según la Ley 527 de 1999 (Comercio Electrónico, Colombia).
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-lg p-6 sm:p-8">
-                <form onSubmit={handleSignatureSubmit} noValidate className="space-y-6">
-
-                  {/* Datos del firmante */}
-                  <div>
-                    <h2 className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-4 font-roboto">
-                      Datos del firmante
-                    </h2>
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <div>
-                        <label htmlFor="id_document" className={labelClass}>
-                          Documento de identidad <span className="text-red-400 ml-0.5">*</span>
-                        </label>
-                        <input
-                          id="id_document"
-                          type="text"
-                          placeholder="Ej: 1234567890"
-                          value={idDocument}
-                          onChange={(e) => setIdDocument(e.target.value)}
-                          disabled={isPending}
-                          className={inputClass}
-                          autoComplete="off"
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="city" className={labelClass}>
-                          Ciudad <span className="text-red-400 ml-0.5">*</span>
-                        </label>
-                        <input
-                          id="city"
-                          type="text"
-                          placeholder="Ej: Bogotá"
-                          value={city}
-                          onChange={(e) => setCity(e.target.value)}
-                          disabled={isPending}
-                          className={inputClass}
-                          autoComplete="address-level2"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Resumen del contrato */}
-                  <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-                    <p className="text-xs text-white/40 font-roboto leading-relaxed">
-                      Al firmar confirmas que has leído y aceptas los{' '}
-                      <Link href="/terminos" target="_blank" rel="noopener noreferrer" className="text-[#ff7a00] underline underline-offset-2">
-                        Términos y Condiciones
-                      </Link>{' '}
-                      de 4U Studio Academy, autorizas el tratamiento de tus datos personales (Ley 1581 de 2012),
-                      y que el contrato firmado digitalmente será guardado de forma segura y te será enviado por correo.
-                    </p>
-                  </div>
-
-                  {/* Canvas de firma */}
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className={labelClass}>
-                        Firma digital <span className="text-red-400 ml-0.5">*</span>
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => { signatureRef.current?.clear(); setSigError(null) }}
-                        disabled={isPending}
-                        className="text-xs text-white/30 hover:text-white/60 transition-colors font-roboto"
-                      >
-                        Limpiar
-                      </button>
-                    </div>
-                    <SignatureCanvas ref={signatureRef} disabled={isPending} />
-                    <p className="text-[11px] text-white/25 font-roboto mt-2">
-                      Usa el mouse o el dedo para firmar en el recuadro de arriba.
-                    </p>
-                  </div>
-
-                  {/* Error */}
-                  {(sigError || (state.status === 'error' && state.message)) && (
-                    <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-roboto text-center">
-                      {sigError ?? state.message}
-                    </div>
-                  )}
-
-                  {/* Acciones */}
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <button
-                      type="button"
-                      onClick={() => { setStep('form'); setSigError(null) }}
-                      disabled={isPending}
-                      className="flex-1 flex items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-semibold text-white/50 border border-white/10 hover:border-white/25 hover:text-white/70 transition-all font-roboto disabled:opacity-40"
-                    >
-                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <path d="M19 12H5M12 19l-7-7 7-7" />
-                      </svg>
-                      Volver
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isPending}
-                      className="flex-2 flex items-center justify-center gap-2.5 rounded-xl py-3.5 px-8 text-sm font-bold text-white font-poppins transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110"
-                      style={{ backgroundColor: ORANGE, boxShadow: '0 0 32px rgba(255,122,0,0.3)', flex: 2 }}
-                    >
-                      {isPending ? (
-                        <>
-                          <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z" />
-                          </svg>
-                          Guardando contrato…
-                        </>
-                      ) : (
-                        <>
-                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
-                            <path d="M9 12l2 2 4-4" />
-                            <path d="M21 12c0 4.97-4.03 9-9 9S3 16.97 3 12 7.03 3 12 3s9 4.03 9 9z" />
-                          </svg>
-                          Firmar y completar inscripción
-                        </>
-                      )}
-                    </button>
-                  </div>
-
-                </form>
-              </div>
-            </>
-          )}
-
           {/* Info adicional */}
-          {step === 'form' && (
+          {true && (
             <div className="mt-8 text-center">
               <p className="text-white/30 text-xs font-roboto">
                 ¿Tienes dudas? Escríbenos por{' '}

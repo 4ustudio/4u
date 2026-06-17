@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getSignedUrl } from '@/lib/storage'
 import type { StudentDocument } from '@/types/documents'
+import ContractSignSection from './ContractSignSection'
 
 const DOCUMENT_TYPE_LABEL: Record<string, string> = {
   terms_and_conditions: 'Términos y Condiciones',
@@ -35,12 +36,19 @@ export default async function DocumentsSection({ studentId, enrollmentId }: Prop
   const { data: docs } = await query
   const documents = (docs ?? []) as StudentDocument[]
 
-  if (documents.length === 0) {
+  const hasContract = documents.some(d => d.document_type === 'terms_and_conditions')
+
+  if (documents.length === 0 || !hasContract) {
     return (
-      <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="text-base font-bold text-gray-900 mb-1">Documentación</h2>
-        <p className="text-sm text-gray-400">Sin documentos registrados.</p>
-      </section>
+      <div className="space-y-4">
+        <ContractSignSection />
+        {documents.length > 0 && (
+          <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="text-base font-bold text-gray-900 mb-4">Otros documentos</h2>
+            {/* docs sin contrato — se renderizan abajo */}
+          </section>
+        )}
+      </div>
     )
   }
 

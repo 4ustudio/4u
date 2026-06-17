@@ -122,8 +122,8 @@ export default async function LeccionesPage() {
             loop
             playsInline
             preload="metadata"
-            className="absolute inset-0 h-full w-full object-cover"
-            style={{ objectPosition: "78% center", transform: "scaleX(-1)" }}
+            className="absolute inset-0 h-full w-full object-cover object-center sm:object-[78%_center]"
+            style={{ transform: "scaleX(-1)" }}
           />
           {/* Capa 1 — negro intenso izq → transparencia progresiva (termina antes de los rostros) */}
           <div

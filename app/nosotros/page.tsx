@@ -98,7 +98,7 @@ export default function NosotrosPage() {
             alt="4U Studio Academy"
             fill
             priority
-            className="object-cover object-left scale-110 translate-x-[12%]"
+            className="object-cover object-center lg:object-left lg:scale-110 lg:translate-x-[12%]"
             sizes="100vw"
           />
         </div>
@@ -181,7 +181,7 @@ export default function NosotrosPage() {
       {/* ──────── 3. Frase institucional ──────── */}
       <section className="relative w-full bg-black overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 min-h-[380px] lg:min-h-[420px] items-center gap-8 py-16 lg:py-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 items-center gap-6 py-14 lg:py-20">
             {/* Text left */}
             <div>
               <span className="block text-6xl text-[#ff7a00]/30 mb-4 font-poppins leading-none">&ldquo;</span>
@@ -193,8 +193,8 @@ export default function NosotrosPage() {
                 La enseñamos como un sueño que se construye.
               </p>
             </div>
-            {/* Video right */}
-            <div className="relative hidden lg:block h-[380px] lg:h-[420px] rounded-2xl overflow-hidden">
+            {/* Video right — visible en todos los breakpoints */}
+            <div className="relative h-[220px] sm:h-[300px] lg:h-[420px] rounded-2xl overflow-hidden">
               <video
                 src="/images/hero/hf_20260603_132024_66aa16f3-508a-4fd7-9e4f-a228b9963941.mp4"
                 autoPlay
@@ -204,7 +204,7 @@ export default function NosotrosPage() {
                 preload="metadata"
                 className="absolute inset-0 h-full w-full object-cover object-center"
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-black via-black/30 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent lg:bg-gradient-to-r lg:from-black lg:via-black/30 lg:to-transparent" />
             </div>
           </div>
         </div>

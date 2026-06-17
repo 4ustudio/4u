@@ -24,8 +24,8 @@ export function AcademicDashboardClient({ data }: Props) {
           <span>/</span>
           <span className="text-white/60">Académico</span>
         </div>
-        <h1 className="text-xl font-bold text-white">Dashboard Académico</h1>
-        <p className="text-sm text-white/40 mt-0.5">Indicadores de operación, asistencia y capacidad.</p>
+        <h1 className="text-xl font-bold text-white">Indicadores Académicos</h1>
+        <p className="text-sm text-white/40 mt-0.5">Operación, asistencia y capacidad.</p>
       </div>
 
       {/* Tabs */}

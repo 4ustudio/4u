@@ -27,10 +27,10 @@ async function getDashboardStats() {
   const [
     { count: activeStudents },
     { data: todaySessions },
-    { count: weekCount },
     { data: rooms },
     { data: todayAttendance },
     { data: weekAttendance },
+    { count: overdueCount },
   ] = await Promise.all([
     supabase.from('students').select('*', { count: 'exact', head: true }).eq('status', 'active'),
     supabase.from('class_sessions')
@@ -38,9 +38,6 @@ async function getDashboardStats() {
       .eq('scheduled_date', today)
       .not('status', 'in', '(cancelled,rescheduled)')
       .order('start_time'),
-    supabase.from('class_sessions').select('*', { count: 'exact', head: true })
-      .gte('scheduled_date', week.start).lte('scheduled_date', week.end)
-      .not('status', 'in', '(cancelled,rescheduled)'),
     supabase.from('class_sessions').select('classroom:classrooms(name), classroom_id')
       .eq('scheduled_date', today).not('status', 'in', '(cancelled,rescheduled)'),
     // Métricas de asistencia hoy
@@ -50,6 +47,7 @@ async function getDashboardStats() {
     supabase.from('class_sessions').select('attendance_status, status')
       .gte('scheduled_date', week.start)
       .lte('scheduled_date', week.end),
+    supabase.from('payments').select('*', { count: 'exact', head: true }).eq('status', 'overdue'),
   ])
 
   const roomMap: Record<string, number> = {}
@@ -85,10 +83,10 @@ async function getDashboardStats() {
   return {
     activeStudents:   activeStudents ?? 0,
     todaySessions:    (todaySessions as ClassSession[]) ?? [],
-    weekSessionCount: weekCount ?? 0,
     roomOccupancy,
     attendanceToday,
     attendanceWeek,
+    overdueCount:     overdueCount ?? 0,
   }
 }
 
@@ -155,16 +153,16 @@ export default async function AdminDashboard() {
           icon={<CalendarIcon />}
         />
         <KpiCard
-          title="Clases esta semana"
-          value={String(stats.weekSessionCount)}
-          trend="Lunes a domingo"
-          icon={<WeekIcon />}
+          title="Cobros vencidos"
+          value={String(stats.overdueCount)}
+          trend="Pagos sin saldar"
+          icon={<AlertIcon />}
         />
         <KpiCard
-          title="Salones en uso"
-          value={String(stats.roomOccupancy.length)}
-          trend="Con al menos una clase hoy"
-          icon={<RoomIcon />}
+          title="Sin próxima clase"
+          value={String(retentionDashboard?.without_upcoming_sessions ?? 0)}
+          trend="Alumnos activos sin sesión"
+          icon={<NoSessionIcon />}
         />
       </section>
 
@@ -399,10 +397,18 @@ function CalendarIcon() {
   )
 }
 
-function WeekIcon() {
+function AlertIcon() {
   return (
     <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-      <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/>
+      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/>
+    </svg>
+  )
+}
+
+function NoSessionIcon() {
+  return (
+    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+      <path d="M8 2v4M16 2v4M4 10h16M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="m9 14 2 2 4-4"/>
     </svg>
   )
 }

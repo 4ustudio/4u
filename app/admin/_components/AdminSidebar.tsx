@@ -141,25 +141,35 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
   return (
     <Link
       href={item.href}
-      className={[
-        'group flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm transition-all',
-        active
-          ? 'border-[#ff7a00]/20 bg-[#2a1b12] text-[#ff8a1d] shadow-[0_0_0_1px_rgba(255,122,0,0.08)]'
-          : 'border-transparent text-white/78 hover:border-white/10 hover:bg-white/[0.04] hover:text-white',
-      ].join(' ')}
+      className="group flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm transition-all"
+      style={active ? {
+        borderColor: 'rgba(255,122,0,0.20)',
+        background: 'var(--adm-nav-active-bg)',
+        color: '#ff8a1d',
+        boxShadow: '0 0 0 1px rgba(255,122,0,0.08)',
+      } : {
+        borderColor: 'transparent',
+        color: 'var(--adm-text-muted)',
+      }}
     >
-      <span className={[
-        'grid h-9 w-9 place-items-center rounded-xl border transition-colors',
-        active
-          ? 'border-[#ff7a00]/25 bg-[#ff7a00]/12 text-[#ff8a1d]'
-          : 'border-white/10 bg-white/[0.03] text-white/65 group-hover:text-white',
-      ].join(' ')}>
+      <span
+        className="grid h-9 w-9 place-items-center rounded-xl border transition-colors"
+        style={active ? {
+          borderColor: 'rgba(255,122,0,0.25)',
+          background: 'rgba(255,122,0,0.12)',
+          color: '#ff8a1d',
+        } : {
+          borderColor: 'var(--adm-border)',
+          background: 'var(--adm-card)',
+          color: 'var(--adm-text-muted)',
+        }}
+      >
         {item.icon}
       </span>
 
       <div className="min-w-0">
         <p className="truncate font-medium">{item.label}</p>
-        <p className="truncate text-[11px] text-white/32">{item.compactLabel}</p>
+        <p className="truncate text-[11px]" style={{ color: 'var(--adm-text-faint)' }}>{item.compactLabel}</p>
       </div>
     </Link>
   )
@@ -171,22 +181,26 @@ export default function AdminSidebar({ role }: { role: AppRole | null }) {
   const executiveMode = canAccessSalesDashboard(role)
 
   return (
-    <aside className="hidden lg:flex sticky top-0 h-screen w-[250px] shrink-0 border-r border-white/8 bg-[#070707] flex-col">
-      <div className="px-7 pt-8 pb-6 border-b border-white/8">
+    <aside
+      className="hidden lg:flex sticky top-0 h-screen w-[250px] shrink-0 border-r flex-col"
+      style={{ background: 'var(--adm-surface)', borderColor: 'var(--adm-border)' }}
+    >
+      <div className="px-7 pt-8 pb-6 border-b" style={{ borderColor: 'var(--adm-border)' }}>
         <Image
           src="/images/icons/Recurso 1.png"
           alt="4U Studio Academy"
           width={130}
           height={40}
           className="object-contain"
+          style={{ filter: 'var(--adm-logo-filter)' } as React.CSSProperties}
         />
       </div>
 
       <div className="px-4 pt-5">
-        <div className="rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3">
-          <p className="text-[11px] uppercase tracking-[0.28em] text-white/35">Acceso</p>
-          <p className="mt-1 text-sm font-semibold text-white">{getRoleLabel(role)}</p>
-          <p className="text-xs text-white/42">
+        <div className="rounded-2xl border px-4 py-3" style={{ borderColor: 'var(--adm-border)', background: 'var(--adm-card)' }}>
+          <p className="text-[11px] uppercase tracking-[0.28em]" style={{ color: 'var(--adm-text-faint)' }}>Acceso</p>
+          <p className="mt-1 text-sm font-semibold" style={{ color: 'var(--adm-text)' }}>{getRoleLabel(role)}</p>
+          <p className="text-xs" style={{ color: 'var(--adm-text-muted)' }}>
             {executiveMode ? 'Panel comercial y retención' : 'Panel académico 4U'}
           </p>
         </div>
@@ -199,7 +213,7 @@ export default function AdminSidebar({ role }: { role: AppRole | null }) {
           return (
             <div key={item.href}>
               {showHeader && (
-                <p className="px-2 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/25">
+                <p className="px-2 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: 'var(--adm-text-faint)' }}>
                   {GROUP_LABELS[item.group]}
                 </p>
               )}
@@ -210,7 +224,7 @@ export default function AdminSidebar({ role }: { role: AppRole | null }) {
       </nav>
 
       <div className="mt-auto px-4 pb-5 pt-3">
-        <div className="overflow-hidden rounded-[22px] border border-white/12 bg-[#0d0d0d] flex">
+        <div className="overflow-hidden rounded-[22px] border flex" style={{ borderColor: 'var(--adm-border-2)', background: 'var(--adm-surface-3)' }}>
           <div className="relative w-28 shrink-0">
             <Image
               src="/images/hero/Banner-principal-2.jpg.jpeg"
@@ -219,11 +233,11 @@ export default function AdminSidebar({ role }: { role: AppRole | null }) {
               className="object-cover object-[48%_35%] opacity-85"
               sizes="112px"
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#0d0d0d]/60" />
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent" style={{ '--tw-gradient-to': 'var(--adm-gradient-stop)' } as React.CSSProperties} />
           </div>
           <div className="px-4 py-4">
             <p className="text-[10px] uppercase tracking-[0.24em] text-[#ff7a00]/80">4U Studio Academy</p>
-            <p className="mt-1.5 text-xs leading-5 text-white/88">
+            <p className="mt-1.5 text-xs leading-5" style={{ color: 'var(--adm-text-muted)' }}>
               {isSuperAdmin(role)
                 ? 'Vista ejecutiva para seguir ventas, retención y reactivación.'
                 : 'Seguimiento claro para la operación académica y comercial.'}
@@ -255,22 +269,27 @@ export function MobileMenuDrawer({ role }: { role: AppRole | null }) {
       )}
 
       {/* Drawer */}
-      <div className={[
-        'fixed inset-y-0 left-0 z-[101] w-[280px] flex flex-col bg-[#070707] border-r border-white/8 transition-transform duration-300 lg:hidden',
-        open ? 'translate-x-0' : '-translate-x-full',
-      ].join(' ')}>
+      <div
+        className={[
+          'fixed inset-y-0 left-0 z-[101] w-[280px] flex flex-col border-r transition-transform duration-300 lg:hidden',
+          open ? 'translate-x-0' : '-translate-x-full',
+        ].join(' ')}
+        style={{ background: 'var(--adm-surface)', borderColor: 'var(--adm-border)' }}
+      >
         {/* Header del drawer */}
-        <div className="flex items-center justify-between px-6 pt-7 pb-5 border-b border-white/8">
+        <div className="flex items-center justify-between px-6 pt-7 pb-5 border-b" style={{ borderColor: 'var(--adm-border)' }}>
           <Image
             src="/images/icons/Recurso 1.png"
             alt="4U Studio Academy"
             width={110}
             height={34}
             className="object-contain"
+            style={{ filter: 'var(--adm-logo-filter)' } as React.CSSProperties}
           />
           <button
             onClick={() => setOpen(false)}
-            className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-white/[0.03] text-white/65 hover:text-white transition-colors"
+            className="grid h-9 w-9 place-items-center rounded-xl border transition-colors"
+            style={{ borderColor: 'var(--adm-border)', background: 'var(--adm-card)', color: 'var(--adm-text-muted)' }}
             aria-label="Cerrar menú"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -281,9 +300,9 @@ export function MobileMenuDrawer({ role }: { role: AppRole | null }) {
 
         {/* Rol */}
         <div className="px-4 pt-4">
-          <div className="rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.28em] text-white/35">Acceso</p>
-            <p className="mt-1 text-sm font-semibold text-white">{getRoleLabel(role)}</p>
+          <div className="rounded-2xl border px-4 py-3" style={{ borderColor: 'var(--adm-border)', background: 'var(--adm-card)' }}>
+            <p className="text-[11px] uppercase tracking-[0.28em]" style={{ color: 'var(--adm-text-faint)' }}>Acceso</p>
+            <p className="mt-1 text-sm font-semibold" style={{ color: 'var(--adm-text)' }}>{getRoleLabel(role)}</p>
           </div>
         </div>
 
@@ -299,30 +318,39 @@ export function MobileMenuDrawer({ role }: { role: AppRole | null }) {
             return (
               <div key={item.href}>
               {showHeader && (
-                <p className="px-2 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/25">
+                <p className="px-2 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: 'var(--adm-text-faint)' }}>
                   {GROUP_LABELS[item.group]}
                 </p>
               )}
               <Link
                 href={item.href}
-                className={[
-                  'flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm transition-all',
-                  active
-                    ? 'border-[#ff7a00]/20 bg-[#2a1b12] text-[#ff8a1d]'
-                    : 'border-transparent text-white/78 hover:border-white/10 hover:bg-white/[0.04] hover:text-white',
-                ].join(' ')}
+                className="flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm transition-all"
+                style={active ? {
+                  borderColor: 'rgba(255,122,0,0.20)',
+                  background: 'var(--adm-nav-active-bg)',
+                  color: '#ff8a1d',
+                } : {
+                  borderColor: 'transparent',
+                  color: 'var(--adm-text-muted)',
+                }}
               >
-                <span className={[
-                  'grid h-9 w-9 place-items-center rounded-xl border transition-colors shrink-0',
-                  active
-                    ? 'border-[#ff7a00]/25 bg-[#ff7a00]/12 text-[#ff8a1d]'
-                    : 'border-white/10 bg-white/[0.03] text-white/65',
-                ].join(' ')}>
+                <span
+                  className="grid h-9 w-9 place-items-center rounded-xl border transition-colors shrink-0"
+                  style={active ? {
+                    borderColor: 'rgba(255,122,0,0.25)',
+                    background: 'rgba(255,122,0,0.12)',
+                    color: '#ff8a1d',
+                  } : {
+                    borderColor: 'var(--adm-border)',
+                    background: 'var(--adm-card)',
+                    color: 'var(--adm-text-muted)',
+                  }}
+                >
                   {item.icon}
                 </span>
                 <div className="min-w-0">
                   <p className="truncate font-medium">{item.label}</p>
-                  <p className="truncate text-[11px] text-white/32">{item.compactLabel}</p>
+                  <p className="truncate text-[11px]" style={{ color: 'var(--adm-text-faint)' }}>{item.compactLabel}</p>
                 </div>
               </Link>
               </div>
@@ -330,9 +358,9 @@ export function MobileMenuDrawer({ role }: { role: AppRole | null }) {
           })}
         </nav>
 
-        {/* Card inferior horizontal */}
-        <div className="px-4 pb-5 pt-3 border-t border-white/8">
-          <div className="overflow-hidden rounded-[18px] border border-white/12 bg-[#0d0d0d] flex">
+        {/* Card inferior */}
+        <div className="px-4 pb-5 pt-3 border-t" style={{ borderColor: 'var(--adm-border)' }}>
+          <div className="overflow-hidden rounded-[18px] border flex" style={{ borderColor: 'var(--adm-border-2)', background: 'var(--adm-surface-3)' }}>
             <div className="relative w-24 shrink-0">
               <Image
                 src="/images/hero/Banner-principal-2.jpg.jpeg"
@@ -341,11 +369,11 @@ export function MobileMenuDrawer({ role }: { role: AppRole | null }) {
                 className="object-cover object-[48%_35%] opacity-85"
                 sizes="96px"
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#0d0d0d]/60" />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent" style={{ '--tw-gradient-to': 'var(--adm-gradient-stop)' } as React.CSSProperties} />
             </div>
             <div className="px-3 py-3">
               <p className="text-[10px] uppercase tracking-[0.22em] text-[#ff7a00]/80">4U Studio Academy</p>
-              <p className="mt-1 text-[11px] leading-[1.45] text-white/80">
+              <p className="mt-1 text-[11px] leading-[1.45]" style={{ color: 'var(--adm-text-muted)' }}>
                 {isSuperAdmin(role)
                   ? 'Vista ejecutiva para ventas, retención y reactivación.'
                   : 'Seguimiento claro para la operación académica.'}
@@ -361,7 +389,8 @@ export function MobileMenuDrawer({ role }: { role: AppRole | null }) {
     <>
       {/* Botón hamburguesa — solo móvil, va en el header */}
       <button
-        className="lg:hidden grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/[0.03] text-white/65 hover:text-white transition-colors"
+        className="lg:hidden grid h-10 w-10 place-items-center rounded-xl border transition-colors"
+        style={{ borderColor: 'var(--adm-border)', background: 'var(--adm-card)', color: 'var(--adm-text-muted)' }}
         onClick={() => setOpen(true)}
         aria-label="Abrir menú"
       >

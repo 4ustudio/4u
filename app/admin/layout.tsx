@@ -6,6 +6,8 @@ import { RealtimeProvider } from '@/components/admin/RealtimeProvider'
 import NotificationBell from '@/components/admin/NotificationBell'
 import PageWrapper from './_components/PageWrapper'
 import UserMenu from './_components/UserMenu'
+import AdminThemeProvider from './_components/AdminThemeProvider'
+import ThemeToggle from './_components/ThemeToggle'
 import { getRoleLabel, parseRole } from '@/lib/auth/roles'
 
 export const metadata = { title: 'Panel Admin — 4U Studio Academy' }
@@ -34,26 +36,31 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <RealtimeProvider>
-      <div className="min-h-screen bg-[#050505] flex text-white">
+      <AdminThemeProvider className="min-h-screen flex">
         {/* Sidebar desktop */}
         <AdminSidebar role={role} />
 
         <div className="flex-1 flex flex-col min-w-0">
           {/* Header */}
-          <header className="sticky top-0 z-30 h-20 shrink-0 flex items-center gap-3 px-4 lg:px-7 border-b border-white/8 bg-[#0a0a0a]/95 backdrop-blur-xl">
+          <header
+            className="sticky top-0 z-30 h-20 shrink-0 flex items-center gap-3 px-4 lg:px-7 border-b backdrop-blur-xl"
+            style={{ background: 'var(--adm-surface-2)', borderBottomColor: 'var(--adm-border)' }}
+          >
             {/* Hamburguesa móvil + drawer */}
             <MobileMenuDrawer role={role} />
 
-            {/* Logo móvil (solo cuando el drawer no está) */}
+            {/* Logo móvil */}
             <Image
               src="/images/icons/Recurso 1.png"
               alt="4U Studio Academy"
               width={90}
               height={28}
               className="object-contain lg:hidden"
+              style={{ filter: 'var(--adm-logo-filter)' } as React.CSSProperties}
             />
 
             <div className="ml-auto flex items-center gap-3">
+              <ThemeToggle />
               <NotificationBell />
               <UserMenu
                 displayName={displayName}
@@ -70,7 +77,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </main>
         </div>
 
-      </div>
+      </AdminThemeProvider>
     </RealtimeProvider>
   )
 }

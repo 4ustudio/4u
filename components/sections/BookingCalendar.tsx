@@ -226,14 +226,22 @@ export default function BookingCalendar({
 
   const timeSlots = useMemo((): TimeSlot[] => {
     if (mode !== "student") return STATIC_SLOTS;
+    const now = new Date();
+    const nowMinutes = selectedDateIso === todayIso
+      ? now.getHours() * 60 + now.getMinutes()
+      : -1;
     const map: Record<string, TimeSlot> = {};
     for (const s of slots) {
       const t = s.slot_time.slice(0,5);
       if (!map[t]) map[t] = { time:t, label:fmtSlotTime(s.slot_time), available:false };
-      if (s.is_available) map[t].available = true;
+      if (s.is_available) {
+        const [h, m] = t.split(":").map(Number);
+        const slotMinutes = h * 60 + m;
+        if (nowMinutes < 0 || slotMinutes > nowMinutes) map[t].available = true;
+      }
     }
     return Object.values(map).sort((a,b) => a.time.localeCompare(b.time));
-  }, [slots, mode]);
+  }, [slots, mode, selectedDateIso, todayIso]);
 
   const todayMidnight = useMemo(() => { const d = new Date(); d.setHours(0,0,0,0); return d; }, []);
   const isPastDay = (d:number, cur:boolean) => {

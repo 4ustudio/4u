@@ -76,6 +76,18 @@ const Icon = {
       <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
     </svg>
   ),
+  metrics: (
+    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+      <path d="M3 3v18h18" />
+      <path d="M7 16l4-4 4 4 4-6" />
+    </svg>
+  ),
+  reactivacion: (
+    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+      <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+      <path d="M21 3v5h-5" />
+    </svg>
+  ),
 }
 
 type NavItem = {
@@ -93,10 +105,11 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/admin/agenda',       label: 'Clases',       compactLabel: 'Clases',        icon: Icon.agenda,      area: 'academic' },
   { href: '/admin/students',     label: 'Estudiantes',  compactLabel: 'Alumnos',       icon: Icon.students,    area: 'academic' },
   { href: '/admin/pagos',        label: 'Pagos',        compactLabel: 'Cobros',        icon: Icon.pagos,       area: 'executive' },
-  { href: '/admin/retencion',    label: 'Retención',    compactLabel: 'Retención',     icon: Icon.retention,   area: 'academic' },
-  { href: '/admin/academico',    label: 'Académico',   compactLabel: 'Indicadores',   icon: Icon.dashboard,   area: 'academic' },
-  { href: '/admin/instructors',  label: 'Instructores', compactLabel: 'Profesores',    icon: Icon.instructors, area: 'academic' },
-  { href: '/admin/enrollments',  label: 'Inscripciones',compactLabel: 'Leads nuevos',  icon: Icon.enrollments, area: 'academic' },
+  { href: '/admin/retencion',       label: 'Retención',      compactLabel: 'Retención',    icon: Icon.retention,     area: 'academic' },
+  { href: '/admin/reactivacion',    label: 'Reactivación',   compactLabel: 'Reactivar',    icon: Icon.reactivacion,  area: 'academic' },
+  { href: '/admin/academico',       label: 'Métricas',       compactLabel: 'Indicadores',  icon: Icon.metrics,       area: 'academic' },
+  { href: '/admin/instructors',     label: 'Instructores',   compactLabel: 'Profesores',   icon: Icon.instructors,   area: 'academic' },
+  { href: '/admin/enrollments',     label: 'Inscripciones',  compactLabel: 'Matrículas',   icon: Icon.enrollments,   area: 'academic' },
   { href: '/admin/automatizaciones', label: 'Automatizaciones', compactLabel: 'Automático', icon: Icon.automations, area: 'shared' },
   { href: '/admin/actividad',        label: 'Actividad',        compactLabel: 'Auditoría',  icon: Icon.activity,    area: 'shared' },
 ]

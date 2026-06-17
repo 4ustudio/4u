@@ -352,12 +352,10 @@ export async function getInstructorForSlotAction(date: string, time: string): Pr
     .eq('instructor_availability.day_of_week', isodow)
     .lte('instructor_availability.start_time', startTime)
     .gte('instructor_availability.end_time', endTime)
-    .order('name')
-    .limit(1)
-    .maybeSingle()
 
-  if (!data) return null
-  return { id: data.id, name: data.name }
+  if (!data || data.length === 0) return null
+  const pick = data[Math.floor(Math.random() * data.length)]
+  return { id: pick.id, name: pick.name }
 }
 
 export async function getActiveCoursesAction(): Promise<{ id: string; name: string }[]> {

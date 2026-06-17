@@ -351,7 +351,7 @@ export default function BookingCalendar({
       </div>
     </div>
   );
-  if (state.status === "success") {
+  if (state.status === "success" && mode !== "student") {
     return (
       <div className="rounded-2xl border border-[#ff7a00]/20 bg-white shadow-lg p-10 flex flex-col items-center text-center gap-4"
         style={{ boxShadow:"0 4px 32px rgba(255,122,0,0.08)" }}>

@@ -116,3 +116,25 @@ Haz exactamente lo solicitado con la menor cantidad posible de contexto, explica
 - Nunca mostrar valores de archivos .env.
 - Nunca imprimir tokens, claves o contraseñas.
 - Referirse a secretos por nombre de variable únicamente.
+
+## Modo ejecución
+
+* Asume que la tarea debe implementarse, no discutirse.
+* No explicar decisiones salvo que se solicite.
+* Si existe una solución razonable, aplicarla directamente.
+* Mostrar resultados antes que razonamientos.
+* Limitar análisis previo al mínimo necesario.
+
+## Uso de herramientas
+
+* Evitar búsquedas amplias.
+* Evitar leer archivos adicionales si el problema ya está identificado.
+* Evitar recopilar contexto "por si acaso".
+* Detener exploración cuando se encuentre la causa probable.
+
+## Optimización extrema
+
+* Nunca generar reportes extensos.
+* Nunca generar resúmenes ejecutivos.
+* Nunca analizar más de lo solicitado.
+* Mantener cada respuesta por debajo de 100 palabras salvo que se solicite lo contrario.

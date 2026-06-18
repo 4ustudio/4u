@@ -78,25 +78,37 @@ body {
   --adm-logo-filter:   none;
   --adm-status-dot:    #0a0a0a;
   --adm-gradient-stop: rgba(13,13,13,0.7);
+  --adm-accent:        #ff8a1d;
+  --adm-accent-strong: #ff7a00;
+  --adm-accent-soft:   rgba(255,122,0,0.12);
+  --adm-accent-border: rgba(255,122,0,0.22);
+  --adm-accent-shadow: rgba(255,122,0,0.08);
+  --adm-brand-muted:   rgba(255,122,0,0.8);
 }
 
 [data-admin-theme="light"] {
-  --adm-bg:            #f0f2f5;
-  --adm-surface:       #ffffff;
-  --adm-surface-2:     #f8f9fa;
-  --adm-surface-3:     #f2f4f6;
-  --adm-card:          rgba(0,0,0,0.03);
-  --adm-border:        rgba(0,0,0,0.09);
-  --adm-border-2:      rgba(0,0,0,0.13);
-  --adm-text:          #0f172a;
-  --adm-text-muted:    rgba(15,23,42,0.62);
-  --adm-text-faint:    rgba(15,23,42,0.38);
-  --adm-nav-active-bg: #fff3e8;
+  --adm-bg:            #f6f1eb;
+  --adm-surface:       #fffdf9;
+  --adm-surface-2:     #f8f4ee;
+  --adm-surface-3:     #f2ebe2;
+  --adm-card:          rgba(92,56,30,0.045);
+  --adm-border:        rgba(92,56,30,0.10);
+  --adm-border-2:      rgba(92,56,30,0.14);
+  --adm-text:          #24160f;
+  --adm-text-muted:    rgba(36,22,15,0.66);
+  --adm-text-faint:    rgba(36,22,15,0.42);
+  --adm-nav-active-bg: #f6e8db;
   --adm-nav-hover:     rgba(0,0,0,0.05);
-  --adm-shadow:        0 20px 60px rgba(0,0,0,0.12);
-  --adm-logo-filter:   brightness(0);
-  --adm-status-dot:    #ffffff;
-  --adm-gradient-stop: rgba(248,249,250,0.7);
+  --adm-shadow:        0 18px 48px rgba(73,41,21,0.10);
+  --adm-logo-filter:   none;
+  --adm-status-dot:    #fffdf9;
+  --adm-gradient-stop: rgba(242,235,226,0.75);
+  --adm-accent:        #c96c1f;
+  --adm-accent-strong: #b85b16;
+  --adm-accent-soft:   rgba(201,108,31,0.10);
+  --adm-accent-border: rgba(201,108,31,0.18);
+  --adm-accent-shadow: rgba(201,108,31,0.06);
+  --adm-brand-muted:   rgba(184,91,22,0.74);
 }
 
 /* =====================================================
@@ -166,6 +178,9 @@ body {
 [data-admin-theme="light"] .bg-\[\#1a1a1a\] { background-color: #e4e6ea !important; }
 [data-admin-theme="light"] .bg-\[\#222\]    { background-color: #dfe1e5 !important; }
 [data-admin-theme="light"] .bg-\[\#2a1b12\] { background-color: #fff3e8 !important; }
+[data-admin-theme="light"] .bg-black\/20    { background-color: rgba(92,56,30,.06) !important; }
+[data-admin-theme="light"] .bg-black\/30    { background-color: rgba(92,56,30,.08) !important; }
+[data-admin-theme="light"] .bg-black\/60    { background-color: rgba(36,22,15,.10) !important; }
 
 /* — Borders: white-opacity → dark-on-light — */
 [data-admin-theme="light"] .border-white\/5  { border-color: rgba(0,0,0,.05) !important; }
@@ -179,6 +194,7 @@ body {
 
 /* — Status dot border — */
 [data-admin-theme="light"] .border-\[\#0a0a0a\] { border-color: #ffffff !important; }
+[data-admin-theme="light"] .border-black\/20    { border-color: rgba(92,56,30,.10) !important; }
 
 /* — Shadows — */
 [data-admin-theme="light"] .shadow-\[0_20px_60px_rgba\(0\,0\,0\,0\.5\)\]  { box-shadow: 0 20px 60px rgba(0,0,0,0.10) !important; }
@@ -217,6 +233,64 @@ body {
 
 /* — Status pill neutrals (lead/exalumno/inactive) — */
 [data-admin-theme="light"] .bg-white\/8.border-white\/10  { background-color: rgba(0,0,0,.06) !important; }
+
+/* — Admin accents: softer orange in light mode — */
+[data-admin-theme="light"] .text-\[\#ff7a00\],
+[data-admin-theme="light"] .text-\[\#ff8a1d\],
+[data-admin-theme="light"] .text-\[\#ff9a3b\],
+[data-admin-theme="light"] .text-orange-400 {
+  color: var(--adm-accent) !important;
+}
+
+[data-admin-theme="light"] .text-orange-300,
+[data-admin-theme="light"] .text-orange-300\/80 {
+  color: color-mix(in srgb, var(--adm-accent) 88%, #ffffff 12%) !important;
+}
+
+[data-admin-theme="light"] .text-orange-500 {
+  color: var(--adm-accent-strong) !important;
+}
+
+[data-admin-theme="light"] .bg-\[\#ff7a00\],
+[data-admin-theme="light"] .bg-orange-500 {
+  background-color: var(--adm-accent-strong) !important;
+}
+
+[data-admin-theme="light"] .bg-\[\#ff7a00\]\/8,
+[data-admin-theme="light"] .bg-\[\#ff7a00\]\/10,
+[data-admin-theme="light"] .bg-\[\#ff7a00\]\/12,
+[data-admin-theme="light"] .bg-\[\#ff7a00\]\/15,
+[data-admin-theme="light"] .bg-orange-500\/5,
+[data-admin-theme="light"] .bg-orange-500\/8,
+[data-admin-theme="light"] .bg-orange-500\/10,
+[data-admin-theme="light"] .bg-orange-500\/15,
+[data-admin-theme="light"] .bg-orange-500\/20 {
+  background-color: var(--adm-accent-soft) !important;
+}
+
+[data-admin-theme="light"] .border-\[\#ff7a00\]\/20,
+[data-admin-theme="light"] .border-\[\#ff7a00\]\/25,
+[data-admin-theme="light"] .border-\[\#ff7a00\]\/30,
+[data-admin-theme="light"] .border-\[\#ff7a00\]\/35,
+[data-admin-theme="light"] .border-orange-500\/20,
+[data-admin-theme="light"] .border-orange-500\/25,
+[data-admin-theme="light"] .border-orange-500\/30,
+[data-admin-theme="light"] .border-orange-500\/40 {
+  border-color: var(--adm-accent-border) !important;
+}
+
+[data-admin-theme="light"] .hover\:bg-\[\#ff7a00\]\/14:hover,
+[data-admin-theme="light"] .hover\:bg-\[\#ff7a00\]\/15:hover,
+[data-admin-theme="light"] .hover\:bg-orange-500\/10:hover,
+[data-admin-theme="light"] .hover\:bg-orange-500:hover {
+  background-color: color-mix(in srgb, var(--adm-accent-soft) 88%, white 12%) !important;
+}
+
+[data-admin-theme="light"] .hover\:text-\[\#ff7a00\]:hover,
+[data-admin-theme="light"] .hover\:text-orange-400:hover,
+[data-admin-theme="light"] .hover\:text-orange-300:hover {
+  color: var(--adm-accent-strong) !important;
+}
 
 /* =====================================================
    Admin: entrada de nuevo registro en tiempo real

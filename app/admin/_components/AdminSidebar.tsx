@@ -143,10 +143,10 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
       href={item.href}
       className="group flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm transition-all"
       style={active ? {
-        borderColor: 'rgba(255,122,0,0.20)',
+        borderColor: 'var(--adm-accent-border)',
         background: 'var(--adm-nav-active-bg)',
-        color: '#ff8a1d',
-        boxShadow: '0 0 0 1px rgba(255,122,0,0.08)',
+        color: 'var(--adm-accent)',
+        boxShadow: '0 0 0 1px var(--adm-accent-shadow)',
       } : {
         borderColor: 'transparent',
         color: 'var(--adm-text-muted)',
@@ -155,9 +155,9 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
       <span
         className="grid h-9 w-9 place-items-center rounded-xl border transition-colors"
         style={active ? {
-          borderColor: 'rgba(255,122,0,0.25)',
-          background: 'rgba(255,122,0,0.12)',
-          color: '#ff8a1d',
+          borderColor: 'var(--adm-accent-border)',
+          background: 'var(--adm-accent-soft)',
+          color: 'var(--adm-accent)',
         } : {
           borderColor: 'var(--adm-border)',
           background: 'var(--adm-card)',
@@ -236,7 +236,7 @@ export default function AdminSidebar({ role }: { role: AppRole | null }) {
             <div className="absolute inset-0 bg-gradient-to-r from-transparent" style={{ '--tw-gradient-to': 'var(--adm-gradient-stop)' } as React.CSSProperties} />
           </div>
           <div className="px-4 py-4">
-            <p className="text-[10px] uppercase tracking-[0.24em] text-[#ff7a00]/80">4U Studio Academy</p>
+            <p className="text-[10px] uppercase tracking-[0.24em]" style={{ color: 'var(--adm-brand-muted)' }}>4U Studio Academy</p>
             <p className="mt-1.5 text-xs leading-5" style={{ color: 'var(--adm-text-muted)' }}>
               {isSuperAdmin(role)
                 ? 'Vista ejecutiva para seguir ventas, retención y reactivación.'
@@ -326,9 +326,9 @@ export function MobileMenuDrawer({ role }: { role: AppRole | null }) {
                 href={item.href}
                 className="flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm transition-all"
                 style={active ? {
-                  borderColor: 'rgba(255,122,0,0.20)',
+                  borderColor: 'var(--adm-accent-border)',
                   background: 'var(--adm-nav-active-bg)',
-                  color: '#ff8a1d',
+                  color: 'var(--adm-accent)',
                 } : {
                   borderColor: 'transparent',
                   color: 'var(--adm-text-muted)',
@@ -337,9 +337,9 @@ export function MobileMenuDrawer({ role }: { role: AppRole | null }) {
                 <span
                   className="grid h-9 w-9 place-items-center rounded-xl border transition-colors shrink-0"
                   style={active ? {
-                    borderColor: 'rgba(255,122,0,0.25)',
-                    background: 'rgba(255,122,0,0.12)',
-                    color: '#ff8a1d',
+                    borderColor: 'var(--adm-accent-border)',
+                    background: 'var(--adm-accent-soft)',
+                    color: 'var(--adm-accent)',
                   } : {
                     borderColor: 'var(--adm-border)',
                     background: 'var(--adm-card)',
@@ -372,7 +372,7 @@ export function MobileMenuDrawer({ role }: { role: AppRole | null }) {
               <div className="absolute inset-0 bg-gradient-to-r from-transparent" style={{ '--tw-gradient-to': 'var(--adm-gradient-stop)' } as React.CSSProperties} />
             </div>
             <div className="px-3 py-3">
-              <p className="text-[10px] uppercase tracking-[0.22em] text-[#ff7a00]/80">4U Studio Academy</p>
+              <p className="text-[10px] uppercase tracking-[0.22em]" style={{ color: 'var(--adm-brand-muted)' }}>4U Studio Academy</p>
               <p className="mt-1 text-[11px] leading-[1.45]" style={{ color: 'var(--adm-text-muted)' }}>
                 {isSuperAdmin(role)
                   ? 'Vista ejecutiva para ventas, retención y reactivación.'

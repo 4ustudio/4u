@@ -40,6 +40,22 @@ const Ctx = createContext<RealtimeCtx>({
 
 export function useRealtime() { return useContext(Ctx) }
 
+function readSoundPreference() {
+  try {
+    return window.localStorage.getItem('4u_admin_sound')
+  } catch {
+    return null
+  }
+}
+
+function writeSoundPreference(value: boolean) {
+  try {
+    window.localStorage.setItem('4u_admin_sound', String(value))
+  } catch {
+    // Ignore storage issues in embedded/private browsing contexts.
+  }
+}
+
 // ── Audio: ping suave vía Web Audio API ───────────────────────
 
 function playPing() {
@@ -71,7 +87,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
 
   // Cargar preferencia de sonido desde localStorage
   useEffect(() => {
-    const pref = localStorage.getItem('4u_admin_sound')
+    const pref = readSoundPreference()
     const on   = pref !== 'false'
     setSoundEnabled(on)
     soundRef.current = on
@@ -161,7 +177,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     setSoundEnabled(prev => {
       const next = !prev
       soundRef.current = next
-      localStorage.setItem('4u_admin_sound', String(next))
+      writeSoundPreference(next)
       return next
     })
   }, [])

@@ -14,6 +14,12 @@ import { getBirthdayBenefitStatus } from '@/lib/students/birthday'
 import WhatsAppButton from '@/components/admin/WhatsAppButton'
 
 const ORANGE = '#ff7a00'
+const SURFACE = 'var(--adm-surface)'
+const SURFACE_2 = 'var(--adm-surface-3)'
+const BORDER = 'var(--adm-panel-border)'
+const TEXT = 'var(--adm-title)'
+const TEXT_MUTED = 'var(--adm-text-muted)'
+const TEXT_FAINT = 'var(--adm-text-faint)'
 
 function formatCOP(n: number) {
   return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n)
@@ -32,11 +38,11 @@ function initials(name: string) {
 }
 
 const AVATAR_COLORS = [
-  'bg-orange-500/20 text-orange-300',
-  'bg-white/10 text-white/60',
-  'bg-purple-500/20 text-purple-300',
-  'bg-green-500/20 text-green-300',
-  'bg-pink-500/20 text-pink-300',
+  'bg-orange-500/15 text-orange-500',
+  'bg-slate-100 text-slate-600',
+  'bg-violet-100 text-violet-600',
+  'bg-emerald-100 text-emerald-600',
+  'bg-rose-100 text-rose-500',
 ]
 function avatarColor(id: string) { return AVATAR_COLORS[id.charCodeAt(0) % AVATAR_COLORS.length] }
 
@@ -49,27 +55,34 @@ function BoldMetricsStrip({ m }: { m: BoldMetrics }) {
     : '—'
 
   return (
-    <div className="rounded-xl border border-orange-500/20 bg-orange-500/5 px-4 py-3">
+    <div
+      className="rounded-[24px] px-5 py-4"
+      style={{
+        border: `1px solid ${BORDER}`,
+        background: 'linear-gradient(135deg, rgba(255,122,0,0.08), rgba(255,255,255,0.9) 40%)',
+        boxShadow: 'var(--adm-card-shadow)',
+      }}
+    >
       <div className="flex items-center gap-2 mb-2.5">
         <span className="h-1.5 w-1.5 rounded-full bg-orange-500 animate-pulse" />
-        <p className="text-[10px] font-bold uppercase tracking-widest text-orange-400/70">Bold Sandbox</p>
+        <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--adm-brand-muted)' }}>Bold Sandbox</p>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div>
-          <p className="text-lg font-extrabold text-orange-300">{m.pagos_hoy}</p>
-          <p className="text-[10px] text-white/35">Pagos Bold hoy</p>
+          <p className="text-2xl font-extrabold" style={{ color: 'var(--adm-accent)' }}>{m.pagos_hoy}</p>
+          <p className="text-[10px]" style={{ color: TEXT_FAINT }}>Pagos Bold hoy</p>
         </div>
         <div>
-          <p className="text-lg font-extrabold text-orange-300">{fmt(m.recaudacion_hoy)}</p>
-          <p className="text-[10px] text-white/35">Recaudación Bold hoy</p>
+          <p className="text-2xl font-extrabold" style={{ color: 'var(--adm-accent)' }}>{fmt(m.recaudacion_hoy)}</p>
+          <p className="text-[10px]" style={{ color: TEXT_FAINT }}>Recaudación Bold hoy</p>
         </div>
         <div>
-          <p suppressHydrationWarning className="text-lg font-extrabold text-white/70">{fmtTime(m.ultimo_webhook)}</p>
-          <p className="text-[10px] text-white/35">Último webhook</p>
+          <p suppressHydrationWarning className="text-2xl font-extrabold" style={{ color: TEXT }}>{fmtTime(m.ultimo_webhook)}</p>
+          <p className="text-[10px]" style={{ color: TEXT_FAINT }}>Último webhook</p>
         </div>
         <div>
-          <p className={`text-lg font-extrabold ${m.webhooks_fallidos_hoy > 0 ? 'text-red-400' : 'text-white/30'}`}>{m.webhooks_fallidos_hoy}</p>
-          <p className="text-[10px] text-white/35">Webhooks fallidos hoy</p>
+          <p className="text-2xl font-extrabold" style={{ color: m.webhooks_fallidos_hoy > 0 ? 'var(--adm-danger)' : TEXT_MUTED }}>{m.webhooks_fallidos_hoy}</p>
+          <p className="text-[10px]" style={{ color: TEXT_FAINT }}>Webhooks fallidos hoy</p>
         </div>
       </div>
     </div>
@@ -236,11 +249,15 @@ function MetricsStrip({ m }: { m: PaymentMetrics }) {
     { label: 'Con descuento',   val: String(m.descuentos),    c: 'text-white/55',   bg: 'bg-white/5 border-white/8' },
   ]
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
       {cards.map(c => (
-        <div key={c.label} className={`rounded-xl border px-4 py-3 ${c.bg}`}>
-          <p className={`text-xl font-extrabold ${c.c}`}>{c.val}</p>
-          <p className="text-[11px] text-white/35 mt-0.5 font-medium">{c.label}</p>
+        <div
+          key={c.label}
+          className="rounded-[24px] px-5 py-4"
+          style={{ border: `1px solid ${BORDER}`, background: SURFACE, boxShadow: 'var(--adm-card-shadow)' }}
+        >
+          <p className={`text-[2rem] font-extrabold leading-none ${c.c}`}>{c.val}</p>
+          <p className="mt-2 text-[11px] font-medium" style={{ color: TEXT_FAINT }}>{c.label}</p>
         </div>
       ))}
     </div>
@@ -273,35 +290,46 @@ function RowActions({
   return (
     <div className="relative">
       <button
+        type="button"
         onClick={() => setOpen(!open)}
-        className="p-1.5 rounded-lg text-white/40 hover:text-white hover:bg-white/8 transition-colors"
+        className="rounded-xl p-2 transition-colors"
+        style={{ color: TEXT_FAINT }}
       >
         <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
       </button>
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-8 z-20 w-48 bg-[#1a1a1a] border border-white/12 rounded-xl shadow-xl overflow-hidden">
+          <div
+            className="absolute right-0 top-9 z-20 w-52 overflow-hidden rounded-2xl"
+            style={{ background: SURFACE, border: `1px solid ${BORDER}`, boxShadow: 'var(--adm-elevated-shadow)' }}
+          >
             {(isPending || isOverdue) && (
               <button
+                type="button"
                 onClick={() => { setOpen(false); onRegister() }}
-                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-white/80 hover:bg-white/8 hover:text-white transition-colors text-left"
+                className="w-full text-left flex items-center gap-2.5 px-4 py-3 text-xs transition-colors"
+                style={{ color: TEXT_MUTED }}
               >
                 <svg className="h-3.5 w-3.5 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6 9 17l-5-5"/></svg>
                 Registrar pago
               </button>
             )}
             <button
+              type="button"
               onClick={() => { setOpen(false); onGenerate() }}
-              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-white/80 hover:bg-white/8 hover:text-white transition-colors text-left"
+              className="w-full text-left flex items-center gap-2.5 px-4 py-3 text-xs transition-colors"
+              style={{ color: TEXT_MUTED }}
             >
               <svg className="h-3.5 w-3.5 text-orange-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
               Generar pago del mes
             </button>
             {canDiscount && (
               <button
+                type="button"
                 onClick={() => { setOpen(false); onDiscount() }}
-                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-white/80 hover:bg-white/8 hover:text-white transition-colors text-left"
+                className="w-full text-left flex items-center gap-2.5 px-4 py-3 text-xs transition-colors"
+                style={{ color: TEXT_MUTED }}
               >
                 <svg className="h-3.5 w-3.5 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 5 5 19M9 7a2 2 0 1 1-4 0 2 2 0 0 1 4 0ZM19 17a2 2 0 1 1-4 0 2 2 0 0 1 4 0Z"/></svg>
                 Aplicar descuento
@@ -309,14 +337,16 @@ function RowActions({
             )}
             {canOverdue && (
               <button
+                type="button"
                 onClick={() => { setOpen(false); onOverdue() }}
-                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-red-400 hover:bg-red-500/8 transition-colors text-left"
+                className="w-full text-left flex items-center gap-2.5 px-4 py-3 text-xs transition-colors"
+                style={{ color: 'var(--adm-danger)' }}
               >
                 <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
                 Marcar vencido
               </button>
             )}
-            <div className="border-t border-white/8" />
+            <div style={{ borderTop: `1px solid ${BORDER}` }} />
             {payment.student_phone && (
               <div className="px-3 py-2" onClick={() => setOpen(false)}>
                 <WhatsAppButton
@@ -335,12 +365,14 @@ function RowActions({
                 />
               </div>
             )}
-            <div className="border-t border-white/8" />
+            <div style={{ borderTop: `1px solid ${BORDER}` }} />
             <button
+              type="button"
               onClick={() => { setOpen(false); onHistory() }}
-              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-white/80 hover:bg-white/8 hover:text-white transition-colors text-left"
+              className="w-full text-left flex items-center gap-2.5 px-4 py-3 text-xs transition-colors"
+              style={{ color: TEXT_MUTED }}
             >
-              <svg className="h-3.5 w-3.5 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 8v4l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+              <svg className="h-3.5 w-3.5" style={{ color: TEXT_FAINT }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 8v4l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
               Ver historial
             </button>
           </div>
@@ -471,34 +503,38 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
   ]
 
   return (
-    <div className="space-y-5 w-full page-animate">
+    <div className="w-full space-y-7 page-animate">
 
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 flex-wrap">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-xl font-bold text-white">Pagos</h1>
-          <p className="text-sm text-white/40 mt-0.5">Gestión de cobros mensuales</p>
+          <h1 className="adm-section-heading text-[2rem] font-extrabold tracking-tight">Pagos</h1>
+          <p className="mt-1 text-sm" style={{ color: TEXT_MUTED }}>Gestión de cobros mensuales</p>
         </div>
         <div className="flex items-center gap-2">
           <button
+            type="button"
             onClick={handleProcessOverdue}
             disabled={overduePending}
-            className="flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-xl border border-red-500/20 bg-red-500/8 text-red-400 hover:bg-red-500/12 disabled:opacity-50 transition-colors"
+            className="flex items-center gap-1.5 rounded-2xl px-4 py-2.5 text-xs font-semibold transition-colors disabled:opacity-50"
+            style={{ border: `1px solid color-mix(in srgb, var(--adm-danger) 18%, white 82%)`, background: 'var(--adm-danger-soft)', color: 'var(--adm-danger)' }}
           >
             <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
             {overduePending ? 'Procesando…' : 'Procesar vencidos'}
           </button>
           <button
+            type="button"
             onClick={() => setShowCobro(true)}
-            className="flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-xl border border-orange-500/40 text-orange-400 hover:bg-orange-500/10 transition-colors"
+            className="flex items-center gap-1.5 rounded-2xl px-4 py-2.5 text-xs font-semibold transition-colors"
+            style={{ border: `1px solid ${BORDER}`, background: SURFACE, color: 'var(--adm-accent)', boxShadow: 'var(--adm-card-shadow)' }}
           >
             <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
             Crear cobro
           </button>
           <button
+            type="button"
             onClick={() => setShowRegister(true)}
-            className="flex items-center gap-1.5 text-xs font-bold text-white px-4 py-2 rounded-xl transition-all hover:brightness-110"
-            style={{ backgroundColor: ORANGE }}
+            className="adm-button-primary flex items-center gap-1.5 rounded-2xl px-4 py-2.5 text-xs font-bold transition-all hover:brightness-110"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
             Registrar pago
@@ -508,9 +544,12 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
 
       {/* Feedback procesar vencidos */}
       {overdueMsg && (
-        <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-xs text-white/60">
+        <div
+          className="flex items-center justify-between rounded-2xl px-4 py-3 text-xs"
+          style={{ background: SURFACE, border: `1px solid ${BORDER}`, color: TEXT_MUTED, boxShadow: 'var(--adm-card-shadow)' }}
+        >
           {overdueMsg}
-          <button onClick={() => setOverdueMsg(null)} className="text-white/30 hover:text-white ml-3">
+          <button type="button" onClick={() => setOverdueMsg(null)} className="ml-3" style={{ color: TEXT_FAINT }}>
             <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
           </button>
         </div>
@@ -523,15 +562,16 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
       <MetricsStrip m={metrics} />
 
       {/* Tabs */}
-      <div className="flex gap-1.5 flex-wrap">
+      <div className="adm-soft-tabs flex-wrap">
         {TABS.map(t => (
           <button
             key={t.key}
+            type="button"
             onClick={() => handleTabChange(t.key)}
-            className={`text-xs px-4 py-1.5 rounded-full font-semibold transition-all ${
-              tab === t.key ? 'text-white' : 'text-white/40 hover:text-white/70'
-            }`}
-            style={tab === t.key ? { backgroundColor: ORANGE } : { backgroundColor: 'rgba(255,255,255,0.06)' }}
+            className="rounded-full px-4 py-2 text-xs font-semibold transition-all"
+            style={tab === t.key
+              ? { background: 'linear-gradient(180deg, color-mix(in srgb, var(--adm-accent) 92%, white 8%) 0%, var(--adm-accent-strong) 100%)', color: '#fff', boxShadow: '0 10px 20px rgba(255,122,0,0.16)' }
+              : { background: 'transparent', color: TEXT_MUTED }}
           >
             {t.label}
           </button>
@@ -539,28 +579,31 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
       </div>
 
       {/* Búsqueda */}
-      <div className="relative max-w-xs">
-        <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <div className="relative max-w-sm">
+        <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: TEXT_FAINT }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         <input
           value={search}
           onChange={e => handleSearch(e.target.value)}
           placeholder="Buscar por estudiante…"
-          className="w-full pl-9 pr-3 py-1.5 text-xs bg-white/[0.04] border border-white/10 rounded-lg text-white placeholder:text-white/25 focus:outline-none focus:ring-1 focus:ring-orange-500/40"
+          className="w-full rounded-2xl py-2.5 pl-9 pr-4 text-sm outline-none transition-all"
+          style={{ background: SURFACE, border: `1px solid ${BORDER}`, color: TEXT, boxShadow: 'var(--adm-card-shadow)' }}
         />
       </div>
 
       {/* Tabla */}
       {loading ? (
-        <div className="text-center py-16 text-white/30 text-sm">Cargando…</div>
+        <div className="py-16 text-center text-sm" style={{ color: TEXT_FAINT }}>Cargando…</div>
       ) : payments.length === 0 ? (
         <div className="text-center py-16 space-y-3">
-          <p className="text-white/30 text-sm">
+          <p className="text-sm" style={{ color: TEXT_FAINT }}>
             {tab === 'all' && !search ? 'Sin pagos registrados.' : 'Sin resultados para este filtro.'}
           </p>
           {tab === 'all' && !search && (
             <button
+              type="button"
               onClick={() => setShowRegister(true)}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-400 hover:text-orange-300 transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold transition-colors"
+              style={{ color: 'var(--adm-accent)' }}
             >
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
               Registrar primer pago
@@ -570,8 +613,11 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
       ) : (
         <>
           {/* Desktop */}
-          <div className="hidden md:block bg-[#0f0f0f] border border-white/10 rounded-xl overflow-hidden">
-            <div className="grid grid-cols-[44px_1fr_130px_100px_90px_90px_90px_110px_44px] gap-3 px-5 py-2.5 border-b border-white/[0.06] text-[10px] uppercase tracking-widest text-white/25 font-semibold">
+          <div className="adm-panel overflow-hidden rounded-[28px]">
+            <div
+              className="grid grid-cols-[52px_1.35fr_130px_120px_100px_90px_100px_120px_44px] gap-4 px-6 py-3.5 text-[10px] font-semibold uppercase tracking-[0.24em]"
+              style={{ color: TEXT_FAINT, background: SURFACE_2 }}
+            >
               <span/>
               <span>Estudiante</span>
               <span>Plan</span>
@@ -582,30 +628,33 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
               <span>Estado / Venc.</span>
               <span/>
             </div>
-            <div className="divide-y divide-white/[0.04]">
+            <div className="space-y-2 px-3 py-3">
               {payments.map(p => {
                 const days  = p.status === 'overdue' ? daysOverdue(p.due_date) : null
                 const bStatus = getBirthdayBenefitStatus(p)
                 const showBday = bStatus === 'eligible' || bStatus === 'granted'
                 return (
-                  <div key={p.id} className="grid grid-cols-[44px_1fr_130px_100px_90px_90px_90px_110px_44px] gap-3 items-center px-5 py-3.5 hover:bg-white/[0.02] transition-colors">
-                    <div className={`h-8 w-8 rounded-lg flex items-center justify-center text-[11px] font-bold ${avatarColor(p.student_id)}`}>
+                  <div
+                    key={p.id}
+                    className="adm-row grid grid-cols-[52px_1.35fr_130px_120px_100px_90px_100px_120px_44px] items-center gap-4 rounded-[22px] px-6 py-4 transition-all"
+                  >
+                    <div className={`h-10 w-10 rounded-2xl flex items-center justify-center text-[11px] font-bold ${avatarColor(p.student_id)}`}>
                       {initials(p.student_name)}
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-sm font-semibold text-white truncate">{p.student_name}</span>
+                        <span className="truncate text-sm font-semibold" style={{ color: TEXT }}>{p.student_name}</span>
                         {showBday && <span className="text-[11px]" title="Beneficio cumpleaños disponible">🎂</span>}
                       </div>
-                      <p className="text-[11px] text-white/30 font-mono truncate">{p.student_phone}</p>
+                      <p className="truncate font-mono text-[11px]" style={{ color: TEXT_FAINT }}>{p.student_phone}</p>
                     </div>
-                    <p className="text-xs text-white/55 truncate">{p.plan_name ?? <span className="text-white/20">—</span>}</p>
-                    <p className="text-xs text-white/55 capitalize">{periodLabel(p.period_year, p.period_month)}</p>
-                    <p className="text-xs text-white/55">{formatCOP(p.original_amount)}</p>
-                    <p className={`text-xs ${p.discount_amount > 0 ? 'text-green-400' : 'text-white/20'}`}>
+                    <p className="truncate text-xs" style={{ color: TEXT_MUTED }}>{p.plan_name ?? <span style={{ color: TEXT_FAINT }}>—</span>}</p>
+                    <p className="text-xs capitalize" style={{ color: TEXT_MUTED }}>{periodLabel(p.period_year, p.period_month)}</p>
+                    <p className="text-xs font-medium" style={{ color: TEXT_MUTED }}>{formatCOP(p.original_amount)}</p>
+                    <p className="text-xs font-medium" style={{ color: p.discount_amount > 0 ? 'var(--adm-success)' : TEXT_FAINT }}>
                       {p.discount_amount > 0 ? `−${formatCOP(p.discount_amount)}` : '—'}
                     </p>
-                    <p className="text-sm font-semibold text-white">{formatCOP(p.final_amount)}</p>
+                    <p className="text-base font-bold" style={{ color: TEXT }}>{formatCOP(p.final_amount)}</p>
                     <div className="space-y-1">
                       <PaymentStatusPill status={p.status} />
                       <BoldCell
@@ -615,10 +664,10 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
                         onUrlGenerated={url => handleBoldUrl(p.id, url)}
                       />
                       {days !== null && days > 0 && (
-                        <p suppressHydrationWarning className="text-[10px] text-red-400">{days}d mora</p>
+                        <p suppressHydrationWarning className="text-[10px]" style={{ color: 'var(--adm-danger)' }}>{days}d mora</p>
                       )}
                       {p.status === 'pending' && (
-                        <p className="text-[10px] text-white/30">
+                        <p className="text-[10px]" style={{ color: TEXT_FAINT }}>
                           {new Date(p.due_date).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })}
                         </p>
                       )}
@@ -635,7 +684,7 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
                 )
               })}
             </div>
-            <div className="px-5 py-3 border-t border-white/[0.06] text-xs text-white/25">
+            <div className="px-6 pb-5 pt-2 text-xs" style={{ color: TEXT_FAINT }}>
               {payments.length} de {total} registros
             </div>
           </div>
@@ -647,22 +696,22 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
               const bStatus = getBirthdayBenefitStatus(p)
               const showBday = bStatus === 'eligible' || bStatus === 'granted'
               return (
-                <div key={p.id} className="bg-[#0f0f0f] border border-white/10 rounded-xl p-4">
+                <div key={p.id} className="adm-panel rounded-[24px] p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-sm font-semibold text-white truncate">{p.student_name}</span>
+                        <span className="truncate text-sm font-semibold" style={{ color: TEXT }}>{p.student_name}</span>
                         {showBday && <span className="text-xs">🎂</span>}
                       </div>
-                      <p className="text-xs text-white/40 mt-0.5">{p.plan_name ?? '—'} · {periodLabel(p.period_year, p.period_month)}</p>
+                      <p className="mt-0.5 text-xs" style={{ color: TEXT_MUTED }}>{p.plan_name ?? '—'} · {periodLabel(p.period_year, p.period_month)}</p>
                     </div>
                     <PaymentStatusPill status={p.status} />
                   </div>
                   <div className="flex items-center justify-between mt-3">
                     <div>
-                      <p className="text-base font-bold text-white">{formatCOP(p.final_amount)}</p>
+                      <p className="text-xl font-bold" style={{ color: TEXT }}>{formatCOP(p.final_amount)}</p>
                       {p.discount_amount > 0 && (
-                        <p className="text-[11px] text-green-400">−{formatCOP(p.discount_amount)} desc.</p>
+                        <p className="text-[11px]" style={{ color: 'var(--adm-success)' }}>−{formatCOP(p.discount_amount)} desc.</p>
                       )}
                       <BoldCell
                         payment={p}
@@ -671,7 +720,7 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
                         onUrlGenerated={url => handleBoldUrl(p.id, url)}
                       />
                       {days !== null && days > 0 && (
-                        <p suppressHydrationWarning className="text-[11px] text-red-400">{days} días de mora</p>
+                        <p suppressHydrationWarning className="text-[11px]" style={{ color: 'var(--adm-danger)' }}>{days} días de mora</p>
                       )}
                     </div>
                     <RowActions

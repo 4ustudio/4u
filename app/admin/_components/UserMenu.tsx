@@ -28,7 +28,7 @@ export default function UserMenu({ displayName, roleLabel, avatarUrl, initials }
         type="button"
         onClick={() => setOpen((o) => !o)}
         className="flex items-center gap-3 rounded-2xl border px-3 py-2 transition-colors"
-        style={{ borderColor: 'var(--adm-border)', background: 'var(--adm-card)' }}
+        style={{ borderColor: 'var(--adm-border)', background: 'var(--adm-surface)', boxShadow: 'var(--adm-card-shadow)' }}
       >
         {/* Avatar */}
         <div
@@ -38,7 +38,7 @@ export default function UserMenu({ displayName, roleLabel, avatarUrl, initials }
           {avatarUrl
             ? <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
             : initials}
-          <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 bg-[#ff7a00]" style={{ borderColor: 'var(--adm-status-dot)' }} />
+          <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2" style={{ borderColor: 'var(--adm-status-dot)', background: 'var(--adm-accent)' }} />
         </div>
 
         {/* Nombre + rol */}

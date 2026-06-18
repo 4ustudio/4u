@@ -8,12 +8,14 @@ export default function ThemeToggle() {
 
   return (
     <button
+      type="button"
       onClick={toggle}
       className="grid h-9 w-9 place-items-center rounded-xl border transition-colors"
       style={{
         borderColor: 'var(--adm-border)',
-        background: 'var(--adm-card)',
+        background: 'var(--adm-surface)',
         color: 'var(--adm-text-muted)',
+        boxShadow: 'var(--adm-card-shadow)',
       }}
       aria-label={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
       title={isDark ? 'Modo claro' : 'Modo oscuro'}

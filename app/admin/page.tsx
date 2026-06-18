@@ -99,13 +99,13 @@ const STATUS_LABEL: Record<string, string> = {
   no_show:     'No asistió',
 }
 
-const STATUS_COLOR: Record<string, string> = {
-  pending:     'bg-yellow-900/40 text-yellow-400',
-  confirmed:   'bg-green-900/40 text-green-400',
-  completed:   'bg-green-900/40 text-green-400',
-  cancelled:   'bg-red-900/40 text-red-400',
-  rescheduled: 'bg-purple-900/40 text-[#ff9a3b]',
-  no_show:     'bg-white/5 text-white/40',
+const STATUS_STYLE: Record<string, { background: string; color: string; borderColor: string }> = {
+  pending:     { background: 'var(--adm-warning-soft)', color: 'var(--adm-warning)', borderColor: 'color-mix(in srgb, var(--adm-warning) 18%, var(--adm-border) 82%)' },
+  confirmed:   { background: 'var(--adm-success-soft)', color: 'var(--adm-success)', borderColor: 'color-mix(in srgb, var(--adm-success) 18%, var(--adm-border) 82%)' },
+  completed:   { background: 'var(--adm-success-soft)', color: 'var(--adm-success)', borderColor: 'color-mix(in srgb, var(--adm-success) 18%, var(--adm-border) 82%)' },
+  cancelled:   { background: 'var(--adm-danger-soft)', color: 'var(--adm-danger)', borderColor: 'color-mix(in srgb, var(--adm-danger) 18%, var(--adm-border) 82%)' },
+  rescheduled: { background: 'var(--adm-info-soft)', color: 'var(--adm-info)', borderColor: 'color-mix(in srgb, var(--adm-info) 18%, var(--adm-border) 82%)' },
+  no_show:     { background: 'var(--adm-neutral-soft)', color: 'var(--adm-text-muted)', borderColor: 'var(--adm-border)' },
 }
 
 export default async function AdminDashboard() {
@@ -115,21 +115,21 @@ export default async function AdminDashboard() {
   const highRisk = retention.highRisk as any[]
 
   return (
-    <div className="space-y-6 w-full page-animate">
+    <div className="w-full space-y-8 page-animate">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">Dashboard</h1>
-          <p className="mt-1 text-sm text-white/40 capitalize">{today}</p>
+          <h1 className="adm-section-heading text-4xl font-extrabold tracking-tight">Dashboard</h1>
+          <p className="mt-1 text-sm capitalize" style={{ color: 'var(--adm-text-muted)' }}>{today}</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <Link href="/admin/agenda" className="inline-flex items-center gap-2 rounded-2xl border border-[#ff7a00]/20 bg-[#ff7a00]/8 px-4 py-2.5 text-sm font-semibold text-[#ff9a3b] transition-colors hover:bg-[#ff7a00]/14">
+          <Link href="/admin/agenda" className="adm-button-primary inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold transition-colors">
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
               <path d="M8 2v4M16 2v4M4 10h16M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/>
             </svg>
             Ver agenda
           </Link>
-          <Link href="/admin/students/nuevo" className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm font-medium text-white/70 transition-colors hover:bg-white/[0.06] hover:text-white">
+          <Link href="/admin/students/nuevo" className="adm-button-secondary inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium transition-colors">
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
               <circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/><path d="M19 8v6M16 11h6"/>
             </svg>
@@ -139,7 +139,7 @@ export default async function AdminDashboard() {
       </div>
 
       {/* KPIs */}
-      <section className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+      <section className="grid grid-cols-2 gap-5 xl:grid-cols-4">
         <KpiCard
           title="Estudiantes activos"
           value={String(stats.activeStudents)}
@@ -171,7 +171,7 @@ export default async function AdminDashboard() {
         <DashCard
           title="Operación académica hoy"
           subtitle="Estado de confirmaciones y asistencia"
-          action={<Link href="/admin/agenda" className="text-xs text-[#ff9a3b] hover:text-[#ff7a00] font-medium transition-colors">Ver agenda →</Link>}
+          action={<Link href="/admin/agenda" className="adm-link-accent text-xs font-semibold transition-colors">Ver agenda →</Link>}
         >
           <div className="mt-4 grid grid-cols-3 sm:grid-cols-6 gap-3">
             <OpsMetric label="Confirmadas"   value={stats.attendanceToday.confirmed}              tone="green" />
@@ -182,23 +182,26 @@ export default async function AdminDashboard() {
             <OpsMetric label="Cancel. instructor" value={stats.attendanceToday.cancelled_by_instructor} tone="orange" />
           </div>
           {(stats.attendanceWeek.attendance_rate !== null || stats.attendanceWeek.confirmation_rate !== null || stats.attendanceWeek.no_show_rate !== null) && (
-            <div className="mt-4 flex flex-wrap gap-4 pt-4 border-t border-white/5">
+            <div className="mt-5 flex flex-wrap gap-6 border-t pt-4" style={{ borderTopColor: 'var(--adm-border)' }}>
               {stats.attendanceWeek.confirmation_rate !== null && (
                 <div>
-                  <p className="text-[10px] text-white/30 uppercase tracking-wider">Confirmación semanal</p>
-                  <p className="text-lg font-bold text-white">{stats.attendanceWeek.confirmation_rate}%</p>
+                  <p className="text-[10px] uppercase tracking-[0.22em]" style={{ color: 'var(--adm-text-faint)' }}>Confirmación semanal</p>
+                  <p className="text-xl font-bold" style={{ color: 'var(--adm-title)' }}>{stats.attendanceWeek.confirmation_rate}%</p>
                 </div>
               )}
               {stats.attendanceWeek.attendance_rate !== null && (
                 <div>
-                  <p className="text-[10px] text-white/30 uppercase tracking-wider">Asistencia semanal</p>
-                  <p className="text-lg font-bold text-white">{stats.attendanceWeek.attendance_rate}%</p>
+                  <p className="text-[10px] uppercase tracking-[0.22em]" style={{ color: 'var(--adm-text-faint)' }}>Asistencia semanal</p>
+                  <p className="text-xl font-bold" style={{ color: 'var(--adm-title)' }}>{stats.attendanceWeek.attendance_rate}%</p>
                 </div>
               )}
               {stats.attendanceWeek.no_show_rate !== null && (
                 <div>
-                  <p className="text-[10px] text-white/30 uppercase tracking-wider">Tasa No Show semanal</p>
-                  <p className={`text-lg font-bold ${(stats.attendanceWeek.no_show_rate ?? 0) > 20 ? 'text-red-400' : 'text-white'}`}>
+                  <p className="text-[10px] uppercase tracking-[0.22em]" style={{ color: 'var(--adm-text-faint)' }}>Tasa No Show semanal</p>
+                  <p
+                    className="text-xl font-bold"
+                    style={{ color: (stats.attendanceWeek.no_show_rate ?? 0) > 20 ? 'var(--adm-danger)' : 'var(--adm-title)' }}
+                  >
                     {stats.attendanceWeek.no_show_rate}%
                   </p>
                 </div>
@@ -209,11 +212,11 @@ export default async function AdminDashboard() {
       </section>
 
       {/* Retención + Mayor riesgo */}
-      <section className="grid gap-4 lg:grid-cols-[1fr_340px]">
+      <section className="grid gap-5 lg:grid-cols-[1fr_340px]">
         <DashCard
           title="Retención de estudiantes"
           subtitle="Alertas operativas para priorizar seguimiento"
-          action={<Link href="/admin/reactivacion" className="text-xs text-[#ff9a3b] hover:text-[#ff7a00] font-medium transition-colors">Abrir módulo →</Link>}
+          action={<Link href="/admin/reactivacion" className="adm-link-accent text-xs font-semibold transition-colors">Abrir módulo →</Link>}
         >
           <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
             <MiniRetention label="En riesgo"      value={retentionDashboard?.risk_students ?? 0}                 tone="yellow" />
@@ -226,15 +229,15 @@ export default async function AdminDashboard() {
         <DashCard title="Mayor riesgo" subtitle="Alumnos priorizados">
           <div className="mt-3 space-y-2">
             {highRisk.length === 0 ? (
-              <p className="text-xs text-white/35">Sin alumnos priorizados.</p>
+              <p className="text-xs" style={{ color: 'var(--adm-text-faint)' }}>Sin alumnos priorizados.</p>
             ) : highRisk.slice(0, 4).map((student) => (
               <Link key={student.id} href={`/admin/students/${student.id}`}
-                className="flex items-center justify-between rounded-xl border border-white/6 bg-black/20 px-3 py-2.5 transition-colors hover:border-[#ff7a00]/25">
+                className="adm-row flex items-center justify-between rounded-xl border px-3 py-3 transition-colors">
                 <div className="min-w-0">
-                  <p className="truncate text-xs font-semibold text-white">{student.name}</p>
-                  <p className="text-[10px] text-white/30">{student.days_since_activity} días sin actividad</p>
+                  <p className="truncate text-sm font-semibold" style={{ color: 'var(--adm-title)' }}>{student.name}</p>
+                  <p className="text-[11px]" style={{ color: 'var(--adm-text-faint)' }}>{student.days_since_activity} días sin actividad</p>
                 </div>
-                <span className="text-xs font-bold text-red-300">{student.retention_score ?? 0}</span>
+                <span className="text-sm font-bold" style={{ color: 'var(--adm-danger)' }}>{student.retention_score ?? 0}</span>
               </Link>
             ))}
           </div>
@@ -247,32 +250,35 @@ export default async function AdminDashboard() {
       </DashCard>
 
       {/* Clases de hoy + Salones */}
-      <div className="grid lg:grid-cols-[1fr_280px] gap-4">
+      <div className="grid gap-5 lg:grid-cols-[1fr_280px]">
         <DashCard
           title="Clases de hoy"
           subtitle="Puedes gestionar cada clase desde la agenda"
-          action={<Link href="/admin/agenda" className="text-xs text-[#ff9a3b] hover:text-[#ff7a00] font-medium transition-colors">Abrir agenda →</Link>}
+          action={<Link href="/admin/agenda" className="adm-link-accent text-xs font-semibold transition-colors">Abrir agenda →</Link>}
         >
           {stats.todaySessions.length === 0 ? (
             <div className="py-10 text-center">
-              <p className="text-white/35 text-sm">No hay clases programadas para hoy.</p>
-              <Link href="/admin/agenda" className="inline-block mt-3 text-xs text-[#ff9a3b] hover:underline">
+              <p className="text-sm" style={{ color: 'var(--adm-text-faint)' }}>No hay clases programadas para hoy.</p>
+              <Link href="/admin/agenda" className="adm-link-accent inline-block mt-3 text-xs font-medium hover:underline">
                 Ir a la agenda para crear una →
               </Link>
             </div>
           ) : (
-            <div className="mt-1 divide-y divide-white/5">
+            <div className="mt-2 space-y-2">
               {stats.todaySessions.map((s) => (
-                <div key={s.id} className="flex items-center gap-4 py-3.5">
+                <div key={s.id} className="adm-row flex items-center gap-4 rounded-2xl border px-4 py-3.5 transition-colors">
                   <div className="text-center shrink-0 w-12">
-                    <p className="text-sm font-bold text-white/80 font-mono">{s.start_time.slice(0, 5)}</p>
-                    <p className="text-[10px] text-white/30">hs</p>
+                    <p className="text-sm font-bold font-mono" style={{ color: 'var(--adm-title)' }}>{s.start_time.slice(0, 5)}</p>
+                    <p className="text-[10px]" style={{ color: 'var(--adm-text-faint)' }}>hs</p>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm text-white font-medium truncate">{(s.student as any)?.name ?? '—'}</p>
-                    <p className="text-xs text-white/40 mt-0.5">{(s.course as any)?.name} · {(s.classroom as any)?.name}</p>
+                    <p className="truncate text-sm font-semibold" style={{ color: 'var(--adm-title)' }}>{(s.student as any)?.name ?? '—'}</p>
+                    <p className="mt-0.5 text-xs" style={{ color: 'var(--adm-text-muted)' }}>{(s.course as any)?.name} · {(s.classroom as any)?.name}</p>
                   </div>
-                  <span className={`text-xs px-2.5 py-1 rounded-full font-medium shrink-0 ${STATUS_COLOR[s.status] ?? 'bg-white/5 text-white/40'}`}>
+                  <span
+                    className="adm-status-pill shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold"
+                    style={STATUS_STYLE[s.status] ?? STATUS_STYLE.no_show}
+                  >
                     {STATUS_LABEL[s.status] ?? s.status}
                   </span>
                 </div>
@@ -286,14 +292,17 @@ export default async function AdminDashboard() {
             {['Salón 1', 'Salón 2', 'Salón 3'].map((room) => {
               const occ = stats.roomOccupancy.find((r) => r.name === room)
               return (
-                <div key={room} className="flex items-center justify-between">
+                <div key={room} className="adm-row flex items-center justify-between rounded-2xl border px-3.5 py-3 transition-colors">
                   <div className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full ${occ ? 'bg-[#ff7a00]' : 'bg-green-400'}`} />
-                    <span className="text-sm text-white/70">{room}</span>
+                    <span className="h-2.5 w-2.5 rounded-full" style={{ background: occ ? 'var(--adm-accent)' : 'var(--adm-success)' }} />
+                    <span className="text-sm font-medium" style={{ color: 'var(--adm-title)' }}>{room}</span>
                   </div>
-                  <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
-                    occ ? 'bg-[#ff7a00]/12 text-[#ff9a3b]' : 'bg-green-900/30 text-green-400'
-                  }`}>
+                  <span
+                    className="adm-status-pill rounded-full px-2.5 py-1 text-xs font-semibold"
+                    style={occ
+                      ? { background: 'var(--adm-accent-soft)', color: 'var(--adm-accent-strong)', borderColor: 'var(--adm-accent-border)' }
+                      : { background: 'var(--adm-success-soft)', color: 'var(--adm-success)', borderColor: 'color-mix(in srgb, var(--adm-success) 18%, var(--adm-border) 82%)' }}
+                  >
                     {occ ? `${occ.count} clase${occ.count !== 1 ? 's' : ''}` : 'Libre'}
                   </span>
                 </div>
@@ -308,14 +317,17 @@ export default async function AdminDashboard() {
 
 function KpiCard({ title, value, trend, icon }: { title: string; value: string; trend: string; icon: React.ReactNode }) {
   return (
-    <div className="rounded-[28px] border border-white/10 bg-[#0b0b0b] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.24)]">
+    <div className="adm-panel adm-kpi-shell rounded-[30px] p-6">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-white/35">{title}</p>
-          <p className="mt-5 text-3xl font-bold tracking-tight text-[#ff7a00]">{value}</p>
-          <p className="mt-3 text-xs text-white/40">{trend}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em]" style={{ color: 'var(--adm-text-faint)' }}>{title}</p>
+          <p className="mt-6 text-[2.8rem] font-extrabold leading-none tracking-tight" style={{ color: 'var(--adm-accent)' }}>{value}</p>
+          <p className="mt-3 text-sm leading-6" style={{ color: 'var(--adm-text-muted)' }}>{trend}</p>
         </div>
-        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-[#ff7a00]/20 bg-[#ff7a00]/8 text-[#ff7a00]">
+        <div
+          className="grid h-12 w-12 shrink-0 place-items-center rounded-[18px] border"
+          style={{ borderColor: 'var(--adm-accent-border)', background: 'var(--adm-accent-soft)', color: 'var(--adm-accent)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.65)' }}
+        >
           {icon}
         </div>
       </div>
@@ -333,18 +345,18 @@ function DashCard({
   children: React.ReactNode
 }) {
   return (
-    <div className="rounded-[28px] border border-white/10 bg-[#0b0b0b] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.24)] lg:p-6">
+    <div className="adm-panel rounded-[30px] p-6 lg:p-7">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-base font-semibold text-white">{title}</h2>
-          {subtitle && <p className="text-xs text-white/30 mt-0.5">{subtitle}</p>}
+          <h2 className="adm-section-heading text-[1.45rem] font-bold tracking-tight">{title}</h2>
+          {subtitle && <p className="mt-1.5 text-sm leading-6" style={{ color: 'var(--adm-text-muted)' }}>{subtitle}</p>}
         </div>
         <div className="flex items-center gap-3">
           {action}
           {badge && (
             <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-green-400" />
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: 'var(--adm-success)' }} />
+              <span className="relative inline-flex h-2 w-2 rounded-full" style={{ background: 'var(--adm-success)' }} />
             </span>
           )}
         </div>
@@ -355,27 +367,32 @@ function DashCard({
 }
 
 function MiniRetention({ label, value, tone }: { label: string; value: number; tone: 'yellow' | 'red' | 'orange' | 'blue' }) {
-  const colors = { yellow: 'text-yellow-300', red: 'text-red-300', orange: 'text-[#ff9a3b]', blue: 'text-violet-300' }
+  const colors = {
+    yellow: 'var(--adm-warning)',
+    red: 'var(--adm-danger)',
+    orange: 'var(--adm-info)',
+    blue: 'var(--adm-accent)',
+  }
   return (
-    <div className="rounded-2xl border border-white/8 bg-white/[0.02] px-3 py-3">
-      <p className={`text-2xl font-black ${colors[tone]}`}>{value}</p>
-      <p className="text-[11px] text-white/35 mt-0.5">{label}</p>
+    <div className="adm-panel-muted rounded-[22px] px-4 py-4">
+      <p className="text-[2.15rem] font-extrabold leading-none" style={{ color: colors[tone] }}>{value}</p>
+      <p className="mt-1.5 text-[11px] font-medium" style={{ color: 'var(--adm-text-muted)' }}>{label}</p>
     </div>
   )
 }
 
 function OpsMetric({ label, value, tone }: { label: string; value: number; tone: 'green' | 'yellow' | 'red' | 'gray' | 'orange' }) {
   const colors = {
-    green:  'text-green-300',
-    yellow: 'text-yellow-300',
-    red:    'text-red-300',
-    gray:   'text-white/40',
-    orange: 'text-[#ff9a3b]',
+    green:  'var(--adm-success)',
+    yellow: 'var(--adm-warning)',
+    red:    'var(--adm-danger)',
+    gray:   'var(--adm-text-muted)',
+    orange: 'var(--adm-info)',
   }
   return (
-    <div className="rounded-2xl border border-white/8 bg-white/[0.02] px-3 py-3">
-      <p className={`text-2xl font-black ${colors[tone]}`}>{value}</p>
-      <p className="text-[10px] text-white/35 mt-0.5 leading-tight">{label}</p>
+    <div className="adm-panel-muted rounded-[22px] px-4 py-4">
+      <p className="text-[2.15rem] font-extrabold leading-none" style={{ color: colors[tone] }}>{value}</p>
+      <p className="mt-1.5 text-[11px] font-medium leading-tight" style={{ color: 'var(--adm-text-muted)' }}>{label}</p>
     </div>
   )
 }

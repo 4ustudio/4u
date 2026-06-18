@@ -18,7 +18,7 @@ function timeAgo(d: Date): string {
 
 const TYPE_CONFIG = {
   enrollment: {
-    dot: 'bg-orange-400',
+    dot: 'var(--adm-accent)',
     icon: (
       <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -26,19 +26,19 @@ const TYPE_CONFIG = {
         <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
       </svg>
     ),
-    bg: 'bg-orange-500/10 text-orange-400',
+    bg: { background: 'var(--adm-accent-soft)', color: 'var(--adm-accent)' },
   },
   session: {
-    dot: 'bg-blue-400',
+    dot: 'var(--adm-text-muted)',
     icon: (
       <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
         <path d="M8 2v4M16 2v4M4 10h16M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/>
       </svg>
     ),
-    bg: 'bg-blue-500/10 text-blue-400',
+    bg: { background: 'var(--adm-neutral-soft)', color: 'var(--adm-text-muted)' },
   },
   conversion: {
-    dot: 'bg-purple-400',
+    dot: 'var(--adm-info)',
     icon: (
       <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
         <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
@@ -46,10 +46,10 @@ const TYPE_CONFIG = {
         <polyline points="16 11 18 13 22 9"/>
       </svg>
     ),
-    bg: 'bg-purple-500/10 text-purple-400',
+    bg: { background: 'var(--adm-info-soft)', color: 'var(--adm-info)' },
   },
   student: {
-    dot: 'bg-green-400',
+    dot: 'var(--adm-success)',
     icon: (
       <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
         <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
@@ -57,7 +57,7 @@ const TYPE_CONFIG = {
         <path d="M20 8v4M18 10h4"/>
       </svg>
     ),
-    bg: 'bg-green-500/10 text-green-400',
+    bg: { background: 'var(--adm-success-soft)', color: 'var(--adm-success)' },
   },
 } as const
 
@@ -65,15 +65,15 @@ const TYPE_CONFIG = {
 
 export function ConnectionDot({ status }: { status: ConnectionStatus }) {
   const cfg = {
-    connected:    { dot: 'bg-green-400', pulse: 'animate-ping bg-green-400', label: 'En línea' },
-    connecting:   { dot: 'bg-yellow-400', pulse: 'animate-ping bg-yellow-400', label: 'Conectando' },
-    disconnected: { dot: 'bg-red-500', pulse: '', label: 'Desconectado' },
+    connected:    { dot: 'var(--adm-success)', pulse: 'var(--adm-success)', label: 'En línea' },
+    connecting:   { dot: 'var(--adm-warning)', pulse: 'var(--adm-warning)', label: 'Conectando' },
+    disconnected: { dot: 'var(--adm-danger)', pulse: '', label: 'Desconectado' },
   }[status]
 
   return (
     <span title={cfg.label} className="relative flex h-2 w-2">
-      {cfg.pulse && <span className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${cfg.pulse}`} />}
-      <span className={`relative inline-flex h-2 w-2 rounded-full ${cfg.dot}`} />
+      {cfg.pulse && <span className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-75" style={{ background: cfg.pulse }} />}
+      <span className="relative inline-flex h-2 w-2 rounded-full" style={{ background: cfg.dot }} />
     </span>
   )
 }
@@ -84,17 +84,17 @@ function NotifItem({ n }: { n: AdminNotif }) {
   const cfg = TYPE_CONFIG[n.type]
   return (
     <div className={`flex gap-3 px-4 py-3 transition-colors ${n.read ? 'opacity-60' : ''}`}>
-      <div className={`mt-0.5 h-7 w-7 shrink-0 rounded-full flex items-center justify-center ${cfg.bg}`}>
+      <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full" style={cfg.bg}>
         {cfg.icon}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
-          <p className={`text-xs font-semibold ${n.read ? 'text-white/50' : 'text-white'}`}>{n.title}</p>
-          <span className="text-[10px] text-white/25 shrink-0 whitespace-nowrap">{timeAgo(n.timestamp)}</span>
+          <p className="text-xs font-semibold" style={{ color: n.read ? 'var(--adm-text-muted)' : 'var(--adm-title)' }}>{n.title}</p>
+          <span className="shrink-0 whitespace-nowrap text-[10px]" style={{ color: 'var(--adm-text-faint)' }}>{timeAgo(n.timestamp)}</span>
         </div>
-        <p className="text-xs text-white/45 mt-0.5 leading-relaxed">{n.body}</p>
+        <p className="mt-0.5 text-xs leading-relaxed" style={{ color: 'var(--adm-text-muted)' }}>{n.body}</p>
       </div>
-      {!n.read && <span className={`mt-2 h-1.5 w-1.5 shrink-0 rounded-full ${cfg.dot}`} />}
+      {!n.read && <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: cfg.dot }} />}
     </div>
   )
 }
@@ -140,7 +140,8 @@ export default function NotificationBell() {
       <button
         onClick={handleOpen}
         aria-label={`Notificaciones${unreadCount > 0 ? ` (${unreadCount} nuevas)` : ''}`}
-        className="relative flex h-8 w-8 items-center justify-center rounded-lg text-white/50 hover:text-white hover:bg-white/8 transition-all"
+        className="relative flex h-9 w-9 items-center justify-center rounded-xl border transition-all"
+        style={{ color: 'var(--adm-text-muted)', borderColor: 'var(--adm-border)', background: 'var(--adm-surface)', boxShadow: 'var(--adm-card-shadow)' }}
       >
         <svg className="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
@@ -148,7 +149,7 @@ export default function NotificationBell() {
         </svg>
         {unreadCount > 0 && (
           <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold text-white"
-            style={{ backgroundColor: '#ff7a00' }}>
+            style={{ backgroundColor: 'var(--adm-accent)' }}>
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -156,12 +157,15 @@ export default function NotificationBell() {
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute right-0 top-full mt-2 z-[70] w-[340px] rounded-2xl border border-white/[0.08] bg-[#111111] shadow-[0_24px_80px_rgba(0,0,0,0.7)] overflow-hidden">
+        <div
+          className="absolute right-0 top-full z-[70] mt-2 w-[340px] overflow-hidden rounded-2xl border"
+          style={{ borderColor: 'var(--adm-border)', background: 'var(--adm-surface)', boxShadow: 'var(--adm-shadow)' }}
+        >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.07]">
+          <div className="flex items-center justify-between border-b px-4 py-3" style={{ borderColor: 'var(--adm-border)' }}>
             <div>
-              <p className="text-sm font-bold text-white">Notificaciones</p>
-              <p className="text-[10px] text-white/30 mt-0.5">
+              <p className="text-sm font-bold" style={{ color: 'var(--adm-title)' }}>Notificaciones</p>
+              <p className="mt-0.5 text-[10px]" style={{ color: 'var(--adm-text-faint)' }}>
                 {notifications.length === 0 ? 'Sin actividad' : `${notifications.length} evento${notifications.length !== 1 ? 's' : ''}`}
               </p>
             </div>
@@ -170,7 +174,8 @@ export default function NotificationBell() {
               <button
                 onClick={toggleSound}
                 title={soundEnabled ? 'Desactivar sonido' : 'Activar sonido'}
-                className="h-7 w-7 flex items-center justify-center rounded-lg text-white/30 hover:text-white hover:bg-white/8 transition-all"
+                className="flex h-7 w-7 items-center justify-center rounded-lg transition-all"
+                style={{ color: 'var(--adm-text-faint)' }}
               >
                 {soundEnabled ? (
                   <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -189,7 +194,8 @@ export default function NotificationBell() {
                 <button
                   onClick={clearAll}
                   title="Limpiar todo"
-                  className="h-7 w-7 flex items-center justify-center rounded-lg text-white/30 hover:text-white hover:bg-white/8 transition-all"
+                  className="flex h-7 w-7 items-center justify-center rounded-lg transition-all"
+                  style={{ color: 'var(--adm-text-faint)' }}
                 >
                   <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                     <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
@@ -203,25 +209,28 @@ export default function NotificationBell() {
           <div className="overflow-y-auto max-h-[420px]">
             {notifications.length === 0 ? (
               <div className="px-4 py-10 text-center">
-                <div className="h-10 w-10 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-3">
-                  <svg className="h-5 w-5 text-white/20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <div
+                  className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full"
+                  style={{ background: 'var(--adm-neutral-soft)', color: 'var(--adm-text-faint)' }}
+                >
+                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
                   </svg>
                 </div>
-                <p className="text-xs text-white/30">Sin notificaciones</p>
-                <p className="text-[10px] text-white/20 mt-1">Los eventos aparecerán aquí en tiempo real</p>
+                <p className="text-xs font-medium" style={{ color: 'var(--adm-text-muted)' }}>Sin notificaciones</p>
+                <p className="mt-1 text-[10px]" style={{ color: 'var(--adm-text-faint)' }}>Los eventos aparecerán aquí en tiempo real</p>
               </div>
             ) : (
-              <div className="divide-y divide-white/[0.05]">
+              <div className="divide-y" style={{ borderColor: 'var(--adm-border)' }}>
                 {notifications.map(n => <NotifItem key={n.id} n={n} />)}
               </div>
             )}
           </div>
 
           {/* Footer con estado */}
-          <div className="px-4 py-2.5 border-t border-white/[0.06] flex items-center gap-2">
+          <div className="flex items-center gap-2 border-t px-4 py-2.5" style={{ borderColor: 'var(--adm-border)' }}>
             <ConnectionDot status={connectionStatus} />
-            <span className="text-[10px] text-white/25">
+            <span className="text-[10px]" style={{ color: 'var(--adm-text-faint)' }}>
               {connectionStatus === 'connected'    ? 'Actualización en tiempo real activa' :
                connectionStatus === 'connecting'   ? 'Conectando al servidor…' :
                'Sin conexión — actualizando…'}

@@ -14,10 +14,10 @@ function timeAgo(d: Date): string {
 }
 
 const ICON_BG: Record<AdminNotif['type'], string> = {
-  enrollment: 'bg-orange-500/10 text-orange-400',
-  session:    'bg-white/8 text-white/60',
-  conversion: 'bg-purple-500/10 text-[#ff9a3b]',
-  student:    'bg-green-500/10 text-green-400',
+  enrollment: 'adm-activity-icon enrollment',
+  session:    'adm-activity-icon session',
+  conversion: 'adm-activity-icon conversion',
+  student:    'adm-activity-icon student',
 }
 
 const ICONS: Record<AdminNotif['type'], React.ReactNode> = {
@@ -51,29 +51,41 @@ export function ActivityFeed() {
   if (notifications.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-10 text-center">
-        <div className="h-10 w-10 rounded-full bg-white/5 flex items-center justify-center mb-3">
-          <svg className="h-5 w-5 text-white/20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+        <div
+          className="mb-3 flex h-10 w-10 items-center justify-center rounded-full"
+          style={{ background: 'var(--adm-neutral-soft)', color: 'var(--adm-text-faint)' }}
+        >
+          <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
             <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
           </svg>
         </div>
-        <p className="text-xs text-white/30">Sin actividad reciente</p>
-        <p className="text-[10px] text-white/20 mt-1">Los eventos aparecerán aquí en tiempo real</p>
+        <p className="text-xs font-medium" style={{ color: 'var(--adm-text-muted)' }}>Sin actividad reciente</p>
+        <p className="mt-1 text-[10px]" style={{ color: 'var(--adm-text-faint)' }}>Los eventos aparecerán aquí en tiempo real</p>
       </div>
     )
   }
 
   return (
-    <div className="divide-y divide-white/[0.05]">
+    <div className="divide-y" style={{ borderColor: 'var(--adm-border)' }}>
       {notifications.slice(0, 20).map(n => (
         <div key={n.id} className="flex items-start gap-3 px-4 py-3">
-          <div className={`mt-0.5 h-7 w-7 shrink-0 rounded-full flex items-center justify-center ${ICON_BG[n.type]}`}>
+          <div
+            className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${ICON_BG[n.type]}`}
+            style={n.type === 'enrollment'
+              ? { background: 'var(--adm-accent-soft)', color: 'var(--adm-accent)' }
+              : n.type === 'session'
+                ? { background: 'var(--adm-neutral-soft)', color: 'var(--adm-text-muted)' }
+                : n.type === 'conversion'
+                  ? { background: 'var(--adm-info-soft)', color: 'var(--adm-info)' }
+                  : { background: 'var(--adm-success-soft)', color: 'var(--adm-success)' }}
+          >
             {ICONS[n.type]}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-white/80">{n.title}</p>
-            <p className="text-xs text-white/45 mt-0.5">{n.body}</p>
+            <p className="text-sm font-semibold" style={{ color: 'var(--adm-title)' }}>{n.title}</p>
+            <p className="mt-0.5 text-xs" style={{ color: 'var(--adm-text-muted)' }}>{n.body}</p>
           </div>
-          <span className="text-[10px] text-white/25 shrink-0 whitespace-nowrap">{timeAgo(n.timestamp)}</span>
+          <span className="shrink-0 whitespace-nowrap text-[10px]" style={{ color: 'var(--adm-text-faint)' }}>{timeAgo(n.timestamp)}</span>
         </div>
       ))}
     </div>

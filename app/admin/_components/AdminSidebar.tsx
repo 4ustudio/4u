@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import type { AppRole } from '@/lib/auth/roles'
 import { canAccessSalesDashboard, getRoleLabel, hasAcademicAccess, isSuperAdmin } from '@/lib/auth/roles'
+import { useAdminTheme } from './AdminThemeProvider'
 
 const Icon = {
   dashboard: (
@@ -183,17 +184,22 @@ export default function AdminSidebar({ role }: { role: AppRole | null }) {
   return (
     <aside
       className="hidden lg:flex sticky top-0 h-screen w-[250px] shrink-0 border-r flex-col"
-      style={{ background: 'var(--adm-surface)', borderColor: 'var(--adm-border)' }}
+      style={{ background: 'var(--adm-surface)', borderColor: 'var(--adm-border)', boxShadow: 'var(--adm-sidebar-shadow)' }}
     >
       <div className="px-7 pt-8 pb-6 border-b" style={{ borderColor: 'var(--adm-border)' }}>
-        <Image
-          src="/images/icons/Recurso 1.png"
-          alt="4U Studio Academy"
-          width={130}
-          height={40}
-          className="object-contain"
-          style={{ filter: 'var(--adm-logo-filter)' } as React.CSSProperties}
-        />
+        <div
+          className="inline-flex rounded-2xl px-2 py-1"
+          style={{ background: 'var(--adm-logo-bg)', border: '1px solid var(--adm-logo-border)' }}
+        >
+          <Image
+            src="/images/icons/Recurso 1.png"
+            alt="4U Studio Academy"
+            width={130}
+            height={40}
+            className="object-contain"
+            style={{ filter: 'var(--adm-logo-filter)' } as React.CSSProperties}
+          />
+        </div>
       </div>
 
       <div className="px-4 pt-5">
@@ -252,6 +258,7 @@ export default function AdminSidebar({ role }: { role: AppRole | null }) {
 export function MobileMenuDrawer({ role }: { role: AppRole | null }) {
   const pathname = usePathname()
   const nav = getVisibleNav(role)
+  const { theme } = useAdminTheme()
   const [open, setOpen] = React.useState(false)
   const [mounted, setMounted] = React.useState(false)
 
@@ -259,11 +266,12 @@ export function MobileMenuDrawer({ role }: { role: AppRole | null }) {
   React.useEffect(() => { setOpen(false) }, [pathname])
 
   const portal = mounted ? (
-    <>
+    <div data-admin-theme={theme} style={{ color: 'var(--adm-text)', colorScheme: theme }}>
       {/* Overlay — fuera del header para evitar el stacking context de backdrop-blur */}
       {open && (
         <div
-          className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-[100] backdrop-blur-sm lg:hidden"
+          style={{ background: 'var(--adm-overlay)' }}
           onClick={() => setOpen(false)}
         />
       )}
@@ -274,19 +282,25 @@ export function MobileMenuDrawer({ role }: { role: AppRole | null }) {
           'fixed inset-y-0 left-0 z-[101] w-[280px] flex flex-col border-r transition-transform duration-300 lg:hidden',
           open ? 'translate-x-0' : '-translate-x-full',
         ].join(' ')}
-        style={{ background: 'var(--adm-surface)', borderColor: 'var(--adm-border)' }}
+        style={{ background: 'var(--adm-surface)', borderColor: 'var(--adm-border)', boxShadow: 'var(--adm-drawer-shadow)' }}
       >
         {/* Header del drawer */}
         <div className="flex items-center justify-between px-6 pt-7 pb-5 border-b" style={{ borderColor: 'var(--adm-border)' }}>
-          <Image
-            src="/images/icons/Recurso 1.png"
-            alt="4U Studio Academy"
-            width={110}
-            height={34}
-            className="object-contain"
-            style={{ filter: 'var(--adm-logo-filter)' } as React.CSSProperties}
-          />
+          <div
+            className="inline-flex rounded-2xl px-2 py-1"
+            style={{ background: 'var(--adm-logo-bg)', border: '1px solid var(--adm-logo-border)' }}
+          >
+            <Image
+              src="/images/icons/Recurso 1.png"
+              alt="4U Studio Academy"
+              width={110}
+              height={34}
+              className="object-contain"
+              style={{ filter: 'var(--adm-logo-filter)' } as React.CSSProperties}
+            />
+          </div>
           <button
+            type="button"
             onClick={() => setOpen(false)}
             className="grid h-9 w-9 place-items-center rounded-xl border transition-colors"
             style={{ borderColor: 'var(--adm-border)', background: 'var(--adm-card)', color: 'var(--adm-text-muted)' }}
@@ -382,13 +396,14 @@ export function MobileMenuDrawer({ role }: { role: AppRole | null }) {
           </div>
         </div>
       </div>
-    </>
+    </div>
   ) : null
 
   return (
     <>
       {/* Botón hamburguesa — solo móvil, va en el header */}
       <button
+        type="button"
         className="lg:hidden grid h-10 w-10 place-items-center rounded-xl border transition-colors"
         style={{ borderColor: 'var(--adm-border)', background: 'var(--adm-card)', color: 'var(--adm-text-muted)' }}
         onClick={() => setOpen(true)}

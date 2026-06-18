@@ -44,7 +44,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           {/* Header */}
           <header
             className="sticky top-0 z-30 h-20 shrink-0 flex items-center gap-3 px-4 lg:px-7 border-b backdrop-blur-xl"
-            style={{ background: 'var(--adm-surface-2)', borderBottomColor: 'var(--adm-border)' }}
+            style={{ background: 'var(--adm-surface-2)', borderBottomColor: 'var(--adm-border)', boxShadow: 'var(--adm-header-shadow)' }}
           >
             {/* Hamburguesa móvil + drawer */}
             <MobileMenuDrawer role={role} />
@@ -55,8 +55,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               alt="4U Studio Academy"
               width={90}
               height={28}
-              className="object-contain lg:hidden"
-              style={{ filter: 'var(--adm-logo-filter)' } as React.CSSProperties}
+              className="object-contain rounded-xl px-2 py-1 lg:hidden"
+              style={{
+                background: 'var(--adm-logo-bg)',
+                border: '1px solid var(--adm-logo-border)',
+                filter: 'var(--adm-logo-filter)',
+              } as React.CSSProperties}
             />
 
             <div className="ml-auto flex items-center gap-3">
@@ -72,7 +76,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </header>
 
           {/* Contenido principal */}
-          <main className="flex-1 p-4 lg:p-7 overflow-auto">
+          <main
+            className="flex-1 overflow-auto p-4 lg:p-8"
+            style={{ background: 'var(--adm-main-bg)' }}
+          >
             <PageWrapper>{children}</PageWrapper>
           </main>
         </div>

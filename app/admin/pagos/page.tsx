@@ -15,7 +15,7 @@ export default async function PagosPage() {
 
   return (
     <PageWrapper>
-      <div className="px-6 py-7 max-w-6xl mx-auto space-y-2">
+      <div className="mx-auto max-w-7xl space-y-2 px-2 py-3 sm:px-4 lg:px-6">
         <PagosClient
           initialPayments={paymentsResult.data}
           initialTotal={paymentsResult.total}

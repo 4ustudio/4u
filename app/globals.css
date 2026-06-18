@@ -77,6 +77,7 @@ body {
   --adm-nav-hover:     rgba(255,255,255,0.04);
   --adm-shadow:        0 20px 60px rgba(0,0,0,0.5);
   --adm-card-shadow:   0 20px 60px rgba(0,0,0,0.24);
+  --adm-bold-strip-bg: linear-gradient(135deg, rgba(255,122,0,0.10), rgba(255,255,255,0.035) 44%, rgba(255,255,255,0.02) 100%);
   --adm-logo-bg:       transparent;
   --adm-logo-border:   transparent;
   --adm-logo-filter:   none;
@@ -127,6 +128,7 @@ body {
   --adm-nav-hover:     rgba(0,0,0,0.05);
   --adm-shadow:        0 20px 50px rgba(15,23,42,0.08);
   --adm-card-shadow:   0 1px 3px rgba(15,23,42,.04), 0 12px 28px rgba(15,23,42,.04);
+  --adm-bold-strip-bg: linear-gradient(135deg, rgba(255,122,0,0.08), rgba(255,255,255,0.95) 40%, rgba(255,255,255,0.88) 100%);
   --adm-logo-bg:       #111827;
   --adm-logo-border:   rgba(255,255,255,0.08);
   --adm-logo-filter:   none;

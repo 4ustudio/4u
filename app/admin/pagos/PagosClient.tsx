@@ -59,7 +59,7 @@ function BoldMetricsStrip({ m }: { m: BoldMetrics }) {
       className="rounded-[24px] px-5 py-4"
       style={{
         border: `1px solid ${BORDER}`,
-        background: 'linear-gradient(135deg, rgba(255,122,0,0.08), rgba(255,255,255,0.9) 40%)',
+        background: 'var(--adm-bold-strip-bg)',
         boxShadow: 'var(--adm-card-shadow)',
       }}
     >

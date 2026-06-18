@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { Resend } from 'resend'
 import { ACADEMY, TERMS } from '@/lib/constants'
 import { activity } from '@/lib/activity'
+import { sendCorporateWhatsApp } from '@/lib/whatsapp-notify'
 import type {
   EnrollmentFormState,
   EnrollmentInsert,
@@ -13,10 +14,11 @@ import type {
 
 const PHONE_RE = /^[+]?[\d\s\-().]{7,20}$/
 
-const TIME_SLOTS = [
-  '10:00 AM', '11:00 AM', '12:00 PM',
-  '1:00 PM',  '2:00 PM',  '3:00 PM',
-  '4:00 PM',  '5:00 PM',  '6:00 PM',  '7:00 PM',
+const SCHEDULE_RANGES = [
+  'Mañana (10am – 12pm)',
+  'Mediodía (12pm – 2pm)',
+  'Tarde (2pm – 5pm)',
+  'Tarde-noche (5pm – 7pm)',
 ]
 
 const LEVEL_LABEL: Record<string, string> = {
@@ -61,8 +63,8 @@ function validate(form: Partial<EnrollmentInsert>): EnrollmentFormState['errors'
   if (!form.level || !['never', 'beginner', 'intermediate', 'advanced'].includes(form.level)) {
     errors.level = 'Selecciona tu nivel actual'
   }
-  if (!form.preferred_time?.trim() || !TIME_SLOTS.includes(form.preferred_time.trim())) {
-    errors.preferred_time = 'Selecciona una hora preferida'
+  if (!form.preferred_time?.trim() || !SCHEDULE_RANGES.includes(form.preferred_time.trim())) {
+    errors.preferred_time = 'Selecciona una franja horaria'
   }
   if (!form.terms_accepted) {
     errors.terms = 'Debes aceptar los términos y condiciones'
@@ -178,7 +180,15 @@ export async function generateAndSaveEnrollment(
     preferred_time:  (formData.get('preferred_time') as string | null)?.trim() ?? '',
     payment_method:  (formData.get('payment_method') as string | null)?.trim() || undefined,
     music_genre:     (formData.get('music_genre') as string | null)?.trim() || undefined,
-    notes:           (formData.get('notes') as string | null)?.trim() || undefined,
+    notes:           (() => {
+      const schedule = (formData.get('available_schedule') as string | null)?.trim()
+      const notes    = (formData.get('notes') as string | null)?.trim()
+      const parts = [
+        schedule ? `Horarios disponibles: ${schedule}` : '',
+        notes ?? '',
+      ].filter(Boolean)
+      return parts.length ? parts.join('\n\n') : undefined
+    })(),
     source:          'inscripcion',
     terms_accepted:    formData.get('terms') === 'on',
     terms_accepted_at: signedAt,
@@ -219,6 +229,7 @@ export async function generateAndSaveEnrollment(
     const enrollmentId = enrollment.id
 
     // ── 3. Activity log + Correos (en paralelo, no bloquean) ──
+    const fechaHora = new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota' })
     await Promise.all([
       activity.leadCreated({
         lead_id:    enrollmentId,
@@ -229,6 +240,14 @@ export async function generateAndSaveEnrollment(
       }),
       sendAdminNotification(raw as EnrollmentInsert),
       sendUserConfirmation(raw as EnrollmentInsert),
+      sendCorporateWhatsApp(
+        `📋 *Nueva inscripción*\n` +
+        `👤 ${raw.student_name}\n` +
+        `📱 ${raw.phone}\n` +
+        `🎸 ${raw.course_interest ?? 'Sin instrumento'}\n` +
+        `📅 ${fechaHora}`,
+        { entity_type: 'enrollment', entity_id: enrollmentId, event: 'Nueva inscripción recibida' }
+      ),
     ])
 
     return {

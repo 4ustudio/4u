@@ -64,13 +64,12 @@ function AgendamientoPopup({ onClose, ctaLink }: { onClose: () => void; ctaLink:
         <div className="mt-2 h-[2px] w-12 rounded-full bg-[#ff7a00]" />
 
         <p className="mt-2 text-sm leading-5 text-white/75 hidden sm:block">
-          Agenda una clase de prueba y vive la experiencia 4U Studio Academy{" "}
+          Agenda tu sesión y vive la experiencia de grabar en estudio{" "}
           <span className="text-[#ff7a00] font-semibold">sin compromisos</span>.
         </p>
 
         <ul className="mt-2 space-y-1.5 text-sm text-white/80">
           {[
-            "Clase personalizada con un instructor profesional",
             "Todos los niveles y edades bienvenidos",
             "Elige el instrumento o área que quieras",
           ].map((item) => (

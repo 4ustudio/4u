@@ -11,10 +11,11 @@ import PageLayout from '@/components/layout/PageLayout'
 const ORANGE = '#ff7a00'
 
 const COURSES = ['Canto', 'Guitarra', 'Piano', 'Batería', 'Bajo', 'Producción Musical']
-const TIME_SLOTS = [
-  '10:00 AM', '11:00 AM', '12:00 PM',
-  '1:00 PM',  '2:00 PM',  '3:00 PM',
-  '4:00 PM',  '5:00 PM',  '6:00 PM',  '7:00 PM',
+const SCHEDULE_RANGES = [
+  'Mañana (10am – 12pm)',
+  'Mediodía (12pm – 2pm)',
+  'Tarde (2pm – 5pm)',
+  'Tarde-noche (5pm – 7pm)',
 ]
 const LEVELS = [
   { value: 'never',        label: 'Nunca he estudiado música' },
@@ -253,11 +254,11 @@ export default function InscripcionPage() {
                     {state.errors?.level && <p className={errorClass}>{state.errors.level}</p>}
                   </fieldset>
 
-                  {/* ── Hora preferida ── */}
+                  {/* ── Franja horaria ── */}
                   <fieldset>
-                    <legend className={labelClass}>Hora preferida <span className="text-white/20 font-normal normal-case ml-1">(lunes a sábado, 10am–7pm)</span></legend>
+                    <legend className={labelClass}>Franja horaria disponible <span className="text-white/20 font-normal normal-case ml-1">(lunes a sábado)</span></legend>
                     <div className="flex flex-wrap gap-2">
-                      {TIME_SLOTS.map((t) => (
+                      {SCHEDULE_RANGES.map((t) => (
                         <label key={t} className="relative flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold font-roboto transition-all cursor-pointer has-[:checked]:text-white has-[:checked]:shadow-lg" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
                           <input type="radio" name="preferred_time" value={t} className="sr-only peer" />
                           <span className="peer-checked:hidden w-2 h-2 rounded-full border border-white/30" />
@@ -268,6 +269,12 @@ export default function InscripcionPage() {
                     </div>
                     {state.errors?.preferred_time && <p className={errorClass}>{state.errors.preferred_time}</p>}
                   </fieldset>
+
+                  {/* ── Horarios disponibles ── */}
+                  <div>
+                    <label htmlFor="available_schedule" className={labelClass}>¿Cuándo puedes venir? <span className="text-white/20 font-normal normal-case ml-1">(opcional)</span></label>
+                    <textarea id="available_schedule" name="available_schedule" rows={2} placeholder="Ej: lunes y miércoles de 4pm a 6pm, sábados en la mañana…" className={inputClass + ' resize-none'} />
+                  </div>
 
                   {/* ── Género musical ── */}
                   <div>

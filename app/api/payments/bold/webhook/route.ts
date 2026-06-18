@@ -3,6 +3,7 @@ import { verifyBoldSignature } from '@/lib/bold/verify-signature'
 import type { BoldWebhookPayload } from '@/lib/bold/types'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { activity } from '@/lib/activity'
+import { sendCorporateWhatsApp } from '@/lib/whatsapp-notify'
 
 // No usar caché — siempre procesar en tiempo real
 export const dynamic = 'force-dynamic'
@@ -115,13 +116,24 @@ export async function POST(req: NextRequest) {
       .eq('id', payment.student_id)
       .single()
 
+    const studentName = student?.name ?? '—'
     await activity.paymentReceived({
       payment_id:    ourPaymentId,
-      student_name:  student?.name ?? '—',
+      student_name:  studentName,
       amount:        payment.final_amount,
       method:        'bold',
       source:        'bold_webhook',
     })
+
+    const amountFmt = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(payment.final_amount)
+    const fechaHora = new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota' })
+    sendCorporateWhatsApp(
+      `✅ *Pago confirmado Bold*\n` +
+      `👤 ${studentName}\n` +
+      `💵 ${amountFmt}\n` +
+      `📅 ${fechaHora}`,
+      { entity_type: 'payment', entity_id: ourPaymentId, event: 'Pago confirmado via Bold' }
+    )
   }
 
   if (type === 'SALE_REJECTED') {

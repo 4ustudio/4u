@@ -343,6 +343,73 @@ export async function getStudentsForSearch(): Promise<StudentOption[]> {
   } catch { return [] }
 }
 
+export interface EnrollmentOption {
+  id: string
+  student_name: string
+  phone: string
+  email: string | null
+  course_interest: string | null
+  status: string | null
+}
+
+export async function getEnrollmentsForSearch(): Promise<EnrollmentOption[]> {
+  try {
+    const { data } = await createAdminClient()
+      .from('enrollments')
+      .select('id, student_name, phone, email, course_interest, status')
+      .is('converted_student_id', null)
+      .not('status', 'eq', 'lost')
+      .order('created_at', { ascending: false })
+    return (data ?? []) as EnrollmentOption[]
+  } catch { return [] }
+}
+
+export interface CreateStudentAndPaymentInput extends Omit<CreateCobroInput, 'student_id'> {
+  student_name: string
+  student_phone: string
+  student_email?: string
+  enrollment_id?: string
+}
+
+export async function createStudentAndPayment(
+  input: CreateStudentAndPaymentInput
+): Promise<{ error: string | null; id?: string }> {
+  try {
+    const admin = createAdminClient()
+
+    // 1. Crear estudiante
+    const { data: newStudent, error: studentError } = await admin
+      .from('students')
+      .insert({
+        name:  input.student_name.trim(),
+        phone: input.student_phone.trim(),
+        email: input.student_email?.trim() || null,
+        student_status: 'activo',
+        ...(input.enrollment_id ? { lead_id: input.enrollment_id } : {}),
+      })
+      .select('id')
+      .single()
+
+    if (studentError || !newStudent) return { error: studentError?.message ?? 'Error creando estudiante.' }
+
+    const student_id = newStudent.id
+
+    // 2. Vincular enrollment si aplica
+    if (input.enrollment_id) {
+      await admin.from('enrollments').update({
+        converted_student_id: student_id,
+        converted_at: new Date().toISOString(),
+        status: 'converted',
+      }).eq('id', input.enrollment_id)
+    }
+
+    // 3. Crear cobro pendiente
+    return createPendingPayment({ ...input, student_id })
+  } catch (e) {
+    return { error: String(e) }
+  }
+}
+
 // ── Mutaciones ─────────────────────────────────────────────────────
 
 export async function registerPayment(input: RegisterPaymentInput): Promise<{ error: string | null; id?: string }> {

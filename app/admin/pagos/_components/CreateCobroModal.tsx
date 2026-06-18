@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useTransition, useEffect } from 'react'
-import { createPendingPayment, getStudentPaymentDefaults } from '../_actions'
-import type { StudentOption, StudentPaymentDefaults } from '../_actions'
+import { createPendingPayment, createStudentAndPayment, getStudentPaymentDefaults } from '../_actions'
+import type { StudentOption, EnrollmentOption, StudentPaymentDefaults } from '../_actions'
 
 const ORANGE = '#ff7a00'
 
@@ -27,19 +27,34 @@ function formatCOP(n: number) {
   return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n)
 }
 
+type Mode = 'existing' | 'enrollment' | 'new'
+
 interface Props {
   preselectedStudentId?: string
   students: StudentOption[]
+  enrollments: EnrollmentOption[]
   onClose: () => void
   onSuccess: () => void
 }
 
-export default function CreateCobroModal({ preselectedStudentId, students, onClose, onSuccess }: Props) {
+export default function CreateCobroModal({ preselectedStudentId, students, enrollments, onClose, onSuccess }: Props) {
   const [pending, startTransition] = useTransition()
   const [loading, setLoading]      = useState(false)
   const [error, setError]          = useState<string | null>(null)
   const [defaults, setDefaults]    = useState<StudentPaymentDefaults | null>(null)
-  const [studentId, setStudentId]  = useState(preselectedStudentId ?? '')
+
+  const [mode, setMode] = useState<Mode>(preselectedStudentId ? 'existing' : 'existing')
+
+  // existing mode
+  const [studentId, setStudentId] = useState(preselectedStudentId ?? '')
+
+  // enrollment mode
+  const [enrollmentId, setEnrollmentId] = useState('')
+
+  // new student mode
+  const [newName,  setNewName]  = useState('')
+  const [newPhone, setNewPhone] = useState('')
+  const [newEmail, setNewEmail] = useState('')
 
   const [originalAmt,    setOriginalAmt]    = useState('')
   const [discountAmt,    setDiscountAmt]    = useState('0')
@@ -51,8 +66,9 @@ export default function CreateCobroModal({ preselectedStudentId, students, onClo
   const [planName,       setPlanName]       = useState('')
   const [notes,          setNotes]          = useState('')
 
+  // Auto-fill cuando cambia studentId en modo existing
   useEffect(() => {
-    if (!studentId) { setDefaults(null); return }
+    if (mode !== 'existing' || !studentId) { setDefaults(null); return }
     setLoading(true)
     getStudentPaymentDefaults(studentId).then(d => {
       setDefaults(d)
@@ -64,7 +80,29 @@ export default function CreateCobroModal({ preselectedStudentId, students, onClo
       }
       setLoading(false)
     })
-  }, [studentId])
+  }, [studentId, mode])
+
+  // Auto-fill nombre/teléfono cuando se selecciona enrollment
+  useEffect(() => {
+    if (mode !== 'enrollment' || !enrollmentId) return
+    const enr = enrollments.find(e => e.id === enrollmentId)
+    if (enr) {
+      setNewName(enr.student_name)
+      setNewPhone(enr.phone)
+      setNewEmail(enr.email ?? '')
+    }
+  }, [enrollmentId, mode, enrollments])
+
+  function handleModeChange(m: Mode) {
+    setMode(m)
+    setStudentId('')
+    setEnrollmentId('')
+    setNewName('')
+    setNewPhone('')
+    setNewEmail('')
+    setDefaults(null)
+    setError(null)
+  }
 
   function handlePlanChange(name: string) {
     setPlanName(name)
@@ -85,29 +123,51 @@ export default function CreateCobroModal({ preselectedStudentId, students, onClo
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!studentId) { setError('Selecciona un estudiante.'); return }
     if (orig <= 0)  { setError('Ingresa el valor del cobro.'); return }
     if (disc > orig){ setError('El descuento supera el valor original.'); return }
     if (!dueDate)   { setError('Indica la fecha de vencimiento.'); return }
 
+    const paymentBase = {
+      period_year:      periodYear,
+      period_month:     periodMonth,
+      original_amount:  orig,
+      discount_amount:  disc,
+      discount_percent: parseFloat(discountPct) || 0,
+      discount_reason:  discountReason || undefined,
+      due_date:         dueDate,
+      plan_name:        planName || undefined,
+      notes:            notes || undefined,
+    }
+
     setError(null)
     startTransition(async () => {
-      const res = await createPendingPayment({
-        student_id:       studentId,
-        period_year:      periodYear,
-        period_month:     periodMonth,
-        original_amount:  orig,
-        discount_amount:  disc,
-        discount_percent: parseFloat(discountPct) || 0,
-        discount_reason:  discountReason || undefined,
-        due_date:         dueDate,
-        plan_name:        planName || undefined,
-        notes:            notes || undefined,
-      })
+      let res: { error: string | null }
+
+      if (mode === 'existing') {
+        if (!studentId) { setError('Selecciona un estudiante.'); return }
+        res = await createPendingPayment({ student_id: studentId, ...paymentBase })
+      } else {
+        if (!newName.trim())  { setError('Ingresa el nombre del estudiante.'); return }
+        if (!newPhone.trim()) { setError('Ingresa el teléfono del estudiante.'); return }
+        res = await createStudentAndPayment({
+          student_name:  newName.trim(),
+          student_phone: newPhone.trim(),
+          student_email: newEmail.trim() || undefined,
+          enrollment_id: mode === 'enrollment' ? enrollmentId || undefined : undefined,
+          ...paymentBase,
+        })
+      }
+
       if (res.error) setError(res.error)
       else { onSuccess(); onClose() }
     })
   }
+
+  const modeLabels: { key: Mode; label: string }[] = [
+    { key: 'existing',   label: 'Estudiante activo' },
+    { key: 'enrollment', label: 'Desde formulario' },
+    { key: 'new',        label: 'Nuevo estudiante' },
+  ]
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -126,15 +186,35 @@ export default function CreateCobroModal({ preselectedStudentId, students, onClo
         </div>
 
         {/* Indicador de flujo */}
-        <div className="flex items-center gap-2 mb-5 mt-3 px-3 py-2 rounded-xl bg-orange-500/8 border border-orange-500/20">
+        <div className="flex items-center gap-2 mb-4 mt-3 px-3 py-2 rounded-xl bg-orange-500/8 border border-orange-500/20">
           <svg className="h-3.5 w-3.5 text-orange-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
           <p className="text-[11px] text-orange-300/80">Crear cobro → Generar link Bold → Estudiante paga → Webhook confirma</p>
         </div>
 
+        {/* Selector de modo */}
+        {!preselectedStudentId && (
+          <div className="flex gap-1 mb-5 p-1 rounded-xl bg-white/[0.04] border border-white/8">
+            {modeLabels.map(({ key, label }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => handleModeChange(key)}
+                className={`flex-1 py-1.5 text-[11px] font-semibold rounded-lg transition-all ${
+                  mode === key
+                    ? 'bg-orange-500 text-white'
+                    : 'text-white/40 hover:text-white/70'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
 
-          {/* Estudiante */}
-          {!preselectedStudentId ? (
+          {/* Sección estudiante según modo */}
+          {mode === 'existing' && !preselectedStudentId && (
             <div>
               <label className="block text-[11px] uppercase tracking-wider text-white/35 mb-1.5">Estudiante</label>
               <select
@@ -147,16 +227,104 @@ export default function CreateCobroModal({ preselectedStudentId, students, onClo
                 {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </div>
-          ) : defaults && (
+          )}
+
+          {mode === 'existing' && preselectedStudentId && defaults && (
             <div className="px-3 py-2.5 rounded-xl bg-white/[0.03] border border-white/8">
               <p className="text-xs text-white/40">Estudiante</p>
               <p className="text-sm font-semibold text-white mt-0.5">{defaults.student_name}</p>
             </div>
           )}
 
+          {mode === 'enrollment' && (
+            <div className="space-y-3">
+              <div>
+                <label className="block text-[11px] uppercase tracking-wider text-white/35 mb-1.5">Formulario de inscripción</label>
+                <select
+                  value={enrollmentId}
+                  onChange={e => setEnrollmentId(e.target.value)}
+                  className="w-full px-3 py-2 text-sm bg-white/[0.04] border border-white/10 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-orange-500/40"
+                >
+                  <option value="">Seleccionar…</option>
+                  {enrollments.map(enr => (
+                    <option key={enr.id} value={enr.id}>
+                      {enr.student_name}{enr.course_interest ? ` — ${enr.course_interest}` : ''}
+                    </option>
+                  ))}
+                </select>
+                {enrollments.length === 0 && (
+                  <p className="text-[11px] text-white/30 mt-1">No hay formularios pendientes de convertir.</p>
+                )}
+              </div>
+              {enrollmentId && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] uppercase tracking-wider text-white/35 mb-1.5">Nombre</label>
+                    <input
+                      type="text"
+                      value={newName}
+                      onChange={e => setNewName(e.target.value)}
+                      className="w-full px-3 py-2 text-sm bg-white/[0.04] border border-white/10 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-orange-500/40"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] uppercase tracking-wider text-white/35 mb-1.5">Teléfono</label>
+                    <input
+                      type="text"
+                      value={newPhone}
+                      onChange={e => setNewPhone(e.target.value)}
+                      className="w-full px-3 py-2 text-sm bg-white/[0.04] border border-white/10 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-orange-500/40"
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {mode === 'new' && (
+            <div className="space-y-3">
+              <div>
+                <label className="block text-[11px] uppercase tracking-wider text-white/35 mb-1.5">Nombre completo</label>
+                <input
+                  type="text"
+                  value={newName}
+                  onChange={e => setNewName(e.target.value)}
+                  placeholder="Nombre del estudiante"
+                  className="w-full px-3 py-2 text-sm bg-white/[0.04] border border-white/10 rounded-lg text-white placeholder:text-white/20 focus:outline-none focus:ring-1 focus:ring-orange-500/40"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] uppercase tracking-wider text-white/35 mb-1.5">Teléfono</label>
+                  <input
+                    type="text"
+                    value={newPhone}
+                    onChange={e => setNewPhone(e.target.value)}
+                    placeholder="3001234567"
+                    className="w-full px-3 py-2 text-sm bg-white/[0.04] border border-white/10 rounded-lg text-white placeholder:text-white/20 focus:outline-none focus:ring-1 focus:ring-orange-500/40"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] uppercase tracking-wider text-white/35 mb-1.5">Email (opcional)</label>
+                  <input
+                    type="email"
+                    value={newEmail}
+                    onChange={e => setNewEmail(e.target.value)}
+                    placeholder="correo@ejemplo.com"
+                    className="w-full px-3 py-2 text-sm bg-white/[0.04] border border-white/10 rounded-lg text-white placeholder:text-white/20 focus:outline-none focus:ring-1 focus:ring-orange-500/40"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
           {loading && <p className="text-xs text-white/30 text-center py-2">Cargando datos del plan…</p>}
 
-          {/* Plan + Periodo */}
+          {/* Plan + Mes */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] uppercase tracking-wider text-white/35 mb-1.5">Plan</label>
@@ -194,7 +362,7 @@ export default function CreateCobroModal({ preselectedStudentId, students, onClo
             />
           </div>
 
-          {/* Descuento */}
+          {/* Descuento + Vencimiento */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] uppercase tracking-wider text-white/35 mb-1.5">Descuento ($)</label>
@@ -264,10 +432,10 @@ export default function CreateCobroModal({ preselectedStudentId, students, onClo
               style={{ backgroundColor: ORANGE }}
             >
               {pending
-                ? 'Creando…'
+                ? (mode === 'existing' ? 'Creando…' : 'Creando estudiante y cobro…')
                 : <>
                     <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                    Crear cobro pendiente
+                    {mode === 'existing' ? 'Crear cobro pendiente' : 'Crear estudiante y cobro'}
                   </>
               }
             </button>

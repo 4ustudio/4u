@@ -27,6 +27,8 @@ export type ActivityAction =
   | 'whatsapp.payment_reminder'
   | 'whatsapp.birthday'
   | 'whatsapp.reactivation'
+  | 'whatsapp.notification_sent'
+  | 'whatsapp.notification_failed'
   | 'automation.rules_ran'
   | 'automation.job_created'
   | 'automation.job_completed'

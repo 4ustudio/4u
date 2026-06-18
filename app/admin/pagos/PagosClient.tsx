@@ -3,7 +3,7 @@
 import { useState, useTransition, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { getPayments, markPaymentOverdue, processOverduePayments, generateBoldCheckout } from './_actions'
-import type { PaymentWithStudent, PaymentMetrics, BoldMetrics, PaymentTab, StudentOption } from './_actions'
+import type { PaymentWithStudent, PaymentMetrics, BoldMetrics, PaymentTab, StudentOption, EnrollmentOption } from './_actions'
 import { PaymentStatusPill } from './_components/PaymentStatusPill'
 import RegisterPaymentModal from './_components/RegisterPaymentModal'
 import GeneratePaymentModal from './_components/GeneratePaymentModal'
@@ -395,9 +395,10 @@ interface Props {
   initialMetrics:  PaymentMetrics
   boldMetrics:     BoldMetrics
   students:        StudentOption[]
+  enrollments:     EnrollmentOption[]
 }
 
-export default function PagosClient({ initialPayments, initialTotal, initialMetrics, boldMetrics, students }: Props) {
+export default function PagosClient({ initialPayments, initialTotal, initialMetrics, boldMetrics, students, enrollments }: Props) {
   const router  = useRouter()
   const [overduePending, startOverdue] = useTransition()
   const [markPending,    startMark]    = useTransition()
@@ -693,6 +694,7 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
       {showCobro && (
         <CreateCobroModal
           students={students}
+          enrollments={enrollments}
           onClose={() => setShowCobro(false)}
           onSuccess={reload}
         />

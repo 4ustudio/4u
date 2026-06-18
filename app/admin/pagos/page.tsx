@@ -1,15 +1,16 @@
-import { getPayments, getPaymentMetrics, getBoldMetrics, getStudentsForSearch } from './_actions'
+import { getPayments, getPaymentMetrics, getBoldMetrics, getStudentsForSearch, getEnrollmentsForSearch } from './_actions'
 import PagosClient from './PagosClient'
 import PageWrapper from '../_components/PageWrapper'
 
 export const dynamic = 'force-dynamic'
 
 export default async function PagosPage() {
-  const [paymentsResult, metrics, boldMetrics, students] = await Promise.all([
+  const [paymentsResult, metrics, boldMetrics, students, enrollments] = await Promise.all([
     getPayments('all', '', 1),
     getPaymentMetrics(),
     getBoldMetrics(),
     getStudentsForSearch(),
+    getEnrollmentsForSearch(),
   ])
 
   return (
@@ -21,6 +22,7 @@ export default async function PagosPage() {
           initialMetrics={metrics}
           boldMetrics={boldMetrics}
           students={students}
+          enrollments={enrollments}
         />
       </div>
     </PageWrapper>

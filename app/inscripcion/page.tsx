@@ -278,6 +278,12 @@ export default function InscripcionPage() {
                           </label>
                         ))}
                       </div>
+                      <label htmlFor="first_session_day" className={labelClass + ' mt-4'}>¿Qué día quieres tu primera sesión?</label>
+                      <input
+                        id="first_session_day" name="first_session_day" type="date"
+                        min={new Date().toISOString().split('T')[0]}
+                        className={inputClass + ' [color-scheme:dark]'}
+                      />
                     </fieldset>
                   )}
 

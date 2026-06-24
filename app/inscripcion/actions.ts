@@ -184,6 +184,10 @@ export async function generateAndSaveEnrollment(
       const schedule = (formData.get('available_schedule') as string | null)?.trim()
       const notes    = (formData.get('notes') as string | null)?.trim()
       const free     = formData.get('free_session') as string | null
+      const dayRaw   = (formData.get('first_session_day') as string | null)?.trim()
+      const day      = dayRaw
+        ? new Date(dayRaw + 'T00:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })
+        : ''
       const freeLabel = free === 'grabacion'
         ? 'Primera sesión gratis: Grabación en estudio'
         : free === 'coach'
@@ -191,6 +195,7 @@ export async function generateAndSaveEnrollment(
         : ''
       const parts = [
         freeLabel,
+        day ? `Día primera sesión: ${day}` : '',
         schedule ? `Horarios disponibles: ${schedule}` : '',
         notes ?? '',
       ].filter(Boolean)

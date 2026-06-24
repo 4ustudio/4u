@@ -226,10 +226,13 @@ function Drawer({
                   <p className="section-label text-[10px] uppercase tracking-widest text-white/25 font-semibold mb-3">Prospecto</p>
                   <div className="grid grid-cols-2 gap-x-6 gap-y-3">
                     <InfoRow label="Edad"      value={`${e.student_age} años`} />
-                    <InfoRow label="Modalidad" value={e.student_type === 'self' ? 'Para sí mismo' : 'Para su hijo/a'} />
+                    <InfoRow label="Modalidad" value={e.student_type === 'self' ? 'Para sí mismo' : e.student_type === 'other' ? 'Para otra persona' : 'Para su hijo/a'} />
                     <InfoRow label="Curso"     value={e.course_interest} />
                     <InfoRow label="Nivel"     value={LEVEL_LABEL[e.level] ?? e.level} />
                     <InfoRow label="Hora pref." value={e.preferred_time} />
+                    {e.notes?.match(/Día primera sesión:\s*(.+)/)?.[1] && (
+                      <InfoRow label="Día 1ª sesión" value={e.notes.match(/Día primera sesión:\s*(.+)/)![1].trim()} />
+                    )}
                     {e.guardian_name && <InfoRow label="Acudiente" value={e.guardian_name} />}
                   </div>
                 </section>

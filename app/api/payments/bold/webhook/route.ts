@@ -3,7 +3,7 @@ import { verifyBoldSignature } from '@/lib/bold/verify-signature'
 import type { BoldWebhookPayload } from '@/lib/bold/types'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { activity } from '@/lib/activity'
-import { sendCorporateWhatsApp } from '@/lib/whatsapp-notify'
+import { sendPaymentConfirmed, sendInternalAlert } from '@/lib/whatsapp-cloud'
 
 // No usar caché — siempre procesar en tiempo real
 export const dynamic = 'force-dynamic'
@@ -112,7 +112,7 @@ export async function POST(req: NextRequest) {
 
     const { data: student } = await db()
       .from('students')
-      .select('name')
+      .select('name, phone')
       .eq('id', payment.student_id)
       .single()
 
@@ -127,12 +127,21 @@ export async function POST(req: NextRequest) {
 
     const amountFmt = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(payment.final_amount)
     const fechaHora = new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota' })
-    sendCorporateWhatsApp(
-      `✅ *Pago confirmado Bold*\n` +
-      `👤 ${studentName}\n` +
-      `💵 ${amountFmt}\n` +
-      `📅 ${fechaHora}`,
-      { entity_type: 'payment', entity_id: ourPaymentId, event: 'Pago confirmado via Bold' }
+    const period    = new Date().toLocaleDateString('es-CO', { month: 'long', year: 'numeric', timeZone: 'America/Bogota' })
+
+    if (student?.phone) {
+      await sendPaymentConfirmed({
+        phone:     student.phone,
+        name:      studentName,
+        amount:    amountFmt,
+        period,
+        paymentId: ourPaymentId,
+      })
+    }
+
+    await sendInternalAlert(
+      `✅ Pago confirmado Bold — ${studentName} · ${amountFmt} · ${fechaHora}`,
+      { entity_type: 'payment', entity_id: ourPaymentId, event: 'Pago confirmado via Bold' },
     )
   }
 

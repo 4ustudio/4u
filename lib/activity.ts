@@ -29,6 +29,10 @@ export type ActivityAction =
   | 'whatsapp.reactivation'
   | 'whatsapp.notification_sent'
   | 'whatsapp.notification_failed'
+  | 'whatsapp.message_sent'
+  | 'whatsapp.message_delivered'
+  | 'whatsapp.message_failed'
+  | 'whatsapp.template_rejected'
   | 'automation.rules_ran'
   | 'automation.job_created'
   | 'automation.job_completed'
@@ -52,6 +56,8 @@ const SEVERITY_BY_ACTION: Partial<Record<ActivityAction, Severity>> = {
   'retention.status_changed': 'warning',
   'payment.overdue':               'warning',
   'payment.bold_webhook_failed':   'warning',
+  'whatsapp.message_failed':       'warning',
+  'whatsapp.template_rejected':    'warning',
 }
 
 export interface LogActivityInput {

@@ -18,6 +18,7 @@ const ICON_BG: Record<AdminNotif['type'], string> = {
   session:    'adm-activity-icon session',
   conversion: 'adm-activity-icon conversion',
   student:    'adm-activity-icon student',
+  payment:    'adm-activity-icon payment',
 }
 
 const ICONS: Record<AdminNotif['type'], React.ReactNode> = {
@@ -39,6 +40,11 @@ const ICONS: Record<AdminNotif['type'], React.ReactNode> = {
   student: (
     <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
       <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M20 8v4M18 10h4"/>
+    </svg>
+  ),
+  payment: (
+    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>
     </svg>
   ),
 }

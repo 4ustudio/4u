@@ -540,7 +540,10 @@ function RiskBadge({ level }: { level: RiskLevel }) {
 function AvatarBadge({ name }: { name: string }) {
   const initials = name.split(/\s+/).filter(Boolean).slice(0, 2).map(p => p[0]?.toUpperCase() ?? '').join('')
   return (
-    <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-white/10 bg-gradient-to-br from-[#232323] to-[#111] text-xs font-bold text-white">
+    <div
+      className="grid h-9 w-9 shrink-0 place-items-center rounded-full border text-xs font-bold"
+      style={{ borderColor: 'var(--adm-border)', background: 'var(--adm-accent-soft)', color: 'var(--adm-accent)' }}
+    >
       {initials}
     </div>
   )

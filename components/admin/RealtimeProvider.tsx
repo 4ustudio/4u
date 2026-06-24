@@ -8,7 +8,9 @@ import { createBrowserClient } from '@supabase/ssr'
 
 // ── Tipos ─────────────────────────────────────────────────────
 
-export type NotifType = 'enrollment' | 'session' | 'conversion' | 'student'
+export type NotifType = 'enrollment' | 'session' | 'conversion' | 'student' | 'payment'
+
+const copFmt = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })
 
 export interface AdminNotif {
   id:        string
@@ -159,6 +161,30 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
             body:      `${row.name} fue registrado en el sistema`,
             timestamp: new Date(),
           })
+        }
+      )
+      // Nuevo cobro generado
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'payments' },
+        ({ new: row }) => {
+          addNotif({
+            type:      'payment',
+            title:     'Nuevo cobro generado',
+            body:      `${copFmt.format(Number(row.final_amount))}${row.plan_name ? ` · ${row.plan_name}` : ''}`,
+            timestamp: new Date(),
+          })
+        }
+      )
+      // Pago registrado (status → paid)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'payments' },
+        ({ new: row, old }) => {
+          if (row.status === 'paid' && old?.status !== 'paid') {
+            addNotif({
+              type:      'payment',
+              title:     'Pago recibido',
+              body:      `${copFmt.format(Number(row.final_amount))}${row.payment_method ? ` vía ${row.payment_method}` : ''}`,
+              timestamp: new Date(),
+            })
+          }
         }
       )
       .subscribe((status) => {

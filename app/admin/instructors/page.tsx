@@ -11,14 +11,14 @@ export default async function InstructorsPage() {
 
   return (
     <div className="space-y-5 w-full page-animate">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-white">Instructores</h1>
           <p className="text-sm text-white/40 mt-0.5">{instructors.length} instructor{instructors.length !== 1 ? 'es' : ''} activo{instructors.length !== 1 ? 's' : ''}</p>
         </div>
         <Link
           href="/admin/instructors/nuevo"
-          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold text-white"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold text-white shrink-0"
           style={{ backgroundColor: '#ff7a00' }}
         >
           <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
@@ -36,7 +36,9 @@ export default async function InstructorsPage() {
           </Link>
         </div>
       ) : (
-        <div className="bg-[#0f0f0f] border border-white/10 rounded-xl overflow-hidden">
+        <>
+        {/* Desktop: tabla */}
+        <div className="hidden md:block bg-[#0f0f0f] border border-white/10 rounded-xl overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-white/10">
@@ -91,6 +93,47 @@ export default async function InstructorsPage() {
             </tbody>
           </table>
         </div>
+
+        {/* Mobile: cards */}
+        <div className="md:hidden space-y-3">
+          {instructors.map((inst: any) => (
+            <div key={inst.id} className="bg-[#0f0f0f] border border-white/10 rounded-xl p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-orange-500/20 text-orange-400 text-xs font-bold">
+                    {inst.name.split(' ').map((p: string) => p[0]).slice(0, 2).join('').toUpperCase()}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="font-medium text-white truncate">{inst.name}</p>
+                    <p className="text-xs text-white/50 truncate">{inst.email}</p>
+                  </div>
+                </div>
+                <span className={`shrink-0 text-xs px-2.5 py-1 rounded-full font-medium ${
+                  inst.status === 'active' ? 'bg-green-900/40 text-green-400' : 'bg-[#141414] text-white/40'
+                }`}>
+                  {inst.status === 'active' ? 'Activo' : 'Inactivo'}
+                </span>
+              </div>
+              {inst.phone && <p className="mt-2 text-xs text-white/50">{inst.phone}</p>}
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <Link
+                  href={`/admin/instructors/${inst.id}/disponibilidad`}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-white/60 border border-white/10"
+                >
+                  Disponibilidad
+                </Link>
+                <Link
+                  href={`/admin/instructors/${inst.id}/editar`}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-white/60 border border-white/10"
+                >
+                  Editar
+                </Link>
+                <DeleteInstructorButton id={inst.id} email={inst.email} name={inst.name} />
+              </div>
+            </div>
+          ))}
+        </div>
+        </>
       )}
     </div>
   )

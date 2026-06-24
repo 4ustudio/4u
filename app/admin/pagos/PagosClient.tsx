@@ -253,10 +253,10 @@ function MetricsStrip({ m }: { m: PaymentMetrics }) {
       {cards.map(c => (
         <div
           key={c.label}
-          className="rounded-[24px] px-5 py-4"
+          className="rounded-[24px] px-4 py-4 sm:px-5"
           style={{ border: `1px solid ${BORDER}`, background: SURFACE, boxShadow: 'var(--adm-card-shadow)' }}
         >
-          <p className={`text-[2rem] font-extrabold leading-none ${c.c}`}>{c.val}</p>
+          <p className={`text-[1.4rem] sm:text-[1.7rem] lg:text-[2rem] font-extrabold leading-none tabular-nums break-words ${c.c}`}>{c.val}</p>
           <p className="mt-2 text-[11px] font-medium" style={{ color: TEXT_FAINT }}>{c.label}</p>
         </div>
       ))}
@@ -613,7 +613,7 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
       ) : (
         <>
           {/* Desktop */}
-          <div className="adm-panel overflow-hidden rounded-[28px]">
+          <div className="adm-panel hidden md:block overflow-hidden rounded-[28px]">
             <div
               className="grid grid-cols-[52px_1.35fr_130px_120px_100px_90px_100px_120px_44px] gap-4 px-6 py-3.5 text-[10px] font-semibold uppercase tracking-[0.24em]"
               style={{ color: TEXT_FAINT, background: SURFACE_2 }}

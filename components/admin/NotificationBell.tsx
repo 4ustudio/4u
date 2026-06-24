@@ -59,6 +59,16 @@ const TYPE_CONFIG = {
     ),
     bg: { background: 'var(--adm-success-soft)', color: 'var(--adm-success)' },
   },
+  payment: {
+    dot: 'var(--adm-accent)',
+    icon: (
+      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        <rect x="2" y="5" width="20" height="14" rx="2"/>
+        <line x1="2" y1="10" x2="22" y2="10"/>
+      </svg>
+    ),
+    bg: { background: 'var(--adm-accent-soft)', color: 'var(--adm-accent)' },
+  },
 } as const
 
 // ── ConnectionDot ─────────────────────────────────────────────
@@ -158,7 +168,7 @@ export default function NotificationBell() {
       {/* Dropdown */}
       {open && (
         <div
-          className="absolute right-0 top-full z-[70] mt-2 w-[340px] overflow-hidden rounded-2xl border"
+          className="fixed inset-x-3 top-16 z-[70] w-auto overflow-hidden rounded-2xl border sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:w-[340px]"
           style={{ borderColor: 'var(--adm-border)', background: 'var(--adm-surface)', boxShadow: 'var(--adm-shadow)' }}
         >
           {/* Header */}
@@ -206,7 +216,7 @@ export default function NotificationBell() {
           </div>
 
           {/* Lista */}
-          <div className="overflow-y-auto max-h-[420px]">
+          <div className="overflow-y-auto max-h-[60vh] sm:max-h-[420px]">
             {notifications.length === 0 ? (
               <div className="px-4 py-10 text-center">
                 <div

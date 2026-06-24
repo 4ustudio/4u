@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { createAuthServerClient } from '@/lib/supabase/server'
-import { getInstructorDashboardData, getMonthSessions, getMyDashboardData } from '../_actions/student'
+import { getInstructorDashboardData, getMonthSessions, getMyDashboardData, getPortalAccess } from '../_actions/student'
 import Header from '@/components/layout/Header'
 import AutoRefresh from './_components/AutoRefresh'
 import ProfileModal from './_components/ProfileModal'
@@ -73,11 +73,13 @@ export default async function MiCuentaPage() {
   ])
 
   if (!data) redirect('/planes')
-  return <StudentDashboard data={data} monthSessions={monthSessions} user={user} monthLabel={monthLabel} now={now} />
+  const access = await getPortalAccess(data.student.id, data.student.lead_id ?? null, data.student.plan_name ?? null)
+  return <StudentDashboard data={data} monthSessions={monthSessions} user={user} monthLabel={monthLabel} now={now} access={access} />
 }
 
-function StudentDashboard({ data, monthSessions, user, monthLabel, now }: any) {
+function StudentDashboard({ data, monthSessions, user, monthLabel, now, access }: any) {
   const { student, usage, upcoming, schedules } = data
+  const canSchedule = access?.hasContract && access?.hasPaid
   const usageTyped = usage as MonthlyUsage | null
   const avatarUrl = (user.user_metadata?.avatar_url as string | undefined) ?? null
   const firstName = student.first_name ?? student.name?.split(' ')[0] ?? 'Estudiante'
@@ -142,16 +144,22 @@ function StudentDashboard({ data, monthSessions, user, monthLabel, now }: any) {
           <section className="space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <SectionTitle title="Agenda tu clase" subtitle="Selecciona una fecha y horario disponible." />
-              <SchedulePdfButton name={fullName} roleLabel="Estudiante" monthLabel={monthLabel} sessions={monthSessions} />
+              {canSchedule && <SchedulePdfButton name={fullName} roleLabel="Estudiante" monthLabel={monthLabel} sessions={monthSessions} />}
             </div>
-            <ClassesCalendar
-              initialSessions={monthSessions}
-              schedules={schedules ?? []}
-              initialYear={now.getFullYear()}
-              initialMonth={now.getMonth() + 1}
-            />
+            {canSchedule ? (
+              <ClassesCalendar
+                initialSessions={monthSessions}
+                schedules={schedules ?? []}
+                initialYear={now.getFullYear()}
+                initialMonth={now.getMonth() + 1}
+              />
+            ) : (
+              <ScheduleLocked hasContract={access?.hasContract} hasPaid={access?.hasPaid} />
+            )}
           </section>
 
+          <div id="documentos" className="scroll-mt-24" />
+          <PaymentSection payments={access?.pendingPayments ?? []} />
           <DocumentsSection studentId={student.id} enrollmentId={student.lead_id ?? null} />
 
           <DisclaimerBar />
@@ -301,6 +309,89 @@ function InstructorDashboard({ data, user, monthLabel, now }: any) {
         </div>
       </main>
     </>
+  )
+}
+
+function ScheduleLocked({ hasContract, hasPaid }: { hasContract: boolean; hasPaid: boolean }) {
+  const steps = [
+    { done: !!hasContract, label: 'Firma tu contrato' },
+    { done: !!hasPaid,     label: 'Realiza tu pago con Bold' },
+  ]
+  return (
+    <section className="rounded-xl border border-amber-200 bg-amber-50 p-6">
+      <div className="flex items-start gap-3">
+        <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+          <Icon name="lock" className="h-5 w-5" />
+        </span>
+        <div className="flex-1">
+          <h3 className="font-poppins text-base font-extrabold text-amber-900">Agenda bloqueada</h3>
+          <p className="mt-0.5 text-sm text-amber-700">Para agendar clases primero completa estos pasos:</p>
+          <ul className="mt-4 space-y-2">
+            {steps.map(s => (
+              <li key={s.label} className="flex items-center gap-2 text-sm">
+                <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-bold ${s.done ? 'bg-green-500 text-white' : 'bg-white border border-amber-300 text-amber-500'}`}>
+                  {s.done ? '✓' : '!'}
+                </span>
+                <span className={s.done ? 'text-gray-500 line-through' : 'font-semibold text-amber-900'}>{s.label}</span>
+              </li>
+            ))}
+          </ul>
+          <a href="#documentos" className="mt-4 inline-flex rounded-lg bg-[#ff7a00] px-5 py-2.5 text-sm font-bold text-white hover:brightness-110 transition-all">
+            Ir a contrato y pago →
+          </a>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function PaymentSection({ payments }: { payments: any[] }) {
+  const payable = payments.filter(p => p?.metadata?.bold_checkout_url)
+  if (payable.length === 0) return null
+  return (
+    <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="flex items-start gap-3 mb-4">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-100 text-[#ff7a00] mt-0.5">
+          <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        </span>
+        <div>
+          <h2 className="font-poppins text-base font-extrabold text-gray-950">Tus pagos</h2>
+          <p className="text-sm text-gray-600 mt-0.5">Paga tu mensualidad de forma segura con Bold.</p>
+        </div>
+      </div>
+      <div className="space-y-3">
+        {payable.map(p => {
+          const mes = new Date(p.period_year, p.period_month - 1).toLocaleDateString('es-CO', { month: 'long', year: 'numeric' })
+          let countdown: { text: string; tone: string } | null = null
+          if (p.due_date) {
+            const due = new Date(p.due_date + 'T23:59:59')
+            const days = Math.ceil((due.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+            countdown = days < 0
+              ? { text: `Vencido hace ${Math.abs(days)} día${Math.abs(days) === 1 ? '' : 's'}`, tone: 'text-red-600' }
+              : days === 0
+              ? { text: 'Vence hoy', tone: 'text-red-600' }
+              : { text: `Te quedan ${days} día${days === 1 ? '' : 's'} para pagar`, tone: days <= 3 ? 'text-amber-600' : 'text-gray-500' }
+          }
+          return (
+            <div key={p.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-gray-900 capitalize">{p.plan_name ?? 'Mensualidad'} · {mes}</p>
+                <p className="text-xs text-gray-400 mt-0.5">${Number(p.final_amount).toLocaleString('es-CO')} COP</p>
+                {countdown && <p className={`text-xs font-semibold mt-0.5 ${countdown.tone}`}>{countdown.text}</p>}
+              </div>
+              <a
+                href={p.metadata.bold_checkout_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#ff7a00] px-5 py-2 text-sm font-bold text-white hover:brightness-110 transition-all shrink-0"
+              >
+                Pagar con Bold
+              </a>
+            </div>
+          )
+        })}
+      </div>
+    </section>
   )
 }
 

@@ -7,6 +7,8 @@ import { redirect } from 'next/navigation'
 import type { BookingFormState } from '@/types/booking'
 import { safeRecordStudentActivity } from '@/app/admin/_actions/retention'
 import { activity } from '@/lib/activity'
+import { createBoldPaymentLink } from '@/lib/bold/client'
+import { PLANES_ADULTOS } from '@/data/plans-adults'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function admin(): any { return createAdminClient() }
@@ -89,6 +91,114 @@ export async function getMyDashboardData(userId?: string) {
     upcoming,
     past,
     schedules: (schedules ?? []) as any[],
+  }
+}
+
+// ─── Precio mensual según plan (desde data/plans-adults) ─────────────
+function getPlanAmount(planName?: string | null): number | null {
+  if (!planName) return null
+  const plan = PLANES_ADULTOS.find(p => p.name === planName)
+  if (!plan || plan.priceOnRequest) return null
+  const num = Number(plan.price.replace(/[^\d]/g, ''))
+  return num > 0 ? num : null
+}
+
+// Crea (idempotente) el cobro del mes actual + link Bold cuando el alumno
+// ya hizo su primer pago. El primer pago lo gestiona el admin manualmente.
+async function ensureCurrentPayment(studentId: string, planName?: string | null) {
+  const amount = getPlanAmount(planName)
+  if (!amount) return
+
+  const now   = new Date()
+  const year  = now.getFullYear()
+  const month = now.getMonth() + 1
+  const a = admin()
+
+  const { data: existing } = await a
+    .from('payments')
+    .select('id')
+    .eq('student_id', studentId)
+    .eq('period_year', year)
+    .eq('period_month', month)
+    .limit(1)
+
+  if (existing && existing.length > 0) return
+
+  const dueDate = new Date(year, month, 0).toISOString().split('T')[0] // último día del mes
+
+  const { data: created } = await a
+    .from('payments')
+    .insert({
+      student_id:      studentId,
+      period_year:     year,
+      period_month:    month,
+      payment_type:    'monthly_fee',
+      original_amount: amount,
+      discount_amount: 0,
+      final_amount:    amount,
+      discount_percent: 0,
+      status:          'pending',
+      due_date:        dueDate,
+      plan_name:       planName,
+    })
+    .select('id')
+    .single()
+
+  if (!created) return
+
+  try {
+    const mes = new Date(year, month - 1).toLocaleString('es-CO', { month: 'long' })
+    const boldRes = await createBoldPaymentLink({
+      paymentId:   created.id,
+      amount,
+      description: `Mensualidad ${mes} ${year}`,
+    })
+    const checkoutUrl = boldRes.payload?.url
+    if (checkoutUrl) {
+      await a.from('payments')
+        .update({ metadata: { bold_checkout_url: checkoutUrl, bold_link_id: boldRes.payload.payment_link }, updated_at: new Date().toISOString() })
+        .eq('id', created.id)
+    }
+  } catch (e) {
+    console.error('Bold link auto-gen falló:', e)
+  }
+}
+
+// ─── Acceso al portal: contrato firmado + pago realizado ─────────────
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function getPortalAccess(studentId: string, enrollmentId?: string | null, planName?: string | null) {
+  const a = admin()
+
+  const { data: paidRows } = await a
+    .from('payments')
+    .select('id')
+    .eq('student_id', studentId)
+    .eq('status', 'paid')
+    .limit(1)
+
+  const hasPaid = (paidRows ?? []).length > 0
+
+  // Solo auto-genera cobros recurrentes tras el primer pago (gestionado por admin)
+  if (hasPaid) await ensureCurrentPayment(studentId, planName)
+
+  const [{ data: docs }, { data: pending }] = await Promise.all([
+    a.from('student_documents')
+      .select('document_type')
+      .or(`student_id.eq.${studentId}${enrollmentId ? `,enrollment_id.eq.${enrollmentId}` : ''}`),
+    a.from('payments')
+      .select('id, final_amount, period_year, period_month, plan_name, due_date, metadata')
+      .eq('student_id', studentId)
+      .neq('status', 'paid')
+      .order('period_year', { ascending: false })
+      .order('period_month', { ascending: false }),
+  ])
+
+  const hasContract = (docs ?? []).some((d: any) => d.document_type === 'terms_and_conditions') // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  return {
+    hasContract,
+    hasPaid,
+    pendingPayments: (pending ?? []) as any[], // eslint-disable-line @typescript-eslint/no-explicit-any
   }
 }
 

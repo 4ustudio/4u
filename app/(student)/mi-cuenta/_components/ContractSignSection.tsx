@@ -114,7 +114,7 @@ export default function ContractSignSection() {
             </button>
           </div>
           <div className="rounded-lg overflow-hidden border border-amber-200">
-            <SignatureCanvas ref={signatureRef} disabled={isPending} />
+            <SignatureCanvas ref={signatureRef} disabled={isPending} penColor="#000000" />
           </div>
           <p className="text-[11px] text-gray-400 mt-1">Usa el mouse o el dedo para firmar.</p>
         </div>

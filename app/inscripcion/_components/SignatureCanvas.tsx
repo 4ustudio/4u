@@ -11,10 +11,11 @@ export interface SignatureCanvasHandle {
 
 interface Props {
   disabled?: boolean
+  penColor?: string
 }
 
 const SignatureCanvas = forwardRef<SignatureCanvasHandle, Props>(
-  function SignatureCanvas({ disabled }, ref) {
+  function SignatureCanvas({ disabled, penColor = '#ffffff' }, ref) {
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const padRef    = useRef<SignaturePad | null>(null)
 
@@ -23,7 +24,7 @@ const SignatureCanvas = forwardRef<SignatureCanvasHandle, Props>(
       if (!canvas) return
 
       const pad = new SignaturePad(canvas, {
-        penColor:      '#ffffff',
+        penColor,
         backgroundColor: 'rgba(0,0,0,0)',
         minWidth:      1.5,
         maxWidth:      3,

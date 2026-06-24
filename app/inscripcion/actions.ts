@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { Resend } from 'resend'
 import { ACADEMY, TERMS } from '@/lib/constants'
 import { activity } from '@/lib/activity'
-import { sendCorporateWhatsApp } from '@/lib/whatsapp-notify'
+import { sendEnrollmentReceived, sendInternalAlert } from '@/lib/whatsapp-cloud'
 import type {
   EnrollmentFormState,
   EnrollmentInsert,
@@ -65,6 +65,14 @@ function validate(form: Partial<EnrollmentInsert>): EnrollmentFormState['errors'
   }
   if (!form.preferred_time?.trim() || !SCHEDULE_RANGES.includes(form.preferred_time.trim())) {
     errors.preferred_time = 'Selecciona una franja horaria'
+  }
+  if (!form.emergency_contact_name?.trim()) {
+    errors.emergency_contact_name = 'El contacto de emergencia es obligatorio'
+  }
+  if (!form.emergency_contact_phone?.trim()) {
+    errors.emergency_contact_phone = 'El teléfono de emergencia es obligatorio'
+  } else if (!PHONE_RE.test(form.emergency_contact_phone.trim())) {
+    errors.emergency_contact_phone = 'Ingresa un número válido'
   }
   if (!form.terms_accepted) {
     errors.terms = 'Debes aceptar los términos y condiciones'
@@ -193,9 +201,11 @@ export async function generateAndSaveEnrollment(
         : free === 'coach'
         ? 'Primera sesión gratis: Con el coach'
         : ''
+      const hour = (formData.get('session_hour') as string | null)?.trim()
       const parts = [
         freeLabel,
         day ? `Día primera sesión: ${day}` : '',
+        hour ? `Hora primera sesión: ${hour}` : '',
         schedule ? `Horarios disponibles: ${schedule}` : '',
         notes ?? '',
       ].filter(Boolean)
@@ -252,13 +262,15 @@ export async function generateAndSaveEnrollment(
       }),
       sendAdminNotification(raw as EnrollmentInsert),
       sendUserConfirmation(raw as EnrollmentInsert),
-      sendCorporateWhatsApp(
-        `📋 *Nueva inscripción*\n` +
-        `👤 ${raw.student_name}\n` +
-        `📱 ${raw.phone}\n` +
-        `🎸 ${raw.course_interest ?? 'Sin instrumento'}\n` +
-        `📅 ${fechaHora}`,
-        { entity_type: 'enrollment', entity_id: enrollmentId, event: 'Nueva inscripción recibida' }
+      sendEnrollmentReceived({
+        phone:        raw.phone ?? '',
+        name:         raw.student_name ?? '',
+        course:       raw.course_interest ?? 'tu instrumento',
+        enrollmentId,
+      }),
+      sendInternalAlert(
+        `📋 Nueva inscripción — ${raw.student_name} · ${raw.phone} · ${raw.course_interest ?? 'Sin instrumento'} · ${fechaHora}`,
+        { entity_type: 'enrollment', entity_id: enrollmentId, event: 'Nueva inscripción recibida' },
       ),
     ])
 

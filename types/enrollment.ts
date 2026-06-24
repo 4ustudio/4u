@@ -84,7 +84,8 @@ export interface EnrollmentFormState {
   errors?: Partial<Record<
     | 'student_type' | 'student_name' | 'student_age' | 'guardian_name'
     | 'phone' | 'email' | 'course_interest' | 'level' | 'preferred_time'
-    | 'terms' | 'data_consent' | 'id_document' | 'city' | 'signature',
+    | 'terms' | 'data_consent' | 'id_document' | 'city' | 'signature'
+    | 'emergency_contact_name' | 'emergency_contact_phone',
     string
   >>
   message?: string

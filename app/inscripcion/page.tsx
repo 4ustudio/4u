@@ -15,6 +15,10 @@ const SCHEDULE_RANGES = [
   'Mañana (10am – 1pm)',
   'Tarde-noche (2pm – 7pm)',
 ]
+const HOUR_SLOTS: Record<string, string[]> = {
+  'Mañana (10am – 1pm)':     ['10:00 am', '11:00 am', '12:00 pm'],
+  'Tarde-noche (2pm – 7pm)': ['2:00 pm', '3:00 pm', '4:00 pm', '5:00 pm', '6:00 pm'],
+}
 const FREE_SESSIONS = [
   { value: 'grabacion', label: '1ª sesión gratis de grabación en estudio' },
   { value: 'coach',     label: '1ª sesión gratis con el coach' },
@@ -43,6 +47,9 @@ export default function InscripcionPage() {
   const [genre,         setGenre]         = useState<string>('')
   const [age,           setAge]           = useState<number | ''>('')
   const [ageError,      setAgeError]      = useState<string | null>(null)
+  const [franja,        setFranja]        = useState<string>('')
+  const [sessionHour,   setSessionHour]   = useState<string>('')
+  const [sessionDay,    setSessionDay]    = useState<string>('')
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [dataConsent,   setDataConsent]   = useState(false)
   const [imageConsent,  setImageConsent]  = useState(false)
@@ -266,7 +273,7 @@ export default function InscripcionPage() {
                   {/* ── Primera sesión gratis (al elegir curso) ── */}
                   {course && (
                     <fieldset>
-                      <legend className={labelClass}>Tu primera sesión gratis</legend>
+                      <legend className={labelClass}>Tu primera sesión gratis <span className="text-white/20 font-normal normal-case ml-1">(selecciona una opción)</span></legend>
                       <div className="grid sm:grid-cols-2 gap-2">
                         {FREE_SESSIONS.map((s) => (
                           <label key={s.value} className="flex items-center gap-3 px-4 py-3 rounded-xl border border-white/10 text-sm font-roboto transition-all cursor-pointer has-[:checked]:border-[#ff7a00] has-[:checked]:bg-[#ff7a00]/10 has-[:checked]:text-white text-white/50 hover:border-white/25">
@@ -282,6 +289,8 @@ export default function InscripcionPage() {
                       <input
                         id="first_session_day" name="first_session_day" type="date"
                         min={new Date().toISOString().split('T')[0]}
+                        value={sessionDay}
+                        onChange={(e) => setSessionDay(e.target.value)}
                         className={inputClass + ' [color-scheme:dark]'}
                       />
                     </fieldset>
@@ -310,13 +319,28 @@ export default function InscripcionPage() {
                     <div className="flex flex-wrap gap-2">
                       {SCHEDULE_RANGES.map((t) => (
                         <label key={t} className="relative flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold font-roboto transition-all cursor-pointer has-[:checked]:text-white has-[:checked]:shadow-lg" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                          <input type="radio" name="preferred_time" value={t} className="sr-only peer" />
+                          <input type="radio" name="preferred_time" value={t} checked={franja === t} onChange={() => { setFranja(t); setSessionHour('') }} className="sr-only peer" />
                           <span className="peer-checked:hidden w-2 h-2 rounded-full border border-white/30" />
                           <span className="hidden peer-checked:block w-2 h-2 rounded-full" style={{ backgroundColor: ORANGE }} />
                           {t}
                         </label>
                       ))}
                     </div>
+                    {franja && (
+                      <>
+                        <p className={labelClass + ' mt-4'}>Elige la hora</p>
+                        <div className="flex flex-wrap gap-2">
+                          {HOUR_SLOTS[franja].map((h) => (
+                            <label key={h} className="relative flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold font-roboto transition-all cursor-pointer has-[:checked]:text-white has-[:checked]:shadow-lg" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                              <input type="radio" name="session_hour" value={h} checked={sessionHour === h} onChange={() => setSessionHour(h)} className="sr-only peer" />
+                              <span className="peer-checked:hidden w-2 h-2 rounded-full border border-white/30" />
+                              <span className="hidden peer-checked:block w-2 h-2 rounded-full" style={{ backgroundColor: ORANGE }} />
+                              {h}
+                            </label>
+                          ))}
+                        </div>
+                      </>
+                    )}
                     {state.errors?.preferred_time && <p className={errorClass}>{state.errors.preferred_time}</p>}
                   </fieldset>
 
@@ -357,12 +381,14 @@ export default function InscripcionPage() {
 
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="emergency_contact_name" className={labelClass}>Contacto de emergencia <span className="text-white/20 font-normal normal-case ml-1">(opcional)</span></label>
-                      <input id="emergency_contact_name" name="emergency_contact_name" type="text" placeholder="Nombre completo" className={inputClass} />
+                      <label htmlFor="emergency_contact_name" className={labelClass}>Contacto de emergencia <span className="text-white/20 font-normal normal-case ml-1">(obligatorio)</span></label>
+                      <input id="emergency_contact_name" name="emergency_contact_name" type="text" placeholder="Nombre completo" required className={inputClass} />
+                      {state.errors?.emergency_contact_name && <p className={errorClass}>{state.errors.emergency_contact_name}</p>}
                     </div>
                     <div>
-                      <label htmlFor="emergency_contact_phone" className={labelClass}>Teléfono emergencia <span className="text-white/20 font-normal normal-case ml-1">(opcional)</span></label>
-                      <input id="emergency_contact_phone" name="emergency_contact_phone" type="tel" placeholder="3001234567" className={inputClass} />
+                      <label htmlFor="emergency_contact_phone" className={labelClass}>Teléfono emergencia <span className="text-white/20 font-normal normal-case ml-1">(obligatorio)</span></label>
+                      <input id="emergency_contact_phone" name="emergency_contact_phone" type="tel" placeholder="3001234567" required className={inputClass} />
+                      {state.errors?.emergency_contact_phone && <p className={errorClass}>{state.errors.emergency_contact_phone}</p>}
                     </div>
                   </div>
 
@@ -403,6 +429,26 @@ export default function InscripcionPage() {
                       </label>
                     </div>
                   </div>
+
+                  {/* ── Confirmación primera sesión ── */}
+                  {(sessionDay || sessionHour) && (
+                    <div className="rounded-xl border border-[#ff7a00]/30 bg-[#ff7a00]/[0.07] p-4">
+                      <p className="text-xs font-semibold text-[#ff7a00] uppercase tracking-wider mb-2 font-roboto">Tu primera sesión de prueba</p>
+                      <div className="space-y-1 text-sm text-white font-roboto">
+                        {sessionDay && (
+                          <p>
+                            📅 {new Date(sessionDay + 'T00:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                          </p>
+                        )}
+                        {sessionHour && <p>🕒 {sessionHour}{franja ? ` · ${franja}` : ''}</p>}
+                      </div>
+                      {(!sessionDay || !sessionHour) && (
+                        <p className="text-xs text-white/40 mt-2 font-roboto">
+                          {!sessionDay ? 'Selecciona el día. ' : ''}{!sessionHour ? 'Selecciona la franja y hora.' : ''}
+                        </p>
+                      )}
+                    </div>
+                  )}
 
                   {/* Error general */}
                   {state.status === 'error' && state.message && (

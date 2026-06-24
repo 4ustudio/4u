@@ -48,7 +48,7 @@ async function getStudentData(id: string) {
   const { data: leadConsent } = student.lead_id
     ? await db()
         .from('enrollments')
-        .select('terms_accepted, terms_accepted_at, terms_version, data_consent, image_consent')
+        .select('terms_accepted, terms_accepted_at, terms_version, data_consent, image_consent, preferred_time')
         .eq('id', student.lead_id)
         .maybeSingle()
     : { data: null }
@@ -70,6 +70,7 @@ async function getStudentData(id: string) {
     upcoming,
     past,
     schedules:   (schedules as StudentSchedule[]) ?? [],
+    leadPreferredTime: (leadConsent as { preferred_time?: string | null } | null)?.preferred_time ?? null,
     leadConsent: leadConsent as {
       terms_accepted:    boolean | null
       terms_accepted_at: string | null
@@ -87,7 +88,7 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
   const data   = await getStudentData(id)
   if (!data) notFound()
 
-  const { student, usage, upcoming, past, schedules, leadConsent, studentDocs } = data
+  const { student, usage, upcoming, past, schedules, leadPreferredTime, leadConsent, studentDocs } = data
   const [retention, studentPayments] = await Promise.all([
     getStudentRetentionProfile(id),
     getStudentPayments(id),
@@ -240,6 +241,7 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
           <ScheduleSection
             schedules={schedules}
             studentId={id}
+            preferredTime={leadPreferredTime}
             courses={courses ?? []}
             classrooms={classrooms ?? []}
             instructors={instructors ?? []}

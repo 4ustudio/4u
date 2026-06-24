@@ -10,12 +10,14 @@ import PageLayout from '@/components/layout/PageLayout'
 
 const ORANGE = '#ff7a00'
 
-const COURSES = ['Canto', 'Guitarra', 'Piano', 'Batería', 'Bajo', 'Producción Musical']
+const COURSES = ['Canto', 'Guitarra', 'Piano', 'Batería', 'Bajo', 'Producción Musical', 'Otro']
 const SCHEDULE_RANGES = [
-  'Mañana (10am – 12pm)',
-  'Mediodía (12pm – 2pm)',
-  'Tarde (2pm – 5pm)',
-  'Tarde-noche (5pm – 7pm)',
+  'Mañana (10am – 1pm)',
+  'Tarde-noche (2pm – 7pm)',
+]
+const FREE_SESSIONS = [
+  { value: 'grabacion', label: '1ª sesión gratis de grabación en estudio' },
+  { value: 'coach',     label: '1ª sesión gratis con el coach' },
 ]
 const LEVELS = [
   { value: 'never',        label: 'Nunca he estudiado música' },
@@ -36,7 +38,9 @@ const initialState: EnrollmentFormState = { status: 'idle' }
 export default function InscripcionPage() {
   const [state, action, isPending] = useActionState(generateAndSaveEnrollment, initialState)
 
-  const [studentType,   setStudentType]   = useState<'self' | 'child' | null>(null)
+  const [studentType,   setStudentType]   = useState<'self' | 'child' | 'other' | null>(null)
+  const [course,        setCourse]        = useState<string>('')
+  const [genre,         setGenre]         = useState<string>('')
   const [age,           setAge]           = useState<number | ''>('')
   const [ageError,      setAgeError]      = useState<string | null>(null)
   const [termsAccepted, setTermsAccepted] = useState(false)
@@ -56,6 +60,14 @@ export default function InscripcionPage() {
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
+    if (course === 'Otro') {
+      const other = (fd.get('course_interest_other') as string | null)?.trim()
+      if (other) fd.set('course_interest', other)
+    }
+    if (genre === 'Otros') {
+      const other = (fd.get('music_genre_other') as string | null)?.trim()
+      if (other) fd.set('music_genre', other)
+    }
     action(fd)
   }
 
@@ -134,8 +146,12 @@ export default function InscripcionPage() {
                   {/* ── 1. ¿Para quién? ── */}
                   <fieldset>
                     <legend className={labelClass}>¿Para quién son las clases?</legend>
-                    <div className="flex gap-3">
-                      {(['self', 'child'] as const).map((type) => (
+                    <div className="flex flex-wrap gap-3">
+                      {([
+                        { type: 'self',  label: 'Para mí' },
+                        { type: 'child', label: 'Para mi hijo o hija' },
+                        { type: 'other', label: 'Para otra persona' },
+                      ] as const).map(({ type, label }) => (
                         <label
                           key={type}
                           className={`${radioCardClass} ${
@@ -165,7 +181,7 @@ export default function InscripcionPage() {
                               <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                             </svg>
                           )}
-                          {type === 'self' ? 'Para mí' : 'Para mi hijo o hija'}
+                          {label}
                         </label>
                       ))}
                     </div>
@@ -193,19 +209,21 @@ export default function InscripcionPage() {
                     )}
                   </div>
 
-                  {/* ── Acudiente ── */}
-                  <div style={{ opacity: studentType === 'child' ? 1 : 0.35, transition: 'opacity 0.2s ease' }}>
-                    <label htmlFor="guardian_name" className={labelClass}>Nombre del acudiente</label>
-                    <input
-                      id="guardian_name" name="guardian_name" type="text"
-                      placeholder="Ej: María García"
-                      required={studentType === 'child'}
-                      disabled={studentType !== 'child'}
-                      tabIndex={studentType === 'child' ? 0 : -1}
-                      className={inputClass}
-                    />
-                    {state.errors?.guardian_name && <p className={errorClass}>{state.errors.guardian_name}</p>}
-                  </div>
+                  {/* ── Acudiente / quien inscribe ── */}
+                  {(studentType === 'child' || studentType === 'other') && (
+                    <div>
+                      <label htmlFor="guardian_name" className={labelClass}>
+                        {studentType === 'child' ? 'Nombre del acudiente' : 'Tu nombre (quien inscribe)'}
+                      </label>
+                      <input
+                        id="guardian_name" name="guardian_name" type="text"
+                        placeholder="Ej: María García"
+                        required
+                        className={inputClass}
+                      />
+                      {state.errors?.guardian_name && <p className={errorClass}>{state.errors.guardian_name}</p>}
+                    </div>
+                  )}
 
                   {/* ── WhatsApp ── */}
                   <div>
@@ -227,15 +245,41 @@ export default function InscripcionPage() {
                     <div className="flex flex-wrap gap-2">
                       {COURSES.map((c) => (
                         <label key={c} className="relative flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold font-roboto transition-all cursor-pointer has-[:checked]:text-white has-[:checked]:shadow-lg" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                          <input type="radio" name="course_interest" value={c} className="sr-only peer" />
+                          <input type="radio" name="course_interest" value={c} checked={course === c} onChange={() => setCourse(c)} className="sr-only peer" />
                           <span className="peer-checked:hidden w-2 h-2 rounded-full border border-white/30" />
                           <span className="hidden peer-checked:block w-2 h-2 rounded-full" style={{ backgroundColor: ORANGE }} />
                           {c}
                         </label>
                       ))}
                     </div>
+                    {course === 'Otro' && (
+                      <input
+                        name="course_interest_other" type="text"
+                        placeholder="¿Cuál curso te interesa?"
+                        required
+                        className={inputClass + ' mt-3'}
+                      />
+                    )}
                     {state.errors?.course_interest && <p className={errorClass}>{state.errors.course_interest}</p>}
                   </fieldset>
+
+                  {/* ── Primera sesión gratis (al elegir curso) ── */}
+                  {course && (
+                    <fieldset>
+                      <legend className={labelClass}>Tu primera sesión gratis</legend>
+                      <div className="grid sm:grid-cols-2 gap-2">
+                        {FREE_SESSIONS.map((s) => (
+                          <label key={s.value} className="flex items-center gap-3 px-4 py-3 rounded-xl border border-white/10 text-sm font-roboto transition-all cursor-pointer has-[:checked]:border-[#ff7a00] has-[:checked]:bg-[#ff7a00]/10 has-[:checked]:text-white text-white/50 hover:border-white/25">
+                            <input type="radio" name="free_session" value={s.value} className="sr-only peer" />
+                            <span className="w-4 h-4 rounded-full border-2 border-white/20 peer-checked:border-[#ff7a00] peer-checked:bg-[#ff7a00] flex items-center justify-center">
+                              <span className="w-1.5 h-1.5 rounded-full bg-white hidden peer-checked:block" />
+                            </span>
+                            {s.label}
+                          </label>
+                        ))}
+                      </div>
+                    </fieldset>
+                  )}
 
                   {/* ── Nivel ── */}
                   <fieldset>
@@ -279,7 +323,7 @@ export default function InscripcionPage() {
                   {/* ── Género musical ── */}
                   <div>
                     <label htmlFor="music_genre" className={labelClass}>Género musical favorito <span className="text-white/20 font-normal normal-case ml-1">(opcional)</span></label>
-                    <select id="music_genre" name="music_genre" className={inputClass + ' appearance-none'}>
+                    <select id="music_genre" name="music_genre" value={genre} onChange={(e) => setGenre(e.target.value)} className={inputClass + ' appearance-none'}>
                       <option value="">Seleccionar…</option>
                       <option value="Rock">Rock</option>
                       <option value="Pop">Pop</option>
@@ -290,6 +334,13 @@ export default function InscripcionPage() {
                       <option value="Regional mexicano">Regional mexicano</option>
                       <option value="Otros">Otros</option>
                     </select>
+                    {genre === 'Otros' && (
+                      <input
+                        name="music_genre_other" type="text"
+                        placeholder="¿Cuál género?"
+                        className={inputClass + ' mt-3'}
+                      />
+                    )}
                   </div>
 
                   {/* ── EPS y Contacto de Emergencia ── */}

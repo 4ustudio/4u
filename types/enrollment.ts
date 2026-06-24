@@ -1,4 +1,4 @@
-export type StudentType = 'self' | 'child'
+export type StudentType = 'self' | 'child' | 'other'
 export type Level = 'never' | 'beginner' | 'intermediate' | 'advanced'
 export type EnrollmentStatus =
   | 'pending'

@@ -15,10 +15,8 @@ import type {
 const PHONE_RE = /^[+]?[\d\s\-().]{7,20}$/
 
 const SCHEDULE_RANGES = [
-  'Mañana (10am – 12pm)',
-  'Mediodía (12pm – 2pm)',
-  'Tarde (2pm – 5pm)',
-  'Tarde-noche (5pm – 7pm)',
+  'Mañana (10am – 1pm)',
+  'Tarde-noche (2pm – 7pm)',
 ]
 
 const LEVEL_LABEL: Record<string, string> = {
@@ -31,7 +29,7 @@ const LEVEL_LABEL: Record<string, string> = {
 function validate(form: Partial<EnrollmentInsert>): EnrollmentFormState['errors'] | null {
   const errors: NonNullable<EnrollmentFormState['errors']> = {}
 
-  if (!form.student_type || !['self', 'child'].includes(form.student_type)) {
+  if (!form.student_type || !['self', 'child', 'other'].includes(form.student_type)) {
     errors.student_type = 'Selecciona una opción'
   }
   if (!form.student_name?.trim()) {
@@ -44,8 +42,10 @@ function validate(form: Partial<EnrollmentInsert>): EnrollmentFormState['errors'
   } else if (form.student_age > 100) {
     errors.student_age = 'Ingresa una edad válida'
   }
-  if (form.student_type === 'child' && !form.guardian_name?.trim()) {
-    errors.guardian_name = 'El nombre del acudiente es obligatorio'
+  if ((form.student_type === 'child' || form.student_type === 'other') && !form.guardian_name?.trim()) {
+    errors.guardian_name = form.student_type === 'child'
+      ? 'El nombre del acudiente es obligatorio'
+      : 'Tu nombre es obligatorio'
   }
   if (!form.phone?.trim()) {
     errors.phone = 'El WhatsApp es obligatorio'
@@ -133,7 +133,7 @@ async function sendAdminNotification(
           <h1 style="font-size:20px;font-weight:800;color:#fff;margin:0 0 4px;">${data.student_name}</h1>
           <p style="font-size:13px;color:#888;margin:0 0 24px;">${new Date().toLocaleString('es-CO', { dateStyle: 'full', timeStyle: 'short' })}</p>
           <table style="width:100%;border-collapse:collapse;font-size:14px;">
-            <tr><td style="padding:8px 0;color:#888;width:140px;">Para quién</td><td style="padding:8px 0;color:#fff;">${data.student_type === 'self' ? 'Para sí mismo' : 'Para su hijo/a'}</td></tr>
+            <tr><td style="padding:8px 0;color:#888;width:140px;">Para quién</td><td style="padding:8px 0;color:#fff;">${data.student_type === 'self' ? 'Para sí mismo' : data.student_type === 'child' ? 'Para su hijo/a' : 'Para otra persona'}</td></tr>
             <tr><td style="padding:8px 0;color:#888;">Edad</td><td style="padding:8px 0;color:#fff;">${data.student_age} años</td></tr>
             ${data.guardian_name ? `<tr><td style="padding:8px 0;color:#888;">Acudiente</td><td style="padding:8px 0;color:#fff;">${data.guardian_name}</td></tr>` : ''}
             <tr><td colspan="2" style="padding:4px 0;border-top:1px solid #222;"></td></tr>
@@ -183,7 +183,14 @@ export async function generateAndSaveEnrollment(
     notes:           (() => {
       const schedule = (formData.get('available_schedule') as string | null)?.trim()
       const notes    = (formData.get('notes') as string | null)?.trim()
+      const free     = formData.get('free_session') as string | null
+      const freeLabel = free === 'grabacion'
+        ? 'Primera sesión gratis: Grabación en estudio'
+        : free === 'coach'
+        ? 'Primera sesión gratis: Con el coach'
+        : ''
       const parts = [
+        freeLabel,
         schedule ? `Horarios disponibles: ${schedule}` : '',
         notes ?? '',
       ].filter(Boolean)

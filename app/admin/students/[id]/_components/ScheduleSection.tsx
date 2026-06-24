@@ -24,14 +24,15 @@ const STATUS_LABEL: Record<string, string> = {
 }
 
 interface Props {
-  schedules:   StudentSchedule[]
-  studentId:   string
-  courses:     { id: string; name: string }[]
-  classrooms:  { id: string; name: string }[]
-  instructors: { id: string; name: string }[]
+  schedules:     StudentSchedule[]
+  studentId:     string
+  preferredTime?: string | null
+  courses:       { id: string; name: string }[]
+  classrooms:    { id: string; name: string }[]
+  instructors:   { id: string; name: string }[]
 }
 
-export default function ScheduleSection({ schedules, studentId, courses, classrooms, instructors }: Props) {
+export default function ScheduleSection({ schedules, studentId, preferredTime, courses, classrooms, instructors }: Props) {
   const router = useRouter()
   const [editingSchedule, setEditingSchedule] = useState<StudentSchedule | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -65,6 +66,17 @@ export default function ScheduleSection({ schedules, studentId, courses, classro
           + Agregar
         </button>
       </div>
+
+      {preferredTime && (
+        <div className="px-5 py-2.5 bg-[#ff7a00]/10 border-b border-[#ff7a00]/20 flex items-center gap-2">
+          <svg className="h-3.5 w-3.5 text-[#ff7a00] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
+          </svg>
+          <span className="text-xs text-white/70">
+            Franja preferida del lead: <span className="font-semibold text-[#ff7a00]">{preferredTime}</span>
+          </span>
+        </div>
+      )}
 
       {schedules.length === 0 ? (
         <p className="px-5 py-8 text-center text-white/35 text-sm">

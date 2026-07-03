@@ -76,6 +76,7 @@ interface BookInput {
   start_time:    string
   instructor_id?: string
   notes?:        string
+  repeat_weeks?: number
 }
 
 export async function bookSessionAction(
@@ -93,6 +94,7 @@ export async function bookSessionAction(
     start_time:    formData.get('start_time')   as string,
     instructor_id: (formData.get('instructor_id') as string | null) || undefined,
     notes:         (formData.get('notes')        as string | null)?.trim() || undefined,
+    repeat_weeks:  Number(formData.get('repeat_weeks') as string | null) || 0,
   }
 
   if (!input.student_id || !input.classroom_id || !input.course_id || !input.date || !input.start_time) {
@@ -102,34 +104,55 @@ export async function bookSessionAction(
     return { error: 'Debes asignar un instructor a la clase.' }
   }
 
-  const { data: rpcData, error } = await createAdminClient().rpc('fn_book_session', {
-    p_student_id:    input.student_id,
-    p_classroom_id:  input.classroom_id,
-    p_course_id:     input.course_id,
-    p_date:          input.date,
-    p_start_time:    input.start_time,
-    p_instructor_id: input.instructor_id ?? null,
-    p_notes:         input.notes ?? null,
-  })
-  const data = rpcData as { success: boolean; error?: string; session_id?: string } | null
+  const baseDate = new Date(input.date + 'T12:00:00')
+  const totalOccurrences = Math.min(Math.max(input.repeat_weeks ?? 0, 0), 4) + 1
+  const failedDates: string[] = []
+  let firstSessionId: string | undefined
 
-  if (error) return { error: error.message }
-  if (!data?.success) return { error: data?.error ?? 'No se pudo crear la clase.' }
+  for (let i = 0; i < totalOccurrences; i++) {
+    const occurrenceDate = new Date(baseDate)
+    occurrenceDate.setDate(occurrenceDate.getDate() + i * 7)
+    const dateStr = occurrenceDate.toISOString().split('T')[0]
 
-  await safeRecordStudentActivity(input.student_id, 'class_booked', 'Clase agendada desde administracion.', {
-    course_id: input.course_id,
-    scheduled_date: input.date,
-    start_time: input.start_time,
-  })
+    const { data: rpcData, error } = await createAdminClient().rpc('fn_book_session', {
+      p_student_id:    input.student_id,
+      p_classroom_id:  input.classroom_id,
+      p_course_id:     input.course_id,
+      p_date:          dateStr,
+      p_start_time:    input.start_time,
+      p_instructor_id: input.instructor_id ?? null,
+      p_notes:         input.notes ?? null,
+    })
+    const data = rpcData as { success: boolean; error?: string; session_id?: string } | null
 
-  await activity.sessionCreated({
-    session_id:     String(data?.session_id ?? ''),
-    instructor_name: input.instructor_id ? `Instructor ${input.instructor_id}` : 'Sin asignar',
-    scheduled_at:   `${input.date} ${input.start_time}`,
-    source:         'admin',
-  })
+    if (error || !data?.success) {
+      failedDates.push(dateStr)
+      continue
+    }
+
+    if (i === 0) firstSessionId = data.session_id
+
+    await safeRecordStudentActivity(input.student_id, 'class_booked', 'Clase agendada desde administracion.', {
+      course_id: input.course_id,
+      scheduled_date: dateStr,
+      start_time: input.start_time,
+    })
+
+    await activity.sessionCreated({
+      session_id:     String(data.session_id ?? ''),
+      instructor_name: input.instructor_id ? `Instructor ${input.instructor_id}` : 'Sin asignar',
+      scheduled_at:   `${dateStr} ${input.start_time}`,
+      source:         'admin',
+    })
+  }
+
+  if (!firstSessionId) return { error: 'No se pudo crear la clase.' }
 
   revalidatePath('/admin/agenda')
+
+  if (failedDates.length > 0) {
+    return { error: `Clase creada, pero no se pudo repetir en: ${failedDates.join(', ')} (horario ocupado).` }
+  }
   return { success: true }
 }
 

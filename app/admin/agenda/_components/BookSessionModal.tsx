@@ -124,6 +124,15 @@ export default function BookSessionModal({ date, time, students, courses, classr
             <textarea name="notes" rows={2} disabled={isPending} className={inputClass + ' resize-none'} placeholder="Opcional" />
           </div>
 
+          <div>
+            <label className="block text-xs text-white/50 mb-1.5">Repetir semanalmente</label>
+            <select name="repeat_weeks" disabled={isPending} defaultValue="0" className={inputClass + ' appearance-none'}>
+              <option value="0">No repetir</option>
+              <option value="3">3 semanas más (4 clases)</option>
+              <option value="4">4 semanas más (5 clases)</option>
+            </select>
+          </div>
+
           {state.error && <p className="text-red-400 text-xs">{state.error}</p>}
 
           <div className="flex gap-3 pt-1">

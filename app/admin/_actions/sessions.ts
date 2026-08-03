@@ -105,7 +105,7 @@ export async function bookSessionAction(
   }
 
   const baseDate = new Date(input.date + 'T12:00:00')
-  const totalOccurrences = Math.min(Math.max(input.repeat_weeks ?? 0, 0), 4) + 1
+  const totalOccurrences = Math.min(Math.max(input.repeat_weeks ?? 0, 0), 7) + 1
   const failedDates: string[] = []
   let firstSessionId: string | undefined
 

@@ -130,6 +130,7 @@ export default function BookSessionModal({ date, time, students, courses, classr
               <option value="0">No repetir</option>
               <option value="3">3 semanas más (4 clases)</option>
               <option value="4">4 semanas más (5 clases)</option>
+              <option value="7">7 semanas más (8 clases)</option>
             </select>
           </div>
 

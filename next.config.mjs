@@ -14,6 +14,14 @@ const nextConfig = {
   async headers() {
     return [
       {
+        source: "/:path*",
+        headers: [
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+        ],
+      },
+      {
         // .mpeg con contenido MP3/audio — Next.js los sirve como video/mpeg por defecto
         source: "/audio/:path*",
         headers: [

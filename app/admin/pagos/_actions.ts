@@ -153,21 +153,12 @@ async function getActorInfo(): Promise<{ actor_name: string; actor_user_id: stri
   } catch { return null }
 }
 
-async function updateStudentRiskFromOverdue(student_id: string): Promise<void> {
-  const { count } = await createAdminClient()
-    .from('payments')
-    .select('id', { count: 'exact', head: true })
-    .eq('student_id', student_id)
-    .eq('status', 'overdue')
-
-  const overdue = count ?? 0
-  let risk_level: string | null = null
-  if (overdue >= 3)      risk_level = 'critico'
-  else if (overdue >= 2) risk_level = 'alto'
-  else if (overdue >= 1) risk_level = 'medio'
-
-  await createAdminClient().from('students').update({ risk_level, updated_at: new Date().toISOString() }).eq('id', student_id)
-}
+// updateStudentRiskFromOverdue() se eliminó: recalculaba students.risk_level
+// solo a partir de los pagos vencidos y pisaba el valor que escribe el job de
+// retención, además de ponerlo a NULL cuando el alumno no debía nada (borrando
+// la señal académica). La morosidad ahora entra como penalización dentro de
+// computeRetentionScore() en app/admin/_actions/retention.ts, que es el único
+// escritor de la columna.
 
 // ── Queries ────────────────────────────────────────────────────────
 
@@ -591,8 +582,6 @@ export async function markPaymentOverdue(payment_id: string): Promise<{ error: s
 
     if (error) return { error: error.message }
 
-    await updateStudentRiskFromOverdue(payment.student_id)
-
     const studentName = (payment.students as any)?.name ?? '—'
     await activity.paymentOverdue({
       payment_id,
@@ -632,13 +621,10 @@ export async function processOverduePayments(): Promise<{ processed: number; err
     // Llamar función DB (UPDATE masivo)
     await createAdminClient().rpc('compute_overdue_payments')
 
-    // Procesar cada uno: risk + log
+    // Procesar cada uno: log
     const processed = toProcess.length
-    const studentIds = [...new Set(toProcess.map(p => p.student_id as string))]
 
     await Promise.all([
-      // Actualizar risk_level por estudiante
-      ...studentIds.map(sid => updateStudentRiskFromOverdue(sid)),
       // Registrar eventos
       ...toProcess.map(p =>
         activity.paymentOverdue({

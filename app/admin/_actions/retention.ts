@@ -100,6 +100,7 @@ function computeRetentionScore(input: {
   noResponse30d: number
   consecutiveNoShows: number
   upcoming: number
+  overdueCount: number
 }) {
   let score = 100
 
@@ -110,6 +111,12 @@ function computeRetentionScore(input: {
   score -= Math.min(30, input.noShows30d * 10)
   score -= Math.min(24, input.noResponse30d * 8)
   score -= Math.min(15, input.cancelledRecent * 5)
+
+  // Penalización por morosidad. Antes vivía aparte, en
+  // updateStudentRiskFromOverdue (pagos/_actions.ts), que sobrescribía
+  // students.risk_level y borraba la señal académica. Ahora entra al score para
+  // que haya un único dueño de la columna.
+  score -= Math.min(45, input.overdueCount * 15)
 
   // Patrones de comportamiento (penalización adicional)
   if (input.consecutiveNoShows >= 2) score -= 15
@@ -175,6 +182,32 @@ interface StudentSignals {
   upcoming: number
   lastCompletedDate: string | null
   consecutiveNoShows: number
+}
+
+// Pagos vencidos por alumno: sin pagar y con la fecha de vencimiento pasada.
+//
+// Deliberadamente NO se filtra por status = 'overdue'. Ese estado solo se
+// asigna cuando alguien ejecuta "Procesar vencidos" en el panel de pagos, así
+// que hoy hay cobros con vencimiento de hace semanas que siguen en 'pending'.
+// Mirar due_date refleja la morosidad real sin depender de esa acción manual.
+async function getOverdueCounts(studentIds: string[]): Promise<Map<string, number>> {
+  const counts = new Map<string, number>()
+  if (studentIds.length === 0) return counts
+
+  const today = new Date().toISOString().split('T')[0]
+
+  const { data } = await createAdminClient()
+    .from('payments')
+    .select('student_id')
+    .neq('status', 'paid')
+    .lt('due_date', today)
+    .in('student_id', studentIds)
+
+  for (const row of data ?? []) {
+    if (!row.student_id) continue
+    counts.set(row.student_id, (counts.get(row.student_id) ?? 0) + 1)
+  }
+  return counts
 }
 
 async function getSessionSignals(studentIds: string[]) {
@@ -358,6 +391,7 @@ export async function runRetentionDailyJob(options: { dryRun?: boolean } = {}): 
   }>
 
   const signals = await getSessionSignals(list.map((s) => s.id))
+  const overdueCounts = await getOverdueCounts(list.map((s) => s.id))
 
   const preview: RetentionPreview = {
     dryRun,
@@ -380,7 +414,7 @@ export async function runRetentionDailyJob(options: { dryRun?: boolean } = {}): 
     const activityDate = signal.lastCompletedDate ?? student.last_activity_at ?? student.student_since ?? student.enrolled_at
     const days = daysSince(activityDate)
     const nextStatus = computeLifecycle(student.student_status, days)
-    const score = computeRetentionScore({ days, ...signal })
+    const score = computeRetentionScore({ days, ...signal, overdueCount: overdueCounts.get(student.id) ?? 0 })
 
     if (nextStatus !== student.student_status || score !== student.retention_score) {
       preview.statusChanges.push({
@@ -422,7 +456,7 @@ export async function runRetentionDailyJob(options: { dryRun?: boolean } = {}): 
     const activityDate = signal.lastCompletedDate ?? student.last_activity_at ?? student.student_since ?? student.enrolled_at
     const days = daysSince(activityDate)
     const nextStatus = computeLifecycle(student.student_status, days)
-    const score = computeRetentionScore({ days, ...signal })
+    const score = computeRetentionScore({ days, ...signal, overdueCount: overdueCounts.get(student.id) ?? 0 })
     const riskReason = computeRiskReason(signal, days, nextStatus)
     const riskLevel = computeRiskLevel(score)
 

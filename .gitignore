@@ -45,3 +45,11 @@ build/
 # Sentry
 .sentryclirc
 .vercel
+
+# Playwright MCP (snapshots/logs de sesiones de agente)
+.playwright-mcp/
+
+# pnpm local — el deploy usa npm (package-lock.json). Versionarlos
+# haría que Vercel cambie de gestor de paquetes.
+pnpm-lock.yaml
+pnpm-workspace.yaml

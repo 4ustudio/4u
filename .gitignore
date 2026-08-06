@@ -53,3 +53,6 @@ build/
 # haría que Vercel cambie de gestor de paquetes.
 pnpm-lock.yaml
 pnpm-workspace.yaml
+
+# Caché incremental de TypeScript
+*.tsbuildinfo

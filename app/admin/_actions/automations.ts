@@ -211,16 +211,22 @@ async function runRetentionRules(now: Date): Promise<number> {
   let created = 0
   const todayStr = toDateStr(now)
 
-  // Estudiantes activos con datos de riesgo
+  // Estudiantes en curso con datos de riesgo. Los valores de student_status son
+  // 'lead' | 'matriculado' | 'activo' | 'riesgo' | 'inactivo' | 'exalumno'
+  // (ver StudentLifecycleStatus y students_student_status_check). Hay que
+  // incluir 'riesgo': computeLifecycle mueve ahí a quien lleva días sin clase,
+  // que es justamente quien acaba con risk_level 'alto' o 'critico'.
   const { data: students } = await db()
     .from('students')
     .select('id, name, phone, risk_level, retention_score, last_activity_at')
-    .eq('student_status', 'active')
+    .in('student_status', ['activo', 'riesgo'])
     .not('risk_level', 'is', null)
 
   for (const s of students ?? []) {
-    // HIGH risk
-    if (s.risk_level === 'high') {
+    // Riesgo alto. Los valores de students.risk_level son 'bajo' | 'medio' |
+    // 'alto' | 'critico' (los escribe computeRiskLevel en _actions/retention.ts,
+    // y el constraint chk_students_risk_level solo admite esos cuatro).
+    if (s.risk_level === 'alto' || s.risk_level === 'critico') {
       const id = await upsertJob('high_risk_student', {
         student_id:      s.id,
         student_name:    s.name,

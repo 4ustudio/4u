@@ -5,12 +5,8 @@
       "schedule": "0 8 * * *"
     },
     {
-      "path": "/api/cron/risk-update",
-      "schedule": "0 6 * * *"
-    },
-    {
       "path": "/api/cron/automation-runner",
-      "schedule": "0 7 * * *"
+      "schedule": "0 9 * * *"
     }
   ]
 }

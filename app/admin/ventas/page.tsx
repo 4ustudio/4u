@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import type { ReactNode } from 'react'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createAuthServerClient } from '@/lib/supabase/server'
-import { canAccessSalesDashboard, parseRole } from '@/lib/auth/roles'
+import { canAccessSalesDashboard, resolveRole } from '@/lib/auth/roles'
 import { getEnrollmentFunnelMetrics } from '@/app/admin/_actions/enrollments'
 import { getRetentionStats } from '@/app/admin/_actions/retention'
 import { getPaymentMetrics } from '@/app/admin/_actions/payments'
@@ -234,7 +234,7 @@ async function getExecutiveData() {
 export default async function VentasPage() {
   const supabase = await createAuthServerClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const role = parseRole(user?.user_metadata ?? null)
+  const role = resolveRole(user)
   if (!canAccessSalesDashboard(role)) redirect('/admin')
 
   const [data, retentionStats, pm, fm] = await Promise.all([

@@ -3,12 +3,12 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createAuthServerClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { parseRole, hasAcademicAccess } from '@/lib/auth/roles'
+import { resolveRole, hasAcademicAccess } from '@/lib/auth/roles'
 
 async function assertAdmin(): Promise<{ error: string } | null> {
   const supabase = await createAuthServerClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const role = parseRole(user?.user_metadata ?? null)
+  const role = resolveRole(user)
   if (!hasAcademicAccess(role)) return { error: 'No autorizado.' }
   return null
 }
@@ -53,12 +53,15 @@ export async function createInstructorAction(
     .maybeSingle()
   if (existing) return { error: 'Ya existe un instructor con ese email.' }
 
-  // Crear usuario auth con role instructor
+  // Crear usuario auth con role instructor.
+  // app_metadata es el rol autoritativo (solo service_role puede escribirlo);
+  // user_metadata queda solo para mostrar nombre en UI, nunca se usa para autorizar.
   const { data: authData, error: authError } = await createAdminClient().auth.admin.createUser({
     email,
     password,
     email_confirm: true,
     user_metadata: { role: 'instructor', name: fullName, full_name: fullName },
+    app_metadata: { role: 'instructor' },
   })
 
   if (authError) {

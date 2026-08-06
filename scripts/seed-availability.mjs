@@ -8,12 +8,18 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
+import { config } from 'dotenv'
 
-const sb = createClient(
-  'https://sctfqgrsrzwpwhkfcbed.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNjdGZxZ3Jzcnp3cHdoa2ZjYmVkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3OTk3OTYzMCwiZXhwIjoyMDk1NTU1NjMwfQ.G3XEqA6wPcUMTsNf5UkZ2RHzq529KtRoV6V_lzc2bKw',
-  { auth: { persistSession: false } }
-)
+config({ path: '.env.local' })
+
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+if (!url || !key) {
+  console.error('❌ Faltan NEXT_PUBLIC_SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY en .env.local')
+  process.exit(1)
+}
+
+const sb = createClient(url, key, { auth: { persistSession: false } })
 
 // ── 1. Cursos faltantes ────────────────────────────────────────────────
 async function seedCourses() {

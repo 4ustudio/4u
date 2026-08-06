@@ -1,6 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import { parseRole, hasAdminAccess, hasAcademicAccess, canAccessSalesDashboard } from '@/lib/auth/roles'
+import { resolveRole, hasAdminAccess, hasAcademicAccess, canAccessSalesDashboard } from '@/lib/auth/roles'
 
 const ACADEMIC_PATHS = ['/admin/students', '/admin/agenda', '/admin/instructors', '/admin/reactivacion', '/admin/enrollments']
 const SALES_PATHS    = ['/admin/ventas', '/admin/leads']
@@ -31,7 +31,7 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   const pathname = request.nextUrl.pathname
-  const role = parseRole(user?.user_metadata ?? null)
+  const role = resolveRole(user)
 
   // ── Ruta /agendar ─────────────────────────────────────────────────
   if (pathname === '/agendar') {

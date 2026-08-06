@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { rateLimit, getClientIp } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
@@ -7,13 +8,18 @@ export const dynamic = 'force-dynamic'
 function db(): any { return createAdminClient() }
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ token: string }> }
 ) {
   const { token } = await params
 
   if (!token) {
     return NextResponse.redirect(new URL('/confirmar/invalido', process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'))
+  }
+
+  const ip = getClientIp(req.headers)
+  if (!rateLimit(`confirm:${ip}`, 20, 60 * 60 * 1000)) {
+    return NextResponse.redirect(new URL('/confirmar/error', process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'))
   }
 
   const { data: session, error } = await db()

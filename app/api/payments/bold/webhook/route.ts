@@ -25,8 +25,12 @@ export async function POST(req: NextRequest) {
   // 2. Validar firma (sandbox no firma webhooks — skip)
   const isSandboxEnv = process.env.BOLD_SANDBOX === 'true'
   if (!isSandboxEnv) {
+    const secret = getWebhookSecret()
+    if (!secret) {
+      console.error('[bold-webhook] BOLD_SECRET_KEY no configurado en producción — rechazando.')
+      return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 })
+    }
     const signature = req.headers.get('x-bold-signature') ?? ''
-    const secret    = getWebhookSecret()
     if (!verifyBoldSignature(rawBody, signature, secret)) {
       console.warn('[bold-webhook] Firma inválida')
       await activity.boldWebhookFailed({ reason: 'firma_invalida' })

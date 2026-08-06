@@ -580,6 +580,13 @@ export async function registerAction(
     return { error: 'No se pudo crear la cuenta. Intenta de nuevo.' }
   }
 
+  // El rol autoritativo vive en app_metadata (solo editable con service_role).
+  // options.data de signUp() de arriba solo llega a user_metadata, editable por
+  // el propio cliente — nunca se usa para autorización.
+  await admin().auth.admin.updateUserById(authData.user.id, {
+    app_metadata: { role: 'student' },
+  })
+
   // 2. Crear registro en students vinculado al nuevo user
   // Usamos columnas garantizadas en el schema base (name, email, phone, user_id)
   const { error: studentError } = await admin()
@@ -680,7 +687,14 @@ export async function uploadAvatarAction(
   if (!file || file.size === 0) return { error: 'Archivo inválido.' }
   if (file.size > 2 * 1024 * 1024) return { error: 'La imagen no puede superar 2MB.' }
 
-  const ext  = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
+  const ALLOWED_TYPES: Record<string, string> = {
+    'image/jpeg': 'jpg',
+    'image/png':  'png',
+    'image/webp': 'webp',
+  }
+  const ext = ALLOWED_TYPES[file.type]
+  if (!ext) return { error: 'Solo se permiten imágenes JPG, PNG o WEBP.' }
+
   const path = `${user.id}/avatar.${ext}`
 
   const arrayBuffer = await file.arrayBuffer()

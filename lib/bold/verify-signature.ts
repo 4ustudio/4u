@@ -1,4 +1,4 @@
-import { createHmac } from 'crypto'
+import { createHmac, timingSafeEqual } from 'crypto'
 
 /**
  * Valida la firma Bold del webhook.
@@ -8,5 +8,8 @@ import { createHmac } from 'crypto'
 export function verifyBoldSignature(rawBody: string, signature: string, secretKey: string): boolean {
   const base64Body = Buffer.from(rawBody).toString('base64')
   const expected   = createHmac('sha256', secretKey).update(base64Body).digest('hex')
-  return expected === signature
+
+  const a = Buffer.from(expected)
+  const b = Buffer.from(signature)
+  return a.length === b.length && timingSafeEqual(a, b)
 }

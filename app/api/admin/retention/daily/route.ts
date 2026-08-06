@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic'
 
 function isAuthorized(request: Request) {
   const expected = process.env.RETENTION_CRON_SECRET || process.env.CRON_SECRET
-  if (!expected) return true
+  if (!expected) return false
   const auth = request.headers.get('authorization')
   return auth === `Bearer ${expected}`
 }

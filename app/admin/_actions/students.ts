@@ -7,7 +7,15 @@ import type { Student, StudentLifecycleStatus, StudentStatus, StudentType, Stude
 import { safeRecordStudentActivity } from './retention'
 import { activity, logActivity } from '@/lib/activity'
 import { isBirthdayMonth, getBirthdayBenefitStatus } from '@/lib/students/birthday'
+import { resolveRole, hasAcademicAccess } from '@/lib/auth/roles'
 
+async function assertAdmin(): Promise<{ error: string } | null> {
+  const supabase = await createAuthServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const role = resolveRole(user)
+  if (!hasAcademicAccess(role)) return { error: 'No autorizado.' }
+  return null
+}
 
 function calculateAge(birthDate: string): number {
   const today = new Date()
@@ -37,6 +45,7 @@ async function validateKidsAge(studentId: string): Promise<string | null> {
 // ─── Lectura ────────────────────────────────────────────────
 
 export async function getStudents(): Promise<Student[]> {
+  if (await assertAdmin()) throw new Error('No autorizado.')
   try {
     const supabase = await createAuthServerClient()
     let { data, error } = await supabase
@@ -81,6 +90,7 @@ export async function getStudents(): Promise<Student[]> {
 }
 
 export async function getStudent(id: string) {
+  if (await assertAdmin()) throw new Error('No autorizado.')
   const [{ data: student, error }, usageResult] = await Promise.all([
     createAdminClient().from('students').select('*').eq('id', id).single(),
     createAdminClient().rpc('fn_monthly_usage', {
@@ -96,6 +106,7 @@ export async function getStudent(id: string) {
 }
 
 export async function getLeads() {
+  if (await assertAdmin()) throw new Error('No autorizado.')
   const { data, error } = await createAdminClient()
     .from('appointments')
     .select('*')
@@ -109,6 +120,7 @@ export async function getLeads() {
 // ─── Horarios fijos ─────────────────────────────────────────
 
 export async function getStudentSchedules(studentId: string): Promise<StudentSchedule[]> {
+  if (await assertAdmin()) throw new Error('No autorizado.')
   const { data, error } = await createAdminClient()
     .from('student_schedules')
     .select('*, course:courses(name), classroom:classrooms(name), instructor:instructors(name)')
@@ -124,6 +136,9 @@ export async function createScheduleAction(
   _prev: { error?: string; success?: boolean },
   formData: FormData
 ): Promise<{ error?: string; success?: boolean }> {
+  const authErr = await assertAdmin()
+  if (authErr) return authErr
+
   const student_id   = formData.get('student_id')   as string
   const course_id    = formData.get('course_id')    as string
   const classroom_id = formData.get('classroom_id') as string
@@ -170,6 +185,9 @@ export async function updateScheduleAction(
   _prev: { error?: string; success?: boolean },
   formData: FormData
 ): Promise<{ error?: string; success?: boolean }> {
+  const authErr = await assertAdmin()
+  if (authErr) return authErr
+
   const id           = formData.get('id')           as string
   const student_id   = formData.get('student_id')   as string
   const course_id    = formData.get('course_id')    as string
@@ -221,6 +239,9 @@ export async function deleteScheduleAction(
   _prev: { error?: string; success?: boolean },
   formData: FormData
 ): Promise<{ error?: string; success?: boolean }> {
+  const authErr = await assertAdmin()
+  if (authErr) return authErr
+
   const id         = formData.get('id')         as string
   const student_id = formData.get('student_id') as string
 
@@ -239,6 +260,9 @@ export async function generateMonthlyClassesAction(
   _prev: { error?: string; generated?: number; skipped?: number; errors?: string[] },
   formData: FormData
 ): Promise<{ error?: string; generated?: number; skipped?: number; errors?: string[] }> {
+  const authErr = await assertAdmin()
+  if (authErr) return { error: authErr.error }
+
   const student_id = formData.get('student_id') as string
   const year       = Number(formData.get('year'))
   const month      = Number(formData.get('month'))
@@ -271,6 +295,9 @@ export async function createStudentAction(
   _prev: { error?: string; success?: boolean },
   formData: FormData
 ): Promise<{ error?: string; success?: boolean }> {
+  const authErr = await assertAdmin()
+  if (authErr) return authErr
+
   const first_name   = (formData.get('first_name')   as string)?.trim() || ''
   const last_name    = (formData.get('last_name')    as string)?.trim() || ''
   const name         = `${first_name} ${last_name}`.trim()
@@ -343,6 +370,9 @@ export async function inviteStudentAction(
   _prev: { error?: string; success?: boolean; resent?: boolean },
   formData: FormData
 ): Promise<{ error?: string; success?: boolean; resent?: boolean }> {
+  const authErr = await assertAdmin()
+  if (authErr) return authErr
+
   const student_id = formData.get('student_id') as string
   if (!student_id) return { error: 'ID de estudiante requerido.' }
 
@@ -372,6 +402,14 @@ export async function inviteStudentAction(
     return { error: inviteError.message }
   }
 
+  // inviteUserByEmail no acepta app_metadata (solo user_metadata) — el rol
+  // autoritativo se fija en una segunda llamada con service_role.
+  if (inviteData?.user?.id) {
+    await createAdminClient().auth.admin.updateUserById(inviteData.user.id, {
+      app_metadata: { role: 'student' },
+    })
+  }
+
   // Guardar user_id si es primera invitación
   if (!alreadyInvited && inviteData?.user?.id) {
     await createAdminClient()
@@ -388,6 +426,9 @@ export async function deleteStudentAction(
   _prev: { error?: string; success?: boolean },
   formData: FormData
 ): Promise<{ error?: string; success?: boolean }> {
+  const authErr = await assertAdmin()
+  if (authErr) return authErr
+
   const id = formData.get('id') as string
   if (!id) return { error: 'ID de estudiante requerido.' }
 
@@ -418,6 +459,9 @@ export async function setStudentPasswordAction(
   _prev: { error?: string; success?: boolean },
   formData: FormData
 ): Promise<{ error?: string; success?: boolean }> {
+  const authErr = await assertAdmin()
+  if (authErr) return authErr
+
   const student_id = formData.get('student_id') as string
   const password   = (formData.get('password') as string)?.trim()
   const confirm    = (formData.get('confirm')   as string)?.trim()
@@ -436,7 +480,10 @@ export async function setStudentPasswordAction(
   if (!student.email) return { error: 'El estudiante no tiene email. Agrégalo primero.' }
 
   if (student.user_id) {
-    const { error } = await createAdminClient().auth.admin.updateUserById(student.user_id, { password })
+    const { error } = await createAdminClient().auth.admin.updateUserById(student.user_id, {
+      password,
+      app_metadata: { role: 'student' },
+    })
     if (error) return { error: error.message }
   } else {
     const { data: newUser, error } = await createAdminClient().auth.admin.createUser({
@@ -444,6 +491,7 @@ export async function setStudentPasswordAction(
       password,
       email_confirm: true,
       user_metadata: { role: 'student' },
+      app_metadata: { role: 'student' },
     })
     if (error) {
       if (error.message?.includes('already registered')) {
@@ -472,6 +520,9 @@ export async function updateStudentAction(
   _prev: { error?: string; success?: boolean },
   formData: FormData
 ): Promise<{ error?: string; success?: boolean }> {
+  const authErr = await assertAdmin()
+  if (authErr) return authErr
+
   const id = formData.get('id') as string
   const first_name   = (formData.get('first_name')   as string)?.trim() || ''
   const last_name    = (formData.get('last_name')    as string)?.trim() || ''
@@ -551,6 +602,9 @@ export async function updateStudentAction(
 export async function grantBirthdayBenefitAction(
   studentId: string
 ): Promise<{ error?: string; success?: boolean }> {
+  const authErr = await assertAdmin()
+  if (authErr) return authErr
+
   const { data: student, error: fetchErr } = await createAdminClient()
     .from('students')
     .select('id, name, birth_date, student_status, birthday_benefit_year, birthday_benefit_used, birthday_discount_percent')
@@ -591,6 +645,9 @@ export async function grantBirthdayBenefitAction(
 export async function useBirthdayDiscountAction(
   studentId: string
 ): Promise<{ error?: string; success?: boolean }> {
+  const authErr = await assertAdmin()
+  if (authErr) return authErr
+
   const { data: student, error: fetchErr } = await createAdminClient()
     .from('students')
     .select('id, name, birthday_benefit_year, birthday_benefit_used, birthday_discount_percent')

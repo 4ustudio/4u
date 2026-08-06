@@ -6,12 +6,12 @@ import { revalidatePath } from 'next/cache'
 import type { ClassSession } from '@/types/admin'
 import { safeRecordStudentActivity } from './retention'
 import { activity } from '@/lib/activity'
-import { parseRole, hasAcademicAccess } from '@/lib/auth/roles'
+import { resolveRole, hasAcademicAccess } from '@/lib/auth/roles'
 
 async function assertAdmin(): Promise<{ error: string } | null> {
   const supabase = await createAuthServerClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const role = parseRole(user?.user_metadata ?? null)
+  const role = resolveRole(user)
   if (!hasAcademicAccess(role)) return { error: 'No autorizado.' }
   return null
 }

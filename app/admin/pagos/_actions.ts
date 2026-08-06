@@ -6,6 +6,15 @@ import { revalidatePath } from 'next/cache'
 import { activity } from '@/lib/activity'
 import { getBirthdayBenefitStatus } from '@/lib/students/birthday'
 import { createBoldPaymentLink } from '@/lib/bold/client'
+import { resolveRole, hasAdminAccess } from '@/lib/auth/roles'
+
+async function assertAdmin(): Promise<{ error: string } | null> {
+  const supabase = await createAuthServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const role = resolveRole(user)
+  if (!hasAdminAccess(role)) return { error: 'No autorizado.' }
+  return null
+}
 
 
 // ── Tipos ──────────────────────────────────────────────────────────
@@ -167,6 +176,7 @@ export async function getPayments(tab: PaymentTab = 'all', search = '', page = 1
   total: number
   error: string | null
 }> {
+  if (await assertAdmin()) return { data: [], total: 0, error: 'No autorizado.' }
   try {
     const PAGE_SIZE = 50
     const from = (page - 1) * PAGE_SIZE
@@ -214,6 +224,7 @@ export async function getPayments(tab: PaymentTab = 'all', search = '', page = 1
 }
 
 export async function getPaymentMetrics(): Promise<PaymentMetrics> {
+  if (await assertAdmin()) return { recaudado: 0, pendientes: 0, vencidos: 0, descuentos: 0, mora_total: 0 }
   try {
     const now = new Date()
     const year = now.getFullYear()
@@ -243,6 +254,7 @@ export async function getPaymentMetrics(): Promise<PaymentMetrics> {
 }
 
 export async function getBoldMetrics(): Promise<BoldMetrics> {
+  if (await assertAdmin()) return { pagos_hoy: 0, recaudacion_hoy: 0, ultimo_webhook: null, webhooks_fallidos_hoy: 0 }
   try {
     const today = new Date().toISOString().split('T')[0]
 
@@ -277,6 +289,7 @@ export async function getBoldMetrics(): Promise<BoldMetrics> {
 }
 
 export async function getStudentPayments(student_id: string): Promise<StudentPaymentRow[]> {
+  if (await assertAdmin()) return []
   try {
     const { data: payments, error } = await createAdminClient()
       .from('payments')
@@ -302,6 +315,7 @@ export async function getStudentPayments(student_id: string): Promise<StudentPay
 }
 
 export async function getStudentPaymentDefaults(student_id: string): Promise<StudentPaymentDefaults | null> {
+  if (await assertAdmin()) return null
   try {
     const { data: student } = await createAdminClient()
       .from('students')
@@ -333,6 +347,7 @@ export async function getStudentPaymentDefaults(student_id: string): Promise<Stu
 }
 
 export async function getStudentsForSearch(): Promise<StudentOption[]> {
+  if (await assertAdmin()) return []
   try {
     const { data } = await createAdminClient()
       .from('students')
@@ -353,6 +368,7 @@ export interface EnrollmentOption {
 }
 
 export async function getEnrollmentsForSearch(): Promise<EnrollmentOption[]> {
+  if (await assertAdmin()) return []
   try {
     const { data } = await createAdminClient()
       .from('enrollments')
@@ -374,6 +390,7 @@ export interface CreateStudentAndPaymentInput extends Omit<CreateCobroInput, 'st
 export async function createStudentAndPayment(
   input: CreateStudentAndPaymentInput
 ): Promise<{ error: string | null; id?: string }> {
+  if (await assertAdmin()) return { error: 'No autorizado.' }
   try {
     const admin = createAdminClient()
 
@@ -413,6 +430,7 @@ export async function createStudentAndPayment(
 // ── Mutaciones ─────────────────────────────────────────────────────
 
 export async function registerPayment(input: RegisterPaymentInput): Promise<{ error: string | null; id?: string }> {
+  if (await assertAdmin()) return { error: 'No autorizado.' }
   try {
     const actor = await getActorInfo()
     const final_amount = input.original_amount - input.discount_amount
@@ -493,6 +511,7 @@ export async function registerPayment(input: RegisterPaymentInput): Promise<{ er
 }
 
 export async function applyDiscount(payment_id: string, input: ApplyDiscountInput): Promise<{ error: string | null }> {
+  if (await assertAdmin()) return { error: 'No autorizado.' }
   try {
     const actor = await getActorInfo()
 
@@ -552,6 +571,7 @@ export async function applyDiscount(payment_id: string, input: ApplyDiscountInpu
 }
 
 export async function markPaymentOverdue(payment_id: string): Promise<{ error: string | null }> {
+  if (await assertAdmin()) return { error: 'No autorizado.' }
   try {
     const actor = await getActorInfo()
 
@@ -596,6 +616,7 @@ export async function markPaymentOverdue(payment_id: string): Promise<{ error: s
 }
 
 export async function processOverduePayments(): Promise<{ processed: number; error: string | null }> {
+  if (await assertAdmin()) return { processed: 0, error: 'No autorizado.' }
   try {
     const today = new Date().toISOString().split('T')[0]
 
@@ -653,6 +674,7 @@ export interface CreateCobroInput {
 }
 
 export async function createPendingPayment(input: CreateCobroInput): Promise<{ error: string | null; id?: string }> {
+  if (await assertAdmin()) return { error: 'No autorizado.' }
   try {
     const actor = await getActorInfo()
     const final_amount = input.original_amount - input.discount_amount
@@ -695,6 +717,7 @@ export async function generateBoldCheckout(payment_id: string): Promise<{
   url: string | null
   error: string | null
 }> {
+  if (await assertAdmin()) return { url: null, error: 'No autorizado.' }
   try {
     const { data: payment, error: fetchError } = await createAdminClient()
       .from('payments')

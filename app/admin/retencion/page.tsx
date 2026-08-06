@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createAuthServerClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { hasAcademicAccess, parseRole } from '@/lib/auth/roles'
+import { hasAcademicAccess, resolveRole } from '@/lib/auth/roles'
 import { getStudentsAtRisk, getLatestFollowupPerStudent, getFollowupMetrics } from '@/app/admin/_actions/followups'
 import RetentionCRMClient from './RetentionCRMClient'
 
@@ -11,7 +11,7 @@ export const metadata = { title: 'Retención de Estudiantes — 4U Studio Academ
 export default async function RetentionPage() {
   const supabase = await createAuthServerClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const role = parseRole(user?.user_metadata ?? null)
+  const role = resolveRole(user)
   if (!hasAcademicAccess(role)) redirect('/admin')
 
   const db = createAdminClient()

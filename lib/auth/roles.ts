@@ -15,7 +15,7 @@ const ROLE_HIERARCHY: Record<AppRole, AppRole[]> = {
 
 // ── Parseo ────────────────────────────────────────────────────────
 
-/** Extrae y valida un AppRole desde user_metadata de Supabase. */
+/** Extrae y valida un AppRole desde metadata de Supabase. */
 export function parseRole(
   metadata: Record<string, unknown> | null | undefined
 ): AppRole | null {
@@ -24,6 +24,24 @@ export function parseRole(
     return raw as AppRole
   }
   return null
+}
+
+/**
+ * Resuelve el rol de un usuario de Supabase Auth.
+ *
+ * MIGRACIÓN EN CURSO: el rol vivía en `user_metadata` (editable por el propio
+ * usuario vía el SDK cliente con la anon key — hueco de escalación de privilegios).
+ * Ahora se lee de `app_metadata` (solo editable con service_role), con fallback
+ * temporal a `user_metadata` para no romper el acceso de usuarios que aún no
+ * pasaron por el backfill. Una vez confirmado el backfill en producción, el
+ * fallback se elimina (parseRole(user?.app_metadata ?? null) directo) — ahí
+ * queda cerrado el hueco también para cuentas nuevas.
+ */
+export function resolveRole(
+  user: { user_metadata?: Record<string, unknown> | null; app_metadata?: Record<string, unknown> | null } | null | undefined
+): AppRole | null {
+  if (!user) return null
+  return parseRole({ ...user.user_metadata, ...user.app_metadata })
 }
 
 // ── Primitivo de autorización ─────────────────────────────────────

@@ -11,7 +11,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://4ustudioacademy.co
 
 function isAuthorized(req: Request) {
   const expected = process.env.CRON_SECRET
-  if (!expected) return true
+  if (!expected) return false
   return req.headers.get('authorization') === `Bearer ${expected}`
 }
 

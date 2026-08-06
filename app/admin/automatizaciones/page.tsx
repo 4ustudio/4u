@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createAuthServerClient } from '@/lib/supabase/server'
-import { isSuperAdmin, parseRole } from '@/lib/auth/roles'
+import { isSuperAdmin, resolveRole } from '@/lib/auth/roles'
 import { getAutomationJobs, getAutomationMetrics } from '@/app/admin/_actions/automations'
 import AutomatizacionesClient from './AutomatizacionesClient'
 
@@ -10,7 +10,7 @@ export const metadata = { title: 'Automatizaciones — 4U Studio Academy' }
 export default async function AutomatizacionesPage() {
   const supabase = await createAuthServerClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const role = parseRole(user?.user_metadata ?? null)
+  const role = resolveRole(user)
   if (!isSuperAdmin(role)) redirect('/admin')
 
   const [jobs, metrics] = await Promise.all([

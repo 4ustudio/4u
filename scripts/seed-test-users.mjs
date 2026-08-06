@@ -11,9 +11,16 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
+import { config } from 'dotenv'
 
-const SUPABASE_URL      = 'https://sctfqgrsrzwpwhkfcbed.supabase.co'
-const SERVICE_ROLE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNjdGZxZ3Jzcnp3cHdoa2ZjYmVkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3OTk3OTYzMCwiZXhwIjoyMDk1NTU1NjMwfQ.G3XEqA6wPcUMTsNf5UkZ2RHzq529KtRoV6V_lzc2bKw'
+config({ path: '.env.local' })
+
+const SUPABASE_URL     = process.env.NEXT_PUBLIC_SUPABASE_URL
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
+if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
+  console.error('❌ Faltan NEXT_PUBLIC_SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY en .env.local')
+  process.exit(1)
+}
 
 const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },

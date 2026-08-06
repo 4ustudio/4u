@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { activity } from "@/lib/activity";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
 type LeadBody = {
   name: string;
@@ -12,6 +13,14 @@ type LeadBody = {
 
 export async function POST(request: Request) {
   try {
+    const ip = getClientIp(request.headers);
+    if (!rateLimit(`leads:${ip}`, 5, 10 * 60 * 1000)) {
+      return NextResponse.json(
+        { error: "Demasiadas solicitudes. Intenta de nuevo en unos minutos." },
+        { status: 429 }
+      );
+    }
+
     const body: LeadBody = await request.json();
 
     const { name, email, phone, course, message, source } = body;

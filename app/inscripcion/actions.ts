@@ -1,10 +1,12 @@
 'use server'
 
+import { headers } from 'next/headers'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { Resend } from 'resend'
 import { ACADEMY, TERMS } from '@/lib/constants'
 import { activity } from '@/lib/activity'
 import { sendEnrollmentReceived, sendInternalAlert } from '@/lib/whatsapp-cloud'
+import { rateLimit, getClientIp } from '@/lib/rate-limit'
 import type {
   EnrollmentFormState,
   EnrollmentInsert,
@@ -173,6 +175,11 @@ export async function generateAndSaveEnrollment(
   _prevState: EnrollmentFormState,
   formData: FormData,
 ): Promise<EnrollmentFormState> {
+  const ip = getClientIp(await headers())
+  if (!rateLimit(`inscripcion:${ip}`, 3, 60 * 60 * 1000)) {
+    return { status: 'error', message: 'Demasiados intentos. Intenta de nuevo en un rato o escríbenos por WhatsApp.' }
+  }
+
   const signedAt = new Date().toISOString()
 
   // ── 1. Validar datos del formulario principal ──

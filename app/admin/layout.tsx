@@ -8,7 +8,7 @@ import PageWrapper from './_components/PageWrapper'
 import UserMenu from './_components/UserMenu'
 import AdminThemeProvider from './_components/AdminThemeProvider'
 import ThemeToggle from './_components/ThemeToggle'
-import { getRoleLabel, parseRole } from '@/lib/auth/roles'
+import { getRoleLabel, resolveRole } from '@/lib/auth/roles'
 
 export const metadata = { title: 'Panel Admin — 4U Studio Academy' }
 
@@ -20,7 +20,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     redirect('/mi-cuenta/login')
   }
 
-  const role = parseRole(user.user_metadata)
+  const role = resolveRole(user)
   const displayName =
     (user.user_metadata?.full_name as string | undefined) ??
     (user.user_metadata?.name as string | undefined) ??

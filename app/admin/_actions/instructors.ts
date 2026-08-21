@@ -14,12 +14,112 @@ async function assertAdmin(): Promise<{ error: string } | null> {
 }
 
 export async function getInstructors() {
-  const { data, error } = await createAdminClient()
-    .from('instructors')
-    .select('*')
-    .order('name')
+  const adminClient = createAdminClient()
+  const [{ data, error }, { data: schedules }, { data: sessions }] = await Promise.all([
+    adminClient.from('instructors').select('*').order('name'),
+    adminClient
+      .from('student_schedules')
+      .select('instructor_id, student_id')
+      .eq('status', 'active'),
+    // ponytail: conteo en memoria; si class_sessions crece a miles, mover a una vista
+    // agregada en Postgres (COUNT DISTINCT student_id GROUP BY instructor_id).
+    adminClient
+      .from('class_sessions')
+      .select('instructor_id, student_id')
+      .neq('status', 'cancelled'),
+  ])
   if (error) throw new Error(error.message)
-  return data ?? []
+
+  // Alumnos únicos por instructor: horario fijo activo + alumnos con clases reales
+  const byInstructor = new Map<string, Set<string>>()
+  for (const s of [...(schedules ?? []), ...(sessions ?? [])]) {
+    if (!s.instructor_id || !s.student_id) continue
+    const set = byInstructor.get(s.instructor_id) ?? new Set<string>()
+    set.add(s.student_id)
+    byInstructor.set(s.instructor_id, set)
+  }
+
+  return (data ?? []).map(inst => ({
+    ...inst,
+    students_count: byInstructor.get(inst.id)?.size ?? 0,
+  }))
+}
+
+/**
+ * Alumnos de un instructor: horario fijo activo + historial de clases.
+ * Cruza student_schedules (asignación) con class_sessions (lo que realmente pasó),
+ * porque un alumno puede tener clases con el instructor sin horario fijo y viceversa.
+ */
+export async function getInstructorStudents(instructorId: string) {
+  const authErr = await assertAdmin()
+  if (authErr) throw new Error(authErr.error)
+
+  const adminClient = createAdminClient()
+  const today = new Date().toISOString().split('T')[0]
+
+  const [{ data: schedules }, { data: sessions }] = await Promise.all([
+    adminClient
+      .from('student_schedules')
+      .select('id, student_id, day_of_week, start_time, status, active_from, active_until, course:courses(name), classroom:classrooms(name)')
+      .eq('instructor_id', instructorId)
+      .eq('status', 'active')
+      .or(`active_until.is.null,active_until.gte.${today}`),
+    adminClient
+      .from('class_sessions')
+      .select('id, student_id, scheduled_date, start_time, status, late_cancellation, course:courses(name), student:students(id, name, phone, email, student_status)')
+      .eq('instructor_id', instructorId)
+      .order('scheduled_date', { ascending: false }),
+  ])
+
+  const allSessions = (sessions ?? []) as any[] // eslint-disable-line @typescript-eslint/no-explicit-any
+  const studentIds = new Set<string>([
+    ...allSessions.map(s => s.student_id),
+    ...(schedules ?? []).map(s => s.student_id),
+  ].filter(Boolean))
+
+  // Datos de alumnos que solo tienen horario fijo (aún sin clases registradas)
+  const knownStudents = new Map<string, any>() // eslint-disable-line @typescript-eslint/no-explicit-any
+  for (const s of allSessions) if (s.student?.id) knownStudents.set(s.student.id, s.student)
+  const missing = [...studentIds].filter(id => !knownStudents.has(id))
+  if (missing.length > 0) {
+    const { data: extra } = await adminClient
+      .from('students')
+      .select('id, name, phone, email, student_status')
+      .in('id', missing)
+    for (const st of extra ?? []) knownStudents.set(st.id, st)
+  }
+
+  const students = [...studentIds].map(id => {
+    const own = allSessions.filter(s => s.student_id === id)
+    const completed = own.filter(s => s.status === 'completed')
+    const upcoming = own
+      .filter(s => s.scheduled_date >= today && (s.status === 'pending' || s.status === 'confirmed'))
+      .sort((a, b) => (a.scheduled_date + a.start_time).localeCompare(b.scheduled_date + b.start_time))
+
+    return {
+      student: knownStudents.get(id) ?? { id, name: 'Alumno sin datos' },
+      schedules: (schedules ?? []).filter(s => s.student_id === id),
+      totalSessions: own.length,
+      completed: completed.length,
+      cancelled: own.filter(s => s.status === 'cancelled').length,
+      noShow: own.filter(s => s.status === 'no_show').length,
+      lastAttended: completed[0] ?? null,   // sessions vienen ordenadas desc
+      nextSession: upcoming[0] ?? null,
+      sessions: own.slice(0, 20),
+    }
+  }).sort((a, b) => a.student.name.localeCompare(b.student.name))
+
+  return {
+    students,
+    totals: {
+      students: students.length,
+      withSchedule: students.filter(s => s.schedules.length > 0).length,
+      sessions: allSessions.length,
+      completed: allSessions.filter(s => s.status === 'completed').length,
+      cancelled: allSessions.filter(s => s.status === 'cancelled').length,
+      noShow: allSessions.filter(s => s.status === 'no_show').length,
+    },
+  }
 }
 
 export async function createInstructorAction(

@@ -45,6 +45,7 @@ export default async function InstructorsPage() {
                 <th className="text-left px-5 py-3 text-xs text-white/35 font-semibold uppercase tracking-wider">Nombre</th>
                 <th className="text-left px-5 py-3 text-xs text-white/35 font-semibold uppercase tracking-wider">Email</th>
                 <th className="text-left px-5 py-3 text-xs text-white/35 font-semibold uppercase tracking-wider">Teléfono</th>
+                <th className="text-left px-5 py-3 text-xs text-white/35 font-semibold uppercase tracking-wider">Alumnos</th>
                 <th className="text-left px-5 py-3 text-xs text-white/35 font-semibold uppercase tracking-wider">Estado</th>
                 <th className="px-5 py-3" />
               </tr>
@@ -63,6 +64,11 @@ export default async function InstructorsPage() {
                   <td className="px-5 py-3.5 text-white/60">{inst.email}</td>
                   <td className="px-5 py-3.5 text-white/60">{inst.phone ?? '—'}</td>
                   <td className="px-5 py-3.5">
+                    <Link href={`/admin/instructors/${inst.id}/alumnos`} className="text-white/70 hover:text-orange-400 transition-colors">
+                      {inst.students_count}
+                    </Link>
+                  </td>
+                  <td className="px-5 py-3.5">
                     <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
                       inst.status === 'active'
                         ? 'bg-green-900/40 text-green-400'
@@ -73,6 +79,12 @@ export default async function InstructorsPage() {
                   </td>
                   <td className="px-5 py-3.5 text-right">
                     <div className="flex items-center justify-end gap-2">
+                      <Link
+                        href={`/admin/instructors/${inst.id}/alumnos`}
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium text-white/50 hover:text-white border border-white/10 hover:border-white/20 transition-colors"
+                      >
+                        Alumnos
+                      </Link>
                       <Link
                         href={`/admin/instructors/${inst.id}/disponibilidad`}
                         className="px-3 py-1.5 rounded-lg text-xs font-medium text-white/50 hover:text-white border border-white/10 hover:border-white/20 transition-colors"
@@ -114,8 +126,17 @@ export default async function InstructorsPage() {
                   {inst.status === 'active' ? 'Activo' : 'Inactivo'}
                 </span>
               </div>
-              {inst.phone && <p className="mt-2 text-xs text-white/50">{inst.phone}</p>}
+              <p className="mt-2 text-xs text-white/50">
+                {inst.students_count} alumno{inst.students_count !== 1 ? 's' : ''}
+                {inst.phone ? ` · ${inst.phone}` : ''}
+              </p>
               <div className="mt-3 flex flex-wrap items-center gap-2">
+                <Link
+                  href={`/admin/instructors/${inst.id}/alumnos`}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-white/60 border border-white/10"
+                >
+                  Alumnos
+                </Link>
                 <Link
                   href={`/admin/instructors/${inst.id}/disponibilidad`}
                   className="px-3 py-1.5 rounded-lg text-xs font-medium text-white/60 border border-white/10"

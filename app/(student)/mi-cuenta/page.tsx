@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { createAuthServerClient } from '@/lib/supabase/server'
+import { resolveRole } from '@/lib/auth/roles'
 import { getInstructorDashboardData, getMonthSessions, getMyDashboardData, getPortalAccess } from '../_actions/student'
 import Header from '@/components/layout/Header'
 import AutoRefresh from './_components/AutoRefresh'
@@ -31,9 +32,17 @@ const DOW_HEAD = ['DOM', 'LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB']
 const WEEK_DAYS = ['LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB', 'DOM']
 const HOURS = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00']
 
+function fechaCorta(iso?: string | null) {
+  if (!iso) return '—'
+  const [y, m, d] = iso.split('-').map(Number)
+  return new Date(y, m - 1, d).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: '2-digit' })
+}
+
+// resolveRole da prioridad a app_metadata (solo escribible por service_role);
+// user_metadata es editable por el propio usuario y no sirve para autorizar.
 function normalizeRole(role: unknown) {
-  if (role === 'owner' || role === 'super_admin' || role === 'admin') return 'admin'
-  if (role === 'instructor' || role === 'teacher' || role === 'maestro') return 'instructor'
+  if (role === 'owner' || role === 'super_admin' || role === 'admin' || role === 'sales') return 'admin'
+  if (role === 'instructor') return 'instructor'
   return 'student'
 }
 
@@ -42,7 +51,7 @@ export default async function MiCuentaPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/mi-cuenta/login')
 
-  const role = normalizeRole(user.user_metadata?.role)
+  const role = normalizeRole(resolveRole(user))
   if (role === 'admin') redirect('/admin')
 
   const now = new Date()
@@ -55,6 +64,7 @@ export default async function MiCuentaPage() {
         email: user.email,
         created_at: null,
       },
+      students: [],
       sessions: [],
       availability: [],
       upcoming: [],
@@ -62,7 +72,7 @@ export default async function MiCuentaPage() {
       blocksCount: 0,
       lastModification: null,
       availabilitySummary: { totalSlots: 0, activeDays: 0, blockedDates: 0, lastModified: null },
-      stats: { weekScheduled: 0, completed: 0, cancelled: 0, activeStudents: 0, todayUpcoming: 0 },
+      stats: { weekScheduled: 0, completed: 0, cancelled: 0, activeStudents: 0, monthStudents: 0, todayUpcoming: 0 },
     }
     return <InstructorDashboard data={data} user={user} monthLabel={monthLabel} now={now} />
   }
@@ -171,7 +181,7 @@ function StudentDashboard({ data, monthSessions, user, monthLabel, now, access }
 }
 
 function InstructorDashboard({ data, user, monthLabel, now }: any) {
-  const { instructor, sessions, availability, upcoming, cancelled, stats, blocksCount, lastModification, availabilitySummary } = data
+  const { instructor, students = [], sessions, availability, upcoming, cancelled, stats, blocksCount, lastModification, availabilitySummary } = data
   const avatarUrl = (user.user_metadata?.avatar_url as string | undefined) ?? null
   const name = instructor.name ?? user.user_metadata?.name ?? 'Instructor 4U'
   const initials = (name[0] ?? 'I').toUpperCase()
@@ -214,6 +224,7 @@ function InstructorDashboard({ data, user, monthLabel, now }: any) {
               <MetricCard icon="check"    value={stats.completed}      label="Completadas"  hint="Este mes"      color="green" />
               <MetricCard icon="clock"    value={stats.todayUpcoming}  label="Hoy"          hint="Proximas hoy"  color="orange" />
               <MetricCard icon="x"        value={stats.cancelled}      label="Canceladas"   hint="Este mes"      color="red" />
+              <MetricCard icon="users"    value={stats.activeStudents} label="Mis alumnos"  hint={`${stats.monthStudents ?? 0} con clase este mes`} color="orange" />
             </div>
           </section>
 
@@ -246,9 +257,61 @@ function InstructorDashboard({ data, user, monthLabel, now }: any) {
             />
           </section>
 
-          {/* Alumnos activos */}
+          {/* Mis alumnos */}
+          <section id="alumnos" className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+            <SectionTitle
+              title="Mis alumnos"
+              subtitle={`${students.length} alumno${students.length !== 1 ? 's' : ''} a tu cargo — historial completo.`}
+            />
+            {students.length === 0 ? (
+              <p className="mt-4 text-sm text-gray-400">Aun no tienes alumnos con clases registradas.</p>
+            ) : (
+              <div className="mt-4 overflow-x-auto">
+                <table className="w-full text-sm min-w-[560px]">
+                  <thead>
+                    <tr className="border-b border-gray-100 text-left text-xs uppercase tracking-wider text-gray-400">
+                      <th className="pb-2 pr-4 font-semibold">Alumno</th>
+                      <th className="pb-2 pr-4 font-semibold">Curso</th>
+                      <th className="pb-2 pr-4 font-semibold">Ultima asistencia</th>
+                      <th className="pb-2 pr-4 font-semibold">Proxima clase</th>
+                      <th className="pb-2 font-semibold text-right">Tomadas / Total</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {students.map((st: any) => (
+                      <tr key={st.id}>
+                        <td className="py-2.5 pr-4">
+                          <div className="flex items-center gap-2.5">
+                            <span className="h-8 w-8 shrink-0 rounded-full bg-orange-100 text-[#ff7a00] flex items-center justify-center font-bold text-xs">
+                              {(st.name ?? '?')[0].toUpperCase()}
+                            </span>
+                            <div className="min-w-0">
+                              <p className="font-semibold text-gray-900 truncate">{st.name}</p>
+                              {st.phone && <p className="text-xs text-gray-400">{st.phone}</p>}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-2.5 pr-4 text-gray-500">{st.course ?? '—'}</td>
+                        <td className="py-2.5 pr-4 text-gray-500">{fechaCorta(st.lastAttended)}</td>
+                        <td className="py-2.5 pr-4 text-gray-500">
+                          {st.nextSession
+                            ? `${fechaCorta(st.nextSession.scheduled_date)} ${st.nextSession.start_time?.slice(0, 5)}`
+                            : '—'}
+                        </td>
+                        <td className="py-2.5 text-right font-semibold text-gray-900">
+                          {st.completed} / {st.total}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+
+          {/* Proximas clases */}
           {upcoming.length > 0 && (
-            <section id="alumnos" className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+            <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
               <SectionTitle title="Proximas clases" subtitle="Tus clases confirmadas y pendientes este mes." />
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 {upcoming.slice(0, 6).map((s: any) => (

@@ -302,8 +302,48 @@ export async function getInstructorDashboardData(userId: string, email?: string 
 
   const lastMod = lastLog ? (lastLog as any).created_at : null
 
+  // Alumnos del instructor: historial completo, no solo el mes en curso.
+  const { data: allSessions } = await adminClient
+    .from('class_sessions')
+    .select('id, student_id, scheduled_date, start_time, status, course:courses(name), student:students(id, name, phone)')
+    .eq('instructor_id', instructor.id)
+    .order('scheduled_date', { ascending: false })
+
+  const history = (allSessions ?? []) as any[] // eslint-disable-line @typescript-eslint/no-explicit-any
+  const studentsMap = new Map<string, any>() // eslint-disable-line @typescript-eslint/no-explicit-any
+  for (const s of history) {
+    if (!s.student_id) continue
+    let row = studentsMap.get(s.student_id)
+    if (!row) {
+      row = {
+        id: s.student_id,
+        name: s.student?.name ?? 'Alumno',
+        phone: s.student?.phone ?? null,
+        course: s.course?.name ?? null,
+        total: 0, completed: 0, cancelled: 0, noShow: 0,
+        lastAttended: null as string | null,
+        nextSession: null as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+      }
+      studentsMap.set(s.student_id, row)
+    }
+    row.total++
+    if (s.status === 'completed') {
+      row.completed++
+      // history viene ordenado por fecha desc → la primera completada es la última asistencia
+      if (!row.lastAttended) row.lastAttended = s.scheduled_date
+    }
+    if (s.status === 'cancelled') row.cancelled++
+    if (s.status === 'no_show') row.noShow++
+    if (s.scheduled_date >= today && (s.status === 'pending' || s.status === 'confirmed')) {
+      const cur = row.nextSession
+      if (!cur || s.scheduled_date + s.start_time < cur.scheduled_date + cur.start_time) row.nextSession = s
+    }
+  }
+  const students = [...studentsMap.values()].sort((a, b) => a.name.localeCompare(b.name))
+
   return {
     instructor,
+    students,
     sessions: monthSessions,
     availability: availability ?? [],
     upcoming,
@@ -320,7 +360,8 @@ export async function getInstructorDashboardData(userId: string, email?: string 
       weekScheduled: upcoming.length,
       completed: monthSessions.filter(s => s.status === 'completed').length,
       cancelled: cancelled.length,
-      activeStudents: uniqueStudents.size,
+      activeStudents: students.length,
+      monthStudents: uniqueStudents.size,
       todayUpcoming: upcoming.filter(s => s.scheduled_date === today).length,
     },
   }

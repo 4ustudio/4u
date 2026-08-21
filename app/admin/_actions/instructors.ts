@@ -14,6 +14,9 @@ async function assertAdmin(): Promise<{ error: string } | null> {
 }
 
 export async function getInstructors() {
+  const authErr = await assertAdmin()
+  if (authErr) throw new Error(authErr.error)
+
   const adminClient = createAdminClient()
   const [{ data, error }, { data: schedules }, { data: sessions }] = await Promise.all([
     adminClient.from('instructors').select('*').order('name'),
@@ -189,6 +192,9 @@ export async function createInstructorAction(
 }
 
 export async function getInstructorById(id: string) {
+  const authErr = await assertAdmin()
+  if (authErr) throw new Error(authErr.error)
+
   const adminClient = createAdminClient()
   const { data, error } = await adminClient
     .from('instructors')
@@ -211,6 +217,9 @@ export async function saveAdminInstructorAvailabilityAction(
   instructorId: string,
   slots: Array<{ day_of_week: number; start_time: string; end_time: string }>
 ): Promise<{ success?: boolean; error?: string }> {
+  const authErr = await assertAdmin()
+  if (authErr) return authErr
+
   const adminClient = createAdminClient()
   await adminClient.from('instructor_availability').delete().eq('instructor_id', instructorId)
   if (slots.length > 0) {

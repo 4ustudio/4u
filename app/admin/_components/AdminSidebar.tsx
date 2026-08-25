@@ -7,88 +7,40 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import type { AppRole } from '@/lib/auth/roles'
-import { canAccessSalesDashboard, getRoleLabel, hasAcademicAccess, isSuperAdmin } from '@/lib/auth/roles'
+import { canAccessSalesDashboard, getRoleLabel, hasAcademicAccess } from '@/lib/auth/roles'
 import { useAdminTheme } from './AdminThemeProvider'
+import {
+  MdSpaceDashboard,
+  MdCalendarMonth,
+  MdGroup,
+  MdAutorenew,
+  MdSchool,
+  MdDescription,
+  MdShoppingCart,
+  MdPersonAddAlt,
+  MdShowChart,
+  MdCreditCard,
+  MdBolt,
+  MdBarChart,
+  MdRestartAlt,
+  MdClose,
+  MdMenu,
+} from 'react-icons/md'
 
 const Icon = {
-  dashboard: (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-      <path d="M4 13h6V5H4zm10 6h6V5h-6zM4 19h6v-4H4z" />
-    </svg>
-  ),
-  agenda: (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-      <path d="M8 2v4M16 2v4M4 9h16M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" />
-    </svg>
-  ),
-  students: (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-    </svg>
-  ),
-  retention: (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-      <path d="M3 12a9 9 0 0 1 15.5-6.2" />
-      <path d="M21 12a9 9 0 0 1-15.5 6.2" />
-      <path d="M18 3v5h-5M6 21v-5h5M12 8v4l3 2" />
-    </svg>
-  ),
-  instructors: (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7M18 3l2 2-5 5" />
-    </svg>
-  ),
-  enrollments: (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-      <polyline points="14 2 14 8 20 8" />
-      <path d="M8 13h8M8 17h5" />
-    </svg>
-  ),
-  ventas: (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-      <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13 5.4 5M7 13l-2 6h13" />
-      <circle cx="9" cy="19" r="1.2" />
-      <circle cx="18" cy="19" r="1.2" />
-    </svg>
-  ),
-  leads: (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-      <path d="m18 2 4 4-14 14H4v-4Z" />
-      <path d="M14 6l4 4" />
-    </svg>
-  ),
-  activity: (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-    </svg>
-  ),
-  pagos: (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-      <rect x="2" y="5" width="20" height="14" rx="2" />
-      <path d="M2 10h20" />
-    </svg>
-  ),
-  automations: (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-      <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-    </svg>
-  ),
-  metrics: (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-      <path d="M3 3v18h18" />
-      <path d="M7 16l4-4 4 4 4-6" />
-    </svg>
-  ),
-  reactivacion: (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-      <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
-      <path d="M21 3v5h-5" />
-    </svg>
-  ),
+  dashboard:    <MdSpaceDashboard className="h-5 w-5" aria-hidden="true" />,
+  agenda:       <MdCalendarMonth className="h-5 w-5" aria-hidden="true" />,
+  students:     <MdGroup className="h-5 w-5" aria-hidden="true" />,
+  retention:    <MdAutorenew className="h-5 w-5" aria-hidden="true" />,
+  instructors:  <MdSchool className="h-5 w-5" aria-hidden="true" />,
+  enrollments:  <MdDescription className="h-5 w-5" aria-hidden="true" />,
+  ventas:       <MdShoppingCart className="h-5 w-5" aria-hidden="true" />,
+  leads:        <MdPersonAddAlt className="h-5 w-5" aria-hidden="true" />,
+  activity:     <MdShowChart className="h-5 w-5" aria-hidden="true" />,
+  pagos:        <MdCreditCard className="h-5 w-5" aria-hidden="true" />,
+  automations:  <MdBolt className="h-5 w-5" aria-hidden="true" />,
+  metrics:      <MdBarChart className="h-5 w-5" aria-hidden="true" />,
+  reactivacion: <MdRestartAlt className="h-5 w-5" aria-hidden="true" />,
 }
 
 type NavGroup = 'general' | 'comercial' | 'academico' | 'sistema'
@@ -113,7 +65,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/admin',                   label: 'Dashboard',      compactLabel: 'Inicio',       icon: Icon.dashboard,    area: 'shared',     group: 'general' },
   { href: '/admin/ventas',            label: 'Comercial',      compactLabel: 'Ingresos',     icon: Icon.ventas,       area: 'executive',  group: 'comercial' },
   { href: '/admin/leads',             label: 'Leads',          compactLabel: 'Prospectos',   icon: Icon.leads,        area: 'executive',  group: 'comercial' },
-  { href: '/admin/enrollments',       label: 'Inscripciones',  compactLabel: 'Matrículas',   icon: Icon.enrollments,  area: 'academic',   group: 'comercial' },
+  { href: '/admin/enrollments',       label: 'Formularios',    compactLabel: 'Matrículas',   icon: Icon.enrollments,  area: 'academic',   group: 'comercial' },
   { href: '/admin/pagos',             label: 'Pagos',          compactLabel: 'Cobros',       icon: Icon.pagos,        area: 'executive',  group: 'comercial' },
   { href: '/admin/agenda',            label: 'Clases',         compactLabel: 'Agenda',       icon: Icon.agenda,       area: 'academic',   group: 'academico' },
   { href: '/admin/students',          label: 'Estudiantes',    compactLabel: 'Alumnos',      icon: Icon.students,     area: 'academic',   group: 'academico' },
@@ -229,28 +181,6 @@ export default function AdminSidebar({ role }: { role: AppRole | null }) {
         })}
       </nav>
 
-      <div className="mt-auto px-4 pb-5 pt-3">
-        <div className="overflow-hidden rounded-[22px] border flex" style={{ borderColor: 'var(--adm-border-2)', background: 'var(--adm-surface-3)' }}>
-          <div className="relative w-28 shrink-0">
-            <Image
-              src="/images/hero/Banner-principal-2.jpg.jpeg"
-              alt="4U Studio Academy"
-              fill
-              className="object-cover object-[48%_35%] opacity-85"
-              sizes="112px"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent" style={{ '--tw-gradient-to': 'var(--adm-gradient-stop)' } as React.CSSProperties} />
-          </div>
-          <div className="px-4 py-4">
-            <p className="text-[10px] uppercase tracking-[0.24em]" style={{ color: 'var(--adm-brand-muted)' }}>4U Studio Academy</p>
-            <p className="mt-1.5 text-xs leading-5" style={{ color: 'var(--adm-text-muted)' }}>
-              {isSuperAdmin(role)
-                ? 'Vista ejecutiva para seguir ventas, retención y reactivación.'
-                : 'Seguimiento claro para la operación académica y comercial.'}
-            </p>
-          </div>
-        </div>
-      </div>
     </aside>
   )
 }
@@ -306,9 +236,7 @@ export function MobileMenuDrawer({ role }: { role: AppRole | null }) {
             style={{ borderColor: 'var(--adm-border)', background: 'var(--adm-card)', color: 'var(--adm-text-muted)' }}
             aria-label="Cerrar menú"
           >
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <path d="M18 6 6 18M6 6l12 12" />
-            </svg>
+            <MdClose className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
 
@@ -372,29 +300,6 @@ export function MobileMenuDrawer({ role }: { role: AppRole | null }) {
           })}
         </nav>
 
-        {/* Card inferior */}
-        <div className="px-4 pb-5 pt-3 border-t" style={{ borderColor: 'var(--adm-border)' }}>
-          <div className="overflow-hidden rounded-[18px] border flex" style={{ borderColor: 'var(--adm-border-2)', background: 'var(--adm-surface-3)' }}>
-            <div className="relative w-24 shrink-0">
-              <Image
-                src="/images/hero/Banner-principal-2.jpg.jpeg"
-                alt="4U Studio Academy"
-                fill
-                className="object-cover object-[48%_35%] opacity-85"
-                sizes="96px"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent" style={{ '--tw-gradient-to': 'var(--adm-gradient-stop)' } as React.CSSProperties} />
-            </div>
-            <div className="px-3 py-3">
-              <p className="text-[10px] uppercase tracking-[0.22em]" style={{ color: 'var(--adm-brand-muted)' }}>4U Studio Academy</p>
-              <p className="mt-1 text-[11px] leading-[1.45]" style={{ color: 'var(--adm-text-muted)' }}>
-                {isSuperAdmin(role)
-                  ? 'Vista ejecutiva para ventas, retención y reactivación.'
-                  : 'Seguimiento claro para la operación académica.'}
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   ) : null
@@ -409,9 +314,7 @@ export function MobileMenuDrawer({ role }: { role: AppRole | null }) {
         onClick={() => setOpen(true)}
         aria-label="Abrir menú"
       >
-        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-          <path d="M4 7h16M4 12h16M4 17h16" />
-        </svg>
+        <MdMenu className="h-5 w-5" aria-hidden="true" />
       </button>
 
       {/* Portal: overlay + drawer fuera del header para evitar stacking context */}

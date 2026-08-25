@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import Link from 'next/link'
+import { MdCalendarMonth, MdPersonAdd, MdGroup, MdWarningAmber, MdEventBusy } from 'react-icons/md'
 import type { ClassSession } from '@/types/admin'
 import { ActivityFeed } from './_components/DashboardLive'
 import { getRetentionDashboardData } from './_actions/retention'
@@ -124,15 +125,11 @@ export default async function AdminDashboard() {
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <Link href="/admin/agenda" className="adm-button-primary inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold transition-colors">
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-              <path d="M8 2v4M16 2v4M4 10h16M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/>
-            </svg>
+            <MdCalendarMonth className="h-4 w-4" aria-hidden="true" />
             Ver agenda
           </Link>
           <Link href="/admin/students/nuevo" className="adm-button-secondary inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium transition-colors">
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-              <circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/><path d="M19 8v6M16 11h6"/>
-            </svg>
+            <MdPersonAdd className="h-4 w-4" aria-hidden="true" />
             Nuevo estudiante
           </Link>
         </div>
@@ -141,24 +138,28 @@ export default async function AdminDashboard() {
       {/* KPIs */}
       <section className="grid grid-cols-2 gap-5 xl:grid-cols-4">
         <KpiCard
+          href="/admin/students"
           title="Estudiantes activos"
           value={String(stats.activeStudents)}
           trend="Total con estado activo"
           icon={<UserIcon />}
         />
         <KpiCard
+          href="/admin/agenda"
           title="Clases hoy"
           value={String(stats.todaySessions.length)}
           trend="Programadas para hoy"
           icon={<CalendarIcon />}
         />
         <KpiCard
+          href="/admin/pagos"
           title="Cobros vencidos"
           value={String(stats.overdueCount)}
           trend="Pagos sin saldar"
           icon={<AlertIcon />}
         />
         <KpiCard
+          href="/admin/reactivacion"
           title="Sin próxima clase"
           value={String(retentionDashboard?.without_upcoming_sessions ?? 0)}
           trend="Alumnos activos sin sesión"
@@ -315,9 +316,9 @@ export default async function AdminDashboard() {
   )
 }
 
-function KpiCard({ title, value, trend, icon }: { title: string; value: string; trend: string; icon: React.ReactNode }) {
-  return (
-    <div className="adm-panel adm-kpi-shell rounded-[30px] p-6">
+function KpiCard({ title, value, trend, icon, href }: { title: string; value: string; trend: string; icon: React.ReactNode; href?: string }) {
+  const content = (
+    <div className="adm-panel adm-kpi-shell rounded-[30px] p-6 transition-transform hover:-translate-y-0.5">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.24em]" style={{ color: 'var(--adm-text-faint)' }}>{title}</p>
@@ -333,6 +334,7 @@ function KpiCard({ title, value, trend, icon }: { title: string; value: string; 
       </div>
     </div>
   )
+  return href ? <Link href={href} className="block">{content}</Link> : content
 }
 
 function DashCard({
@@ -398,36 +400,19 @@ function OpsMetric({ label, value, tone }: { label: string; value: number; tone:
 }
 
 function UserIcon() {
-  return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
-      <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-    </svg>
-  )
+  return <MdGroup className="h-5 w-5" aria-hidden="true" />
 }
 
 function CalendarIcon() {
-  return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-      <path d="M8 2v4M16 2v4M4 10h16M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/>
-    </svg>
-  )
+  return <MdCalendarMonth className="h-5 w-5" aria-hidden="true" />
 }
 
 function AlertIcon() {
-  return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/>
-    </svg>
-  )
+  return <MdWarningAmber className="h-5 w-5" aria-hidden="true" />
 }
 
 function NoSessionIcon() {
-  return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-      <path d="M8 2v4M16 2v4M4 10h16M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="m9 14 2 2 4-4"/>
-    </svg>
-  )
+  return <MdEventBusy className="h-5 w-5" aria-hidden="true" />
 }
 
 function RoomIcon() {

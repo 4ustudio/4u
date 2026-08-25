@@ -4,7 +4,7 @@ import { useState, useTransition, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { saveInstructorAvailabilityAction, createInstructorAvailabilityAction, updateInstructorAvailabilityAction, deleteInstructorAvailabilityAction, extendInstructorAvailabilityAction, blockDateForInstructorAction, unblockDateForInstructorAction, getInstructorBlocksAction, getInstructorAvailabilityLogAction } from '../../_actions/student'
 
-const DAY_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes']
+const DAY_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 const DAY_NAMES_FULL = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
 const DEFAULT_START = '10:00'
 const DEFAULT_END = '18:00'
@@ -81,7 +81,7 @@ export default function AvailabilityEditor({ initialAvailability }: Props) {
           </button>
         </div>
 
-        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2">
+        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
           {DAY_NAMES.map((name, i) => {
             const daySlots = slotsByDay(i + 1)
             const hasSlots = daySlots.length > 0
@@ -183,7 +183,7 @@ function HorariosTab({ initialSlots, onSaved }: { initialSlots: Slot[]; onSaved:
   const [isPending, startTransition] = useTransition()
   const [slots, setSlots] = useState<Record<number, TimeRange[]>>(() => {
     const init: Record<number, TimeRange[]> = {}
-    for (let d = 1; d <= 5; d++) {
+    for (let d = 1; d <= 6; d++) {
       const existing = initialSlots.filter(s => s.day_of_week === d)
       init[d] = existing.length > 0
         ? existing.map(s => ({ start: s.start_time.slice(0,5), end: s.end_time.slice(0,5), id: s.id }))
@@ -242,7 +242,7 @@ function HorariosTab({ initialSlots, onSaved }: { initialSlots: Slot[]; onSaved:
     setError(null)
     setSuccess(null)
 
-    for (let d = 1; d <= 5; d++) {
+    for (let d = 1; d <= 6; d++) {
       if (isOverlapping(d)) {
         setError(`${DAY_NAMES[d-1]}: los horarios no pueden solaparse.`)
         return
@@ -257,7 +257,7 @@ function HorariosTab({ initialSlots, onSaved }: { initialSlots: Slot[]; onSaved:
 
     startTransition(async () => {
       const payload: { day_of_week: number; start_time: string; end_time: string }[] = []
-      for (let d = 1; d <= 5; d++) {
+      for (let d = 1; d <= 6; d++) {
         for (const r of slots[d]) {
           payload.push({ day_of_week: d, start_time: r.start + ':00', end_time: r.end + ':00' })
         }

@@ -36,10 +36,7 @@ interface Props {
 }
 
 export default function AdminThemeProvider({ children, className }: Props) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window === 'undefined') return 'dark'
-    return readAdminTheme() ?? 'dark'
-  })
+  const [theme, setTheme] = useState<Theme>('dark')
 
   useEffect(() => {
     const stored = readAdminTheme()

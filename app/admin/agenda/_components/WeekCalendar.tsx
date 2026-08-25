@@ -8,9 +8,9 @@ import type { ClassSession, AvailableSlot } from '@/types/admin'
 import type { Classroom } from './BookSessionModal'
 
 // Slots por día de la semana
-// ISODOW: 1=Lun…5=Vie → 10:00–22:00  |  6=Sáb, 7=Dom → cerrado
+// ISODOW: 1=Lun…6=Sáb → 10:00–22:00  |  7=Dom → cerrado
 function generateSlots(isodow: number): string[] {
-  if (isodow === 6 || isodow === 7) return []
+  if (isodow === 7) return []
   const slots: string[] = []
   for (let h = 10; h <= 22; h++) slots.push(`${String(h).padStart(2, '0')}:00`)
   return slots

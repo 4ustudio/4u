@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { MdAdd, MdSearch, MdCalendarMonth, MdClose, MdPerson, MdRefresh } from 'react-icons/md'
 import { createBrowserClient } from '@supabase/ssr'
 import WeekCalendar from './WeekCalendar'
 import type { ClassSession, AvailableSlot } from '@/types/admin'
@@ -74,7 +75,9 @@ export default function HybridView({
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
 
-    // Nombre único por instancia para evitar conflictos al re-montar
+    // Nombre único por instancia: createBrowserClient() reusa el mismo cliente
+    // singleton en el navegador, y un nombre fijo choca con el canal anterior
+    // si el remount ocurre antes de que termine el removeChannel() async.
     const channelName = `admin-agenda-sessions-${Date.now()}`
     let retry: ReturnType<typeof setTimeout> | undefined
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -112,13 +115,7 @@ export default function HybridView({
     }
   }, []) // sin dependencias — doRefreshRef siempre está actualizado
 
-  // ── Polling cada 30s como fallback ──────────────────────────────
-  useEffect(() => {
-    const id = setInterval(doRefresh, 30_000)
-    return () => clearInterval(id)
-  }, [doRefresh])
-
-  // ── Refresh al volver a la pestaña ──────────────────────────────
+  // ── Refresh al volver a la pestaña (fallback si realtime se perdió mientras estaba en background) ──
   useEffect(() => {
     const onVisible = () => { if (!document.hidden) doRefresh() }
     document.addEventListener('visibilitychange', onVisible)
@@ -167,17 +164,13 @@ export default function HybridView({
             href="/admin/students/nuevo"
             className="flex items-center gap-1.5 text-xs font-semibold text-white bg-orange-500 hover:bg-orange-600 transition-colors px-2.5 py-1.5 rounded-lg shrink-0"
           >
-            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
-              <path d="M12 5v14M5 12h14" />
-            </svg>
+            <MdAdd className="h-3.5 w-3.5" aria-hidden="true" />
             Nuevo
           </Link>
         </div>
 
         <div className="relative">
-          <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-            <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-          </svg>
+          <MdSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/25" aria-hidden="true" />
           <input
             type="text"
             placeholder="Buscar por nombre o teléfono…"
@@ -195,14 +188,10 @@ export default function HybridView({
 
         {selectedId && selectedStudent && (
           <div className="flex items-center gap-2 bg-orange-500/10 border border-orange-500/25 rounded-lg px-3 py-2">
-            <svg className="h-3.5 w-3.5 text-orange-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-              <path d="M8 2v4M16 2v4M4 10h16M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/>
-            </svg>
+            <MdCalendarMonth className="h-3.5 w-3.5 text-orange-400 shrink-0" aria-hidden="true" />
             <span className="text-xs text-orange-300 flex-1 truncate font-medium">{selectedStudent.name}</span>
             <button onClick={() => setSelectedId(null)} className="text-orange-400/50 hover:text-orange-300 shrink-0 transition-colors" title="Ver todos">
-              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
-                <path d="M18 6 6 18M6 6l12 12" />
-              </svg>
+              <MdClose className="h-3.5 w-3.5" aria-hidden="true" />
             </button>
           </div>
         )}
@@ -263,9 +252,7 @@ export default function HybridView({
                       className="flex items-center gap-1 text-[11px] text-white/30 hover:text-orange-400 transition-colors w-fit"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                        <circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>
-                      </svg>
+                      <MdPerson className="h-3 w-3" aria-hidden="true" />
                       Ver perfil completo
                     </Link>
                   </div>
@@ -318,15 +305,7 @@ export default function HybridView({
           title="Actualizar ahora"
           className="flex items-center gap-1.5 text-[11px] text-white/30 hover:text-white/60 transition-colors px-2 py-1 rounded-lg hover:bg-white/5 shrink-0"
         >
-          <svg
-            className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`}
-            viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"
-          >
-            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
-            <path d="M21 3v5h-5" />
-            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
-            <path d="M3 21v-5h5" />
-          </svg>
+          <MdRefresh className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`} aria-hidden="true" />
           <span>{refreshing ? 'Actualizando…' : lastRefresh.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}</span>
           <span className={`h-1.5 w-1.5 rounded-full ${refreshing ? 'bg-orange-400 animate-pulse' : 'bg-green-400'}`} />
         </button>

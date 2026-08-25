@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import { redirect } from 'next/navigation'
-import { createAuthServerClient } from '@/lib/supabase/server'
+import { getAuthUser } from '@/lib/supabase/server'
 import AdminSidebar, { MobileMenuDrawer } from './_components/AdminSidebar'
 import { RealtimeProvider } from '@/components/admin/RealtimeProvider'
 import NotificationBell from '@/components/admin/NotificationBell'
@@ -13,8 +13,7 @@ import { getRoleLabel, resolveRole } from '@/lib/auth/roles'
 export const metadata = { title: 'Panel Admin — 4U Studio Academy' }
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createAuthServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await getAuthUser()
 
   if (!user) {
     redirect('/mi-cuenta/login')

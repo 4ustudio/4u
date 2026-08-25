@@ -1,7 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
-import { createAuthServerClient } from '@/lib/supabase/server'
+import { getAuthUser } from '@/lib/supabase/server'
 import { activity } from '@/lib/activity'
 import type { ActivityAction } from '@/lib/activity'
 import type { WhatsAppTemplate } from '@/lib/whatsapp'
@@ -9,8 +9,7 @@ import type { WhatsAppTemplate } from '@/lib/whatsapp'
 
 async function getActorInfo() {
   try {
-    const supabase = await createAuthServerClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await getAuthUser()
     if (!user) return null
     return {
       actor_user_id: user.id,

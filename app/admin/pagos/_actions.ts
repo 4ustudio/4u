@@ -1,7 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
-import { createAuthServerClient } from '@/lib/supabase/server'
+import { getAuthUser } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { activity } from '@/lib/activity'
 import { getBirthdayBenefitStatus } from '@/lib/students/birthday'
@@ -9,8 +9,7 @@ import { createBoldPaymentLink } from '@/lib/bold/client'
 import { resolveRole, hasAdminAccess } from '@/lib/auth/roles'
 
 async function assertAdmin(): Promise<{ error: string } | null> {
-  const supabase = await createAuthServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await getAuthUser()
   const role = resolveRole(user)
   if (!hasAdminAccess(role)) return { error: 'No autorizado.' }
   return null
@@ -142,8 +141,7 @@ export interface StudentOption {
 
 async function getActorInfo(): Promise<{ actor_name: string; actor_user_id: string; actor_role: string } | null> {
   try {
-    const supabase = await createAuthServerClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await getAuthUser()
     if (!user) return null
     return {
       actor_user_id: user.id,

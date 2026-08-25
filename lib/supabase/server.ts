@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { createServerClient as createSSRClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
@@ -36,3 +37,10 @@ export async function createAuthServerClient() {
     }
   )
 }
+
+// Usuario autenticado, memoizado por request — dedupe getUser() entre
+// layout, layouts anidados y server actions que corren en el mismo render.
+export const getAuthUser = cache(async () => {
+  const supabase = await createAuthServerClient()
+  return supabase.auth.getUser()
+})

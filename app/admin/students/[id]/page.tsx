@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin'
+import { MdVisibility, MdDownload } from 'react-icons/md'
 import { getSignedUrl } from '@/lib/storage'
 import type { StudentDocument } from '@/types/documents'
 function db(): any { return createAdminClient() }
@@ -21,7 +22,15 @@ async function getStudentData(id: string) {
   const now = new Date()
   const today = now.toISOString().split('T')[0]
 
-  const [{ data: student, error }, usageResult, { data: sessions }, { data: schedules }] = await Promise.all([
+  const [
+    { data: student, error },
+    usageResult,
+    { data: sessions },
+    { data: schedules },
+    { data: courses },
+    { data: classrooms },
+    { data: instructors },
+  ] = await Promise.all([
     db().from('students').select('*').eq('id', id).single(),
     db().rpc('fn_monthly_usage', {
       p_student_id: id,
@@ -41,24 +50,27 @@ async function getStudentData(id: string) {
       .eq('student_id', id)
       .order('day_of_week')
       .order('start_time'),
+    db().from('courses').select('id, name').eq('is_active', true),
+    db().from('classrooms').select('id, name, classroom_courses(course_id)').eq('is_active', true),
+    db().from('instructors').select('id, name').eq('status', 'active'),
   ])
 
   if (error || !student) return null
 
-  const { data: leadConsent } = student.lead_id
-    ? await db()
-        .from('enrollments')
-        .select('terms_accepted, terms_accepted_at, terms_version, data_consent, image_consent, preferred_time')
-        .eq('id', student.lead_id)
-        .maybeSingle()
-    : { data: null }
-
-  // Documentos legales firmados
-  const { data: rawDocs } = await db()
-    .from('student_documents')
-    .select('*')
-    .or(`student_id.eq.${student.id}${student.lead_id ? `,enrollment_id.eq.${student.lead_id}` : ''}`)
-    .order('signed_at', { ascending: false })
+  const [{ data: leadConsent }, { data: rawDocs }] = await Promise.all([
+    student.lead_id
+      ? db()
+          .from('enrollments')
+          .select('terms_accepted, terms_accepted_at, terms_version, data_consent, image_consent, preferred_time')
+          .eq('id', student.lead_id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    db()
+      .from('student_documents')
+      .select('*')
+      .or(`student_id.eq.${student.id}${student.lead_id ? `,enrollment_id.eq.${student.lead_id}` : ''}`)
+      .order('signed_at', { ascending: false }),
+  ])
 
   const sessionsList = (sessions ?? []) as any[]
   const upcoming = sessionsList.filter(s => s.scheduled_date >= today).slice(0, 10)
@@ -79,6 +91,9 @@ async function getStudentData(id: string) {
       image_consent:     boolean | null
     } | null,
     studentDocs: (rawDocs ?? []) as StudentDocument[],
+    courses:     courses ?? [],
+    classrooms:  classrooms ?? [],
+    instructors: instructors ?? [],
   }
 }
 
@@ -88,7 +103,7 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
   const data   = await getStudentData(id)
   if (!data) notFound()
 
-  const { student, usage, upcoming, past, schedules, leadPreferredTime, leadConsent, studentDocs } = data
+  const { student, usage, upcoming, past, schedules, leadPreferredTime, leadConsent, studentDocs, courses, classrooms, instructors } = data
   const [retention, studentPayments] = await Promise.all([
     getStudentRetentionProfile(id),
     getStudentPayments(id),
@@ -110,13 +125,6 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
   )
   const now = new Date()
   const monthLabel = now.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' })
-
-  // Datos para los modales de horarios
-  const [{ data: courses }, { data: classrooms }, { data: instructors }] = await Promise.all([
-    db().from('courses').select('id, name').eq('is_active', true),
-    db().from('classrooms').select('id, name, classroom_courses(course_id)').eq('is_active', true),
-    db().from('instructors').select('id, name').eq('status', 'active'),
-  ])
 
   return (
     <div className="space-y-5 w-full page-animate">
@@ -325,14 +333,14 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
                         {viewUrl && (
                           <a href={viewUrl} target="_blank" rel="noopener noreferrer"
                              className="inline-flex items-center gap-1 rounded-md border border-white/15 px-2 py-1 text-[11px] font-medium text-white/60 hover:text-white hover:border-white/30 transition-colors">
-                            <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            <MdVisibility className="h-3 w-3" />
                             Ver
                           </a>
                         )}
                         {downloadUrl && (
                           <a href={downloadUrl} download={`Contrato_4UStudio_v${doc.document_version}.pdf`}
                              className="inline-flex items-center gap-1 rounded-md bg-[#ff7a00]/20 border border-[#ff7a00]/30 px-2 py-1 text-[11px] font-medium text-[#ff7a00] hover:bg-[#ff7a00]/30 transition-colors">
-                            <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            <MdDownload className="h-3 w-3" />
                             PDF
                           </a>
                         )}

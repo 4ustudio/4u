@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { createAuthServerClient } from '@/lib/supabase/server'
+import { getAuthUser } from '@/lib/supabase/server'
 import type { Database, Json } from '@/types/supabase'
 
 type FollowupRow = Database['public']['Tables']['student_followups']['Row']
@@ -171,8 +171,7 @@ export async function getFollowupMetrics(): Promise<FollowupMetrics> {
 // ── Mutations ─────────────────────────────────────────────────
 
 export async function createFollowup(formData: FormData): Promise<{ ok: boolean; error?: string }> {
-  const supabase = await createAuthServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await getAuthUser()
 
   const studentId = formData.get('student_id') as string
   const followupType = formData.get('followup_type') as string
@@ -213,8 +212,7 @@ export async function createFollowup(formData: FormData): Promise<{ ok: boolean;
 }
 
 export async function markStudentRecovered(studentId: string): Promise<{ ok: boolean; error?: string }> {
-  const supabase = await createAuthServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await getAuthUser()
   const db = createAdminClient()
 
   // Leer estado previo para el log

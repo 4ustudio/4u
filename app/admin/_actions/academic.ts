@@ -1,15 +1,14 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
-import { createAuthServerClient } from '@/lib/supabase/server'
+import { getAuthUser } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { resolveRole, hasAcademicAccess } from '@/lib/auth/roles'
 import { safeRecordStudentActivity } from './retention'
 import { activity } from '@/lib/activity'
 
 async function assertAdmin(): Promise<{ error: string } | null> {
-  const supabase = await createAuthServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await getAuthUser()
   const role = resolveRole(user)
   if (!hasAcademicAccess(role)) return { error: 'No autorizado.' }
   return null
@@ -182,13 +181,15 @@ export async function getAcademicDashboardData(): Promise<AcademicDashboardData>
     }))
 
   // Matching: instructores disponibles
-  const { data: instructorCoursesRaw } = await admin
-    .from('instructor_courses')
-    .select('instructor_id, course:courses(name)')
-  const { data: instructorAvailRaw } = await admin
-    .from('instructor_availability')
-    .select('instructor_id')
-    .eq('status' as never, 'available' as never)
+  const [{ data: instructorCoursesRaw }, { data: instructorAvailRaw }] = await Promise.all([
+    admin
+      .from('instructor_courses')
+      .select('instructor_id, course:courses(name)'),
+    admin
+      .from('instructor_availability')
+      .select('instructor_id')
+      .eq('status' as never, 'available' as never),
+  ])
   const availMap = new Map<string, number>()
   for (const a of (instructorAvailRaw as any[]) ?? []) {
     availMap.set(a.instructor_id, (availMap.get(a.instructor_id) ?? 0) + 1)

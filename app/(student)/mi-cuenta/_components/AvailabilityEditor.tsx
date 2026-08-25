@@ -3,7 +3,7 @@
 import { useState, useTransition, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createPortal } from 'react-dom'
-import { saveInstructorAvailabilityAction, createInstructorAvailabilityAction, updateInstructorAvailabilityAction, deleteInstructorAvailabilityAction, extendInstructorAvailabilityAction, blockDateForInstructorAction, unblockDateForInstructorAction, getInstructorBlocksAction, getInstructorAvailabilityLogAction, getUnassignedStudentsForDay, assignInstructorToScheduleAction } from '../../_actions/student'
+import { createInstructorAvailabilityAction, updateInstructorAvailabilityAction, deleteInstructorAvailabilityAction, extendInstructorAvailabilityAction, blockDateForInstructorAction, unblockDateForInstructorAction, getInstructorBlocksAction, getInstructorAvailabilityLogAction, getUnassignedStudentsForDay, assignInstructorToScheduleAction } from '../../_actions/student'
 import { OPEN_SCHEDULE_EVENT } from './scheduleEvents'
 
 const DAY_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
@@ -175,6 +175,7 @@ function HorariosTab({ initialSlots, onSaved, focusDay }: { initialSlots: Slot[]
   useEffect(() => { focusRef.current?.scrollIntoView({ block: 'center' }) }, [])
 
   function toggleDay(day: number) {
+    if (isPending) return
     const wasActive = slots[day].length > 0
     if (wasActive) {
       const toDelete = slots[day].filter(r => r.id)
@@ -184,14 +185,16 @@ function HorariosTab({ initialSlots, onSaved, focusDay }: { initialSlots: Slot[]
       })
       return
     }
+    setSlots(prev => ({ ...prev, [day]: [{ start: DEFAULT_START, end: DEFAULT_END, id: undefined }] }))
     startTransition(async () => {
       const result = await createInstructorAvailabilityAction({ day_of_week: day, start_time: DEFAULT_START + ':00', end_time: DEFAULT_END + ':00' })
-      if (result.error) { setError(result.error); return }
-      setSlots(prev => ({ ...prev, [day]: [{ start: DEFAULT_START, end: DEFAULT_END, id: result.id }] }))
+      if (result.error) { setError(result.error); setSlots(prev => ({ ...prev, [day]: [] })); return }
+      setSlots(prev => ({ ...prev, [day]: prev[day].map(r => r.id ? r : { ...r, id: result.id }) }))
     })
   }
 
   function addSlot(day: number) {
+    if (isPending) return
     startTransition(async () => {
       const result = await createInstructorAvailabilityAction({ day_of_week: day, start_time: DEFAULT_START + ':00', end_time: DEFAULT_END + ':00' })
       if (result.error) { setError(result.error); return }
@@ -243,18 +246,8 @@ function HorariosTab({ initialSlots, onSaved, focusDay }: { initialSlots: Slot[]
       }
     }
 
-    startTransition(async () => {
-      const payload: { day_of_week: number; start_time: string; end_time: string }[] = []
-      for (let d = 1; d <= 6; d++) {
-        for (const r of slots[d]) {
-          payload.push({ day_of_week: d, start_time: r.start + ':00', end_time: r.end + ':00' })
-        }
-      }
-      const result = await saveInstructorAvailabilityAction(payload)
-      if (result.error) { setError(result.error); return }
-      setSuccess('Horarios guardados correctamente.')
-      setTimeout(onSaved, 1000)
-    })
+    setSuccess('Horarios guardados correctamente.')
+    setTimeout(onSaved, 1000)
   }
 
   function handleEditStart(day: number, idx: number) {
@@ -404,10 +397,9 @@ function HorariosTab({ initialSlots, onSaved, focusDay }: { initialSlots: Slot[]
       <div className="pt-3 flex justify-end">
         <button
           onClick={handleSave}
-          disabled={isPending}
-          className="px-6 py-2.5 rounded-xl bg-[#ff7a00] text-sm font-bold text-white hover:bg-orange-600 transition-colors disabled:opacity-60 disabled:cursor-wait"
+          className="px-6 py-2.5 rounded-xl bg-[#ff7a00] text-sm font-bold text-white hover:bg-orange-600 transition-colors"
         >
-          {isPending ? 'Guardando...' : 'Guardar cambios'}
+          Guardar cambios
         </button>
       </div>
     </div>

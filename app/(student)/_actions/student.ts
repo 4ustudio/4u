@@ -1069,7 +1069,7 @@ export async function createInstructorAvailabilityAction(
 
   if (error) return { error: error.message }
 
-  await logAvailabilityAction({
+  void logAvailabilityAction({
     instructorId: instructor.id,
     availabilityId: newSlot?.id,
     action: 'created',
@@ -1106,7 +1106,7 @@ export async function updateInstructorAvailabilityAction(
 
   if (error) return { error: error.message }
 
-  await logAvailabilityAction({
+  void logAvailabilityAction({
     instructorId: instructor.id,
     availabilityId: id,
     action: 'updated',
@@ -1141,7 +1141,7 @@ export async function deleteInstructorAvailabilityAction(
   const { error } = await admin().from('instructor_availability').delete().eq('id', id).eq('instructor_id', instructor.id)
   if (error) return { error: error.message }
 
-  await logAvailabilityAction({
+  void logAvailabilityAction({
     instructorId: instructor.id,
     availabilityId: id,
     action: 'deleted',

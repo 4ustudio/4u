@@ -12,6 +12,7 @@ import SchedulePdfButton from './_components/SchedulePdfButton'
 import ClassesCalendar from './_components/ClassesCalendar'
 import InstructorCalendar from './_components/InstructorCalendar'
 import AvailabilityEditor from './_components/AvailabilityEditor'
+import InstructorQuickActions from './_components/InstructorQuickActions'
 import InstructorCancelSession from './_components/InstructorCancelSession'
 import OpenScheduleLink from './_components/OpenScheduleLink'
 import { InstrumentIcon } from './_components/instruments'
@@ -187,7 +188,7 @@ function StudentDashboard({ data, monthSessions, user, monthLabel, now, access }
 }
 
 function InstructorDashboard({ data, user, monthLabel, now }: any) {
-  const { instructor, students = [], sessions, availability, upcoming, cancelled, stats, blocksCount, lastModification, availabilitySummary } = data
+  const { instructor, students = [], sessions, availability, upcoming, cancelled, stats, blocksCount, lastModification, availabilitySummary, quickActionData } = data
   const avatarUrl = (user.user_metadata?.avatar_url as string | undefined) ?? null
   const name = instructor.name ?? user.user_metadata?.name ?? 'Instructor 4U'
   const initials = (name[0] ?? 'I').toUpperCase()
@@ -218,15 +219,7 @@ function InstructorDashboard({ data, user, monthLabel, now }: any) {
           />
 
           {/* Accesos rápidos */}
-          <div>
-            <h2 className="mb-3 font-poppins text-base font-extrabold text-gray-950">Acciones rápidas</h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <ActionCard icon="calendar"  title="Ver horarios"     text="Consulta tu disponibilidad" href="#disponibilidad" />
-              <ActionCard icon="briefcase" title="Gestionar clases" text="Crea y organiza tus clases" href="#calendario" />
-              <ActionCard icon="lock"      title="Bloquear fechas"  text="Indica fechas no disponibles" href="#disponibilidad" />
-              <ActionCard icon="users"     title="Mis alumnos"      text="Ver y gestionar estudiantes" href="#alumnos" />
-            </div>
-          </div>
+          <InstructorQuickActions initialData={quickActionData} />
 
           {/* Calendario + panel lateral */}
           <section id="calendario" className="grid gap-6 lg:grid-cols-[1fr_320px] items-start">
@@ -245,7 +238,7 @@ function InstructorDashboard({ data, user, monthLabel, now }: any) {
             <aside className="space-y-4">
               <SidebarList
                 title="Próximas clases"
-                viewAllHref="/mi-cuenta/clases-mes"
+                viewAllHref="#calendario"
                 items={upcoming.slice(0, 3).map((s: any) => ({
                   key: s.id,
                   dotColor: statusMeta(s.status).hex,

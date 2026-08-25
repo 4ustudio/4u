@@ -3,8 +3,8 @@
 import { useState, useTransition, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createPortal } from 'react-dom'
-import { createInstructorAvailabilityAction, updateInstructorAvailabilityAction, deleteInstructorAvailabilityAction, extendInstructorAvailabilityAction, blockDateForInstructorAction, unblockDateForInstructorAction, getInstructorBlocksAction, getInstructorAvailabilityLogAction, getUnassignedStudentsForDay, assignInstructorToScheduleAction } from '../../_actions/student'
-import { OPEN_SCHEDULE_EVENT } from './scheduleEvents'
+import { saveInstructorAvailabilityAction, createInstructorAvailabilityAction, updateInstructorAvailabilityAction, deleteInstructorAvailabilityAction, extendInstructorAvailabilityAction, blockDateForInstructorAction, unblockDateForInstructorAction, getInstructorBlocksAction, getInstructorAvailabilityLogAction, getUnassignedStudentsForDay, assignInstructorToScheduleAction } from '../../_actions/student'
+import { OPEN_SCHEDULE_EVENT, type OpenScheduleDetail, type ScheduleModalTab } from './scheduleEvents'
 
 const DAY_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 const DAY_NAMES_FULL = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
@@ -60,12 +60,14 @@ export default function AvailabilityEditor({ initialAvailability }: Props) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [focusDay, setFocusDay] = useState<number | null>(null)
+  const [initialTab, setInitialTab] = useState<ScheduleModalTab>('horarios')
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
   useEffect(() => {
     const openIt = (e: Event) => {
-      const day = (e as CustomEvent<number>).detail
-      setFocusDay(typeof day === 'number' ? day : null)
+      const detail = (e as CustomEvent<OpenScheduleDetail>).detail
+      setFocusDay(typeof detail === 'number' ? detail : detail?.focusDay ?? null)
+      setInitialTab(typeof detail === 'number' ? 'horarios' : detail?.tab ?? 'horarios')
       setOpen(true)
     }
     window.addEventListener(OPEN_SCHEDULE_EVENT, openIt)
@@ -78,6 +80,7 @@ export default function AvailabilityEditor({ initialAvailability }: Props) {
         <AvailabilityModal
           initialSlots={initialAvailability}
           focusDay={focusDay}
+          initialTab={initialTab}
           onClose={() => setOpen(false)}
           onSaved={() => { setOpen(false); router.refresh() }}
         />,
@@ -88,13 +91,14 @@ export default function AvailabilityEditor({ initialAvailability }: Props) {
 }
 
 /* ── Modal de edición completo ──────────────────────────────────── */
-function AvailabilityModal({ initialSlots, focusDay, onClose, onSaved }: {
+function AvailabilityModal({ initialSlots, focusDay, initialTab, onClose, onSaved }: {
   initialSlots: Slot[]
   focusDay?: number | null
+  initialTab: ScheduleModalTab
   onClose: () => void
   onSaved: () => void
 }) {
-  const [tab, setTab] = useState<'horarios' | 'bloqueos' | 'historial'>('horarios')
+  const [tab, setTab] = useState<ScheduleModalTab>(initialTab)
   const [mounted, setMounted] = useState(false)
   useEffect(() => {
     setMounted(true)
@@ -175,30 +179,25 @@ function HorariosTab({ initialSlots, onSaved, focusDay }: { initialSlots: Slot[]
   useEffect(() => { focusRef.current?.scrollIntoView({ block: 'center' }) }, [])
 
   function toggleDay(day: number) {
-    if (isPending) return
     const wasActive = slots[day].length > 0
     if (wasActive) {
-      const toDelete = slots[day].filter(r => r.id)
       setSlots(prev => ({ ...prev, [day]: [] }))
-      startTransition(async () => {
-        for (const r of toDelete) await deleteInstructorAvailabilityAction(r.id!)
-      })
       return
     }
     setSlots(prev => ({ ...prev, [day]: [{ start: DEFAULT_START, end: DEFAULT_END, id: undefined }] }))
-    startTransition(async () => {
-      const result = await createInstructorAvailabilityAction({ day_of_week: day, start_time: DEFAULT_START + ':00', end_time: DEFAULT_END + ':00' })
-      if (result.error) { setError(result.error); setSlots(prev => ({ ...prev, [day]: [] })); return }
-      setSlots(prev => ({ ...prev, [day]: prev[day].map(r => r.id ? r : { ...r, id: result.id }) }))
-    })
   }
 
   function addSlot(day: number) {
     if (isPending) return
+    const latestEnd = slots[day].reduce((latest, slot) => slot.end > latest ? slot.end : latest, '09:00')
+    const [hour] = latestEnd.split(':').map(Number)
+    if (hour >= 21) { setError('No puedes agregar más franjas después de las 21:00.'); return }
+    const start = latestEnd
+    const end = `${String(hour + 1).padStart(2, '0')}:00`
     startTransition(async () => {
-      const result = await createInstructorAvailabilityAction({ day_of_week: day, start_time: DEFAULT_START + ':00', end_time: DEFAULT_END + ':00' })
+      const result = await createInstructorAvailabilityAction({ day_of_week: day, start_time: start + ':00', end_time: end + ':00' })
       if (result.error) { setError(result.error); return }
-      setSlots(prev => ({ ...prev, [day]: [...prev[day], { start: DEFAULT_START, end: DEFAULT_END, id: result.id }] }))
+      setSlots(prev => ({ ...prev, [day]: [...prev[day], { start, end, id: result.id }] }))
     })
   }
 
@@ -246,8 +245,15 @@ function HorariosTab({ initialSlots, onSaved, focusDay }: { initialSlots: Slot[]
       }
     }
 
-    setSuccess('Horarios guardados correctamente.')
-    setTimeout(onSaved, 1000)
+    const payload = Object.entries(slots).flatMap(([day, ranges]) => ranges.map(range => ({
+      day_of_week: Number(day), start_time: `${range.start}:00`, end_time: `${range.end}:00`,
+    })))
+    startTransition(async () => {
+      const result = await saveInstructorAvailabilityAction(payload)
+      if (result.error) { setError(result.error); return }
+      setSuccess('Horarios guardados correctamente.')
+      setTimeout(onSaved, 600)
+    })
   }
 
   function handleEditStart(day: number, idx: number) {
@@ -347,22 +353,24 @@ function HorariosTab({ initialSlots, onSaved, focusDay }: { initialSlots: Slot[]
 
             {/* Franjas horarias con acciones individuales */}
             {active && slots[day].map((range, idx) => (
-              <div key={idx} className="mt-2 pl-14">
+              <div key={idx} className="mt-2 pl-0 sm:pl-14">
                 {editingSlot?.day === day && editingSlot?.idx === idx ? (
                   /* Modo edición */
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs text-gray-500">De</span>
+                  <div className="flex items-end gap-2 rounded-lg bg-white/80 p-2 sm:p-0 flex-wrap">
+                    <label className="text-xs font-medium text-gray-600">De
                     <input type="time" value={editValue.start} min="07:00" max="22:00" step="3600"
                       onChange={e => setEditValue(p => ({ ...p, start: e.target.value }))}
-                      className="rounded-lg border border-gray-200 px-2 py-1.5 text-xs font-semibold text-gray-800 focus:border-[#ff7a00]/50 focus:outline-none bg-white w-[88px]"
+                      className="mt-1 block h-9 w-[112px] rounded-lg border border-gray-300 bg-white px-2 text-sm font-semibold text-gray-900 focus:border-[#ff7a00] focus:outline-none"
                     />
-                    <span className="text-xs text-gray-500">a</span>
+                    </label>
+                    <label className="text-xs font-medium text-gray-600">A
                     <input type="time" value={editValue.end} min="07:00" max="22:00" step="3600"
                       onChange={e => setEditValue(p => ({ ...p, end: e.target.value }))}
-                      className="rounded-lg border border-gray-200 px-2 py-1.5 text-xs font-semibold text-gray-800 focus:border-[#ff7a00]/50 focus:outline-none bg-white w-[88px]"
+                      className="mt-1 block h-9 w-[112px] rounded-lg border border-gray-300 bg-white px-2 text-sm font-semibold text-gray-900 focus:border-[#ff7a00] focus:outline-none"
                     />
-                    <button onClick={handleEditSave} className="text-xs font-bold text-green-600 hover:text-green-700 px-2">Guardar</button>
-                    <button onClick={() => setEditingSlot(null)} className="text-xs text-gray-500 hover:text-gray-700">Cancelar</button>
+                    </label>
+                    <button onClick={handleEditSave} className="h-9 rounded-lg bg-green-600 px-3 text-xs font-bold text-white hover:bg-green-700">Guardar</button>
+                    <button onClick={() => setEditingSlot(null)} className="h-9 rounded-lg px-2 text-xs font-medium text-gray-600 hover:bg-gray-100">Cancelar</button>
                   </div>
                 ) : extendingSlot?.day === day && extendingSlot?.idx === idx ? (
                   /* Modo ampliar */
@@ -397,9 +405,10 @@ function HorariosTab({ initialSlots, onSaved, focusDay }: { initialSlots: Slot[]
       <div className="pt-3 flex justify-end">
         <button
           onClick={handleSave}
+          disabled={isPending}
           className="px-6 py-2.5 rounded-xl bg-[#ff7a00] text-sm font-bold text-white hover:bg-orange-600 transition-colors"
         >
-          Guardar cambios
+          {isPending ? 'Guardando…' : 'Guardar cambios'}
         </button>
       </div>
     </div>
@@ -409,6 +418,7 @@ function HorariosTab({ initialSlots, onSaved, focusDay }: { initialSlots: Slot[]
 /* ── Alumnos sin instructor que calzan con un día ─────────────────── */
 function MatchingStudents({ day, ranges }: { day: number; ranges: TimeRange[] }) {
   const [isPending, startTransition] = useTransition()
+  const [requested, setRequested] = useState(false)
   const [matches, setMatches] = useState<any[] | null>(null) // eslint-disable-line @typescript-eslint/no-explicit-any
   const [assigning, setAssigning] = useState<string | null>(null)
   const [assignedIds, setAssignedIds] = useState<Set<string>>(new Set())
@@ -416,6 +426,7 @@ function MatchingStudents({ day, ranges }: { day: number; ranges: TimeRange[] })
   const rangesKey = ranges.map(r => `${r.start}-${r.end}`).join(',')
 
   useEffect(() => {
+    if (!requested) return
     if (ranges.length === 0) { setMatches([]); return }
     startTransition(async () => {
       const lists = await Promise.all(
@@ -431,7 +442,7 @@ function MatchingStudents({ day, ranges }: { day: number; ranges: TimeRange[] })
       setMatches(merged)
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [day, rangesKey])
+  }, [day, rangesKey, requested])
 
   function handleAssign(scheduleId: string) {
     setAssigning(scheduleId)
@@ -447,7 +458,9 @@ function MatchingStudents({ day, ranges }: { day: number; ranges: TimeRange[] })
   return (
     <div className="mt-3 pl-14">
       <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Alumnos sin instructor en este horario</p>
-      {isPending && matches === null
+      {!requested
+        ? <button type="button" onClick={() => setRequested(true)} className="text-xs font-semibold text-[#ff7a00] hover:text-orange-600">Ver alumnos disponibles</button>
+        : isPending && matches === null
         ? <p className="text-xs text-gray-400">Buscando…</p>
         : visible.length === 0
           ? <p className="text-xs text-gray-400">No hay alumnos esperando instructor en este horario.</p>

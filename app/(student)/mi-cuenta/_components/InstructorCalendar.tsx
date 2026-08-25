@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useMemo, useEffect, useTransition, useActionState } from 'react'
+import { useState, useMemo, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { createPortal } from 'react-dom'
-import { getInstructorMonthSessions, instructorUpdateStatusAction, instructorRegisterAttendanceAction } from '../../_actions/student'
+import { cancelInstructorSessionAction, getInstructorMonthSessions, instructorRegisterAttendanceAction } from '../../_actions/student'
 import { InstrumentIcon } from './instruments'
 import { statusMeta, STATUS_LEGEND } from './statusMeta'
 import { getHolidayMapForYears } from '@/lib/calendar/colombia-holidays'
@@ -37,6 +37,12 @@ function fmtDateShort(iso: string) {
 }
 function fmtDateFull(iso: string) {
   return new Date(iso + 'T12:00:00').toLocaleDateString('es-CO', { weekday:'long', day:'numeric', month:'long', year:'numeric' })
+}
+function cancellationWhatsAppUrl(phone: string, studentName: string, course: string, date: string, time: string) {
+  const number = phone.replace(/\D/g, '').replace(/^57/, '')
+  const dateLabel = new Date(`${date}T12:00:00`).toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' })
+  const message = `Hola ${studentName}, te informamos que tu clase de ${course} del ${dateLabel} a las ${time} ha sido cancelada por el instructor. Por favor comunícate con 4U Studio Academy para reprogramarla. Disculpa los inconvenientes.`
+  return `https://wa.me/57${number}?text=${encodeURIComponent(message)}`
 }
 
 interface Props {
@@ -195,9 +201,11 @@ export default function InstructorCalendar({ initialSessions, initialYear, initi
 
                   return (
                     <div key={i}
-                      onClick={() => holiday
-                        ? setSelectedDay(dateStr)
-                        : window.dispatchEvent(new CustomEvent(OPEN_SCHEDULE_EVENT, { detail: new Date(dateStr + 'T12:00:00').getDay() }))}
+                      onClick={() => {
+                        if (holiday || daySessions.length > 1) { setSelectedDay(dateStr); return }
+                        if (daySessions.length === 1) { setSelected(daySessions[0]); return }
+                        window.dispatchEvent(new CustomEvent(OPEN_SCHEDULE_EVENT, { detail: new Date(dateStr + 'T12:00:00').getDay() }))
+                      }}
                       className={`min-h-[38px] sm:min-h-[76px] rounded-lg border p-1 sm:p-1.5 flex flex-col gap-0.5 transition-colors cursor-pointer ${!holiday ? 'hover:border-[#ff7a00]/40' : ''} ${cellStyle}`}>
                       <span className={`text-[10px] sm:text-[11px] font-bold leading-none ${isToday ? 'text-[#ff7a00]' : holiday ? 'text-yellow-700' : daySessions.length > 0 ? 'text-gray-800' : 'text-gray-400'}`}>
                         {cell.day}
@@ -374,15 +382,22 @@ export default function InstructorCalendar({ initialSessions, initialYear, initi
 }
 
 /* ── Modal sesión instructor ─────────────────────────────────────────── */
-const initialStatusState     = { error: undefined as string | undefined, success: undefined as boolean | undefined }
-const initialAttendanceState = { error: undefined as string | undefined, success: undefined as boolean | undefined }
-
 function SessionModal({ session: s, onClose }: { session: any; onClose: () => void }) {
   const router = useRouter()
-  const meta = statusMeta(s.status)
-  const [open, setOpen] = useState<'status' | 'attendance' | null>(null)
-  const [statusState, statusAction, statusPending] = useActionState(instructorUpdateStatusAction, initialStatusState)
-  const [attState, attAction, attPending] = useActionState(instructorRegisterAttendanceAction, initialAttendanceState)
+  const [open, setOpen] = useState<'attendance' | null>(null)
+  const [attendance, setAttendance] = useState<string | null>(s.attendance_status ?? null)
+  const [attendanceMessage, setAttendanceMessage] = useState<string | null>(null)
+  const [attendanceError, setAttendanceError] = useState<string | null>(null)
+  const [attendancePending, startAttendanceTransition] = useTransition()
+  const [showCancelConfirmation, setShowCancelConfirmation] = useState(false)
+  const [cancelMessage, setCancelMessage] = useState<string | null>(null)
+  const [cancelError, setCancelError] = useState<string | null>(null)
+  const [cancelPending, startCancelTransition] = useTransition()
+  const [isCancelled, setIsCancelled] = useState(false)
+  const [cancellationNotice, setCancellationNotice] = useState<{ name: string; phone: string | null; course: string; date: string; time: string } | null>(null)
+  const meta = statusMeta(isCancelled ? 'cancelled' : s.status)
+  const hoursUntilClass = (new Date(`${s.scheduled_date}T${s.start_time}`).getTime() - Date.now()) / (1000 * 60 * 60)
+  const isShortNotice = hoursUntilClass < 24
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'
@@ -391,11 +406,50 @@ function SessionModal({ session: s, onClose }: { session: any; onClose: () => vo
     return () => { document.body.style.overflow = ''; window.removeEventListener('keydown', onKey) }
   }, [onClose])
 
-  useEffect(() => {
-    if (statusState.success || attState.success) { router.refresh(); onClose() }
-  }, [statusState.success, attState.success, router, onClose])
+  function registerAttendance(value: 'attended' | 'absent' | 'no_show') {
+    const previousAttendance = attendance
+    setAttendance(value)
+    setAttendanceError(null)
+    setAttendanceMessage('Guardando asistencia…')
+    startAttendanceTransition(async () => {
+      const formData = new FormData()
+      formData.set('session_id', s.id)
+      formData.set('attendance', value)
+      const result = await instructorRegisterAttendanceAction({}, formData)
+      if (result.error) {
+        setAttendance(previousAttendance)
+        setAttendanceMessage(null)
+        setAttendanceError(result.error)
+        return
+      }
+      setAttendanceMessage('Asistencia registrada correctamente.')
+      router.refresh()
+    })
+  }
 
-  const isClosed = ['cancelled', 'rescheduled', 'completed', 'no_show'].includes(s.status)
+  function cancelSession() {
+    setCancelError(null)
+    setCancelMessage('Cancelando clase…')
+    startCancelTransition(async () => {
+      const result = await cancelInstructorSessionAction(s.id)
+      if (result.error) {
+        setCancelMessage(null)
+        setCancelError(result.error)
+        return
+      }
+      setShowCancelConfirmation(false)
+      setIsCancelled(true)
+      setCancellationNotice({
+        name: result.student?.name ?? 'Estudiante',
+        phone: result.student?.phone ?? null,
+        course: result.session?.course ?? s.course?.name ?? 'Clase',
+        date: result.session?.date ?? s.scheduled_date,
+        time: result.session?.time ?? fmtTime(s.start_time),
+      })
+      setCancelMessage('Clase cancelada correctamente.')
+      router.refresh()
+    })
+  }
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
@@ -428,35 +482,6 @@ function SessionModal({ session: s, onClose }: { session: any; onClose: () => vo
 
             <AttendanceAccordion
               title="Registrar asistencia"
-              subtitle="¿El estudiante asistió? Marca el resultado de la clase."
-              open={open === 'status'}
-              onToggle={() => setOpen(p => p === 'status' ? null : 'status')}
-            >
-              <div className="space-y-1.5 pt-1">
-                {([
-                  { status: 'completed', label: '✅ Completada — el estudiante asistió' },
-                  { status: 'no_show',   label: '🚫 No asistió' },
-                  { status: 'confirmed', label: '🕐 Confirmar — aún no ocurre' },
-                  { status: 'pending',   label: '⏳ Pendiente' },
-                ] as const).map(({ status, label }) => (
-                  <form key={status} action={statusAction}>
-                    <input type="hidden" name="session_id" value={s.id} />
-                    <input type="hidden" name="new_status" value={status} />
-                    <button type="submit" disabled={statusPending || s.status === status}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-xs border transition-colors disabled:opacity-40 ${
-                        s.status === status ? 'bg-gray-100 text-gray-500 border-gray-200' : 'bg-white text-gray-700 border-gray-200 hover:border-[#ff7a00]/40'
-                      }`}
-                    >
-                      {label}{s.status === status && <span className="ml-1.5 text-gray-400">(actual)</span>}
-                    </button>
-                  </form>
-                ))}
-                {statusState.error && <p className="text-red-500 text-xs">{statusState.error}</p>}
-              </div>
-            </AttendanceAccordion>
-
-            <AttendanceAccordion
-              title="Registrar asistencia (simple)"
               subtitle="Marca si el estudiante asistió, faltó o no se presentó."
               open={open === 'attendance'}
               onToggle={() => setOpen(p => p === 'attendance' ? null : 'attendance')}
@@ -467,23 +492,70 @@ function SessionModal({ session: s, onClose }: { session: any; onClose: () => vo
                   { value: 'absent',   label: '❌ Ausente' },
                   { value: 'no_show',  label: '🚫 No se presentó' },
                 ] as const).map(({ value, label }) => (
-                  <form key={value} action={attAction}>
-                    <input type="hidden" name="session_id" value={s.id} />
-                    <input type="hidden" name="attendance" value={value} />
-                    <button type="submit" disabled={attPending}
+                  <button key={value} type="button" onClick={() => registerAttendance(value)} disabled={attendancePending || cancelPending || isCancelled}
                       className={`w-full text-left px-3 py-2 rounded-lg text-xs border transition-colors disabled:opacity-40 ${
-                        s.attendance_status === value ? 'bg-gray-100 text-gray-500 border-gray-200' : 'bg-white text-gray-700 border-gray-200 hover:border-[#ff7a00]/40'
+                        attendance === value ? 'bg-gray-100 text-gray-500 border-gray-200' : 'bg-white text-gray-700 border-gray-200 hover:border-[#ff7a00]/40'
                       }`}
                     >
-                      {label}{s.attendance_status === value && <span className="ml-1.5 text-gray-400">(actual)</span>}
+                      {label}{attendance === value && <span className="ml-1.5 text-gray-400">(actual)</span>}
                     </button>
-                  </form>
                 ))}
-                {attState.error && <p className="text-red-500 text-xs">{attState.error}</p>}
+                {attendanceMessage && <p className="text-green-700 text-xs font-medium" role="status">{attendanceMessage}</p>}
+                {attendanceError && <p className="text-red-500 text-xs" role="alert">{attendanceError}</p>}
               </div>
             </AttendanceAccordion>
 
-            {isClosed && <p className="text-[11px] text-gray-400 mt-1">Esta clase ya está cerrada, pero puedes actualizar su estado.</p>}
+            {!isCancelled && !attendance && !['cancelled', 'completed', 'no_show', 'rescheduled'].includes(s.status) && (
+              <div className="pt-2">
+                {!showCancelConfirmation ? (
+                  <button type="button" onClick={() => setShowCancelConfirmation(true)} disabled={attendancePending || cancelPending}
+                    className="text-xs font-bold text-red-600 hover:text-red-700 disabled:opacity-50">
+                    Cancelar clase
+                  </button>
+                ) : (
+                  <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+                    <p className="text-xs font-medium text-red-800">¿Seguro que deseas cancelar esta clase?</p>
+                    {isShortNotice && (
+                      <div className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-[11px] leading-relaxed text-amber-800">
+                        Faltan menos de 24 horas. La cancelación no descontará clases al alumno, pero debes notificarle para que pueda reprogramar.
+                      </div>
+                    )}
+                    <div className="mt-2 flex gap-2">
+                      <button type="button" onClick={cancelSession} disabled={cancelPending}
+                        className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-bold text-white disabled:opacity-60">
+                        {cancelPending ? 'Cancelando…' : 'Sí, cancelar'}
+                      </button>
+                      <button type="button" onClick={() => setShowCancelConfirmation(false)} disabled={cancelPending}
+                        className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600">
+                        No
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {cancelError && <p className="mt-2 text-xs text-red-600" role="alert">{cancelError}</p>}
+              </div>
+            )}
+
+            {!isCancelled && ['completed', 'no_show', 'rescheduled'].includes(s.status) && (
+              <p className="pt-2 text-[11px] text-gray-500">
+                Esta clase ya tiene un resultado registrado y no se puede cancelar.
+              </p>
+            )}
+
+            {isCancelled && cancelMessage && (
+              <div className="mt-2 rounded-lg border border-green-200 bg-green-50 p-3" role="status">
+                <p className="text-xs font-bold text-green-800">{cancelMessage}</p>
+                {isShortNotice && <p className="mt-1 text-[11px] text-amber-800">La cancelación se hizo con menos de 24 horas; recuerda avisar al alumno.</p>}
+                {cancellationNotice?.phone ? (
+                  <a href={cancellationWhatsAppUrl(cancellationNotice.phone, cancellationNotice.name, cancellationNotice.course, cancellationNotice.date, cancellationNotice.time)} target="_blank" rel="noopener noreferrer"
+                    className="mt-2 inline-flex rounded-md bg-[#25D366] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#1ebe5a]">
+                    Notificar a {cancellationNotice.name.split(' ')[0]}
+                  </a>
+                ) : (
+                  <p className="mt-1 text-[11px] text-gray-600">El alumno no tiene teléfono registrado para notificarle.</p>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -527,8 +599,8 @@ function DayModal({ dateStr, holiday, sessions, onSelectSession, onClose }: {
         style={{ border:`1px solid ${hs.border}` }} onClick={e => e.stopPropagation()}>
         <div className="flex items-start justify-between gap-3 mb-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: hs.text }}>Festivo nacional</p>
-            <h3 className="text-xl font-bold text-gray-900 font-poppins">{holiday?.title ?? '—'}</h3>
+            <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: hs.text }}>{holiday ? 'Festivo nacional' : 'Clases del día'}</p>
+            <h3 className="text-xl font-bold text-gray-900 font-poppins">{holiday?.title ?? 'Clases programadas'}</h3>
             <p className="text-sm text-gray-500 mt-1 capitalize">{fmtDateFull(dateStr)}</p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 mt-1 shrink-0">

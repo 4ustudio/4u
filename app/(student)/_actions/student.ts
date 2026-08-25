@@ -263,7 +263,7 @@ export async function getInstructorDashboardData(userId: string, email?: string 
 
   if (!instructor) return null
 
-  const [{ data: sessions }, { data: availability }, { count: blockCount }, { data: lastLog }] = await Promise.all([
+  const [{ data: sessions }, { data: availability }, { count: blockCount }, { data: lastLog }, { data: enrolledStudents }, { data: activeCourses }, { data: activeClassrooms }] = await Promise.all([
     adminClient
       .from('class_sessions')
       .select('*, student:students(name, phone), course:courses(name), classroom:classrooms(name), instructor:instructors(name)')
@@ -289,6 +289,9 @@ export async function getInstructorDashboardData(userId: string, email?: string 
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle(),
+    adminClient.from('students').select('id, name, phone').eq('status', 'active').order('name'),
+    adminClient.from('courses').select('id, name').eq('is_active', true).order('name'),
+    adminClient.from('classrooms').select('id, name').eq('is_active', true).order('name'),
   ])
 
   const monthSessions = (sessions ?? []) as any[] // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -346,6 +349,11 @@ export async function getInstructorDashboardData(userId: string, email?: string 
     students,
     sessions: monthSessions,
     availability: availability ?? [],
+    quickActionData: {
+      students: enrolledStudents ?? [],
+      courses: activeCourses ?? [],
+      classrooms: activeClassrooms ?? [],
+    },
     upcoming,
     cancelled,
     blocksCount: blockCount ?? 0,
@@ -491,7 +499,10 @@ export async function getAvailableSlotsAction(date: string): Promise<Array<{
     p_date: date,
     p_student_id: student?.id ?? null,
   })
-  return (data ?? []) as any[] // eslint-disable-line @typescript-eslint/no-explicit-any
+  const rows = (data ?? []) as any[] // eslint-disable-line @typescript-eslint/no-explicit-any
+  const times = [...new Set(rows.filter(slot => slot.is_available).map(slot => slot.slot_time.slice(0, 5)))] as string[]
+  const instructors = new Map(await Promise.all(times.map(async time => [time, await getInstructorForSlotAction(date, time)] as const)))
+  return rows.map(slot => ({ ...slot, is_available: !!slot.is_available && !!instructors.get(slot.slot_time.slice(0, 5)) }))
 }
 
 export async function getInstructorForSlotAction(date: string, time: string): Promise<{ id: string; name: string } | null> {
@@ -501,17 +512,27 @@ export async function getInstructorForSlotAction(date: string, time: string): Pr
   const endTime = `${String(h + 1).padStart(2, '0')}:00:00`
   const startTime = `${time}:00`
 
-  const { data } = await admin()
+  const adminClient = admin()
+  const [{ data }, { data: busy }, { data: blocks }] = await Promise.all([
+    adminClient
     .from('instructors')
     .select('id, name, instructor_availability!inner(day_of_week, start_time, end_time)')
     .eq('status', 'active')
     .eq('instructor_availability.day_of_week', isodow)
     .lte('instructor_availability.start_time', startTime)
     .gte('instructor_availability.end_time', endTime)
+    .order('name'),
+    adminClient.from('class_sessions').select('instructor_id, start_time').eq('scheduled_date', date).not('status', 'in', '(cancelled,rescheduled)'),
+    adminClient.from('instructor_availability_blocks').select('instructor_id, start_time, end_time').eq('blocked_date', date),
+  ])
 
   if (!data || data.length === 0) return null
-  const pick = data[Math.floor(Math.random() * data.length)]
-  return { id: pick.id, name: pick.name }
+  const pick = data.find((candidate: any) => {
+    const classConflict = (busy ?? []).some((session: any) => session.instructor_id === candidate.id && session.start_time < endTime && startTime < session.start_time.slice(0, 5) + ':00')
+    const blocked = (blocks ?? []).some((block: any) => block.instructor_id === candidate.id && block.start_time < endTime && startTime < block.end_time)
+    return !classConflict && !blocked
+  })
+  return pick ? { id: pick.id, name: pick.name } : null
 }
 
 export async function getActiveCoursesAction(): Promise<{ id: string; name: string }[]> {
@@ -833,6 +854,50 @@ export async function assignInstructorToScheduleAction(scheduleId: string): Prom
   return { success: true }
 }
 
+export async function getEnrolledStudentsForInstructorAction(): Promise<{ id: string; name: string; phone: string | null }[]> {
+  const session = await getInstructorFromSession()
+  if (!session) return []
+  const { data } = await admin().from('students').select('id, name, phone').eq('status', 'active').order('name')
+  return (data ?? []) as { id: string; name: string; phone: string | null }[]
+}
+
+export async function getInstructorCoursesAction(): Promise<{ id: string; name: string }[]> {
+  const session = await getInstructorFromSession()
+  if (!session) return []
+  const { data } = await admin().from('courses').select('id, name').eq('is_active', true).order('name')
+  return (data ?? []) as { id: string; name: string }[]
+}
+
+export async function getInstructorClassroomsAction(): Promise<{ id: string; name: string }[]> {
+  const session = await getInstructorFromSession()
+  if (!session) return []
+  const { data } = await admin().from('classrooms').select('id, name').eq('is_active', true).order('name')
+  return (data ?? []) as { id: string; name: string }[]
+}
+
+export async function createInstructorClassAction(input: { studentId: string; courseId: string; classroomId: string; date: string; time: string }): Promise<{ success?: boolean; error?: string }> {
+  const session = await getInstructorFromSession()
+  if (!session) return { error: 'Sesión expirada.' }
+  if (!input.studentId || !input.courseId || !input.classroomId || !/^\d{4}-\d{2}-\d{2}$/.test(input.date) || !/^(0[8-9]|1\d|2[0-1]):00$/.test(input.time)) return { error: 'Datos de clase inválidos.' }
+  if (input.date < new Date().toISOString().slice(0, 10)) return { error: 'No puedes crear clases en una fecha pasada.' }
+
+  const adminClient = admin()
+  const [{ data: student }, { data: course }, { data: classroom }] = await Promise.all([
+    adminClient.from('students').select('id').eq('id', input.studentId).eq('status', 'active').maybeSingle(),
+    adminClient.from('courses').select('id').eq('id', input.courseId).eq('is_active', true).maybeSingle(),
+    adminClient.from('classrooms').select('id').eq('id', input.classroomId).eq('is_active', true).maybeSingle(),
+  ])
+  if (!student) return { error: 'El alumno ya no está inscrito.' }
+  if (!course) return { error: 'El curso no está activo.' }
+  if (!classroom) return { error: 'El salón no está disponible.' }
+  const startTime = `${input.time}:00`
+  const { data, error } = await adminClient.rpc('fn_book_session', { p_student_id: input.studentId, p_classroom_id: input.classroomId, p_course_id: input.courseId, p_date: input.date, p_start_time: startTime, p_instructor_id: session.instructor.id })
+  const result = data as { success?: boolean; error?: string } | null
+  if (error || !result?.success) return { error: result?.error ?? error?.message ?? 'No se pudo crear la clase.' }
+  revalidatePath('/mi-cuenta')
+  return { success: true }
+}
+
 // ─── Instructor: registrar asistencia de sus propias clases ─────────
 
 async function assertOwnSession(sessionId: string) {
@@ -903,11 +968,15 @@ export async function instructorRegisterAttendanceAction(
   if (error) return { error: error.message }
 
   if (attendance === 'attended') {
-    await safeRecordStudentActivity(classSession.student_id, 'class_completed', 'Asistencia registrada por el instructor.', { session_id: sessionId, course_id: classSession.course_id })
-    await activity.attendanceConfirmed({ session_id: sessionId, student_name: 'Estudiante', source: 'instructor' })
+    await Promise.all([
+      safeRecordStudentActivity(classSession.student_id, 'class_completed', 'Asistencia registrada por el instructor.', { session_id: sessionId, course_id: classSession.course_id }),
+      activity.attendanceConfirmed({ session_id: sessionId, student_name: 'Estudiante', source: 'instructor' }),
+    ])
   } else {
-    await safeRecordStudentActivity(classSession.student_id, 'class_no_show', 'Inasistencia registrada por el instructor.', { session_id: sessionId })
-    await activity.attendanceNoShow({ session_id: sessionId, student_name: 'Estudiante', source: 'instructor' })
+    await Promise.all([
+      safeRecordStudentActivity(classSession.student_id, 'class_no_show', 'Inasistencia registrada por el instructor.', { session_id: sessionId }),
+      activity.attendanceNoShow({ session_id: sessionId, student_name: 'Estudiante', source: 'instructor' }),
+    ])
   }
 
   revalidatePath('/mi-cuenta')
@@ -1056,6 +1125,13 @@ export async function createInstructorAvailabilityAction(
   if (!session) return { error: 'Sesión expirada.' }
   const { instructor, userEmail, userName } = session
 
+  const { data: existing } = await admin().from('instructor_availability')
+    .select('id, start_time, end_time')
+    .eq('instructor_id', instructor.id)
+    .eq('day_of_week', slot.day_of_week)
+  const overlaps = (existing ?? []).some((current: any) => current.start_time < slot.end_time && slot.start_time < current.end_time)
+  if (overlaps) return { error: 'Ya existe una franja que se cruza con ese horario.' }
+
   const { error, data: newSlot } = await admin().from('instructor_availability').insert({
     instructor_id: instructor.id,
     day_of_week: slot.day_of_week,
@@ -1067,7 +1143,7 @@ export async function createInstructorAvailabilityAction(
     valid_until: slot.valid_until ?? null,
   }).select().single()
 
-  if (error) return { error: error.message }
+  if (error) return { error: error.code === '23505' ? 'Ese horario ya existe. Actualiza la página e inténtalo de nuevo.' : error.message }
 
   void logAvailabilityAction({
     instructorId: instructor.id,
@@ -1402,18 +1478,19 @@ export async function cancelInstructorSessionAction(sessionId: string): Promise<
 
   if (updateErr) return { error: updateErr.message }
 
-  await safeRecordStudentActivity(
-    session.student_id,
-    'class_cancelled',
-    `Clase cancelada por instructor${isShortNotice ? ' (menos de 24h de anticipación)' : ''}.`,
-    { session_id: sessionId, scheduled_date: session.scheduled_date, start_time: session.start_time }
-  )
-
-  await activity.sessionCancelled({
-    session_id:   sessionId,
-    scheduled_at: `${session.scheduled_date} ${session.start_time}`,
-    source:       'instructor-portal',
-  })
+  await Promise.all([
+    safeRecordStudentActivity(
+      session.student_id,
+      'class_cancelled',
+      `Clase cancelada por instructor${isShortNotice ? ' (menos de 24h de anticipación)' : ''}.`,
+      { session_id: sessionId, scheduled_date: session.scheduled_date, start_time: session.start_time }
+    ),
+    activity.sessionCancelled({
+      session_id:   sessionId,
+      scheduled_at: `${session.scheduled_date} ${session.start_time}`,
+      source:       'instructor-portal',
+    }),
+  ])
 
   revalidatePath('/mi-cuenta')
   return {

@@ -833,6 +833,87 @@ export async function assignInstructorToScheduleAction(scheduleId: string): Prom
   return { success: true }
 }
 
+// ─── Instructor: registrar asistencia de sus propias clases ─────────
+
+async function assertOwnSession(sessionId: string) {
+  const session = await getInstructorFromSession()
+  if (!session) return { error: 'Sesión expirada.' } as const
+
+  const { data: classSession } = await admin()
+    .from('class_sessions')
+    .select('student_id, scheduled_date, start_time, course_id, status, instructor_id')
+    .eq('id', sessionId)
+    .maybeSingle()
+
+  if (!classSession) return { error: 'Clase no encontrada.' } as const
+  if (classSession.instructor_id !== session.instructor.id) return { error: 'No autorizado.' } as const
+
+  return { classSession } as const
+}
+
+export async function instructorUpdateStatusAction(
+  _prev: { error?: string; success?: boolean },
+  formData: FormData
+): Promise<{ error?: string; success?: boolean }> {
+  const sessionId  = formData.get('session_id') as string
+  const newStatus  = formData.get('new_status') as string
+  if (!sessionId || !newStatus) return { error: 'Faltan datos.' }
+  if (!['completed', 'no_show', 'confirmed', 'pending'].includes(newStatus)) return { error: 'Estado inválido.' }
+
+  const check = await assertOwnSession(sessionId)
+  if ('error' in check) return { error: check.error }
+  const { classSession } = check
+
+  const { error } = await admin().from('class_sessions').update({ status: newStatus }).eq('id', sessionId)
+  if (error) return { error: error.message }
+
+  if (newStatus === 'completed') {
+    await safeRecordStudentActivity(classSession.student_id, 'class_completed', 'Clase marcada como completada por el instructor.', { session_id: sessionId, course_id: classSession.course_id })
+    await activity.attendanceConfirmed({ session_id: sessionId, student_name: 'Estudiante', source: 'instructor' })
+  }
+  if (newStatus === 'no_show') {
+    await safeRecordStudentActivity(classSession.student_id, 'class_no_show', 'Clase marcada como no asistió por el instructor.', { session_id: sessionId })
+    await activity.attendanceNoShow({ session_id: sessionId, student_name: 'Estudiante', source: 'instructor' })
+  }
+
+  revalidatePath('/mi-cuenta')
+  return { success: true }
+}
+
+export async function instructorRegisterAttendanceAction(
+  _prev: { error?: string; success?: boolean },
+  formData: FormData
+): Promise<{ error?: string; success?: boolean }> {
+  const sessionId  = formData.get('session_id') as string
+  const attendance = formData.get('attendance') as string
+  if (!sessionId || !attendance) return { error: 'Faltan datos.' }
+  if (!['attended', 'absent', 'no_show'].includes(attendance)) return { error: 'Estado de asistencia inválido.' }
+
+  const check = await assertOwnSession(sessionId)
+  if ('error' in check) return { error: check.error }
+  const { classSession } = check
+
+  const update: Record<string, unknown> = {
+    attendance_status: attendance,
+    attendance_confirmed_at: new Date().toISOString(),
+    status: attendance === 'attended' ? 'completed' : 'no_show',
+  }
+
+  const { error } = await admin().from('class_sessions').update(update as never).eq('id', sessionId)
+  if (error) return { error: error.message }
+
+  if (attendance === 'attended') {
+    await safeRecordStudentActivity(classSession.student_id, 'class_completed', 'Asistencia registrada por el instructor.', { session_id: sessionId, course_id: classSession.course_id })
+    await activity.attendanceConfirmed({ session_id: sessionId, student_name: 'Estudiante', source: 'instructor' })
+  } else {
+    await safeRecordStudentActivity(classSession.student_id, 'class_no_show', 'Inasistencia registrada por el instructor.', { session_id: sessionId })
+    await activity.attendanceNoShow({ session_id: sessionId, student_name: 'Estudiante', source: 'instructor' })
+  }
+
+  revalidatePath('/mi-cuenta')
+  return { success: true }
+}
+
 // ─── Helpers de sesión para instructor ──────────────────────────────
 
 async function getInstructorFromSession() {
@@ -970,7 +1051,7 @@ export async function saveInstructorAvailabilityAction(
 
 export async function createInstructorAvailabilityAction(
   slot: { day_of_week: number; start_time: string; end_time: string; status?: string; notes?: string; valid_from?: string; valid_until?: string }
-): Promise<{ success?: boolean; error?: string }> {
+): Promise<{ success?: boolean; error?: string; id?: string }> {
   const session = await getInstructorFromSession()
   if (!session) return { error: 'Sesión expirada.' }
   const { instructor, userEmail, userName } = session
@@ -1001,7 +1082,7 @@ export async function createInstructorAvailabilityAction(
   })
 
   revalidatePath('/mi-cuenta')
-  return { success: true }
+  return { success: true, id: newSlot?.id }
 }
 
 // ─── Instructor: actualizar disponibilidad individual ───────────────

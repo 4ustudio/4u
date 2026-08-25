@@ -13,6 +13,7 @@ import ClassesCalendar from './_components/ClassesCalendar'
 import InstructorCalendar from './_components/InstructorCalendar'
 import AvailabilityEditor from './_components/AvailabilityEditor'
 import InstructorCancelSession from './_components/InstructorCancelSession'
+import OpenScheduleLink from './_components/OpenScheduleLink'
 import { InstrumentIcon } from './_components/instruments'
 import { statusMeta } from './_components/statusMeta'
 import BirthdayBenefitCard from './_components/BirthdayBenefitCard'
@@ -36,6 +37,11 @@ function fechaCorta(iso?: string | null) {
   if (!iso) return '—'
   const [y, m, d] = iso.split('-').map(Number)
   return new Date(y, m - 1, d).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: '2-digit' })
+}
+
+function formatDateShort(iso?: string | null) {
+  if (!iso) return '—'
+  return new Date(iso + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' })
 }
 
 // resolveRole da prioridad a app_metadata (solo escribible por service_role);
@@ -188,73 +194,78 @@ function InstructorDashboard({ data, user, monthLabel, now }: any) {
   const memberSince = instructor.created_at
     ? new Date(instructor.created_at).toLocaleDateString('es-CO', { month: 'long', year: 'numeric' })
     : 'marzo 2024'
+  const nextSession = upcoming?.[0] ?? null
+  const monthHours = sessions?.length ?? 0
 
   return (
     <>
       <Header />
       <main className="min-h-screen bg-[#fafafa] px-4 pt-[92px] pb-12">
         <div className="mx-auto max-w-[1180px] space-y-6">
-          <PageTitle subtitle="Administra tus clases, horarios y alumnos." />
+          <PageTitle subtitle="Administra tu enseñanza y tu tiempo." />
 
-          <ProfileHero
+          <InstructorHeroCard
             avatarUrl={avatarUrl}
             initials={initials}
             name={name}
             email={instructor.email ?? user.email}
-            badge="Maestro"
             memberSince={memberSince}
-            action={<InstructorProfileModal name={name} email={instructor.email ?? user.email ?? ''} avatarUrl={avatarUrl} />}
-            right={<InstructorSummary stats={stats} />}
+            editProfile={<InstructorProfileModal name={name} email={instructor.email ?? user.email ?? ''} avatarUrl={avatarUrl} />}
+            monthSessions={sessions?.length ?? 0}
+            activeStudents={stats.activeStudents}
+            nextSession={nextSession}
+            monthHours={monthHours}
           />
 
           {/* Accesos rápidos */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <ActionCard icon="calendar" title="Ver horarios"     text="Tu disponibilidad"        href="#disponibilidad" />
-            <ActionCard icon="briefcase" title="Gestionar clases" text="Ver tus clases del mes"  href="#calendario" />
-            <ActionCard icon="lock"     title="Bloquear fechas"  text="Fechas específicas"     href="#disponibilidad" />
-            <ActionCard icon="users"    title="Mis alumnos"      text="Ver estudiantes activos"   href="#alumnos" />
-            <ActionCard icon="report"   title="Reportes"         text="Tu actividad mensual"     href="/mi-cuenta/clases-mes" />
+          <div>
+            <h2 className="mb-3 font-poppins text-base font-extrabold text-gray-950">Acciones rápidas</h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <ActionCard icon="calendar"  title="Ver horarios"     text="Consulta tu disponibilidad" href="#disponibilidad" />
+              <ActionCard icon="briefcase" title="Gestionar clases" text="Crea y organiza tus clases" href="#calendario" />
+              <ActionCard icon="lock"      title="Bloquear fechas"  text="Indica fechas no disponibles" href="#disponibilidad" />
+              <ActionCard icon="users"     title="Mis alumnos"      text="Ver y gestionar estudiantes" href="#alumnos" />
+            </div>
           </div>
 
-          {/* Métricas */}
-          <section>
-            <SectionTitle title="Resumen de clases" subtitle="Asi va tu actividad este mes." />
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <MetricCard icon="calendar" value={stats.weekScheduled}  label="Proximas"     hint="Confirmadas"   color="blue" />
-              <MetricCard icon="check"    value={stats.completed}      label="Completadas"  hint="Este mes"      color="green" />
-              <MetricCard icon="clock"    value={stats.todayUpcoming}  label="Hoy"          hint="Proximas hoy"  color="orange" />
-              <MetricCard icon="x"        value={stats.cancelled}      label="Canceladas"   hint="Este mes"      color="red" />
-              <MetricCard icon="users"    value={stats.activeStudents} label="Mis alumnos"  hint={`${stats.monthStudents ?? 0} con clase este mes`} color="orange" />
-            </div>
-          </section>
-
-          {/* Próximas clases hoy */}
-          {upcoming.filter((s: any) => s.scheduled_date === now.toISOString().split('T')[0]).length > 0 && (
-            <section className="rounded-xl bg-[#090909] p-6 text-white shadow-lg">
-              <h2 className="mb-4 font-poppins text-lg font-extrabold text-[#ff7a00]">Clases de hoy</h2>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {upcoming.filter((s: any) => s.scheduled_date === now.toISOString().split('T')[0]).map((s: any) => (
-                  <div key={s.id} className="rounded-xl border border-white/10 bg-white/5 p-4">
-                    <p className="font-poppins font-bold">{s.start_time?.slice(0,5)} · {s.course?.name ?? 'Clase'}</p>
-                    <p className="text-sm text-white/60 mt-1">{s.student?.name ?? 'Sin alumno'}</p>
-                    <p className="text-xs text-white/40 mt-0.5">{s.classroom?.name ?? '—'}</p>
-                  </div>
-                ))}
+          {/* Calendario + panel lateral */}
+          <section id="calendario" className="grid gap-6 lg:grid-cols-[1fr_320px] items-start">
+            <div>
+              <div className="mb-3 flex items-center justify-between">
+                <SectionTitle title="Tu calendario" subtitle="Tus clases del mes — navega por fecha." />
+                <SchedulePdfButton name={name} roleLabel="Instructor" monthLabel={monthLabel} sessions={sessions} />
               </div>
-            </section>
-          )}
-
-          {/* Calendario interactivo */}
-          <section>
-            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <SectionTitle title="Tu calendario" subtitle="Tus clases del mes — navega por fecha." />
-              <SchedulePdfButton name={name} roleLabel="Instructor" monthLabel={monthLabel} sessions={sessions} />
+              <InstructorCalendar
+                initialSessions={sessions}
+                initialYear={now.getFullYear()}
+                initialMonth={now.getMonth() + 1}
+              />
             </div>
-            <InstructorCalendar
-              initialSessions={sessions}
-              initialYear={now.getFullYear()}
-              initialMonth={now.getMonth() + 1}
-            />
+
+            <aside className="space-y-4">
+              <SidebarList
+                title="Próximas clases"
+                viewAllHref="/mi-cuenta/clases-mes"
+                items={upcoming.slice(0, 3).map((s: any) => ({
+                  key: s.id,
+                  dotColor: statusMeta(s.status).hex,
+                  title: s.course?.name ?? 'Clase',
+                  subtitle: `${formatDateShort(s.scheduled_date)} · ${s.start_time?.slice(0,5)}`,
+                  meta: s.student?.name ?? 'Sin alumno',
+                }))}
+                empty="No tienes clases próximas."
+              />
+              <RemindersList
+                blocksCount={blocksCount ?? 0}
+                hasAvatar={!!avatarUrl}
+                lastModification={lastModification}
+              />
+              <StatusDonut
+                hasAvatar={!!avatarUrl}
+                hasAvailability={(availability?.length ?? 0) > 0}
+                hasStudents={(students?.length ?? 0) > 0}
+              />
+            </aside>
           </section>
 
           {/* Mis alumnos */}
@@ -287,7 +298,6 @@ function InstructorDashboard({ data, user, monthLabel, now }: any) {
                             </span>
                             <div className="min-w-0">
                               <p className="font-semibold text-gray-900 truncate">{st.name}</p>
-                              {st.phone && <p className="text-xs text-gray-400">{st.phone}</p>}
                             </div>
                           </div>
                         </td>
@@ -309,58 +319,37 @@ function InstructorDashboard({ data, user, monthLabel, now }: any) {
             )}
           </section>
 
-          {/* Proximas clases */}
-          {upcoming.length > 0 && (
-            <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-              <SectionTitle title="Proximas clases" subtitle="Tus clases confirmadas y pendientes este mes." />
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                {upcoming.slice(0, 6).map((s: any) => (
-                  <div key={s.id} className="flex items-center gap-3 rounded-xl border border-gray-100 p-3">
-                    <span className="h-9 w-9 rounded-full bg-orange-100 text-[#ff7a00] flex items-center justify-center font-bold text-sm shrink-0">
-                      {(s.student?.name ?? '?')[0].toUpperCase()}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-gray-900 truncate">{s.student?.name ?? 'Sin alumno'}</p>
-                      <p className="text-xs text-gray-400">{s.course?.name ?? '—'} · {s.scheduled_date} {s.start_time?.slice(0,5)}</p>
-                    </div>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold ${statusMeta(s.status).badgeClass}`}>{statusMeta(s.status).label}</span>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Resumen de disponibilidad */}
-          <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          {/* Disponibilidad */}
+          <section id="disponibilidad">
             <SectionTitle title="Disponibilidad" subtitle="Resumen de tu horario semanal." />
             <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-xl bg-orange-50 border border-orange-100 p-4">
-                <p className="text-2xl font-extrabold font-poppins text-[#ff7a00]">{availabilitySummary?.totalSlots ?? availability?.length ?? 0}</p>
-                <p className="text-sm font-semibold text-gray-700 mt-1">Franjas activas</p>
-                <p className="text-xs text-gray-500">horarios configurados</p>
-              </div>
-              <div className="rounded-xl bg-blue-50 border border-blue-100 p-4">
-                <p className="text-2xl font-extrabold font-poppins text-blue-600">{availabilitySummary?.activeDays ?? 0}</p>
-                <p className="text-sm font-semibold text-gray-700 mt-1">Días activos</p>
-                <p className="text-xs text-gray-500">días con disponibilidad</p>
-              </div>
-              <div className="rounded-xl bg-red-50 border border-red-100 p-4">
-                <p className="text-2xl font-extrabold font-poppins text-red-500">{blocksCount ?? 0}</p>
-                <p className="text-sm font-semibold text-gray-700 mt-1">Fechas bloqueadas</p>
-                <p className="text-xs text-gray-500">bloqueos activos</p>
-              </div>
-              <div className="rounded-xl bg-gray-50 border border-gray-100 p-4">
-                <p className="text-2xl font-extrabold font-poppins text-gray-600">
-                  {lastModification
+              <AvailabilityCard
+                icon="calendar"
+                label="Días activos"
+                value={availabilitySummary?.activeDays ? `${availabilitySummary.activeDays} día${availabilitySummary.activeDays === 1 ? '' : 's'}` : 'Sin configurar'}
+              />
+              <AvailabilityCard
+                icon="clock"
+                label="Franjas activas"
+                value={`${availabilitySummary?.totalSlots ?? availability?.length ?? 0}`}
+              />
+              <AvailabilityCard
+                icon="lock"
+                label="Fechas bloqueadas"
+                value={`${blocksCount ?? 0}`}
+              />
+              <AvailabilityCard
+                icon="users"
+                label="Última modificación"
+                value={
+                  lastModification
                     ? (() => {
                         const diff = Math.floor((Date.now() - new Date(lastModification).getTime()) / (1000 * 60 * 60 * 24))
-                        return diff === 0 ? 'Hoy' : diff === 1 ? 'Ayer' : `${diff} días`
+                        return diff === 0 ? 'Hoy' : diff === 1 ? 'Ayer' : `Hace ${diff} días`
                       })()
-                    : '—'}
-                </p>
-                <p className="text-sm font-semibold text-gray-700 mt-1">Última modificación</p>
-                <p className="text-xs text-gray-500">cambio de horario</p>
-              </div>
+                    : 'Sin cambios'
+                }
+              />
             </div>
           </section>
 
@@ -534,6 +523,175 @@ function PlanCard({ title, subtitle, meta, progress }: { title: string; subtitle
           </span>
         </div>
       </div>
+    </div>
+  )
+}
+
+function InstructorHeroCard({ avatarUrl, initials, name, email, memberSince, editProfile, monthSessions, activeStudents, nextSession, monthHours }: any) {
+  return (
+    <section className="overflow-hidden rounded-xl bg-[#090909] p-7 text-white shadow-xl">
+      <div className="flex flex-col gap-7 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex items-center gap-6">
+          <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full bg-[#ff7a00]">
+            {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" /> : <span className="flex h-full w-full items-center justify-center font-poppins text-3xl font-black">{initials}</span>}
+            <span className="absolute bottom-1.5 right-1.5 h-3.5 w-3.5 rounded-full border-2 border-black bg-green-500" />
+          </div>
+          <div className="min-w-0">
+            <h2 className="truncate font-poppins text-2xl font-extrabold">{name}</h2>
+            <p className="mt-1 text-sm text-white/60">{email}</p>
+            <span className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#ff7a00]/15 px-2.5 py-1 text-xs font-bold text-[#ff7a00]">
+              <Icon name="crown" className="h-3.5 w-3.5" /> Membresía
+            </span>
+            <p className="mt-1 text-xs text-white/45">Miembro desde {memberSince}</p>
+            <div className="mt-3">{editProfile}</div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-x-8 gap-y-5 sm:grid-cols-4 lg:border-l lg:border-white/10 lg:pl-8">
+          <HeroStat icon="calendar" label="Clases este mes" value={monthSessions} />
+          <HeroStat icon="users" label="Estudiantes activos" value={activeStudents} />
+          <HeroStat
+            icon="clock"
+            label="Próxima clase"
+            value={nextSession ? `${nextSession.start_time?.slice(0,5)}` : '—'}
+            hint={nextSession ? `${formatDateShort(nextSession.scheduled_date)} · ${nextSession.course?.name ?? 'Clase'}` : 'Sin clases próximas'}
+          />
+          <HeroStat icon="hourglass" label="Horas del mes" value={`${monthHours}h`} />
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function HeroStat({ icon, label, value, hint }: { icon: string; label: string; value: string | number; hint?: string }) {
+  return (
+    <div>
+      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-[#ff7a00] mb-2">
+        <Icon name={icon} className="h-4 w-4" />
+      </span>
+      <p className="text-xs text-white/50">{label}</p>
+      <strong className="font-poppins text-xl">{value}</strong>
+      {hint && <p className="text-[11px] text-white/40 mt-0.5">{hint}</p>}
+    </div>
+  )
+}
+
+function SidebarList({ title, items, empty, viewAllHref }: { title: string; items: any[]; empty: string; viewAllHref?: string }) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-poppins text-sm font-extrabold text-gray-950">{title}</h3>
+        {viewAllHref && items.length > 0 && <Link href={viewAllHref} className="text-xs font-bold text-[#ff7a00]">Ver todas</Link>}
+      </div>
+      {items.length === 0 ? (
+        <p className="text-xs text-gray-400">{empty}</p>
+      ) : (
+        <div className="space-y-3">
+          {items.map(item => (
+            <div key={item.key} className="flex items-start gap-2.5">
+              <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full" style={{ background: item.dotColor }} />
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-gray-900 truncate">{item.title}</p>
+                <p className="text-xs text-gray-400">{item.subtitle}{item.meta ? ` · ${item.meta}` : ''}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function RemindersList({ blocksCount, hasAvatar, lastModification }: { blocksCount: number; hasAvatar: boolean; lastModification: string | null }) {
+  const reminders: { icon: string; title: string; text: string }[] = []
+
+  if (blocksCount > 0) {
+    reminders.push({
+      icon: 'lock',
+      title: 'Bloqueo de fechas',
+      text: `Tienes ${blocksCount} rango${blocksCount === 1 ? '' : 's'} de fechas bloqueadas.`,
+    })
+  }
+  if (!hasAvatar) {
+    reminders.push({ icon: 'users', title: 'Completa tu perfil', text: 'Añade una foto y más detalles sobre ti.' })
+  }
+  if (lastModification) {
+    const diff = Math.floor((Date.now() - new Date(lastModification).getTime()) / (1000 * 60 * 60 * 24))
+    if (diff >= 7) {
+      reminders.push({ icon: 'clock', title: 'Actualiza tu disponibilidad', text: `Tu último ajuste fue hace ${diff} días.` })
+    }
+  }
+
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <h3 className="font-poppins text-sm font-extrabold text-gray-950 mb-3">Recordatorios</h3>
+      {reminders.length === 0 ? (
+        <p className="text-xs text-gray-400">Todo al día.</p>
+      ) : (
+        <div className="space-y-3">
+          {reminders.map(r => (
+            <div key={r.title} className="flex items-start gap-2.5">
+              <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-orange-100 text-[#ff7a00]">
+                <Icon name={r.icon} className="h-3.5 w-3.5" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-gray-900">{r.title}</p>
+                <p className="text-xs text-gray-500">{r.text}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function StatusDonut({ hasAvatar, hasAvailability, hasStudents }: { hasAvatar: boolean; hasAvailability: boolean; hasStudents: boolean }) {
+  const checks = [
+    { label: 'Perfil completo', done: hasAvatar },
+    { label: 'Disponibilidad configurada', done: hasAvailability },
+    { label: 'Alumnos asignados', done: hasStudents },
+  ]
+  const doneCount = checks.filter(c => c.done).length
+  const pct = Math.round((doneCount / checks.length) * 100)
+  const circumference = 2 * Math.PI * 34
+
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <h3 className="font-poppins text-sm font-extrabold text-gray-950 mb-4">Estado general</h3>
+      <div className="flex items-center justify-center mb-4">
+        <div className="relative h-24 w-24">
+          <svg className="-rotate-90" viewBox="0 0 80 80">
+            <circle cx="40" cy="40" r="34" fill="none" stroke="#f3f4f6" strokeWidth="7" />
+            <circle cx="40" cy="40" r="34" fill="none" stroke="#ff7a00" strokeWidth="7" strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={circumference - (pct / 100) * circumference} />
+          </svg>
+          <span className="absolute inset-0 flex flex-col items-center justify-center">
+            <strong className="font-poppins text-lg text-gray-950">{pct}%</strong>
+            <small className="text-[10px] text-gray-400">Completado</small>
+          </span>
+        </div>
+      </div>
+      <div className="space-y-2">
+        {checks.map(c => (
+          <div key={c.label} className="flex items-center justify-between text-xs">
+            <span className="text-gray-600">{c.label}</span>
+            <span className={c.done ? 'text-green-500' : 'text-gray-300'}>{c.done ? '✓' : '—'}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function AvailabilityCard({ icon, label, value }: { icon: string; label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100 text-[#ff7a00] mb-3">
+        <Icon name={icon} className="h-4.5 w-4.5" />
+      </span>
+      <p className="font-poppins text-lg font-extrabold text-gray-950">{value}</p>
+      <p className="text-sm text-gray-500 mt-0.5">{label}</p>
+      <div className="mt-2"><OpenScheduleLink /></div>
     </div>
   )
 }

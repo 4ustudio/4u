@@ -21,6 +21,7 @@ interface Slot {
 interface TimeRange {
   start: string
   end: string
+  id?: string
 }
 
 interface BlockEntry {
@@ -174,22 +175,34 @@ function HorariosTab({ initialSlots, onSaved, focusDay }: { initialSlots: Slot[]
   useEffect(() => { focusRef.current?.scrollIntoView({ block: 'center' }) }, [])
 
   function toggleDay(day: number) {
-    setSlots(prev => ({
-      ...prev,
-      [day]: prev[day].length > 0 ? [] : [{ start: DEFAULT_START, end: DEFAULT_END }]
-    }))
+    const wasActive = slots[day].length > 0
+    if (wasActive) {
+      const toDelete = slots[day].filter(r => r.id)
+      setSlots(prev => ({ ...prev, [day]: [] }))
+      startTransition(async () => {
+        for (const r of toDelete) await deleteInstructorAvailabilityAction(r.id!)
+      })
+      return
+    }
+    startTransition(async () => {
+      const result = await createInstructorAvailabilityAction({ day_of_week: day, start_time: DEFAULT_START + ':00', end_time: DEFAULT_END + ':00' })
+      if (result.error) { setError(result.error); return }
+      setSlots(prev => ({ ...prev, [day]: [{ start: DEFAULT_START, end: DEFAULT_END, id: result.id }] }))
+    })
   }
 
   function addSlot(day: number) {
-    setSlots(prev => ({
-      ...prev,
-      [day]: [...prev[day], { start: DEFAULT_START, end: DEFAULT_END }]
-    }))
+    startTransition(async () => {
+      const result = await createInstructorAvailabilityAction({ day_of_week: day, start_time: DEFAULT_START + ':00', end_time: DEFAULT_END + ':00' })
+      if (result.error) { setError(result.error); return }
+      setSlots(prev => ({ ...prev, [day]: [...prev[day], { start: DEFAULT_START, end: DEFAULT_END, id: result.id }] }))
+    })
   }
 
   function removeSlot(day: number, idx: number) {
     const slot = slots[day][idx]
     if (!window.confirm(`¿Eliminar ${slot.start}–${slot.end}?`)) return
+    if (slot.id) startTransition(async () => { await deleteInstructorAvailabilityAction(slot.id!) })
     setSlots(prev => {
       const next = prev[day].filter((_, i) => i !== idx)
       return { ...prev, [day]: next }
@@ -257,11 +270,18 @@ function HorariosTab({ initialSlots, onSaved, focusDay }: { initialSlots: Slot[]
       setError('La hora de inicio debe ser anterior a la de fin.')
       return
     }
+    const slotId = slots[day][idx].id
     setSlots(prev => {
-      const ranges = prev[day].map((r, i) => i === idx ? { start: editValue.start, end: editValue.end } : r)
+      const ranges = prev[day].map((r, i) => i === idx ? { ...r, start: editValue.start, end: editValue.end } : r)
       return { ...prev, [day]: ranges }
     })
     setEditingSlot(null)
+    if (slotId) {
+      startTransition(async () => {
+        const result = await updateInstructorAvailabilityAction(slotId, { start_time: editValue.start + ':00', end_time: editValue.end + ':00' })
+        if (result.error) setError(result.error)
+      })
+    }
   }
 
   function handleExtendStart(day: number, idx: number) {
@@ -278,11 +298,18 @@ function HorariosTab({ initialSlots, onSaved, focusDay }: { initialSlots: Slot[]
       setError('La nueva hora debe ser mayor a la actual.')
       return
     }
+    const slotId = current.id
     setSlots(prev => {
       const ranges = prev[day].map((r, i) => i === idx ? { ...r, end: extendValue } : r)
       return { ...prev, [day]: ranges }
     })
     setExtendingSlot(null)
+    if (slotId) {
+      startTransition(async () => {
+        const result = await extendInstructorAvailabilityAction(slotId, extendValue + ':00')
+        if (result.error) setError(result.error)
+      })
+    }
   }
 
   return (
@@ -424,8 +451,6 @@ function MatchingStudents({ day, ranges }: { day: number; ranges: TimeRange[] })
   }
 
   const visible = (matches ?? []).filter(m => !assignedIds.has(m.id))
-
-  if (matches === null || (matches.length === 0 && assignedIds.size === 0)) return null
 
   return (
     <div className="mt-3 pl-14">

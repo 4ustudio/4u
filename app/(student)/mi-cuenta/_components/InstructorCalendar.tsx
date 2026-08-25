@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useMemo, useEffect, useTransition } from 'react'
+import { useState, useMemo, useEffect, useTransition, useActionState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createPortal } from 'react-dom'
-import { getInstructorMonthSessions } from '../../_actions/student'
+import { getInstructorMonthSessions, instructorUpdateStatusAction, instructorRegisterAttendanceAction } from '../../_actions/student'
 import { InstrumentIcon } from './instruments'
 import { statusMeta, STATUS_LEGEND } from './statusMeta'
 import { getHolidayMapForYears } from '@/lib/calendar/colombia-holidays'
@@ -373,8 +374,16 @@ export default function InstructorCalendar({ initialSessions, initialYear, initi
 }
 
 /* ── Modal sesión instructor ─────────────────────────────────────────── */
+const initialStatusState     = { error: undefined as string | undefined, success: undefined as boolean | undefined }
+const initialAttendanceState = { error: undefined as string | undefined, success: undefined as boolean | undefined }
+
 function SessionModal({ session: s, onClose }: { session: any; onClose: () => void }) {
+  const router = useRouter()
   const meta = statusMeta(s.status)
+  const [open, setOpen] = useState<'status' | 'attendance' | null>(null)
+  const [statusState, statusAction, statusPending] = useActionState(instructorUpdateStatusAction, initialStatusState)
+  const [attState, attAction, attPending] = useActionState(instructorRegisterAttendanceAction, initialAttendanceState)
+
   useEffect(() => {
     document.body.style.overflow = 'hidden'
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -382,9 +391,15 @@ function SessionModal({ session: s, onClose }: { session: any; onClose: () => vo
     return () => { document.body.style.overflow = ''; window.removeEventListener('keydown', onKey) }
   }, [onClose])
 
+  useEffect(() => {
+    if (statusState.success || attState.success) { router.refresh(); onClose() }
+  }, [statusState.success, attState.success, router, onClose])
+
+  const isClosed = ['cancelled', 'rescheduled', 'completed', 'no_show'].includes(s.status)
+
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full max-w-sm rounded-2xl border border-[#ff7a00]/20 bg-white p-6 shadow-xl"
+      <div className="w-full max-w-sm rounded-2xl border border-[#ff7a00]/20 bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto"
         style={{ boxShadow:'0 8px 32px rgba(255,122,0,0.12)' }} onClick={e => e.stopPropagation()}>
         <div className="flex items-start gap-3 mb-5">
           <span className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: meta.hex + '22', color: meta.hex }}>
@@ -406,7 +421,89 @@ function SessionModal({ session: s, onClose }: { session: any; onClose: () => vo
           <Row label="Salón"    value={s.classroom?.name ?? '—'}/>
           {s.notes && <Row label="Notas" value={s.notes}/>}
         </dl>
+
+        {s.student_id && (
+          <div className="mt-5 pt-4 border-t border-gray-100 space-y-2">
+            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Registrar asistencia</p>
+
+            <AttendanceAccordion
+              title="Registrar asistencia"
+              subtitle="¿El estudiante asistió? Marca el resultado de la clase."
+              open={open === 'status'}
+              onToggle={() => setOpen(p => p === 'status' ? null : 'status')}
+            >
+              <div className="space-y-1.5 pt-1">
+                {([
+                  { status: 'completed', label: '✅ Completada — el estudiante asistió' },
+                  { status: 'no_show',   label: '🚫 No asistió' },
+                  { status: 'confirmed', label: '🕐 Confirmar — aún no ocurre' },
+                  { status: 'pending',   label: '⏳ Pendiente' },
+                ] as const).map(({ status, label }) => (
+                  <form key={status} action={statusAction}>
+                    <input type="hidden" name="session_id" value={s.id} />
+                    <input type="hidden" name="new_status" value={status} />
+                    <button type="submit" disabled={statusPending || s.status === status}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-xs border transition-colors disabled:opacity-40 ${
+                        s.status === status ? 'bg-gray-100 text-gray-500 border-gray-200' : 'bg-white text-gray-700 border-gray-200 hover:border-[#ff7a00]/40'
+                      }`}
+                    >
+                      {label}{s.status === status && <span className="ml-1.5 text-gray-400">(actual)</span>}
+                    </button>
+                  </form>
+                ))}
+                {statusState.error && <p className="text-red-500 text-xs">{statusState.error}</p>}
+              </div>
+            </AttendanceAccordion>
+
+            <AttendanceAccordion
+              title="Registrar asistencia (simple)"
+              subtitle="Marca si el estudiante asistió, faltó o no se presentó."
+              open={open === 'attendance'}
+              onToggle={() => setOpen(p => p === 'attendance' ? null : 'attendance')}
+            >
+              <div className="space-y-1.5 pt-1">
+                {([
+                  { value: 'attended', label: '✅ Asistió' },
+                  { value: 'absent',   label: '❌ Ausente' },
+                  { value: 'no_show',  label: '🚫 No se presentó' },
+                ] as const).map(({ value, label }) => (
+                  <form key={value} action={attAction}>
+                    <input type="hidden" name="session_id" value={s.id} />
+                    <input type="hidden" name="attendance" value={value} />
+                    <button type="submit" disabled={attPending}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-xs border transition-colors disabled:opacity-40 ${
+                        s.attendance_status === value ? 'bg-gray-100 text-gray-500 border-gray-200' : 'bg-white text-gray-700 border-gray-200 hover:border-[#ff7a00]/40'
+                      }`}
+                    >
+                      {label}{s.attendance_status === value && <span className="ml-1.5 text-gray-400">(actual)</span>}
+                    </button>
+                  </form>
+                ))}
+                {attState.error && <p className="text-red-500 text-xs">{attState.error}</p>}
+              </div>
+            </AttendanceAccordion>
+
+            {isClosed && <p className="text-[11px] text-gray-400 mt-1">Esta clase ya está cerrada, pero puedes actualizar su estado.</p>}
+          </div>
+        )}
       </div>
+    </div>
+  )
+}
+
+function AttendanceAccordion({ title, subtitle, open, onToggle, children }: {
+  title: string; subtitle: string; open: boolean; onToggle: () => void; children: any
+}) {
+  return (
+    <div className={`rounded-xl border transition-colors ${open ? 'border-[#ff7a00]/40 bg-orange-50/30' : 'border-gray-100'}`}>
+      <button type="button" onClick={onToggle} className="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left">
+        <div className="min-w-0">
+          <p className="text-xs font-bold text-gray-800">{title}</p>
+          <p className="text-[11px] text-gray-400 leading-snug">{subtitle}</p>
+        </div>
+        <svg className={`h-4 w-4 shrink-0 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      {open && <div className="px-3 pb-3">{children}</div>}
     </div>
   )
 }

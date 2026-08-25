@@ -7,6 +7,7 @@ import { InstrumentIcon } from './instruments'
 import { statusMeta, STATUS_LEGEND } from './statusMeta'
 import { getHolidayMapForYears } from '@/lib/calendar/colombia-holidays'
 import { EVENT_STYLE } from '@/lib/calendar/types'
+import { OPEN_SCHEDULE_EVENT } from './scheduleEvents'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -192,8 +193,11 @@ export default function InstructorCalendar({ initialSessions, initialYear, initi
                         : 'border-gray-100 bg-white'
 
                   return (
-                    <div key={i} onClick={() => holiday && setSelectedDay(dateStr)}
-                      className={`min-h-[38px] sm:min-h-[76px] rounded-lg border p-1 sm:p-1.5 flex flex-col gap-0.5 transition-colors ${cellStyle}`}>
+                    <div key={i}
+                      onClick={() => holiday
+                        ? setSelectedDay(dateStr)
+                        : window.dispatchEvent(new CustomEvent(OPEN_SCHEDULE_EVENT, { detail: new Date(dateStr + 'T12:00:00').getDay() }))}
+                      className={`min-h-[38px] sm:min-h-[76px] rounded-lg border p-1 sm:p-1.5 flex flex-col gap-0.5 transition-colors cursor-pointer ${!holiday ? 'hover:border-[#ff7a00]/40' : ''} ${cellStyle}`}>
                       <span className={`text-[10px] sm:text-[11px] font-bold leading-none ${isToday ? 'text-[#ff7a00]' : holiday ? 'text-yellow-700' : daySessions.length > 0 ? 'text-gray-800' : 'text-gray-400'}`}>
                         {cell.day}
                       </span>

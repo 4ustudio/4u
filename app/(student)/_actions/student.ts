@@ -795,6 +795,44 @@ export async function getInstructorMonthSessions(year: number, month: number) {
   return (sessions ?? []) as any[] // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
+// ─── Instructor: alumnos sin instructor que calzan con su horario ───
+
+export async function getUnassignedStudentsForDay(dayOfWeek: number, startTime: string, endTime: string) {
+  const session = await getInstructorFromSession()
+  if (!session) return []
+
+  const { data } = await admin()
+    .from('student_schedules')
+    .select('id, day_of_week, start_time, student:students(id, name, phone), course:courses(name)')
+    .eq('day_of_week', dayOfWeek)
+    .is('instructor_id', null)
+    .eq('status', 'active')
+    .gte('start_time', startTime)
+    .lt('start_time', endTime)
+    .order('start_time')
+
+  return (data ?? []) as any[] // eslint-disable-line @typescript-eslint/no-explicit-any
+}
+
+export async function assignInstructorToScheduleAction(scheduleId: string): Promise<{ success?: boolean; error?: string }> {
+  const session = await getInstructorFromSession()
+  if (!session) return { error: 'Sesión expirada.' }
+
+  const { data, error } = await admin()
+    .from('student_schedules')
+    .update({ instructor_id: session.instructor.id })
+    .eq('id', scheduleId)
+    .is('instructor_id', null)
+    .select('id')
+    .maybeSingle()
+
+  if (error) return { error: error.message }
+  if (!data) return { error: 'Ese alumno ya fue asignado a otro instructor.' }
+
+  revalidatePath('/mi-cuenta')
+  return { success: true }
+}
+
 // ─── Helpers de sesión para instructor ──────────────────────────────
 
 async function getInstructorFromSession() {

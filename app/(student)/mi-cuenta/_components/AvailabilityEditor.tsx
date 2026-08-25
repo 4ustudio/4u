@@ -1,8 +1,10 @@
 'use client'
 
-import { useState, useTransition, useEffect, useCallback } from 'react'
+import { useState, useTransition, useEffect, useCallback, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { createPortal } from 'react-dom'
-import { saveInstructorAvailabilityAction, createInstructorAvailabilityAction, updateInstructorAvailabilityAction, deleteInstructorAvailabilityAction, extendInstructorAvailabilityAction, blockDateForInstructorAction, unblockDateForInstructorAction, getInstructorBlocksAction, getInstructorAvailabilityLogAction } from '../../_actions/student'
+import { saveInstructorAvailabilityAction, createInstructorAvailabilityAction, updateInstructorAvailabilityAction, deleteInstructorAvailabilityAction, extendInstructorAvailabilityAction, blockDateForInstructorAction, unblockDateForInstructorAction, getInstructorBlocksAction, getInstructorAvailabilityLogAction, getUnassignedStudentsForDay, assignInstructorToScheduleAction } from '../../_actions/student'
+import { OPEN_SCHEDULE_EVENT } from './scheduleEvents'
 
 const DAY_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 const DAY_NAMES_FULL = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
@@ -54,69 +56,40 @@ interface Props {
 }
 
 export default function AvailabilityEditor({ initialAvailability }: Props) {
+  const router = useRouter()
   const [open, setOpen] = useState(false)
+  const [focusDay, setFocusDay] = useState<number | null>(null)
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
-
-  const slotsByDay = (day: number) => initialAvailability.filter(a => a.day_of_week === day)
-
-  const activeSlots = initialAvailability.length
-  const blockCount = 0
-  const lastMod = initialAvailability.length > 0 ? 'Hoy' : '—'
+  useEffect(() => {
+    const openIt = (e: Event) => {
+      const day = (e as CustomEvent<number>).detail
+      setFocusDay(typeof day === 'number' ? day : null)
+      setOpen(true)
+    }
+    window.addEventListener(OPEN_SCHEDULE_EVENT, openIt)
+    return () => window.removeEventListener(OPEN_SCHEDULE_EVENT, openIt)
+  }, [])
 
   return (
-    <div id="disponibilidad" className="mt-6 space-y-4">
-      {/* Resumen */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="font-poppins text-lg font-extrabold text-gray-950">Tu horario disponible</h3>
-            <p className="text-sm text-gray-600 mt-0.5">Días y horas en los que puedes dar clases.</p>
-          </div>
-          <button
-            onClick={() => setOpen(true)}
-            className="rounded-xl border border-[#ff7a00]/35 px-4 py-2 text-sm font-bold text-[#ff7a00] hover:bg-[#ff7a00] hover:text-white transition-colors"
-          >
-            Editar horario
-          </button>
-        </div>
-
-        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
-          {DAY_NAMES.map((name, i) => {
-            const daySlots = slotsByDay(i + 1)
-            const hasSlots = daySlots.length > 0
-            return (
-              <div key={name} className={`rounded-xl border p-3 text-xs ${hasSlots ? 'border-[#ff7a00]/25 bg-orange-50/40' : 'border-gray-100 bg-gray-50'}`}>
-                <p className={`font-bold font-poppins mb-1 ${hasSlots ? 'text-gray-900' : 'text-gray-400'}`}>{name.slice(0, 3)}</p>
-                {hasSlots
-                  ? daySlots.map((slot, idx) => (
-                      <p key={idx} className="text-[#ff7a00] font-semibold leading-tight">
-                        {slot.start_time.slice(0,5)}–{slot.end_time.slice(0,5)}
-                      </p>
-                    ))
-                  : <p className="text-gray-400">No disp.</p>
-                }
-              </div>
-            )
-          })}
-        </div>
-      </div>
-
+    <>
       {mounted && open && createPortal(
         <AvailabilityModal
           initialSlots={initialAvailability}
+          focusDay={focusDay}
           onClose={() => setOpen(false)}
-          onSaved={() => setOpen(false)}
+          onSaved={() => { setOpen(false); router.refresh() }}
         />,
         document.body
       )}
-    </div>
+    </>
   )
 }
 
 /* ── Modal de edición completo ──────────────────────────────────── */
-function AvailabilityModal({ initialSlots, onClose, onSaved }: {
+function AvailabilityModal({ initialSlots, focusDay, onClose, onSaved }: {
   initialSlots: Slot[]
+  focusDay?: number | null
   onClose: () => void
   onSaved: () => void
 }) {
@@ -169,7 +142,7 @@ function AvailabilityModal({ initialSlots, onClose, onSaved }: {
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-6 py-4">
-          {tab === 'horarios' && <HorariosTab initialSlots={initialSlots} onSaved={onSaved} />}
+          {tab === 'horarios' && <HorariosTab initialSlots={initialSlots} onSaved={onSaved} focusDay={focusDay} />}
           {tab === 'bloqueos' && <BloqueosTab />}
           {tab === 'historial' && <HistorialTab />}
         </div>
@@ -179,7 +152,7 @@ function AvailabilityModal({ initialSlots, onClose, onSaved }: {
 }
 
 /* ── Tab: Horarios (CRUD individual + ampliar) ──────────────────── */
-function HorariosTab({ initialSlots, onSaved }: { initialSlots: Slot[]; onSaved: () => void }) {
+function HorariosTab({ initialSlots, onSaved, focusDay }: { initialSlots: Slot[]; onSaved: () => void; focusDay?: number | null }) {
   const [isPending, startTransition] = useTransition()
   const [slots, setSlots] = useState<Record<number, TimeRange[]>>(() => {
     const init: Record<number, TimeRange[]> = {}
@@ -187,7 +160,7 @@ function HorariosTab({ initialSlots, onSaved }: { initialSlots: Slot[]; onSaved:
       const existing = initialSlots.filter(s => s.day_of_week === d)
       init[d] = existing.length > 0
         ? existing.map(s => ({ start: s.start_time.slice(0,5), end: s.end_time.slice(0,5), id: s.id }))
-        : []
+        : (d === focusDay ? [{ start: DEFAULT_START, end: DEFAULT_END }] : [])
     }
     return init
   })
@@ -197,6 +170,8 @@ function HorariosTab({ initialSlots, onSaved }: { initialSlots: Slot[]; onSaved:
   const [extendValue, setExtendValue] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const focusRef = useRef<HTMLDivElement>(null)
+  useEffect(() => { focusRef.current?.scrollIntoView({ block: 'center' }) }, [])
 
   function toggleDay(day: number) {
     setSlots(prev => ({
@@ -318,8 +293,10 @@ function HorariosTab({ initialSlots, onSaved }: { initialSlots: Slot[]; onSaved:
       {DAY_NAMES.map((name, i) => {
         const day = i + 1
         const active = slots[day].length > 0
+        const isFocus = day === focusDay
         return (
-          <div key={day} className={`rounded-xl border px-4 py-3 transition-colors ${active ? 'border-[#ff7a00]/30 bg-orange-50/30' : 'border-gray-100 bg-gray-50/50'}`}>
+          <div key={day} ref={isFocus ? focusRef : undefined}
+            className={`rounded-xl border px-4 py-3 transition-colors ${isFocus ? 'ring-2 ring-[#ff7a00]/50' : ''} ${active ? 'border-[#ff7a00]/30 bg-orange-50/30' : 'border-gray-100 bg-gray-50/50'}`}>
             {/* Fila del día */}
             <div className="flex items-center gap-3">
               <button
@@ -391,6 +368,8 @@ function HorariosTab({ initialSlots, onSaved }: { initialSlots: Slot[]; onSaved:
                 )}
               </div>
             ))}
+
+            {active && <MatchingStudents day={day} ranges={slots[day]} />}
           </div>
         )
       })}
@@ -404,6 +383,77 @@ function HorariosTab({ initialSlots, onSaved }: { initialSlots: Slot[]; onSaved:
           {isPending ? 'Guardando...' : 'Guardar cambios'}
         </button>
       </div>
+    </div>
+  )
+}
+
+/* ── Alumnos sin instructor que calzan con un día ─────────────────── */
+function MatchingStudents({ day, ranges }: { day: number; ranges: TimeRange[] }) {
+  const [isPending, startTransition] = useTransition()
+  const [matches, setMatches] = useState<any[] | null>(null) // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [assigning, setAssigning] = useState<string | null>(null)
+  const [assignedIds, setAssignedIds] = useState<Set<string>>(new Set())
+
+  const rangesKey = ranges.map(r => `${r.start}-${r.end}`).join(',')
+
+  useEffect(() => {
+    if (ranges.length === 0) { setMatches([]); return }
+    startTransition(async () => {
+      const lists = await Promise.all(
+        ranges.map(r => getUnassignedStudentsForDay(day, r.start, r.end))
+      )
+      const seen = new Set<string>()
+      const merged: any[] = [] // eslint-disable-line @typescript-eslint/no-explicit-any
+      for (const list of lists) for (const s of list) {
+        if (seen.has(s.id)) continue
+        seen.add(s.id)
+        merged.push(s)
+      }
+      setMatches(merged)
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [day, rangesKey])
+
+  function handleAssign(scheduleId: string) {
+    setAssigning(scheduleId)
+    startTransition(async () => {
+      const result = await assignInstructorToScheduleAction(scheduleId)
+      setAssigning(null)
+      if (!result.error) setAssignedIds(prev => new Set(prev).add(scheduleId))
+    })
+  }
+
+  const visible = (matches ?? []).filter(m => !assignedIds.has(m.id))
+
+  if (matches === null || (matches.length === 0 && assignedIds.size === 0)) return null
+
+  return (
+    <div className="mt-3 pl-14">
+      <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Alumnos sin instructor en este horario</p>
+      {isPending && matches === null
+        ? <p className="text-xs text-gray-400">Buscando…</p>
+        : visible.length === 0
+          ? <p className="text-xs text-gray-400">No hay alumnos esperando instructor en este horario.</p>
+          : (
+            <div className="space-y-1.5">
+              {visible.map(m => (
+                <div key={m.id} className="flex items-center justify-between gap-2 rounded-lg border border-gray-100 bg-white px-3 py-1.5">
+                  <span className="text-xs text-gray-700">
+                    <span className="font-semibold">{m.student?.name ?? 'Alumno'}</span>
+                    {' · '}{m.course?.name ?? '—'}{' · '}{m.start_time?.slice(0,5)}
+                  </span>
+                  <button
+                    onClick={() => handleAssign(m.id)}
+                    disabled={assigning === m.id}
+                    className="text-xs font-bold text-[#ff7a00] hover:text-orange-600 disabled:opacity-50 shrink-0"
+                  >
+                    {assigning === m.id ? 'Asignando…' : 'Asignarme'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )
+      }
     </div>
   )
 }

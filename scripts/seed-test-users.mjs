@@ -108,6 +108,35 @@ async function upsertStudent(userId, email) {
 }
 
 // ─────────────────────────────────────────────────────────────────────
+async function upsertInstructor(email) {
+  const { data: existing } = await supabase
+    .from('instructors')
+    .select('id, name')
+    .eq('email', email)
+    .maybeSingle()
+
+  if (existing) {
+    console.log(`  ↩  Instructor ya existe: ${existing.name} (${existing.id})`)
+    return existing.id
+  }
+
+  const { data, error } = await supabase
+    .from('instructors')
+    .insert({
+      name:   'Instructor Prueba',
+      email,
+      phone:  '3001234568',
+      status: 'active',
+    })
+    .select('id')
+    .single()
+
+  if (error) throw new Error(`insert instructor: ${error.message}`)
+  console.log(`  ✓  Instructor creado: Instructor Prueba (${data.id})`)
+  return data.id
+}
+
+// ─────────────────────────────────────────────────────────────────────
 async function upsertMonthlyQuota(studentId) {
   const { data: existing } = await supabase
     .from('monthly_quotas')
@@ -160,16 +189,22 @@ async function main() {
     const studentId     = await upsertStudent(studentUserId, 'test@4ustudio.com')
     await upsertMonthlyQuota(studentId)
 
-    // 3. Resumen de catálogos
+    // 3. Instructor
+    console.log('\n── Instructor ──')
+    await upsertAuthUser('test-instructor@4ustudio.com', 'TestInstr4U2026!', { role: 'instructor' })
+    await upsertInstructor('test-instructor@4ustudio.com')
+
+    // 4. Resumen de catálogos
     await printSummary()
 
     console.log('\n═══ Listo ═══')
     console.log('\nCredenciales:')
-    console.log('  Admin:      admin@4ustudio.com   /  Admin4U2026!')
-    console.log('  Estudiante: test@4ustudio.com    /  Test4U2026!')
+    console.log('  Admin:      admin@4ustudio.com          /  Admin4U2026!')
+    console.log('  Estudiante: test@4ustudio.com           /  Test4U2026!')
+    console.log('  Instructor: test-instructor@4ustudio.com /  TestInstr4U2026!')
     console.log('\nURLs:')
-    console.log('  Portal estudiante: /mi-cuenta/login')
-    console.log('  Panel admin:       /admin/login')
+    console.log('  Portal estudiante/profesor: /mi-cuenta/login')
+    console.log('  Panel admin:                /admin/login')
 
   } catch (err) {
     console.error('\n✗ Error:', err.message)

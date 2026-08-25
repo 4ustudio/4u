@@ -31,9 +31,9 @@ const LEVELS = [
 ]
 
 const inputClass =
-  'w-full bg-white/[0.06] border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-white/30 font-roboto focus:outline-none focus:ring-2 focus:ring-[#ff7a00]/50 transition-all disabled:opacity-50'
-const labelClass = 'block text-xs font-semibold text-white/50 uppercase tracking-wider mb-1.5 font-roboto'
-const errorClass = 'text-red-400 text-xs mt-1 font-roboto'
+  'w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm placeholder:text-gray-400 font-roboto focus:outline-none focus:ring-2 focus:ring-[#ff7a00]/40 focus:border-[#ff7a00] transition-all disabled:opacity-50'
+const labelClass = 'block text-xs font-bold text-gray-900 uppercase tracking-wider mb-1.5 font-roboto'
+const errorClass = 'text-red-500 text-xs mt-1 font-roboto'
 const radioCardClass =
   'flex-1 flex items-center justify-center gap-2 rounded-xl border px-4 py-3.5 text-sm font-semibold font-roboto transition-colors cursor-pointer'
 
@@ -144,8 +144,7 @@ export default function InscripcionPage() {
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-lg p-6 sm:p-8">
-                <div className="pointer-events-none absolute -inset-20 opacity-50" style={{ background: "radial-gradient(ellipse 60% 50% at 50% 40%, rgba(255,122,0,0.08), transparent 70%)" }} aria-hidden="true" />
+              <div className="relative rounded-2xl bg-white p-6 sm:p-8" style={{ boxShadow: '0 0 50px rgba(255,122,0,0.18)' }}>
 
                 <form onSubmit={handleSubmit} noValidate className="space-y-6 relative">
                   <input type="hidden" name="student_type" value={studentType ?? ''} />
@@ -163,8 +162,8 @@ export default function InscripcionPage() {
                           key={type}
                           className={`${radioCardClass} ${
                             studentType === type
-                              ? 'border-[#ff7a00] bg-[#ff7a00]/10 text-white'
-                              : 'border-white/10 text-white/50 hover:border-white/25 hover:text-white/70'
+                              ? 'border-[#ff7a00] bg-[#ff7a00]/5 text-[#ff7a00]'
+                              : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700'
                           }`}
                         >
                           <input
@@ -234,14 +233,14 @@ export default function InscripcionPage() {
 
                   {/* ── WhatsApp ── */}
                   <div>
-                    <label htmlFor="phone" className={labelClass}>WhatsApp <span className="text-white/20 font-normal normal-case ml-1">(obligatorio)</span></label>
+                    <label htmlFor="phone" className={labelClass}>WhatsApp <span className="text-gray-400 font-normal normal-case ml-1">(obligatorio)</span></label>
                     <input id="phone" name="phone" type="tel" placeholder="Ej: +57 317 019 2639" autoComplete="tel" required className={inputClass} />
                     {state.errors?.phone && <p className={errorClass}>{state.errors.phone}</p>}
                   </div>
 
                   {/* ── Email ── */}
                   <div>
-                    <label htmlFor="email" className={labelClass}>Correo electrónico <span className="text-white/20 font-normal normal-case ml-1">(obligatorio)</span></label>
+                    <label htmlFor="email" className={labelClass}>Correo electrónico <span className="text-gray-400 font-normal normal-case ml-1">(obligatorio)</span></label>
                     <input id="email" name="email" type="email" placeholder="ejemplo@correo.com" autoComplete="email" required className={inputClass} />
                     {state.errors?.email && <p className={errorClass}>{state.errors.email}</p>}
                   </div>
@@ -251,9 +250,9 @@ export default function InscripcionPage() {
                     <legend className={labelClass}>Curso de interés</legend>
                     <div className="flex flex-wrap gap-2">
                       {COURSES.map((c) => (
-                        <label key={c} className="relative flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold font-roboto transition-all cursor-pointer has-[:checked]:text-white has-[:checked]:shadow-lg" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                        <label key={c} className="relative flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold font-roboto transition-all cursor-pointer text-gray-600 has-[:checked]:text-[#ff7a00] has-[:checked]:border-[#ff7a00]" style={{ backgroundColor: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.08)' }}>
                           <input type="radio" name="course_interest" value={c} checked={course === c} onChange={() => setCourse(c)} className="sr-only peer" />
-                          <span className="peer-checked:hidden w-2 h-2 rounded-full border border-white/30" />
+                          <span className="peer-checked:hidden w-2 h-2 rounded-full border border-gray-300" />
                           <span className="hidden peer-checked:block w-2 h-2 rounded-full" style={{ backgroundColor: ORANGE }} />
                           {c}
                         </label>
@@ -273,12 +272,12 @@ export default function InscripcionPage() {
                   {/* ── Primera sesión gratis (al elegir curso) ── */}
                   {course && (
                     <fieldset>
-                      <legend className={labelClass}>Tu primera sesión gratis <span className="text-white/20 font-normal normal-case ml-1">(selecciona una opción)</span></legend>
+                      <legend className={labelClass}>Tu primera sesión gratis <span className="text-gray-400 font-normal normal-case ml-1">(selecciona una opción)</span></legend>
                       <div className="grid sm:grid-cols-2 gap-2">
                         {FREE_SESSIONS.map((s) => (
-                          <label key={s.value} className="flex items-center gap-3 px-4 py-3 rounded-xl border border-white/10 text-sm font-roboto transition-all cursor-pointer has-[:checked]:border-[#ff7a00] has-[:checked]:bg-[#ff7a00]/10 has-[:checked]:text-white text-white/50 hover:border-white/25">
+                          <label key={s.value} className="flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-200 text-sm font-roboto transition-all cursor-pointer has-[:checked]:border-[#ff7a00] has-[:checked]:bg-[#ff7a00]/5 has-[:checked]:text-gray-900 text-gray-600 hover:border-gray-300">
                             <input type="radio" name="free_session" value={s.value} className="sr-only peer" />
-                            <span className="w-4 h-4 rounded-full border-2 border-white/20 peer-checked:border-[#ff7a00] peer-checked:bg-[#ff7a00] flex items-center justify-center">
+                            <span className="w-4 h-4 rounded-full border-2 border-gray-300 peer-checked:border-[#ff7a00] peer-checked:bg-[#ff7a00] flex items-center justify-center">
                               <span className="w-1.5 h-1.5 rounded-full bg-white hidden peer-checked:block" />
                             </span>
                             {s.label}
@@ -291,7 +290,7 @@ export default function InscripcionPage() {
                         min={new Date().toISOString().split('T')[0]}
                         value={sessionDay}
                         onChange={(e) => setSessionDay(e.target.value)}
-                        className={inputClass + ' [color-scheme:dark]'}
+                        className={inputClass}
                       />
                     </fieldset>
                   )}
@@ -301,9 +300,9 @@ export default function InscripcionPage() {
                     <legend className={labelClass}>Nivel actual</legend>
                     <div className="grid sm:grid-cols-2 gap-2">
                       {LEVELS.map((l) => (
-                        <label key={l.value} className="flex items-center gap-3 px-4 py-3 rounded-xl border border-white/10 text-sm font-roboto transition-all cursor-pointer has-[:checked]:border-[#ff7a00] has-[:checked]:bg-[#ff7a00]/10 has-[:checked]:text-white text-white/50 hover:border-white/25">
+                        <label key={l.value} className="flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-200 text-sm font-roboto transition-all cursor-pointer has-[:checked]:border-[#ff7a00] has-[:checked]:bg-[#ff7a00]/5 has-[:checked]:text-gray-900 text-gray-600 hover:border-gray-300">
                           <input type="radio" name="level" value={l.value} className="sr-only peer" />
-                          <span className="w-4 h-4 rounded-full border-2 border-white/20 peer-checked:border-[#ff7a00] peer-checked:bg-[#ff7a00] flex items-center justify-center">
+                          <span className="w-4 h-4 rounded-full border-2 border-gray-300 peer-checked:border-[#ff7a00] peer-checked:bg-[#ff7a00] flex items-center justify-center">
                             <span className="w-1.5 h-1.5 rounded-full bg-white hidden peer-checked:block" />
                           </span>
                           {l.label}
@@ -315,12 +314,12 @@ export default function InscripcionPage() {
 
                   {/* ── Franja horaria ── */}
                   <fieldset>
-                    <legend className={labelClass}>Franja horaria disponible <span className="text-white/20 font-normal normal-case ml-1">(lunes a sábado)</span></legend>
+                    <legend className={labelClass}>Franja horaria disponible <span className="text-gray-400 font-normal normal-case ml-1">(lunes a sábado)</span></legend>
                     <div className="flex flex-wrap gap-2">
                       {SCHEDULE_RANGES.map((t) => (
-                        <label key={t} className="relative flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold font-roboto transition-all cursor-pointer has-[:checked]:text-white has-[:checked]:shadow-lg" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                        <label key={t} className="relative flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold font-roboto transition-all cursor-pointer text-gray-600 has-[:checked]:text-[#ff7a00] has-[:checked]:border-[#ff7a00]" style={{ backgroundColor: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.08)' }}>
                           <input type="radio" name="preferred_time" value={t} checked={franja === t} onChange={() => { setFranja(t); setSessionHour('') }} className="sr-only peer" />
-                          <span className="peer-checked:hidden w-2 h-2 rounded-full border border-white/30" />
+                          <span className="peer-checked:hidden w-2 h-2 rounded-full border border-gray-300" />
                           <span className="hidden peer-checked:block w-2 h-2 rounded-full" style={{ backgroundColor: ORANGE }} />
                           {t}
                         </label>
@@ -331,9 +330,9 @@ export default function InscripcionPage() {
                         <p className={labelClass + ' mt-4'}>Elige la hora</p>
                         <div className="flex flex-wrap gap-2">
                           {HOUR_SLOTS[franja].map((h) => (
-                            <label key={h} className="relative flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold font-roboto transition-all cursor-pointer has-[:checked]:text-white has-[:checked]:shadow-lg" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                            <label key={h} className="relative flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold font-roboto transition-all cursor-pointer text-gray-600 has-[:checked]:text-[#ff7a00] has-[:checked]:border-[#ff7a00]" style={{ backgroundColor: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.08)' }}>
                               <input type="radio" name="session_hour" value={h} checked={sessionHour === h} onChange={() => setSessionHour(h)} className="sr-only peer" />
-                              <span className="peer-checked:hidden w-2 h-2 rounded-full border border-white/30" />
+                              <span className="peer-checked:hidden w-2 h-2 rounded-full border border-gray-300" />
                               <span className="hidden peer-checked:block w-2 h-2 rounded-full" style={{ backgroundColor: ORANGE }} />
                               {h}
                             </label>
@@ -346,13 +345,13 @@ export default function InscripcionPage() {
 
                   {/* ── Horarios disponibles ── */}
                   <div>
-                    <label htmlFor="available_schedule" className={labelClass}>¿Cuándo puedes venir? <span className="text-white/20 font-normal normal-case ml-1">(opcional)</span></label>
+                    <label htmlFor="available_schedule" className={labelClass}>¿Cuándo puedes venir? <span className="text-gray-400 font-normal normal-case ml-1">(opcional)</span></label>
                     <textarea id="available_schedule" name="available_schedule" rows={2} placeholder="Ej: lunes y miércoles de 4pm a 6pm, sábados en la mañana…" className={inputClass + ' resize-none'} />
                   </div>
 
                   {/* ── Género musical ── */}
                   <div>
-                    <label htmlFor="music_genre" className={labelClass}>Género musical favorito <span className="text-white/20 font-normal normal-case ml-1">(opcional)</span></label>
+                    <label htmlFor="music_genre" className={labelClass}>Género musical favorito <span className="text-gray-400 font-normal normal-case ml-1">(opcional)</span></label>
                     <select id="music_genre" name="music_genre" value={genre} onChange={(e) => setGenre(e.target.value)} className={inputClass + ' appearance-none'}>
                       <option value="">Seleccionar…</option>
                       <option value="Rock">Rock</option>
@@ -375,18 +374,18 @@ export default function InscripcionPage() {
 
                   {/* ── EPS y Contacto de Emergencia ── */}
                   <div>
-                    <label htmlFor="eps" className={labelClass}>EPS <span className="text-white/20 font-normal normal-case ml-1">(opcional)</span></label>
+                    <label htmlFor="eps" className={labelClass}>EPS <span className="text-gray-400 font-normal normal-case ml-1">(opcional)</span></label>
                     <input id="eps" name="eps" type="text" placeholder="Ej: Sura, Nueva EPS, Sanitas…" className={inputClass} />
                   </div>
 
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="emergency_contact_name" className={labelClass}>Contacto de emergencia <span className="text-white/20 font-normal normal-case ml-1">(obligatorio)</span></label>
+                      <label htmlFor="emergency_contact_name" className={labelClass}>Contacto de emergencia <span className="text-gray-400 font-normal normal-case ml-1">(obligatorio)</span></label>
                       <input id="emergency_contact_name" name="emergency_contact_name" type="text" placeholder="Nombre completo" required className={inputClass} />
                       {state.errors?.emergency_contact_name && <p className={errorClass}>{state.errors.emergency_contact_name}</p>}
                     </div>
                     <div>
-                      <label htmlFor="emergency_contact_phone" className={labelClass}>Teléfono emergencia <span className="text-white/20 font-normal normal-case ml-1">(obligatorio)</span></label>
+                      <label htmlFor="emergency_contact_phone" className={labelClass}>Teléfono emergencia <span className="text-gray-400 font-normal normal-case ml-1">(obligatorio)</span></label>
                       <input id="emergency_contact_phone" name="emergency_contact_phone" type="tel" placeholder="3001234567" required className={inputClass} />
                       {state.errors?.emergency_contact_phone && <p className={errorClass}>{state.errors.emergency_contact_phone}</p>}
                     </div>
@@ -394,17 +393,17 @@ export default function InscripcionPage() {
 
                   {/* ── Comentarios ── */}
                   <div>
-                    <label htmlFor="notes" className={labelClass}>Comentarios <span className="text-white/20 font-normal normal-case ml-1">(opcional)</span></label>
+                    <label htmlFor="notes" className={labelClass}>Comentarios <span className="text-gray-400 font-normal normal-case ml-1">(opcional)</span></label>
                     <textarea id="notes" name="notes" rows={3} placeholder="Cuéntanos sobre tus intereses musicales, horarios preferidos, o cualquier otra información..." className={inputClass + ' resize-none'} />
                   </div>
 
                   {/* ── Consentimientos ── */}
                   <div className="space-y-3 pt-1">
                     <div className="flex items-start gap-3">
-                      <input id="terms" name="terms" type="checkbox" checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 rounded border border-white/20 bg-white/[0.06] accent-[#ff7a00] cursor-pointer" />
-                      <label htmlFor="terms" className="text-xs text-white/50 font-roboto leading-relaxed cursor-pointer">
+                      <input id="terms" name="terms" type="checkbox" checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 rounded border border-gray-300 bg-white accent-[#ff7a00] cursor-pointer" />
+                      <label htmlFor="terms" className="text-xs text-gray-500 font-roboto leading-relaxed cursor-pointer">
                         He leído y acepto los{' '}
-                        <Link href="/terminos" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 text-white/70 hover:text-white transition-colors">
+                        <Link href="/terminos" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 text-[#ff7a00] hover:brightness-110 transition-all font-semibold">
                           términos y condiciones
                         </Link>
                         <span className="text-red-400 ml-0.5">*</span>
@@ -413,8 +412,8 @@ export default function InscripcionPage() {
                     {state.errors?.terms && <p className={errorClass}>{state.errors.terms}</p>}
 
                     <div className="flex items-start gap-3">
-                      <input id="data_consent" name="data_consent" type="checkbox" checked={dataConsent} onChange={(e) => setDataConsent(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 rounded border border-white/20 bg-white/[0.06] accent-[#ff7a00] cursor-pointer" />
-                      <label htmlFor="data_consent" className="text-xs text-white/50 font-roboto leading-relaxed cursor-pointer">
+                      <input id="data_consent" name="data_consent" type="checkbox" checked={dataConsent} onChange={(e) => setDataConsent(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 rounded border border-gray-300 bg-white accent-[#ff7a00] cursor-pointer" />
+                      <label htmlFor="data_consent" className="text-xs text-gray-500 font-roboto leading-relaxed cursor-pointer">
                         Autorizo el tratamiento de mis datos personales conforme a la Ley 1581 de 2012
                         <span className="text-red-400 ml-0.5">*</span>
                       </label>
@@ -422,10 +421,10 @@ export default function InscripcionPage() {
                     {state.errors?.data_consent && <p className={errorClass}>{state.errors.data_consent}</p>}
 
                     <div className="flex items-start gap-3">
-                      <input id="image_consent" name="image_consent" type="checkbox" checked={imageConsent} onChange={(e) => setImageConsent(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 rounded border border-white/20 bg-white/[0.06] accent-[#ff7a00] cursor-pointer" />
-                      <label htmlFor="image_consent" className="text-xs text-white/50 font-roboto leading-relaxed cursor-pointer">
+                      <input id="image_consent" name="image_consent" type="checkbox" checked={imageConsent} onChange={(e) => setImageConsent(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 rounded border border-gray-300 bg-white accent-[#ff7a00] cursor-pointer" />
+                      <label htmlFor="image_consent" className="text-xs text-gray-500 font-roboto leading-relaxed cursor-pointer">
                         Autorizo el uso de mi imagen, voz y nombre con fines institucionales y promocionales
-                        <span className="text-white/25 ml-1">(opcional)</span>
+                        <span className="text-gray-400 ml-1">(opcional)</span>
                       </label>
                     </div>
                   </div>
@@ -434,7 +433,7 @@ export default function InscripcionPage() {
                   {(sessionDay || sessionHour) && (
                     <div className="rounded-xl border border-[#ff7a00]/30 bg-[#ff7a00]/[0.07] p-4">
                       <p className="text-xs font-semibold text-[#ff7a00] uppercase tracking-wider mb-2 font-roboto">Tu primera sesión de prueba</p>
-                      <div className="space-y-1 text-sm text-white font-roboto">
+                      <div className="space-y-1 text-sm text-gray-900 font-roboto">
                         {sessionDay && (
                           <p>
                             📅 {new Date(sessionDay + 'T00:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
@@ -443,7 +442,7 @@ export default function InscripcionPage() {
                         {sessionHour && <p>🕒 {sessionHour}{franja ? ` · ${franja}` : ''}</p>}
                       </div>
                       {(!sessionDay || !sessionHour) && (
-                        <p className="text-xs text-white/40 mt-2 font-roboto">
+                        <p className="text-xs text-gray-500 mt-2 font-roboto">
                           {!sessionDay ? 'Selecciona el día. ' : ''}{!sessionHour ? 'Selecciona la franja y hora.' : ''}
                         </p>
                       )}

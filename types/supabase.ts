@@ -2651,6 +2651,17 @@ export type Database = {
           quota_total: number
         }[]
       }
+      fn_monthly_usage_batch: {
+        Args: { p_month: number; p_student_ids: string[]; p_year: number }
+        Returns: {
+          classes_available: number
+          classes_completed: number
+          classes_scheduled: number
+          late_cancellations: number
+          quota_total: number
+          student_id: string
+        }[]
+      }
       fn_record_student_activity: {
         Args: {
           p_description?: string

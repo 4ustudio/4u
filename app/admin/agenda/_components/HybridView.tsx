@@ -75,15 +75,16 @@ export default function HybridView({
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
 
-    // Nombre único por instancia: createBrowserClient() reusa el mismo cliente
-    // singleton en el navegador, y un nombre fijo choca con el canal anterior
-    // si el remount ocurre antes de que termine el removeChannel() async.
-    const channelName = `admin-agenda-sessions-${Date.now()}`
     let retry: ReturnType<typeof setTimeout> | undefined
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let channel: any
 
     const subscribe = () => {
+      // Nombre único por intento: createBrowserClient() reusa el mismo cliente
+      // singleton en el navegador, y un nombre fijo choca con el canal anterior
+      // si el retry ocurre antes de que termine el removeChannel() async —
+      // Supabase devolvería el canal viejo ya suscrito y el .on() fallaría.
+      const channelName = `admin-agenda-sessions-${Date.now()}-${Math.random().toString(36).slice(2)}`
       channel = sb
         .channel(channelName)
         .on('postgres_changes', {

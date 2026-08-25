@@ -43,13 +43,18 @@ async function validateKidsAge(studentId: string): Promise<string | null> {
 
 // ─── Lectura ────────────────────────────────────────────────
 
+// Solo las columnas que consume getStudentsDashboard() y StudentsClient.tsx —
+// select('*') traía ~30 columnas (incluyendo notes, address, document_number...)
+// por cada alumno solo para pintar la lista.
+const STUDENT_LIST_COLUMNS = 'id, name, phone, email, city, birth_date, status, student_status, user_id, enrolled_at'
+
 export async function getStudents(): Promise<Student[]> {
   if (await assertAdmin()) throw new Error('No autorizado.')
   try {
     const supabase = await createAuthServerClient()
     let { data, error } = await supabase
       .from('students')
-      .select('*')
+      .select(STUDENT_LIST_COLUMNS)
       .is('archived_at', null)
       .order('created_at', { ascending: false })
 
@@ -58,7 +63,7 @@ export async function getStudents(): Promise<Student[]> {
       if (missingArchiveColumn) {
         const retry = await supabase
           .from('students')
-          .select('*')
+          .select(STUDENT_LIST_COLUMNS)
           .order('created_at', { ascending: false })
         data = retry.data
         error = retry.error
@@ -68,13 +73,13 @@ export async function getStudents(): Promise<Student[]> {
     if (error) {
       let { data: d2, error: e2 } = await createAdminClient()
         .from('students')
-        .select('*')
+        .select(STUDENT_LIST_COLUMNS)
         .is('archived_at', null)
         .order('created_at', { ascending: false })
       if (e2?.message?.includes('archived_at')) {
         const retry = await createAdminClient()
           .from('students')
-          .select('*')
+          .select(STUDENT_LIST_COLUMNS)
           .order('created_at', { ascending: false })
         d2 = retry.data
         e2 = retry.error
@@ -243,17 +248,16 @@ export async function getStudentsDashboard(): Promise<{ students: StudentListRow
 
   const year = today.getFullYear()
   const month = today.getMonth() + 1
-  const usageResults = await Promise.all(
-    ids.map(id => db.rpc('fn_monthly_usage', { p_student_id: id, p_year: year, p_month: month }))
-  )
+  const { data: usageRows } = ids.length > 0
+    ? await db.rpc('fn_monthly_usage_batch', { p_student_ids: ids, p_year: year, p_month: month })
+    : { data: [] as any[] }
   const usageByStudent = new Map<string, { completed: number; total: number }>()
-  ids.forEach((id, i) => {
-    const row = usageResults[i]?.data?.[0]
+  for (const row of (usageRows ?? []) as any[]) {
     // classes_completed casi nunca se usa (los instructores rara vez marcan asistencia),
     // así que el progreso real del mes se refleja mejor con classes_scheduled (clases ya
     // agendadas de la cuota mensual).
-    if (row) usageByStudent.set(id, { completed: Number(row.classes_scheduled ?? 0), total: Number(row.quota_total ?? 0) })
-  })
+    usageByStudent.set(row.student_id, { completed: Number(row.classes_scheduled ?? 0), total: Number(row.quota_total ?? 0) })
+  }
 
   const active = students.filter(isActiveStudent).length
   const newThisMonth = students.filter(s => isThisMonthIso(s.enrolled_at)).length

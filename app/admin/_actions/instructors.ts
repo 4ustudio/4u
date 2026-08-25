@@ -2,7 +2,7 @@
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getAuthUser } from '@/lib/supabase/server'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, updateTag } from 'next/cache'
 import { resolveRole, hasAcademicAccess } from '@/lib/auth/roles'
 
 async function assertAdmin(): Promise<{ error: string } | null> {
@@ -187,6 +187,7 @@ export async function createInstructorAction(
 
   revalidatePath('/admin/instructors')
   revalidatePath('/agendar')
+  updateTag('catalog-instructors')
   return { success: true }
 }
 
@@ -280,6 +281,7 @@ export async function updateInstructorAction(
 
   revalidatePath('/admin/instructors')
   revalidatePath('/agendar')
+  updateTag('catalog-instructors')
   return { success: true }
 }
 
@@ -308,5 +310,6 @@ export async function deleteInstructorAction(
 
   revalidatePath('/admin/instructors')
   revalidatePath('/agendar')
+  updateTag('catalog-instructors')
   return { success: true }
 }

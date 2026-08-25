@@ -15,6 +15,7 @@ import StudentPaymentsPanel from './_components/StudentPaymentsPanel'
 import type { Student, MonthlyUsage, StudentSchedule } from '@/types/admin'
 import { getStudentRetentionProfile } from '../../_actions/retention'
 import { getStudentPayments } from '@/app/admin/pagos/_actions'
+import { getCachedCourses, getCachedClassrooms, getCachedInstructors } from '@/lib/cache/catalogs'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,9 +28,11 @@ async function getStudentData(id: string) {
     usageResult,
     { data: sessions },
     { data: schedules },
-    { data: courses },
-    { data: classrooms },
-    { data: instructors },
+    courses,
+    classrooms,
+    instructors,
+    retention,
+    studentPayments,
   ] = await Promise.all([
     db().from('students').select('*').eq('id', id).single(),
     db().rpc('fn_monthly_usage', {
@@ -50,9 +53,11 @@ async function getStudentData(id: string) {
       .eq('student_id', id)
       .order('day_of_week')
       .order('start_time'),
-    db().from('courses').select('id, name').eq('is_active', true),
-    db().from('classrooms').select('id, name, classroom_courses(course_id)').eq('is_active', true),
-    db().from('instructors').select('id, name').eq('status', 'active'),
+    getCachedCourses(),
+    getCachedClassrooms(),
+    getCachedInstructors(),
+    getStudentRetentionProfile(id),
+    getStudentPayments(id),
   ])
 
   if (error || !student) return null
@@ -94,6 +99,8 @@ async function getStudentData(id: string) {
     courses:     courses ?? [],
     classrooms:  classrooms ?? [],
     instructors: instructors ?? [],
+    retention,
+    studentPayments,
   }
 }
 
@@ -103,11 +110,7 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
   const data   = await getStudentData(id)
   if (!data) notFound()
 
-  const { student, usage, upcoming, past, schedules, leadPreferredTime, leadConsent, studentDocs, courses, classrooms, instructors } = data
-  const [retention, studentPayments] = await Promise.all([
-    getStudentRetentionProfile(id),
-    getStudentPayments(id),
-  ])
+  const { student, usage, upcoming, past, schedules, leadPreferredTime, leadConsent, studentDocs, courses, classrooms, instructors, retention, studentPayments } = data
 
   // Generar signed URLs para documentos legales
   const docsWithUrls = await Promise.all(
@@ -116,8 +119,10 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
       let downloadUrl: string | null = null
       if (doc.pdf_url) {
         try {
-          viewUrl     = await getSignedUrl(doc.pdf_url, 3600)
-          downloadUrl = await getSignedUrl(doc.pdf_url, 86400)
+          [viewUrl, downloadUrl] = await Promise.all([
+            getSignedUrl(doc.pdf_url, 3600),
+            getSignedUrl(doc.pdf_url, 86400),
+          ])
         } catch { /* storage path no existe */ }
       }
       return { doc, viewUrl, downloadUrl }

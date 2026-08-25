@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition, useEffect } from 'react'
+import { MdClose, MdLink } from 'react-icons/md'
 import { createPendingPayment, createStudentAndPayment, getStudentPaymentDefaults } from '../_actions'
 import type { StudentOption, EnrollmentOption, StudentPaymentDefaults } from '../_actions'
 
@@ -181,13 +182,13 @@ export default function CreateCobroModal({ preselectedStudentId, students, enrol
             <p className="text-xs text-white/35 mt-0.5">Queda pendiente — el estudiante paga vía link Bold</p>
           </div>
           <button onClick={onClose} className="text-white/40 hover:text-white transition-colors">
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            <MdClose className="h-5 w-5" />
           </button>
         </div>
 
         {/* Indicador de flujo */}
         <div className="flex items-center gap-2 mb-4 mt-3 px-3 py-2 rounded-xl bg-orange-500/8 border border-orange-500/20">
-          <svg className="h-3.5 w-3.5 text-orange-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          <MdLink className="h-3.5 w-3.5 text-orange-400 shrink-0" />
           <p className="text-[11px] text-orange-300/80">Crear cobro → Generar link Bold → Estudiante paga → Webhook confirma</p>
         </div>
 
@@ -434,7 +435,7 @@ export default function CreateCobroModal({ preselectedStudentId, students, enrol
               {pending
                 ? (mode === 'existing' ? 'Creando…' : 'Creando estudiante y cobro…')
                 : <>
-                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                    <MdLink className="h-4 w-4" />
                     {mode === 'existing' ? 'Crear cobro pendiente' : 'Crear estudiante y cobro'}
                   </>
               }

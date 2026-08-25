@@ -1,5 +1,6 @@
 'use client'
 
+import { MdDescription, MdCalendarMonth, MdPersonAddAlt, MdGroupAdd, MdCreditCard, MdHistory } from 'react-icons/md'
 import { useRealtime, type AdminNotif } from '@/components/admin/RealtimeProvider'
 
 // ── Utilidades ────────────────────────────────────────────────
@@ -22,31 +23,11 @@ const ICON_BG: Record<AdminNotif['type'], string> = {
 }
 
 const ICONS: Record<AdminNotif['type'], React.ReactNode> = {
-  enrollment: (
-    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
-    </svg>
-  ),
-  session: (
-    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-      <path d="M8 2v4M16 2v4M4 10h16M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/>
-    </svg>
-  ),
-  conversion: (
-    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/>
-    </svg>
-  ),
-  student: (
-    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-      <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M20 8v4M18 10h4"/>
-    </svg>
-  ),
-  payment: (
-    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-      <rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>
-    </svg>
-  ),
+  enrollment: <MdDescription className="h-3.5 w-3.5" />,
+  session:    <MdCalendarMonth className="h-3.5 w-3.5" />,
+  conversion: <MdPersonAddAlt className="h-3.5 w-3.5" />,
+  student:    <MdGroupAdd className="h-3.5 w-3.5" />,
+  payment:    <MdCreditCard className="h-3.5 w-3.5" />,
 }
 
 // ── ActivityFeed ──────────────────────────────────────────────
@@ -61,9 +42,7 @@ export function ActivityFeed() {
           className="mb-3 flex h-10 w-10 items-center justify-center rounded-full"
           style={{ background: 'var(--adm-neutral-soft)', color: 'var(--adm-text-faint)' }}
         >
-          <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-          </svg>
+          <MdHistory className="h-5 w-5" />
         </div>
         <p className="text-xs font-medium" style={{ color: 'var(--adm-text-muted)' }}>Sin actividad reciente</p>
         <p className="mt-1 text-[10px]" style={{ color: 'var(--adm-text-faint)' }}>Los eventos aparecerán aquí en tiempo real</p>

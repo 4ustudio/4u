@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { MdAdd } from 'react-icons/md'
 import Link from 'next/link'
 import { PaymentStatusPill } from '@/app/admin/pagos/_components/PaymentStatusPill'
 import GeneratePaymentModal from '@/app/admin/pagos/_components/GeneratePaymentModal'
@@ -41,7 +42,7 @@ export default function StudentPaymentsPanel({ studentId, studentName, payments,
             className="flex items-center gap-1.5 text-[11px] font-bold text-white px-3 py-1.5 rounded-lg transition-all hover:brightness-110"
             style={{ backgroundColor: '#ff7a00' }}
           >
-            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            <MdAdd className="h-3.5 w-3.5" aria-hidden="true" />
             Generar pago
           </button>
         </div>

@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useTransition, useRef } from 'react'
+import { MdEditNote, MdHistory, MdCall, MdCheck, MdClose, MdRefresh } from 'react-icons/md'
+import { FaWhatsapp } from 'react-icons/fa'
 import type { StudentAtRisk, Followup, RiskLevel, FollowupMetrics } from '@/app/admin/_actions/followups'
 import { createFollowup, markStudentRecovered, getStudentFollowups } from '@/app/admin/_actions/followups'
 
@@ -600,57 +602,29 @@ function ModalOverlay({ onClose, children }: { onClose: () => void; children: Re
 // ── Iconos ────────────────────────────────────────────────────
 
 function NoteIcon() {
-  return (
-    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-    </svg>
-  )
+  return <MdEditNote className="h-4 w-4" aria-hidden="true" />
 }
 
 function HistoryIcon() {
-  return (
-    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-      <path d="M12 8v4l2 2"/><path d="M3.05 11a9 9 0 1 0 .5-4.5"/><path d="M3 3v5h5"/>
-    </svg>
-  )
+  return <MdHistory className="h-4 w-4" aria-hidden="true" />
 }
 
 function WaIcon() {
-  return (
-    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-    </svg>
-  )
+  return <FaWhatsapp className="h-4 w-4" aria-hidden="true" />
 }
 
 function PhoneIcon() {
-  return (
-    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.34h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9a16 16 0 0 0 6.08 6.08l1.32-.88a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
-    </svg>
-  )
+  return <MdCall className="h-4 w-4" aria-hidden="true" />
 }
 
 function CheckIcon() {
-  return (
-    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-      <polyline points="20 6 9 17 4 12"/>
-    </svg>
-  )
+  return <MdCheck className="h-4 w-4" aria-hidden="true" />
 }
 
 function CloseIcon() {
-  return (
-    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-      <path d="M18 6 6 18M6 6l12 12"/>
-    </svg>
-  )
+  return <MdClose className="h-4 w-4" aria-hidden="true" />
 }
 
 function SpinnerIcon() {
-  return (
-    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-      <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-    </svg>
-  )
+  return <MdRefresh className="h-4 w-4 animate-spin" aria-hidden="true" />
 }

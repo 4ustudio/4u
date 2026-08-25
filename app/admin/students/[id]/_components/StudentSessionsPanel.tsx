@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { MdClose, MdAdd } from 'react-icons/md'
 import SessionDetailModal from '@/app/admin/agenda/_components/SessionDetailModal'
 import BookSessionModal from '@/app/admin/agenda/_components/BookSessionModal'
 
@@ -64,9 +65,7 @@ function QuickDatePicker({ onConfirm, onClose }: { onConfirm: (date: string, tim
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-bold text-white">Fecha y hora de la clase</h2>
           <button onClick={onClose} className="text-white/30 hover:text-white">
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-              <path d="M18 6 6 18M6 6l12 12" />
-            </svg>
+            <MdClose className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
         <div className="space-y-3">
@@ -120,9 +119,7 @@ export default function StudentSessionsPanel({ studentId, student, upcoming, pas
             onClick={() => setDatePicker(true)}
             className="flex items-center gap-1.5 text-xs text-orange-400 hover:text-orange-300 transition-colors"
           >
-            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
-              <path d="M12 5v14M5 12h14" />
-            </svg>
+            <MdAdd className="h-3.5 w-3.5" aria-hidden="true" />
             Nueva clase
           </button>
         </div>

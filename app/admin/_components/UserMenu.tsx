@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { MdExpandMore, MdLogout } from 'react-icons/md'
 import { signOutAction } from '@/app/admin/_actions/auth'
 
 interface Props {
@@ -48,14 +49,11 @@ export default function UserMenu({ displayName, roleLabel, avatarUrl, initials }
         </div>
 
         {/* Chevron */}
-        <svg
+        <MdExpandMore
           className={`h-4 w-4 shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
           style={{ color: 'var(--adm-text-faint)' }}
-          viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
           aria-hidden="true"
-        >
-          <path d="m6 9 6 6 6-6" />
-        </svg>
+        />
       </button>
 
       {/* Dropdown */}
@@ -78,9 +76,7 @@ export default function UserMenu({ displayName, roleLabel, avatarUrl, initials }
               className="w-full flex items-center gap-2.5 px-4 py-3 text-sm transition-colors text-left"
               style={{ color: 'var(--adm-text-muted)' }}
             >
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
-              </svg>
+              <MdLogout className="h-4 w-4" aria-hidden="true" />
               Cerrar sesión
             </button>
           </form>

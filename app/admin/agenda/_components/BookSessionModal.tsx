@@ -1,6 +1,7 @@
 'use client'
 
 import { useActionState, useEffect, useState } from 'react'
+import { MdClose } from 'react-icons/md'
 import { useRouter } from 'next/navigation'
 import { bookSessionAction } from '../../_actions/sessions'
 
@@ -59,9 +60,7 @@ export default function BookSessionModal({ date, time, students, courses, classr
             <p className="text-xs text-white/40 capitalize mt-0.5">{dateLabel} · {time}</p>
           </div>
           <button onClick={onClose} className="text-white/30 hover:text-white p-1" aria-label="Cerrar">
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-              <path d="M18 6 6 18M6 6l12 12" />
-            </svg>
+            <MdClose className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
 

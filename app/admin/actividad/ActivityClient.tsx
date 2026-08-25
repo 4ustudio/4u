@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useCallback, useEffect } from 'react'
 import Link from 'next/link'
+import { MdClose } from 'react-icons/md'
 import { getActivityLogs } from './_actions'
 import type { ActivityLogRow, ActivityFilters, ActivityModule, DashboardMetrics } from './_actions'
 import type { Severity } from '@/lib/activity'
@@ -242,9 +243,7 @@ function Drawer({ row, onClose }: { row: ActivityLogRow; onClose: () => void }) 
             </div>
           </div>
           <button onClick={onClose} className="shrink-0 text-white/30 hover:text-white transition-colors mt-0.5">
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M18 6 6 18M6 6l12 12" />
-            </svg>
+            <MdClose className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
 

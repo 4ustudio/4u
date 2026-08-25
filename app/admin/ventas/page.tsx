@@ -1,8 +1,9 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import type { ReactNode } from 'react'
+import { MdCalendarMonth, MdWarningAmber, MdAttachMoney, MdCheckCircle, MdGroup } from 'react-icons/md'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { createAuthServerClient } from '@/lib/supabase/server'
+import { getAuthUser } from '@/lib/supabase/server'
 import { canAccessSalesDashboard, resolveRole } from '@/lib/auth/roles'
 import { getEnrollmentFunnelMetrics } from '@/app/admin/_actions/enrollments'
 import { getRetentionStats } from '@/app/admin/_actions/retention'
@@ -232,8 +233,7 @@ async function getExecutiveData() {
 }
 
 export default async function VentasPage() {
-  const supabase = await createAuthServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await getAuthUser()
   const role = resolveRole(user)
   if (!canAccessSalesDashboard(role)) redirect('/admin')
 
@@ -284,9 +284,7 @@ export default async function VentasPage() {
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <div className="inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white/85">
-              <svg className="h-5 w-5 text-white/55" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-                <path d="M8 2v4M16 2v4M4 10h16M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" />
-              </svg>
+              <MdCalendarMonth className="h-5 w-5 text-white/55" aria-hidden="true" />
               <span>{data.rangeLabel}</span>
             </div>
           </div>
@@ -580,10 +578,7 @@ export default async function VentasPage() {
           </div>
           {fm.accionesVencidas > 0 && (
             <div className="mt-4 flex items-center gap-2 rounded-2xl border border-red-500/20 bg-red-500/5 px-4 py-3">
-              <svg className="h-4 w-4 shrink-0 text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-              </svg>
+              <MdWarningAmber className="h-4 w-4 shrink-0 text-red-400" aria-hidden="true" />
               <p className="text-sm text-red-300">
                 <span className="font-bold">{fm.accionesVencidas}</span>{' '}
                 {fm.accionesVencidas === 1 ? 'acción de seguimiento vencida' : 'acciones de seguimiento vencidas'} —{' '}
@@ -729,10 +724,7 @@ function AlertItem({
   const isRed = tone === 'red'
   return (
     <div className={`flex items-start gap-3 rounded-2xl border px-4 py-3 ${isRed ? 'border-red-500/20 bg-red-500/5' : 'border-[#ff7a00]/15 bg-[#ff7a00]/5'}`}>
-      <svg className={`mt-0.5 h-4 w-4 shrink-0 ${isRed ? 'text-red-400' : 'text-[#ff9a3b]'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-        <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-      </svg>
+      <MdWarningAmber className={`mt-0.5 h-4 w-4 shrink-0 ${isRed ? 'text-red-400' : 'text-[#ff9a3b]'}`} aria-hidden="true" />
       <div className="min-w-0">
         <div>
           <span className={`text-sm font-bold ${isRed ? 'text-red-300' : 'text-[#ff9a3b]'}`}>{count} </span>
@@ -998,37 +990,25 @@ function AvatarBadge({ label }: { label: string }) {
 
 function CurrencyIcon() {
   return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-      <path d="M12 3v18M17 7.5c0-1.9-2.2-3.5-5-3.5s-5 1.6-5 3.5 2.2 3.5 5 3.5 5 1.6 5 3.5-2.2 3.5-5 3.5-5-1.6-5-3.5" />
-    </svg>
+    <MdAttachMoney className="h-5 w-5" aria-hidden="true" />
   )
 }
 
 function CheckCircleIcon() {
   return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-      <polyline points="22 4 12 14.01 9 11.01"/>
-    </svg>
+    <MdCheckCircle className="h-5 w-5" aria-hidden="true" />
   )
 }
 
 function AlertTriangleIcon() {
   return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-      <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-    </svg>
+    <MdWarningAmber className="h-5 w-5" aria-hidden="true" />
   )
 }
 
 function RetentionIcon() {
   return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-      <circle cx="9" cy="7" r="4"/>
-      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-    </svg>
+    <MdGroup className="h-5 w-5" aria-hidden="true" />
   )
 }
 

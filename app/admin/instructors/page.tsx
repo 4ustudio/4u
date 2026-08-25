@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { MdAdd } from 'react-icons/md'
 import { getInstructors } from '../_actions/instructors'
 import DeleteInstructorButton from './_components/DeleteInstructorButton'
 
@@ -21,9 +22,7 @@ export default async function InstructorsPage() {
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold text-white shrink-0"
           style={{ backgroundColor: '#ff7a00' }}
         >
-          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
-            <path d="M12 5v14M5 12h14" />
-          </svg>
+          <MdAdd className="h-4 w-4" aria-hidden="true" />
           Nuevo instructor
         </Link>
       </div>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition, useEffect } from 'react'
+import { MdClose } from 'react-icons/md'
 import { getStudentPaymentDefaults, registerPayment } from '../_actions'
 import type { StudentOption, PaymentMethod, StudentPaymentDefaults } from '../_actions'
 import { getBirthdayBenefitStatus } from '@/lib/students/birthday'
@@ -154,7 +155,7 @@ export default function GeneratePaymentModal({ preselectedStudentId, students, o
             <p className="text-xs text-white/35 mt-0.5">Prellenado desde el plan del estudiante</p>
           </div>
           <button onClick={onClose} className="text-white/40 hover:text-white transition-colors">
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            <MdClose className="h-5 w-5" />
           </button>
         </div>
 

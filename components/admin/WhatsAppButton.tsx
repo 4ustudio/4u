@@ -88,18 +88,22 @@ export default function WhatsAppButton({
   }
 
   // ── Variante ícono (sin popover, acción directa) ───────────────
+  // Botón, no <a>: evita anidar <a> dentro de filas que ya son un <Link>.
   if (variant === 'icon') {
     return (
-      <a
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={() => logWhatsAppOpened({ entity_type: entityType, entity_id: entityId, contact_name: vars.name ?? '—', template, action: logAction })}
+      <button
+        type="button"
+        onClick={(ev) => {
+          ev.preventDefault()
+          ev.stopPropagation()
+          window.open(url, '_blank', 'noopener,noreferrer')
+          logWhatsAppOpened({ entity_type: entityType, entity_id: entityId, contact_name: vars.name ?? '—', template, action: logAction })
+        }}
         title={`WhatsApp: ${vars.name ?? ''}`}
         className="inline-flex items-center justify-center h-7 w-7 rounded-lg text-green-400 hover:bg-green-500/10 transition-colors"
       >
         <WaIcon className="h-4 w-4" />
-      </a>
+      </button>
     )
   }
 

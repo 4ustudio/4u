@@ -1,6 +1,7 @@
 'use client'
 
 import { useActionState, useState } from 'react'
+import { MdInventory2 } from 'react-icons/md'
 import { useRouter } from 'next/navigation'
 import { deleteStudentAction } from '@/app/admin/_actions/students'
 
@@ -23,9 +24,7 @@ export default function DeleteStudentButton({ studentId, studentName }: { studen
         onClick={() => setConfirming(true)}
         className="w-full flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-xs font-semibold transition-all font-poppins text-red-400 border border-red-500/25 bg-red-500/5 hover:bg-red-500/10"
       >
-        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-          <path d="M21 8v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8M21 8H3M21 8l-3-5H6L3 8M10 12h4"/>
-        </svg>
+        <MdInventory2 className="h-3.5 w-3.5" aria-hidden="true" />
         Archivar estudiante
       </button>
     )

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition, useEffect } from 'react'
+import { MdClose } from 'react-icons/md'
 import { registerPayment } from '../_actions'
 import type { StudentOption, PaymentType, PaymentMethod } from '../_actions'
 import { getBirthdayBenefitStatus } from '@/lib/students/birthday'
@@ -156,7 +157,7 @@ export default function RegisterPaymentModal({ students, onClose, onSuccess }: P
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-base font-bold text-white">Registrar pago</h2>
           <button onClick={onClose} className="text-white/40 hover:text-white transition-colors">
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            <MdClose className="h-5 w-5" />
           </button>
         </div>
 

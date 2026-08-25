@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { MdClose } from 'react-icons/md'
 import { getStudentPayments } from '../_actions'
 import type { StudentPaymentRow } from '../_actions'
 import { PaymentStatusPill } from './PaymentStatusPill'
@@ -41,7 +42,7 @@ export default function StudentHistoryModal({ studentId, studentName, onClose }:
             <p className="text-xs text-white/40 mt-0.5">{studentName}</p>
           </div>
           <button onClick={onClose} className="text-white/40 hover:text-white transition-colors">
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            <MdClose className="h-5 w-5" />
           </button>
         </div>
 

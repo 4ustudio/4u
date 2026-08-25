@@ -2,6 +2,10 @@
 
 import { useState, useTransition, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
+import {
+  MdClose, MdOpenInNew, MdCode, MdLink, MdMoreVert, MdCheck, MdAdd,
+  MdLocalOffer, MdErrorOutline, MdHistory, MdWarningAmber, MdSearch,
+} from 'react-icons/md'
 import { getPayments, markPaymentOverdue, processOverduePayments, generateBoldCheckout } from './_actions'
 import type { PaymentWithStudent, PaymentMetrics, BoldMetrics, PaymentTab, StudentOption, EnrollmentOption } from './_actions'
 import { PaymentStatusPill } from './_components/PaymentStatusPill'
@@ -110,7 +114,7 @@ function BoldInfoDrawer({ payment, sessionUrl, onClose }: {
             <p className="text-sm font-bold text-white">Información Bold</p>
           </div>
           <button onClick={onClose} className="text-white/30 hover:text-white transition-colors p-1">
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            <MdClose className="h-4 w-4" />
           </button>
         </div>
 
@@ -153,7 +157,7 @@ function BoldInfoDrawer({ payment, sessionUrl, onClose }: {
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 w-full py-2.5 text-xs font-semibold rounded-xl border border-orange-500/40 text-orange-400 hover:bg-orange-500/10 transition-colors"
             >
-              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3"/></svg>
+              <MdOpenInNew className="h-3.5 w-3.5" />
               Abrir checkout Bold
             </a>
           ) : (
@@ -165,7 +169,7 @@ function BoldInfoDrawer({ payment, sessionUrl, onClose }: {
               onClick={() => setShowPayload(!showPayload)}
               className="flex items-center justify-center gap-2 w-full py-2.5 text-xs font-semibold rounded-xl border border-white/10 text-white/50 hover:bg-white/5 transition-colors"
             >
-              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+              <MdCode className="h-3.5 w-3.5" />
               {showPayload ? 'Ocultar payload' : 'Ver payload gateway'}
             </button>
           )}
@@ -228,7 +232,7 @@ function BoldCell({ payment, sessionUrl, onShowDrawer, onUrlGenerated }: {
         {genPending
           ? <><span className="h-2.5 w-2.5 rounded-full border border-orange-400/50 border-t-orange-400 animate-spin" />Generando…</>
           : <>
-              <svg className="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              <MdLink className="h-2.5 w-2.5" />
               Generar link Bold
             </>
         }
@@ -295,7 +299,7 @@ function RowActions({
         className="rounded-xl p-2 transition-colors"
         style={{ color: TEXT_FAINT }}
       >
-        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+        <MdMoreVert className="h-4 w-4" />
       </button>
       {open && (
         <>
@@ -311,7 +315,7 @@ function RowActions({
                 className="w-full text-left flex items-center gap-2.5 px-4 py-3 text-xs transition-colors"
                 style={{ color: TEXT_MUTED }}
               >
-                <svg className="h-3.5 w-3.5 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6 9 17l-5-5"/></svg>
+                <MdCheck className="h-3.5 w-3.5 text-green-400" />
                 Registrar pago
               </button>
             )}
@@ -321,7 +325,7 @@ function RowActions({
               className="w-full text-left flex items-center gap-2.5 px-4 py-3 text-xs transition-colors"
               style={{ color: TEXT_MUTED }}
             >
-              <svg className="h-3.5 w-3.5 text-orange-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              <MdAdd className="h-3.5 w-3.5 text-orange-400" />
               Generar pago del mes
             </button>
             {canDiscount && (
@@ -331,7 +335,7 @@ function RowActions({
                 className="w-full text-left flex items-center gap-2.5 px-4 py-3 text-xs transition-colors"
                 style={{ color: TEXT_MUTED }}
               >
-                <svg className="h-3.5 w-3.5 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 5 5 19M9 7a2 2 0 1 1-4 0 2 2 0 0 1 4 0ZM19 17a2 2 0 1 1-4 0 2 2 0 0 1 4 0Z"/></svg>
+                <MdLocalOffer className="h-3.5 w-3.5 text-blue-400" />
                 Aplicar descuento
               </button>
             )}
@@ -342,7 +346,7 @@ function RowActions({
                 className="w-full text-left flex items-center gap-2.5 px-4 py-3 text-xs transition-colors"
                 style={{ color: 'var(--adm-danger)' }}
               >
-                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+                <MdErrorOutline className="h-3.5 w-3.5" />
                 Marcar vencido
               </button>
             )}
@@ -372,7 +376,7 @@ function RowActions({
               className="w-full text-left flex items-center gap-2.5 px-4 py-3 text-xs transition-colors"
               style={{ color: TEXT_MUTED }}
             >
-              <svg className="h-3.5 w-3.5" style={{ color: TEXT_FAINT }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 8v4l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+              <MdHistory className="h-3.5 w-3.5" style={{ color: TEXT_FAINT }} />
               Ver historial
             </button>
           </div>
@@ -395,7 +399,7 @@ function ConfirmOverdue({ payment, onConfirm, onCancel, pending }: {
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onCancel} />
       <div className="relative z-10 w-full max-w-sm bg-[#0f0f0f] border border-white/12 rounded-2xl p-6 space-y-4">
         <div className="h-10 w-10 rounded-full bg-red-500/15 flex items-center justify-center mx-auto">
-          <svg className="h-5 w-5 text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 9v4M12 17h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>
+          <MdWarningAmber className="h-5 w-5 text-red-400" />
         </div>
         <div className="text-center">
           <p className="text-sm font-semibold text-white">Marcar como vencido</p>
@@ -519,7 +523,7 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
             className="flex items-center gap-1.5 rounded-2xl px-4 py-2.5 text-xs font-semibold transition-colors disabled:opacity-50"
             style={{ border: `1px solid color-mix(in srgb, var(--adm-danger) 18%, white 82%)`, background: 'var(--adm-danger-soft)', color: 'var(--adm-danger)' }}
           >
-            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+            <MdErrorOutline className="h-3.5 w-3.5" />
             {overduePending ? 'Procesando…' : 'Procesar vencidos'}
           </button>
           <button
@@ -528,7 +532,7 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
             className="flex items-center gap-1.5 rounded-2xl px-4 py-2.5 text-xs font-semibold transition-colors"
             style={{ border: `1px solid ${BORDER}`, background: SURFACE, color: 'var(--adm-accent)', boxShadow: 'var(--adm-card-shadow)' }}
           >
-            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            <MdLink className="h-3.5 w-3.5" />
             Crear cobro
           </button>
           <button
@@ -536,7 +540,7 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
             onClick={() => setShowRegister(true)}
             className="adm-button-primary flex items-center gap-1.5 rounded-2xl px-4 py-2.5 text-xs font-bold transition-all hover:brightness-110"
           >
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            <MdAdd className="h-4 w-4" />
             Registrar pago
           </button>
         </div>
@@ -550,7 +554,7 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
         >
           {overdueMsg}
           <button type="button" onClick={() => setOverdueMsg(null)} className="ml-3" style={{ color: TEXT_FAINT }}>
-            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            <MdClose className="h-3.5 w-3.5" />
           </button>
         </div>
       )}
@@ -580,7 +584,7 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
 
       {/* Búsqueda */}
       <div className="relative max-w-sm">
-        <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: TEXT_FAINT }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: TEXT_FAINT }} />
         <input
           value={search}
           onChange={e => handleSearch(e.target.value)}
@@ -605,7 +609,7 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
               className="inline-flex items-center gap-1.5 text-xs font-semibold transition-colors"
               style={{ color: 'var(--adm-accent)' }}
             >
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              <MdAdd className="h-4 w-4" />
               Registrar primer pago
             </button>
           )}

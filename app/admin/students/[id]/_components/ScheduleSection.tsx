@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { MdSchedule } from 'react-icons/md'
 import { useRouter } from 'next/navigation'
 import ScheduleFormModal from './ScheduleFormModal'
 import { deleteScheduleAction } from '../../../_actions/students'
@@ -69,9 +70,7 @@ export default function ScheduleSection({ schedules, studentId, preferredTime, c
 
       {preferredTime && (
         <div className="px-5 py-2.5 bg-[#ff7a00]/10 border-b border-[#ff7a00]/20 flex items-center gap-2">
-          <svg className="h-3.5 w-3.5 text-[#ff7a00] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
-          </svg>
+          <MdSchedule className="h-3.5 w-3.5 text-[#ff7a00] shrink-0" aria-hidden="true" />
           <span className="text-xs text-white/70">
             Franja preferida del lead: <span className="font-semibold text-[#ff7a00]">{preferredTime}</span>
           </span>

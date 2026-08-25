@@ -1,6 +1,7 @@
 'use client'
 
 import { useActionState, useEffect } from 'react'
+import { MdClose } from 'react-icons/md'
 import { useRouter } from 'next/navigation'
 import { createScheduleAction, updateScheduleAction } from '../../../_actions/students'
 import type { StudentSchedule } from '@/types/admin'
@@ -56,9 +57,7 @@ export default function ScheduleFormModal({ studentId, schedule, courses, classr
             </p>
           </div>
           <button onClick={onClose} className="text-white/30 hover:text-white p-1" aria-label="Cerrar">
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-              <path d="M18 6 6 18M6 6l12 12" />
-            </svg>
+            <MdClose className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
 

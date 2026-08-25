@@ -2,6 +2,10 @@
 
 import { useActionState, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import {
+  MdClose, MdCheckCircle, MdCancel, MdCalendarMonth, MdHistory,
+  MdPersonAdd, MdWarningAmber, MdExpandMore,
+} from 'react-icons/md'
 import WhatsAppButton from '@/components/admin/WhatsAppButton'
 import {
   cancelSessionAction,
@@ -118,9 +122,7 @@ export default function SessionDetailModal({ session, classrooms, instructors, o
               </p>
             </div>
             <button onClick={onClose} className="ml-3 text-white/30 hover:text-white p-1 shrink-0" aria-label="Cerrar">
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                <path d="M18 6 6 18M6 6l12 12" />
-              </svg>
+              <MdClose className="h-5 w-5" aria-hidden="true" />
             </button>
           </div>
 
@@ -190,9 +192,7 @@ export default function SessionDetailModal({ session, classrooms, instructors, o
           {/* Acción 1: Registrar asistencia */}
           <ActionCard
             icon={
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-              </svg>
+              <MdCheckCircle className="h-5 w-5" aria-hidden="true" />
             }
             title="Registrar asistencia"
             subtitle="¿El estudiante asistió? Marca el resultado de la clase."
@@ -232,9 +232,7 @@ export default function SessionDetailModal({ session, classrooms, instructors, o
           {/* Acción 1b: Registrar asistencia (nuevo sistema simplificado) */}
           <ActionCard
             icon={
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/>
-              </svg>
+              <MdCheckCircle className="h-5 w-5" aria-hidden="true" />
             }
             title="Registrar asistencia (simple)"
             subtitle="Marca si el estudiante asistió, faltó o no se presentó."
@@ -273,9 +271,7 @@ export default function SessionDetailModal({ session, classrooms, instructors, o
           {/* Acción 2: Cambiar horario */}
           <ActionCard
             icon={
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                <path d="M8 2v4M16 2v4M4 10h16M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/>
-              </svg>
+              <MdCalendarMonth className="h-5 w-5" aria-hidden="true" />
             }
             title="Cambiar horario"
             subtitle="Mover la clase a otra fecha, hora o salón diferente."
@@ -320,9 +316,7 @@ export default function SessionDetailModal({ session, classrooms, instructors, o
           {!isClosed && (
             <ActionCard
               icon={
-                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                  <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
-                </svg>
+                <MdHistory className="h-5 w-5" aria-hidden="true" />
               }
               title="Confirmación de asistencia"
               subtitle="Actualizar manualmente el estado de confirmación del estudiante."
@@ -358,9 +352,7 @@ export default function SessionDetailModal({ session, classrooms, instructors, o
           {isActive && (
             <ActionCard
               icon={
-                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11l-4-4-4 4M18 7v8"/>
-                </svg>
+                <MdPersonAdd className="h-5 w-5" aria-hidden="true" />
               }
               title="Cancelar por instructor"
               subtitle={canInstructorCancel ? 'El instructor cancela con más de 24h de anticipación.' : 'No disponible — faltan menos de 24 horas para la clase.'}
@@ -372,7 +364,7 @@ export default function SessionDetailModal({ session, classrooms, instructors, o
                 <form action={instCancelAction} className="space-y-3 pt-1">
                   <input type="hidden" name="session_id" value={session.id} />
                   <div className="flex gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2.5">
-                    <svg className="h-4 w-4 shrink-0 mt-0.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <MdWarningAmber className="h-4 w-4 shrink-0 mt-0.5 text-amber-400" aria-hidden="true" />
                     <div className="text-xs text-amber-300/90 leading-relaxed">
                       <span className="font-bold text-amber-300">Política de asistencia — </span>
                       Las clases que <span className="font-bold">no fueron canceladas con al menos 24 horas de anticipación</span> se contabilizan como clases tomadas y se descuentan del plan mensual del estudiante.
@@ -399,9 +391,7 @@ export default function SessionDetailModal({ session, classrooms, instructors, o
           {isActive && (
             <ActionCard
               icon={
-                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                  <circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/>
-                </svg>
+                <MdCancel className="h-5 w-5" aria-hidden="true" />
               }
               title="Cancelar clase (admin)"
               subtitle="Liberar este horario. Si faltan menos de 24 h, consume cupo del estudiante."
@@ -472,12 +462,10 @@ function ActionCard({
           <p className={`text-sm font-semibold ${open ? 'text-white' : 'text-white/80'}`}>{title}</p>
           <p className="text-xs text-white/40 mt-0.5 leading-snug">{subtitle}</p>
         </div>
-        <svg
+        <MdExpandMore
           className={`h-4 w-4 shrink-0 transition-transform text-white/30 ${open ? 'rotate-180' : ''}`}
-          viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"
-        >
-          <path d="m6 9 6 6 6-6" />
-        </svg>
+          aria-hidden="true"
+        />
       </button>
       {open && (
         <div className="px-4 pb-4">

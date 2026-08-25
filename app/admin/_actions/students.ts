@@ -1,7 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
-import { createAuthServerClient } from '@/lib/supabase/server'
+import { createAuthServerClient, getAuthUser } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type { Student, StudentLifecycleStatus, StudentStatus, StudentType, StudentSchedule, Frequency } from '@/types/admin'
 import { safeRecordStudentActivity } from './retention'
@@ -10,8 +10,7 @@ import { isBirthdayMonth, getBirthdayBenefitStatus } from '@/lib/students/birthd
 import { resolveRole, hasAcademicAccess } from '@/lib/auth/roles'
 
 async function assertAdmin(): Promise<{ error: string } | null> {
-  const supabase = await createAuthServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await getAuthUser()
   const role = resolveRole(user)
   if (!hasAcademicAccess(role)) return { error: 'No autorizado.' }
   return null
@@ -81,11 +80,208 @@ export async function getStudents(): Promise<Student[]> {
         e2 = retry.error
       }
       if (e2) throw new Error(e2.message)
-      return (d2 ?? []) as unknown as Student[]
+      return attachSchedules((d2 ?? []) as unknown as Student[])
     }
-    return (data ?? []) as unknown as Student[]
+    return attachSchedules((data ?? []) as unknown as Student[])
   } catch (e) {
     throw new Error(e instanceof Error ? e.message : 'Error cargando estudiantes')
+  }
+}
+
+async function attachSchedules(students: Student[]): Promise<Student[]> {
+  if (students.length === 0) return students
+  const { data: schedules } = await createAdminClient()
+    .from('student_schedules')
+    .select('student_id, day_of_week, start_time, active_from, course:courses(name), instructor:instructors(name), classroom:classrooms(name)')
+    .eq('status', 'active')
+    .in('student_id', students.map(s => s.id))
+
+  const byStudent = new Map<string, NonNullable<Student['schedules']>>()
+  for (const raw of (schedules ?? []) as any[]) {
+    const list = byStudent.get(raw.student_id) ?? []
+    list.push({
+      day_of_week:     raw.day_of_week,
+      start_time:      raw.start_time,
+      active_from:     raw.active_from,
+      course_name:     raw.course?.name ?? null,
+      instructor_name: raw.instructor?.name ?? null,
+      classroom_name:  raw.classroom?.name ?? null,
+    })
+    byStudent.set(raw.student_id, list)
+  }
+
+  return students.map(s => ({ ...s, schedules: byStudent.get(s.id) ?? [] }))
+}
+
+// ─── Dashboard de la lista de estudiantes (KPIs + próxima clase + progreso) ──
+
+export interface StudentsKpis {
+  total: number
+  active: number
+  activePct: number
+  newThisMonth: number
+  newThisMonthPct: number
+  classesThisWeek: number
+  classesToday: number
+  upcoming7d: number
+  activeInstructors: number
+  avgAttendance30d: number | null
+}
+
+export interface StudentListRow extends Student {
+  nextClass: { date: string; startTime: string; classroomName: string | null } | null
+  progress: { completed: number; total: number } | null
+  fallbackClass: { courseName: string | null; instructorName: string | null; classroomName: string | null } | null
+  fallbackSchedule: { startDate: string; occurrencesPerWeek: number | null; sessionCount: number } | null
+}
+
+function isActiveStudent(s: Student): boolean {
+  return s.student_status ? s.student_status === 'activo' : s.status === 'active'
+}
+
+function isThisMonthIso(iso: string): boolean {
+  const d = new Date(iso), n = new Date()
+  return d.getMonth() === n.getMonth() && d.getFullYear() === n.getFullYear()
+}
+
+export async function getStudentsDashboard(): Promise<{ students: StudentListRow[]; kpis: StudentsKpis }> {
+  const students = await getStudents()
+  const db = createAdminClient()
+  const ids = students.map(s => s.id)
+  const today = new Date()
+  const todayStr = today.toISOString().split('T')[0]
+  const weekStart = new Date(today); weekStart.setDate(today.getDate() - ((today.getDay() || 7) - 1))
+  const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6)
+  const in7d = new Date(today); in7d.setDate(today.getDate() + 7)
+  const d30ago = new Date(today); d30ago.setDate(today.getDate() - 30)
+
+  const [
+    { data: nextSessions },
+    { data: latestSessions },
+    { count: classesThisWeek },
+    { count: classesToday },
+    { count: upcoming7d },
+    { count: activeInstructors },
+    { data: attendanceSessions },
+  ] = await Promise.all([
+    ids.length > 0
+      ? db.from('class_sessions')
+          .select('student_id, scheduled_date, start_time, classroom:classrooms(name)')
+          .in('student_id', ids)
+          .gte('scheduled_date', todayStr)
+          .not('status', 'in', '(cancelled,rescheduled)')
+          .order('scheduled_date').order('start_time')
+      : Promise.resolve({ data: [] as any[] }),
+    // Respaldo para "Programa/Clase" y "Profesor" cuando el estudiante no tiene
+    // un horario fijo activo — se toma su clase agendada más reciente (pasada o futura).
+    ids.length > 0
+      ? db.from('class_sessions')
+          .select('student_id, course:courses(name), instructor:instructors(name), classroom:classrooms(name), scheduled_date')
+          .in('student_id', ids)
+          .not('status', 'in', '(cancelled,rescheduled)')
+          .order('scheduled_date', { ascending: false })
+      : Promise.resolve({ data: [] as any[] }),
+    db.from('class_sessions').select('id', { count: 'exact', head: true })
+      .gte('scheduled_date', weekStart.toISOString().split('T')[0])
+      .lte('scheduled_date', weekEnd.toISOString().split('T')[0])
+      .not('status', 'in', '(cancelled,rescheduled)'),
+    db.from('class_sessions').select('id', { count: 'exact', head: true })
+      .eq('scheduled_date', todayStr)
+      .not('status', 'in', '(cancelled,rescheduled)'),
+    db.from('class_sessions').select('id', { count: 'exact', head: true })
+      .gt('scheduled_date', todayStr)
+      .lte('scheduled_date', in7d.toISOString().split('T')[0])
+      .not('status', 'in', '(cancelled,rescheduled)'),
+    db.from('instructors').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+    db.from('class_sessions').select('status')
+      .gte('scheduled_date', d30ago.toISOString().split('T')[0])
+      .lte('scheduled_date', todayStr)
+      .not('status', 'in', '(cancelled,rescheduled)'),
+  ])
+
+  const nextByStudent = new Map<string, { date: string; startTime: string; classroomName: string | null }>()
+  for (const raw of (nextSessions ?? []) as any[]) {
+    if (nextByStudent.has(raw.student_id)) continue
+    nextByStudent.set(raw.student_id, {
+      date: raw.scheduled_date,
+      startTime: raw.start_time,
+      classroomName: raw.classroom?.name ?? null,
+    })
+  }
+
+  const fallbackByStudent = new Map<string, { courseName: string | null; instructorName: string | null; classroomName: string | null }>()
+  for (const raw of (latestSessions ?? []) as any[]) {
+    if (fallbackByStudent.has(raw.student_id)) continue
+    fallbackByStudent.set(raw.student_id, {
+      courseName:     raw.course?.name ?? null,
+      instructorName: raw.instructor?.name ?? null,
+      classroomName:  raw.classroom?.name ?? null,
+    })
+  }
+
+  // Sin horario fijo activo → inicio real (primera clase agendada) y frecuencia
+  // estimada como clases reales / semanas transcurridas entre la primera y la
+  // última (el día de la semana varía porque no hay horario fijo, así que
+  // contar días distintos sobreestima la frecuencia — se usa el promedio real).
+  // Con una sola clase registrada no hay forma honesta de estimar una cadencia.
+  const datesByStudent = new Map<string, Set<string>>()
+  for (const raw of (latestSessions ?? []) as any[]) {
+    const set = datesByStudent.get(raw.student_id) ?? new Set<string>()
+    set.add(raw.scheduled_date)
+    datesByStudent.set(raw.student_id, set)
+  }
+  const fallbackScheduleByStudent = new Map<string, { startDate: string; occurrencesPerWeek: number | null; sessionCount: number }>()
+  for (const [studentId, dateSet] of datesByStudent) {
+    const dates = [...dateSet].sort()
+    const startDate = dates[0]
+    const endDate = dates[dates.length - 1]
+    const spanDays = (new Date(endDate + 'T12:00:00').getTime() - new Date(startDate + 'T12:00:00').getTime()) / 86400000
+    const weeksSpan = spanDays / 7
+    const occurrencesPerWeek = weeksSpan > 0 ? Math.max(1, Math.round(dates.length / weeksSpan)) : null
+    fallbackScheduleByStudent.set(studentId, { startDate, occurrencesPerWeek, sessionCount: dates.length })
+  }
+
+  const year = today.getFullYear()
+  const month = today.getMonth() + 1
+  const usageResults = await Promise.all(
+    ids.map(id => db.rpc('fn_monthly_usage', { p_student_id: id, p_year: year, p_month: month }))
+  )
+  const usageByStudent = new Map<string, { completed: number; total: number }>()
+  ids.forEach((id, i) => {
+    const row = usageResults[i]?.data?.[0]
+    // classes_completed casi nunca se usa (los instructores rara vez marcan asistencia),
+    // así que el progreso real del mes se refleja mejor con classes_scheduled (clases ya
+    // agendadas de la cuota mensual).
+    if (row) usageByStudent.set(id, { completed: Number(row.classes_scheduled ?? 0), total: Number(row.quota_total ?? 0) })
+  })
+
+  const active = students.filter(isActiveStudent).length
+  const newThisMonth = students.filter(s => isThisMonthIso(s.enrolled_at)).length
+  const attended = (attendanceSessions ?? []).filter(s => s.status === 'completed').length
+  const attendanceTotal = (attendanceSessions ?? []).length
+
+  const rows: StudentListRow[] = students.map(s => ({
+    ...s,
+    nextClass:        nextByStudent.get(s.id) ?? null,
+    progress:         usageByStudent.get(s.id) ?? null,
+    fallbackClass:    fallbackByStudent.get(s.id) ?? null,
+    fallbackSchedule: fallbackScheduleByStudent.get(s.id) ?? null,
+  }))
+
+  return {
+    students: rows,
+    kpis: {
+      total: students.length,
+      active,
+      activePct: students.length > 0 ? Math.round((active / students.length) * 100) : 0,
+      newThisMonth,
+      newThisMonthPct: students.length > 0 ? Math.round((newThisMonth / students.length) * 100) : 0,
+      classesThisWeek: classesThisWeek ?? 0,
+      classesToday: classesToday ?? 0,
+      upcoming7d: upcoming7d ?? 0,
+      activeInstructors: activeInstructors ?? 0,
+      avgAttendance30d: attendanceTotal > 0 ? Math.round((attended / attendanceTotal) * 100) : null,
+    },
   }
 }
 

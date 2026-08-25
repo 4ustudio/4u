@@ -52,6 +52,14 @@ export interface Student {
   birthday_benefit_year?:     number | null
   birthday_benefit_used?:     boolean | null
   birthday_discount_percent?: number | null
+  schedules?: {
+    day_of_week: number
+    start_time: string
+    active_from: string
+    course_name?: string | null
+    instructor_name?: string | null
+    classroom_name?: string | null
+  }[]
   eps?: string | null
   emergency_contact_name?: string | null
   emergency_contact_phone?: string | null

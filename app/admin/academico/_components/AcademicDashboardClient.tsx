@@ -12,20 +12,28 @@ interface Props {
 }
 
 export function AcademicDashboardClient({ data }: Props) {
-  const [tab, setTab] = useState<'kpis' | 'attendance' | 'risk' | 'matching'>('kpis')
+  const [tab, setTab] = useState<'kpis' | 'attendance' | 'matching'>('kpis')
   const { kpis } = data
 
   return (
     <div className="space-y-6 w-full page-animate">
       {/* Header */}
-      <div>
-        <div className="flex items-center gap-2 text-xs text-white/35 mb-1">
-          <Link href="/admin" className="hover:text-white/60 transition-colors">Admin</Link>
-          <span>/</span>
-          <span className="text-white/60">Académico</span>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <div className="flex items-center gap-2 text-xs text-white/35 mb-1">
+            <Link href="/admin" className="hover:text-white/60 transition-colors">Admin</Link>
+            <span>/</span>
+            <span className="text-white/60">Académico</span>
+          </div>
+          <h1 className="text-xl font-bold text-white">Indicadores Académicos</h1>
+          <p className="text-sm text-white/40 mt-0.5">Operación, asistencia y capacidad.</p>
         </div>
-        <h1 className="text-xl font-bold text-white">Indicadores Académicos</h1>
-        <p className="text-sm text-white/40 mt-0.5">Operación, asistencia y capacidad.</p>
+        <Link
+          href="/admin/retencion"
+          className="text-xs font-semibold text-[#ff7a00] hover:text-[#ff9433] transition-colors whitespace-nowrap"
+        >
+          Ver alumnos en riesgo →
+        </Link>
       </div>
 
       {/* Tabs */}
@@ -33,7 +41,6 @@ export function AcademicDashboardClient({ data }: Props) {
         {[
           { key: 'kpis' as const, label: 'KPIs', desc: 'Indicadores generales' },
           { key: 'attendance' as const, label: 'Asistencia', desc: 'Por instructor y curso' },
-          { key: 'risk' as const, label: 'Riesgo', desc: 'Alertas académicas' },
           { key: 'matching' as const, label: 'Matching', desc: 'Instructores vs horarios' },
         ].map(t => (
           <button
@@ -53,7 +60,6 @@ export function AcademicDashboardClient({ data }: Props) {
 
       {tab === 'kpis' && <KPITab kpis={kpis} />}
       {tab === 'attendance' && <AttendanceTab data={data} />}
-      {tab === 'risk' && <RiskTab data={data} />}
       {tab === 'matching' && <MatchingTab data={data} />}
     </div>
   )
@@ -129,61 +135,6 @@ function AttendanceTab({ data }: { data: AcademicDashboardData }) {
             <span key={c.name} className={c.rate >= 80 ? 'text-green-400' : c.rate >= 60 ? 'text-yellow-400' : 'text-red-400'}>{c.rate}%</span>,
           ])}
         />
-      </div>
-    </div>
-  )
-}
-
-/* ── Riesgo ──────────────────────────────────────────────────── */
-function RiskTab({ data }: { data: AcademicDashboardData }) {
-  const riskCount = data.riskStudents.length
-  const criticalCount = data.riskStudents.filter(r => r.risk_level === 'critical').length
-  const warningCount = data.riskStudents.filter(r => r.risk_level === 'warning').length
-
-  return (
-    <div className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-4">
-          <p className="text-2xl font-extrabold font-poppins text-red-400">{criticalCount}</p>
-          <p className="text-sm font-semibold text-white/80 mt-1">Críticos</p>
-          <p className="text-xs text-white/40">3+ no-shows en 60 días</p>
-        </div>
-        <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-4">
-          <p className="text-2xl font-extrabold font-poppins text-yellow-400">{warningCount}</p>
-          <p className="text-sm font-semibold text-white/80 mt-1">Advertencia</p>
-          <p className="text-xs text-white/40">asistencia &lt; 50%</p>
-        </div>
-        <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
-          <p className="text-2xl font-extrabold font-poppins text-white">{riskCount}</p>
-          <p className="text-sm font-semibold text-white/80 mt-1">Total en riesgo</p>
-          <p className="text-xs text-white/40">requieren atención</p>
-        </div>
-      </div>
-
-      {riskCount === 0 ? (
-        <p className="text-sm text-white/40 text-center py-8">No hay estudiantes en riesgo académico.</p>
-      ) : (
-        <div className="bg-[#0f0f0f] border border-white/10 rounded-xl overflow-hidden">
-          <Table
-            headers={['Estudiante', 'Estado', 'Score', 'No-shows', 'Asistencia 90d', 'Riesgo']}
-            rows={data.riskStudents.map(r => [
-              <Link key={r.id} href={`/admin/students/${r.id}`} className="text-white hover:text-[#ff7a00] transition-colors">{r.name}</Link>,
-              <span key={`s-${r.id}`} className="text-xs text-white/60">{r.student_status ?? '—'}</span>,
-              <span key={`sc-${r.id}`} className={r.retention_score && r.retention_score < 50 ? 'text-red-400' : 'text-white/60'}>{r.retention_score ?? '—'}</span>,
-              <span key={`ns-${r.id}`} className="text-red-400">{r.recent_no_shows}</span>,
-              <span key={`ar-${r.id}`} className={r.attendance_rate_90d !== null && r.attendance_rate_90d < 50 ? 'text-red-400' : 'text-white/60'}>{r.attendance_rate_90d !== null ? `${r.attendance_rate_90d}%` : '—'}</span>,
-              <span key={`rl-${r.id}`} className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                r.risk_level === 'critical' ? 'bg-red-900/30 text-red-400' : 'bg-yellow-900/30 text-yellow-400'
-              }`}>
-                {r.risk_level === 'critical' ? 'Crítico' : 'Advertencia'}
-              </span>,
-            ])}
-          />
-        </div>
-      )}
-
-      <div className="text-xs text-white/30 p-3 rounded-lg border border-white/10 bg-white/[0.02]">
-        <strong className="text-white/60">Reglas de riesgo académico:</strong> 3 ausencias consecutivas (no_show) en 60 días → <strong>crítico</strong>. Asistencia &lt; 50% en 90 días → <strong>advertencia</strong>.
       </div>
     </div>
   )

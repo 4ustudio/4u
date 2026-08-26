@@ -30,15 +30,6 @@ export interface AcademicDashboardData {
   }
   attendanceByInstructor: { name: string; total: number; attended: number; rate: number }[]
   attendanceByCourse: { name: string; total: number; attended: number; rate: number }[]
-  riskStudents: {
-    id: string
-    name: string
-    student_status: string | null
-    retention_score: number | null
-    risk_level: string
-    recent_no_shows: number
-    attendance_rate_90d: number | null
-  }[]
   matching: {
     unmatchedSchedules: { student_name: string; course_name: string; day_of_week: number; start_time: string }[]
     availableInstructors: { name: string; email: string | null; courses: string[]; availabilitySlots: number }[]
@@ -73,7 +64,6 @@ export async function getAcademicDashboardData(): Promise<AcademicDashboardData>
   const month = now.getMonth() + 1
 
   // KPIs en paralelo — queries optimizadas con límites
-  const ninetyDaysAgo = new Date(Date.now() - 90 * 86400000).toISOString().split('T')[0]
   const monthSessionsLimit = today.slice(0, 7) + '-01'
 
   const [
@@ -85,7 +75,6 @@ export async function getAcademicDashboardData(): Promise<AcademicDashboardData>
     { data: studentsActive },
     { data: schedules },
     { data: monthSessions },
-    { data: riskSessions },
   ] = await Promise.all([
     admin.from('class_sessions').select('id', { count: 'exact', head: true })
       .eq('scheduled_date', today).not('status', 'in', '(cancelled,rescheduled)'),
@@ -104,10 +93,6 @@ export async function getAcademicDashboardData(): Promise<AcademicDashboardData>
     admin.from('class_sessions')
       .select('id, status, attendance_status, student_id, instructor_id, course_id, instructor:instructors(name), course:courses(name)')
       .gte('scheduled_date', monthSessionsLimit).lt('scheduled_date', monthEnd).limit(500),
-    admin.from('class_sessions')
-      .select('student_id, status')
-      .gte('scheduled_date', ninetyDaysAgo)
-      .in('status', ['completed', 'no_show']).limit(1000),
   ])
 
   const instructorCount = instructors?.length ?? 0
@@ -167,9 +152,6 @@ export async function getAcademicDashboardData(): Promise<AcademicDashboardData>
     .map(([name, v]) => ({ name, total: v.total, attended: v.attended, rate: Math.round((v.attended / v.total) * 100) }))
     .sort((a, b) => b.total - a.total)
 
-  // Estudiantes en riesgo (desde 90 días de datos)
-  const riskStudents = await computeRiskStudents(riskSessions ?? [], activeSchedules, admin)
-
   // Matching: horarios sin instructor
   const unmatchedSchedules = activeSchedules
     .filter(s => !(s as any).instructor_id)
@@ -221,48 +203,9 @@ export async function getAcademicDashboardData(): Promise<AcademicDashboardData>
     },
     attendanceByInstructor,
     attendanceByCourse,
-    riskStudents,
     matching: { unmatchedSchedules, availableInstructors },
     capacity: { classroomHeatmap: [], instructorHeatmap: [] },
   }
-}
-
-async function computeRiskStudents(sessions: any[], _schedules: any[], admin: ReturnType<typeof createAdminClient>) {
-  const { data: allStudents } = await admin
-    .from('students')
-    .select('id, name, student_status, retention_score')
-    .eq('status', 'active')
-
-  const studentMap = new Map<string, { id: string; name: string; student_status: string | null; retention_score: number | null; no_shows: number; total: number; completed: number }>()
-  for (const st of allStudents ?? []) {
-    const s = st as any
-    studentMap.set(s.id, { id: s.id, name: s.name, student_status: s.student_status, retention_score: s.retention_score, no_shows: 0, total: 0, completed: 0 })
-  }
-
-  for (const s of sessions) {
-    const rec = studentMap.get(s.student_id)
-    if (!rec) continue
-    rec.total++
-    if (s.status === 'completed') rec.completed++
-    if (s.status === 'no_show') rec.no_shows++
-  }
-
-  return Array.from(studentMap.values()).map(s => {
-    const rate = s.total > 0 ? Math.round((s.completed / s.total) * 100) : null
-    const riskLevel = s.no_shows >= 3 ? 'critical' : (rate !== null && rate < 50) ? 'warning' : 'ok'
-    return {
-      id: s.id,
-      name: s.name || '—',
-      student_status: s.student_status,
-      retention_score: s.retention_score,
-      risk_level: riskLevel,
-      recent_no_shows: s.no_shows,
-      attendance_rate_90d: rate,
-    }
-  }).filter(s => s.risk_level !== 'ok').sort((a, b) => {
-    const order = { critical: 0, warning: 1, ok: 2 }
-    return order[a.risk_level as keyof typeof order] - order[b.risk_level as keyof typeof order]
-  })
 }
 
 // ─── Registrar asistencia (nuevo sistema simplificado) ──────────

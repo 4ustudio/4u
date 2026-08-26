@@ -263,7 +263,7 @@ export async function getInstructorDashboardData(userId: string, email?: string 
 
   if (!instructor) return null
 
-  const [{ data: sessions }, { data: availability }, { count: blockCount }, { data: lastLog }, { data: enrolledStudents }, { data: activeCourses }, { data: activeClassrooms }] = await Promise.all([
+  const [{ data: sessions }, { data: availability }, { count: blockCount }, { data: lastLog }, { data: enrolledStudents }, { data: activeCourses }, { data: activeClassrooms }, { data: myCourses }] = await Promise.all([
     adminClient
       .from('class_sessions')
       .select('*, student:students(name, phone), course:courses(name), classroom:classrooms(name), instructor:instructors(name)')
@@ -292,6 +292,7 @@ export async function getInstructorDashboardData(userId: string, email?: string 
     adminClient.from('students').select('id, name, phone').eq('status', 'active').order('name'),
     adminClient.from('courses').select('id, name').eq('is_active', true).order('name'),
     adminClient.from('classrooms').select('id, name').eq('is_active', true).order('name'),
+    adminClient.from('instructor_courses').select('course_id').eq('instructor_id', instructor.id),
   ])
 
   const monthSessions = (sessions ?? []) as any[] // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -349,6 +350,8 @@ export async function getInstructorDashboardData(userId: string, email?: string 
     students,
     sessions: monthSessions,
     availability: availability ?? [],
+    allCourses: activeCourses ?? [],
+    myCourseIds: (myCourses ?? []).map((c: any) => c.course_id), // eslint-disable-line @typescript-eslint/no-explicit-any
     quickActionData: {
       students: enrolledStudents ?? [],
       courses: activeCourses ?? [],
@@ -488,51 +491,194 @@ export async function studentBookAction(
 
 // ─── Disponibilidad de slots (para booking en tiempo real) ───────────
 
-export async function getAvailableSlotsAction(date: string): Promise<Array<{
+type InstructorDayContext = {
+  instructors: { id: string; name: string; instructor_availability: { day_of_week: number; start_time: string; end_time: string }[] }[]
+  busy: { instructor_id: string; start_time: string }[]
+  blocks: { instructor_id: string; start_time: string; end_time: string }[]
+  // Instructores que dictan ALGÚN curso (nunca se asigna uno sin cursos, aunque tenga horario libre).
+  teachesAnyCourse: Set<string>
+  // Sólo cuando se filtra por un curso puntual: quiénes lo dictan.
+  teachesCourse: Set<string> | null
+}
+
+// Trae en 5 queries (no N+5) todo lo necesario para resolver el instructor de CUALQUIER horario de ese día/curso.
+async function loadInstructorDayContext(date: string, courseName?: string): Promise<InstructorDayContext> {
+  const adminClient = admin()
+  const dow = new Date(date + 'T12:00:00').getDay()
+  const isodow = dow === 0 ? 7 : dow
+
+  let courseId: string | null = null
+  if (courseName) {
+    const { data: course } = await adminClient
+      .from('courses')
+      .select('id')
+      .ilike('name', courseName)
+      .eq('is_active', true)
+      .maybeSingle()
+    courseId = (course as any)?.id ?? null
+  }
+
+  const [{ data: instructors }, { data: busy }, { data: blocks }, { data: allInstructorCourses }, { data: instructorCourses }] = await Promise.all([
+    adminClient
+      .from('instructors')
+      .select('id, name, instructor_availability!inner(day_of_week, start_time, end_time)')
+      .eq('status', 'active')
+      .eq('instructor_availability.day_of_week', isodow)
+      .order('name'),
+    adminClient.from('class_sessions').select('instructor_id, start_time').eq('scheduled_date', date).not('status', 'in', '(cancelled,rescheduled)'),
+    adminClient.from('instructor_availability_blocks').select('instructor_id, start_time, end_time').eq('blocked_date', date),
+    adminClient.from('instructor_courses').select('instructor_id'),
+    courseId ? adminClient.from('instructor_courses').select('instructor_id').eq('course_id', courseId) : Promise.resolve({ data: null }),
+  ])
+
+  return {
+    instructors: (instructors ?? []) as any[],
+    busy: (busy ?? []) as any[],
+    blocks: (blocks ?? []) as any[],
+    teachesAnyCourse: new Set((allInstructorCourses as any[] ?? []).map(r => r.instructor_id)),
+    teachesCourse: instructorCourses ? new Set((instructorCourses as any[]).map(r => r.instructor_id)) : null,
+  }
+}
+
+function pickInstructorForTime(ctx: InstructorDayContext, time: string): { id: string; name: string } | null {
+  const [h] = time.split(':').map(Number)
+  const endTime = `${String(h + 1).padStart(2, '0')}:00:00`
+  const startTime = `${time}:00`
+
+  const candidates = ctx.instructors.filter(inst =>
+    inst.instructor_availability.some(a => a.start_time <= startTime && a.end_time >= endTime)
+  )
+  const pick = candidates.find(candidate => {
+    if (!ctx.teachesAnyCourse.has(candidate.id)) return false
+    if (ctx.teachesCourse && !ctx.teachesCourse.has(candidate.id)) return false
+    const classConflict = ctx.busy.some(session => session.instructor_id === candidate.id && session.start_time < endTime && startTime < session.start_time.slice(0, 5) + ':00')
+    const blocked = ctx.blocks.some(block => block.instructor_id === candidate.id && block.start_time < endTime && startTime < block.end_time)
+    return !classConflict && !blocked
+  })
+  return pick ? { id: pick.id, name: pick.name } : null
+}
+
+export async function getAvailableSlotsAction(date: string, courseName?: string): Promise<Array<{
   slot_time: string
   classroom_id: string
   classroom_name: string
   is_available: boolean
 }>> {
   const student = await getAuthenticatedStudent()
-  const { data } = await admin().rpc('fn_available_slots', {
-    p_date: date,
-    p_student_id: student?.id ?? null,
-  })
+  const [{ data }, ctx] = await Promise.all([
+    admin().rpc('fn_available_slots', { p_date: date, p_student_id: student?.id ?? null }),
+    loadInstructorDayContext(date, courseName),
+  ])
   const rows = (data ?? []) as any[] // eslint-disable-line @typescript-eslint/no-explicit-any
-  const times = [...new Set(rows.filter(slot => slot.is_available).map(slot => slot.slot_time.slice(0, 5)))] as string[]
-  const instructors = new Map(await Promise.all(times.map(async time => [time, await getInstructorForSlotAction(date, time)] as const)))
-  return rows.map(slot => ({ ...slot, is_available: !!slot.is_available && !!instructors.get(slot.slot_time.slice(0, 5)) }))
+  return rows.map(slot => ({
+    ...slot,
+    is_available: !!slot.is_available && !!pickInstructorForTime(ctx, slot.slot_time.slice(0, 5)),
+  }))
 }
 
-export async function getInstructorForSlotAction(date: string, time: string): Promise<{ id: string; name: string } | null> {
-  const dow = new Date(date + 'T12:00:00').getDay()
-  const isodow = dow === 0 ? 7 : dow
-  const [h] = time.split(':').map(Number)
-  const endTime = `${String(h + 1).padStart(2, '0')}:00:00`
-  const startTime = `${time}:00`
+export async function getInstructorForSlotAction(date: string, time: string, courseName?: string): Promise<{ id: string; name: string } | null> {
+  const ctx = await loadInstructorDayContext(date, courseName)
+  return pickInstructorForTime(ctx, time)
+}
 
+// Cupos con instructor real para varios días de una sola vez (badges del calendario).
+// A diferencia de loadInstructorDayContext (por día), aquí las tablas compartidas
+// (instructores, ocupación, bloqueos, cursos) se traen UNA vez para todo el rango,
+// no una vez por día — evita N×4 queries cuando se pintan ~20 días de un mes.
+export async function getDaySlotCountsAction(dates: string[]): Promise<Record<string, number>> {
+  if (dates.length === 0) return {}
+  const student = await getAuthenticatedStudent()
   const adminClient = admin()
-  const [{ data }, { data: busy }, { data: blocks }] = await Promise.all([
-    adminClient
-    .from('instructors')
-    .select('id, name, instructor_availability!inner(day_of_week, start_time, end_time)')
-    .eq('status', 'active')
-    .eq('instructor_availability.day_of_week', isodow)
-    .lte('instructor_availability.start_time', startTime)
-    .gte('instructor_availability.end_time', endTime)
-    .order('name'),
-    adminClient.from('class_sessions').select('instructor_id, start_time').eq('scheduled_date', date).not('status', 'in', '(cancelled,rescheduled)'),
-    adminClient.from('instructor_availability_blocks').select('instructor_id, start_time, end_time').eq('blocked_date', date),
+
+  const [slotsByDate, { data: instructors }, { data: busy }, { data: blocks }, { data: instructorCourses }] = await Promise.all([
+    Promise.all(dates.map(async date => {
+      const { data } = await adminClient.rpc('fn_available_slots', { p_date: date, p_student_id: student?.id ?? null })
+      return [date, (data ?? []) as any[]] as const // eslint-disable-line @typescript-eslint/no-explicit-any
+    })),
+    adminClient.from('instructors').select('id, name, instructor_availability(day_of_week, start_time, end_time)').eq('status', 'active'),
+    adminClient.from('class_sessions').select('instructor_id, start_time, scheduled_date').in('scheduled_date', dates).not('status', 'in', '(cancelled,rescheduled)'),
+    adminClient.from('instructor_availability_blocks').select('instructor_id, start_time, end_time, blocked_date').in('blocked_date', dates),
+    adminClient.from('instructor_courses').select('instructor_id'),
   ])
 
-  if (!data || data.length === 0) return null
-  const pick = data.find((candidate: any) => {
-    const classConflict = (busy ?? []).some((session: any) => session.instructor_id === candidate.id && session.start_time < endTime && startTime < session.start_time.slice(0, 5) + ':00')
-    const blocked = (blocks ?? []).some((block: any) => block.instructor_id === candidate.id && block.start_time < endTime && startTime < block.end_time)
-    return !classConflict && !blocked
-  })
-  return pick ? { id: pick.id, name: pick.name } : null
+  const teachesAnyCourse = new Set((instructorCourses as any[] ?? []).map(r => r.instructor_id)) // eslint-disable-line @typescript-eslint/no-explicit-any
+  const busyByDate = new Map<string, any[]>() // eslint-disable-line @typescript-eslint/no-explicit-any
+  for (const row of (busy as any[] ?? [])) { // eslint-disable-line @typescript-eslint/no-explicit-any
+    const list = busyByDate.get(row.scheduled_date) ?? []
+    list.push(row)
+    busyByDate.set(row.scheduled_date, list)
+  }
+  const blocksByDate = new Map<string, any[]>() // eslint-disable-line @typescript-eslint/no-explicit-any
+  for (const row of (blocks as any[] ?? [])) { // eslint-disable-line @typescript-eslint/no-explicit-any
+    const list = blocksByDate.get(row.blocked_date) ?? []
+    list.push(row)
+    blocksByDate.set(row.blocked_date, list)
+  }
+
+  const result: Record<string, number> = {}
+  for (const [date, rows] of slotsByDate) {
+    const dow = new Date(date + 'T12:00:00').getDay()
+    const isodow = dow === 0 ? 7 : dow
+    const dayInstructors = ((instructors as any[]) ?? []) // eslint-disable-line @typescript-eslint/no-explicit-any
+      .filter(inst => teachesAnyCourse.has(inst.id) && inst.instructor_availability.some((a: any) => a.day_of_week === isodow)) // eslint-disable-line @typescript-eslint/no-explicit-any
+    const dayBusy = busyByDate.get(date) ?? []
+    const dayBlocks = blocksByDate.get(date) ?? []
+    const times = new Set(rows.filter(r => r.is_available).map(r => r.slot_time.slice(0, 5)))
+
+    let count = 0
+    for (const t of times) {
+      const [h] = t.split(':').map(Number)
+      const endTime = `${String(h + 1).padStart(2, '0')}:00:00`
+      const startTime = `${t}:00`
+      const hasInstructor = dayInstructors.some(inst => {
+        const windowOk = inst.instructor_availability.some((a: any) => a.day_of_week === isodow && a.start_time <= startTime && a.end_time >= endTime) // eslint-disable-line @typescript-eslint/no-explicit-any
+        if (!windowOk) return false
+        const classConflict = dayBusy.some(session => session.instructor_id === inst.id && session.start_time < endTime && startTime < session.start_time.slice(0, 5) + ':00')
+        const blocked = dayBlocks.some(block => block.instructor_id === inst.id && block.start_time < endTime && startTime < block.end_time)
+        return !classConflict && !blocked
+      })
+      if (hasInstructor) count++
+    }
+    result[date] = count
+  }
+  return result
+}
+
+// Qué cursos tienen al menos un cupo con instructor real ese día (para deshabilitar "Elegir clase" sin salida).
+export async function getCoursesWithAvailabilityAction(date: string, courseNames: string[]): Promise<Record<string, boolean>> {
+  const student = await getAuthenticatedStudent()
+  const adminClient = admin()
+  const dow = new Date(date + 'T12:00:00').getDay()
+  const isodow = dow === 0 ? 7 : dow
+
+  const [{ data: slotRows }, { data: instructors }, { data: busy }, { data: blocks }, { data: courses }] = await Promise.all([
+    adminClient.rpc('fn_available_slots', { p_date: date, p_student_id: student?.id ?? null }),
+    adminClient
+      .from('instructors')
+      .select('id, name, instructor_availability!inner(day_of_week, start_time, end_time)')
+      .eq('status', 'active')
+      .eq('instructor_availability.day_of_week', isodow),
+    adminClient.from('class_sessions').select('instructor_id, start_time').eq('scheduled_date', date).not('status', 'in', '(cancelled,rescheduled)'),
+    adminClient.from('instructor_availability_blocks').select('instructor_id, start_time, end_time').eq('blocked_date', date),
+    adminClient.from('courses').select('id, name, instructor_courses(instructor_id)').eq('is_active', true).in('name', courseNames),
+  ])
+
+  const times = [...new Set(((slotRows ?? []) as any[]).filter(s => s.is_available).map(s => s.slot_time.slice(0, 5)))] as string[]
+  const baseCtx = {
+    instructors: (instructors ?? []) as any[],
+    busy: (busy ?? []) as any[],
+    blocks: (blocks ?? []) as any[],
+  }
+
+  const result: Record<string, boolean> = {}
+  for (const name of courseNames) {
+    const course = (courses ?? []).find((c: any) => c.name === name) as any
+    if (!course) { result[name] = false; continue }
+    const teachesCourse = new Set<string>((course.instructor_courses ?? []).map((r: any) => r.instructor_id as string))
+    const ctx: InstructorDayContext = { ...baseCtx, teachesAnyCourse: teachesCourse, teachesCourse }
+    result[name] = times.some(t => !!pickInstructorForTime(ctx, t))
+  }
+  return result
 }
 
 export async function getActiveCoursesAction(): Promise<{ id: string; name: string }[]> {
@@ -1049,7 +1195,7 @@ async function logAvailabilityAction(
 
 export async function saveInstructorAvailabilityAction(
   slots: Array<{ day_of_week: number; start_time: string; end_time: string }>
-): Promise<{ success?: boolean; error?: string }> {
+): Promise<{ success?: boolean; error?: string; slots?: Array<{ id: string; day_of_week: number; start_time: string; end_time: string }> }> {
   const session = await getInstructorFromSession()
   if (!session) return { error: 'Sesión expirada.' }
   const { instructor, userEmail, userName } = session
@@ -1084,12 +1230,14 @@ export async function saveInstructorAvailabilityAction(
     }
   }
 
+  let insertedSlots: any[] = []
   if (slots.length > 0) {
     const { error, data: newSlots } = await adminClient.from('instructor_availability').insert(
       slots.map(s => ({ ...s, instructor_id: instructor.id }))
     ).select()
 
     if (error) return { error: error.message }
+    insertedSlots = newSlots ?? []
 
     // Registrar creación de cada nuevo slot
     if (newSlots) {
@@ -1113,7 +1261,10 @@ export async function saveInstructorAvailabilityAction(
   }
 
   revalidatePath('/mi-cuenta')
-  return { success: true }
+  return {
+    success: true,
+    slots: insertedSlots.map((s: any) => ({ id: s.id, day_of_week: s.day_of_week, start_time: s.start_time, end_time: s.end_time })),
+  }
 }
 
 // ─── Instructor: crear disponibilidad individual ────────────────────
@@ -1375,6 +1526,28 @@ export async function getInstructorAvailabilityLogAction(): Promise<any[]> {
   return data ?? []
 }
 
+// ─── Instructor: guardar clases que dicta ────────────────────────────
+
+export async function saveInstructorCoursesAction(
+  courseIds: string[]
+): Promise<{ success?: boolean; error?: string }> {
+  const session = await getInstructorFromSession()
+  if (!session) return { error: 'Sesión expirada.' }
+  const { instructor } = session
+  const adminClient = admin()
+
+  await adminClient.from('instructor_courses').delete().eq('instructor_id', instructor.id)
+  if (courseIds.length > 0) {
+    const { error } = await adminClient.from('instructor_courses').insert(
+      courseIds.map(course_id => ({ instructor_id: instructor.id, course_id }))
+    )
+    if (error) return { error: error.message }
+  }
+
+  revalidatePath('/mi-cuenta')
+  return { success: true }
+}
+
 // ─── Instructor: actualizar perfil (nombre, email, foto) ─────────────
 
 export async function updateInstructorProfileAction(
@@ -1388,6 +1561,7 @@ export async function updateInstructorProfileAction(
   const name      = (formData.get('name')      as string)?.trim()
   const email     = (formData.get('email')     as string)?.trim()
   const avatarUrl = (formData.get('avatar_url') as string)?.trim() || undefined
+  const courseIds = formData.getAll('course_ids') as string[]
 
   if (!name) return { error: 'El nombre es requerido.' }
 
@@ -1412,6 +1586,15 @@ export async function updateInstructorProfileAction(
     .eq('id', instructor.id)
 
   if (updErr) return { error: 'No se pudo actualizar el perfil.' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (adminClient as any).from('instructor_courses').delete().eq('instructor_id', instructor.id)
+  if (courseIds.length > 0) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (adminClient as any).from('instructor_courses').insert(
+      courseIds.map(course_id => ({ instructor_id: instructor.id, course_id }))
+    )
+  }
 
   const metaUpdates: Record<string, string> = { full_name: name }
   if (avatarUrl) metaUpdates.avatar_url = avatarUrl

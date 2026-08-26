@@ -5,7 +5,7 @@ import {
 } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import { createAppointment } from "@/app/agendar/actions";
-import { getAvailableSlotsAction, getInstructorForSlotAction } from "@/app/(student)/_actions/student";
+import { getAvailableSlotsAction, getInstructorForSlotAction, getCoursesWithAvailabilityAction, getDaySlotCountsAction } from "@/app/(student)/_actions/student";
 import { getHolidayMapForYears } from "@/lib/calendar/colombia-holidays";
 import type { BookingFormState } from "@/types/booking";
 import { ACADEMY } from "@/lib/constants";
@@ -24,6 +24,10 @@ type BookingCalendarProps = {
   activeCourses?: { id: string; name: string }[];
   studentId?: string;
   initialInstructorId?: string;
+  initialDateIso?: string;
+  initialSlots?: SlotRow[];
+  initialCourseAvailability?: Record<string, boolean>;
+  initialDaySlotCounts?: Record<string, number>;
 };
 
 const FALLBACK_COURSES = ["Bajo","Batería","Canto","Guitarra","Piano","Producción Musical","Teclado"];
@@ -52,6 +56,20 @@ function fmtSlotTime(t: string): string {
   const period = h >= 12 ? "PM" : "AM";
   const h12 = h > 12 ? h - 12 : h === 0 ? 12 : h;
   return `${h12}:${String(m).padStart(2,"0")} ${period}`;
+}
+
+// Cuenta horarios con cupo, excluyendo los que ya pasaron si la fecha es hoy.
+function countAvailableSlots(rows: SlotRow[], isToday: boolean): number {
+  const times = new Set(rows.filter(s => s.is_available).map(s => s.slot_time.slice(0,5)));
+  if (!isToday) return times.size;
+  const now = new Date();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  let count = 0;
+  for (const t of times) {
+    const [h, m] = t.split(":").map(Number);
+    if (h * 60 + m > nowMinutes) count++;
+  }
+  return count;
 }
 
 function toIsoDate(d: Date): string {
@@ -106,6 +124,10 @@ export default function BookingCalendar({
   initialInstructorId = "",
   activeCourses,
   studentId,
+  initialDateIso,
+  initialSlots,
+  initialCourseAvailability,
+  initialDaySlotCounts,
 }: BookingCalendarProps = {}) {
   const [state, formAction, isPending] = useActionState(serverAction ?? createAppointment, { status: "idle" } as BookingFormState);
 
@@ -127,7 +149,14 @@ export default function BookingCalendar({
   const [slots,       setSlots]       = useState<SlotRow[]>([]);
   const [slotsLoading,setSlotsLoading] = useState(false);
   const [raceError,   setRaceError]   = useState<string | null>(null);
-  const [daySlotCounts, setDaySlotCounts] = useState<Record<string,number>>({});
+  const [daySlotCounts, setDaySlotCounts] = useState<Record<string,number>>(() => {
+    const seed = { ...(initialDaySlotCounts ?? {}) };
+    if (initialDateIso && initialSlots) {
+      seed[initialDateIso] = countAvailableSlots(initialSlots, initialDateIso === todayIso);
+    }
+    return seed;
+  });
+  const [courseAvailability, setCourseAvailability] = useState<Record<string, boolean> | null>(null);
 
   const selectedTimeRef = useRef(selectedTime);
   useEffect(() => { selectedTimeRef.current = selectedTime; }, [selectedTime]);
@@ -146,20 +175,42 @@ export default function BookingCalendar({
 
   useEffect(() => {
     if (!selectedDateIso || mode !== "student") { setSlots([]); return; }
-    setSlotsLoading(true);
     setSelectedTime(null);
     setAssignedInstructor(null);
     setSelectedInstructorId("");
     setRaceError(null);
-    getAvailableSlotsAction(selectedDateIso)
+
+    if (initialDateIso && initialSlots && selectedDateIso === initialDateIso && selectedCourse === "") {
+      const data = initialSlots;
+      setSlots(data);
+      setSlotsLoading(false);
+      setDaySlotCounts(prev => ({ ...prev, [selectedDateIso]: countAvailableSlots(data, selectedDateIso === todayIso) }));
+      return;
+    }
+
+    setSlotsLoading(true);
+    getAvailableSlotsAction(selectedDateIso, selectedCourse)
       .then(data => {
         setSlots(data);
         setSlotsLoading(false);
-        const available = new Set(data.filter(s => s.is_available).map(s => s.slot_time.slice(0,5))).size;
-        setDaySlotCounts(prev => ({ ...prev, [selectedDateIso]: available }));
+        setDaySlotCounts(prev => ({ ...prev, [selectedDateIso]: countAvailableSlots(data, selectedDateIso === todayIso) }));
       })
       .catch(() => setSlotsLoading(false));
-  }, [selectedDateIso, mode]);
+  }, [selectedDateIso, selectedCourse, mode, initialDateIso, initialSlots, todayIso]);
+
+  useEffect(() => {
+    if (!selectedDateIso || mode !== "student") { setCourseAvailability(null); return; }
+
+    if (initialDateIso && initialCourseAvailability && selectedDateIso === initialDateIso) {
+      setCourseAvailability(initialCourseAvailability);
+      return;
+    }
+
+    setCourseAvailability(null);
+    getCoursesWithAvailabilityAction(selectedDateIso, courses)
+      .then(setCourseAvailability)
+      .catch(() => setCourseAvailability(null));
+  }, [selectedDateIso, mode, initialDateIso, initialCourseAvailability]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!selectedTime || !selectedDateIso || mode !== "student") {
@@ -167,11 +218,11 @@ export default function BookingCalendar({
       setSelectedInstructorId("");
       return;
     }
-    getInstructorForSlotAction(selectedDateIso, selectedTime).then(inst => {
+    getInstructorForSlotAction(selectedDateIso, selectedTime, selectedCourse).then(inst => {
       setAssignedInstructor(inst);
       setSelectedInstructorId(inst?.id ?? "");
     });
-  }, [selectedTime, selectedDateIso, mode]);
+  }, [selectedTime, selectedDateIso, selectedCourse, mode]);
 
   useEffect(() => {
     if (state.status === "error" && (state as any).isRaceCondition && selectedDateIso) {
@@ -275,24 +326,14 @@ export default function BookingCalendar({
 
     if (!eligibleDates.length) return;
 
-    Promise.all(
-      eligibleDates.map(async dateStr => {
-        try {
-          const data = await getAvailableSlotsAction(dateStr);
-          const available = new Set(data.filter(s => s.is_available).map(s => s.slot_time.slice(0,5))).size;
-          return [dateStr, available] as const;
-        } catch {
-          return [dateStr, 0] as const;
-        }
-      })
-    ).then(results => {
+    getDaySlotCountsAction(eligibleDates).then(results => {
       if (disposed) return;
       setDaySlotCounts(prev => {
         const next = { ...prev };
-        for (const [dateStr, available] of results) next[dateStr] = available;
+        for (const [dateStr, available] of Object.entries(results)) next[dateStr] = available;
         return next;
       });
-    });
+    }).catch(() => {});
 
     return () => { disposed = true; };
   }, [cells, daySlotCounts, holidayMap, mm, mode, month, todayMidnight, year]);
@@ -318,7 +359,7 @@ export default function BookingCalendar({
   };
 
   const availableCount = timeSlots.filter(ts => ts.available).length;
-  const canSubmit = !!selectedDate && !!selectedCourse && !!selectedTime;
+  const canSubmit = !!selectedDate && !!selectedCourse && !!selectedTime && (mode !== "student" || !!assignedInstructor);
   const selectedTimeLabel = selectedTime ? fmtSlotTime(selectedTime+":00") : null;
   const currentStep = !selectedDate ? 1 : !selectedCourse ? 2 : !selectedTime ? 3 : 4;
 
@@ -562,7 +603,7 @@ export default function BookingCalendar({
                             <span className="text-[8px] sm:text-[9px] text-white/25 leading-none">Sin cupos</span>
                           )
                         ) : (
-                          <span className="inline-flex w-fit items-center rounded-md border border-green-400/20 bg-green-400/10 px-2 py-1 text-[8px] sm:text-[9px] font-bold leading-none text-green-300">Cupos</span>
+                          <span className="inline-flex h-[18px] sm:h-5 w-12 items-center rounded-md bg-white/10 animate-pulse"/>
                         )}
                       </div>
                     )}
@@ -639,21 +680,32 @@ export default function BookingCalendar({
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              {courses.map(c => (
-                <button key={c} type="button" disabled={!selectedDate}
+              {courses.map(c => {
+                const checking = mode === "student" && !!selectedDate && courseAvailability === null;
+                const unavailable = mode === "student" && !!selectedDate && courseAvailability !== null && !courseAvailability[c];
+                return (
+                <button key={c} type="button" disabled={!selectedDate || unavailable || checking}
+                  title={unavailable ? "Sin instructor disponible ese día" : checking ? "Comprobando disponibilidad…" : undefined}
                   onClick={() => { setSelectedCourse(c); setSelectedTime(null); setRaceError(null); }}
                   className="px-3.5 py-2 rounded-lg text-xs font-semibold transition-all font-roboto disabled:cursor-not-allowed"
                   style={
                     selectedCourse===c
                       ? { backgroundColor:ORANGE, color:"#fff", boxShadow:"0 0 16px rgba(255,122,0,0.28)" }
-                      : selectedDate
-                        ? { backgroundColor:"rgba(255,255,255,0.05)", color:"rgba(255,255,255,0.76)", border:"1px solid rgba(255,255,255,0.12)" }
-                        : { backgroundColor:"rgba(255,255,255,0.035)", color:"rgba(255,255,255,0.32)", border:"1px solid rgba(255,255,255,0.08)" }
+                      : unavailable
+                        ? { backgroundColor:"rgba(255,255,255,0.02)", color:"rgba(255,255,255,0.2)", border:"1px solid rgba(255,255,255,0.06)", textDecoration:"line-through" }
+                        : checking
+                          ? { backgroundColor:"rgba(255,255,255,0.03)", color:"rgba(255,255,255,0.28)", border:"1px solid rgba(255,255,255,0.08)" }
+                          : selectedDate
+                            ? { backgroundColor:"rgba(255,255,255,0.05)", color:"rgba(255,255,255,0.76)", border:"1px solid rgba(255,255,255,0.12)" }
+                            : { backgroundColor:"rgba(255,255,255,0.035)", color:"rgba(255,255,255,0.32)", border:"1px solid rgba(255,255,255,0.08)" }
                   }
                 >
                   {c}
                 </button>
-              ))}
+              )})}
+              {mode === "student" && selectedDate && courseAvailability === null && (
+                <span className="text-xs text-white/30 font-roboto self-center">Buscando instructores…</span>
+              )}
             </div>
           </div>
 

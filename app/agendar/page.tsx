@@ -3,9 +3,15 @@ import Header from "@/components/layout/Header"
 import BookingCalendar from "@/components/sections/BookingCalendar"
 import { createAuthServerClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
-import { studentBookAction } from "@/app/(student)/_actions/student"
+import {
+  studentBookAction,
+  getAvailableSlotsAction,
+  getCoursesWithAvailabilityAction,
+  getDaySlotCountsAction,
+} from "@/app/(student)/_actions/student"
 import { instructors as staticInstructors } from "@/data/instructors"
 import InstructorCard from "./_components/InstructorCard"
+import { getHolidayMap } from "@/lib/calendar/colombia-holidays"
 
 export const dynamic = "force-dynamic"
 
@@ -54,6 +60,67 @@ export default async function AgendarPage({
   }
 
   const instructorsForCalendar = allInstructors.map(({ id, name }) => ({ id, name }))
+
+  // Precarga en servidor la disponibilidad de HOY para que /agendar cargue instantáneo
+  // (evita el round-trip cliente→server-action que hacía esperar spinner al abrir el día actual).
+  const todayIso = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bogota" }).format(new Date())
+  const todayDow = new Date(todayIso + "T12:00:00").getDay()
+  let initialSlots: Awaited<ReturnType<typeof getAvailableSlotsAction>> = []
+  let initialCourseAvailability: Record<string, boolean> = {}
+  if (todayDow !== 0 && todayDow !== 6) {
+    try {
+      const [slotsRes, availRes] = await Promise.all([
+        getAvailableSlotsAction(todayIso),
+        getCoursesWithAvailabilityAction(todayIso, activeCourses.map((c) => c.name)),
+      ])
+      initialSlots = slotsRes
+      initialCourseAvailability = availRes
+    } catch {
+      // silencioso — el cliente recalcula al hacer click en el día
+    }
+  }
+
+  // Precarga en servidor los "X cupos" del mes actual completo (días hábiles, no festivos, no pasados)
+  // para que el calendario no muestre celdas vacías esperando al fetch cliente por cada día.
+  const [todayYearStr, todayMonthStr, todayDayStr] = todayIso.split("-")
+  const todayYearNum = Number(todayYearStr)
+  const todayMonthNum = Number(todayMonthStr)
+  const todayDayNum = Number(todayDayStr)
+  const daysInMonth = new Date(todayYearNum, todayMonthNum, 0).getDate()
+  const holidayMap = getHolidayMap(todayYearNum)
+
+  const eligibleDays: { dateIso: string; day: number }[] = []
+  for (let day = todayDayNum; day <= daysInMonth; day++) {
+    const dateIso = `${todayYearStr}-${todayMonthStr}-${String(day).padStart(2, "0")}`
+    const dow = new Date(todayYearNum, todayMonthNum - 1, day).getDay()
+    if (dow === 0 || dow === 6) continue
+    if (holidayMap[dateIso]?.[0]) continue
+    eligibleDays.push({ dateIso, day })
+  }
+
+  const nowBogota = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Bogota" }))
+  const nowMinutes = nowBogota.getHours() * 60 + nowBogota.getMinutes()
+
+  const initialDaySlotCounts: Record<string, number> = {}
+  try {
+    const otherDays = eligibleDays.map((d) => d.dateIso).filter((d) => d !== todayIso)
+    const [otherCounts] = await Promise.all([
+      otherDays.length ? getDaySlotCountsAction(otherDays) : Promise.resolve({} as Record<string, number>),
+    ])
+    Object.assign(initialDaySlotCounts, otherCounts)
+
+    if (eligibleDays.some((d) => d.dateIso === todayIso)) {
+      const times = new Set(initialSlots.filter((s) => s.is_available).map((s) => s.slot_time.slice(0, 5)))
+      let count = 0
+      for (const t of times) {
+        const [h, m] = t.split(":").map(Number)
+        if (h * 60 + m > nowMinutes) count++
+      }
+      initialDaySlotCounts[todayIso] = count
+    }
+  } catch {
+    // silencioso — el cliente recalcula al abrir el mes
+  }
 
   // Preselect instructor from query param (slug → name → Supabase UUID)
   const matchedStatic = instructorParam
@@ -134,6 +201,10 @@ export default async function AgendarPage({
                 activeCourses={activeCourses}
                 studentId={studentId}
                 initialInstructorId={initialInstructorId}
+                initialDateIso={todayIso}
+                initialSlots={initialSlots}
+                initialCourseAvailability={initialCourseAvailability}
+                initialDaySlotCounts={initialDaySlotCounts}
               />
             </div>
 

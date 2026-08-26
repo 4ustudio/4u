@@ -216,6 +216,8 @@ function InstructorDashboard({ data, user, monthLabel, now }: any) {
             activeStudents={stats.activeStudents}
             nextSession={nextSession}
             monthHours={monthHours}
+            allCourses={allCourses ?? []}
+            myCourseIds={myCourseIds ?? []}
           />
 
           {/* Accesos rápidos */}
@@ -520,7 +522,9 @@ function PlanCard({ title, subtitle, meta, progress }: { title: string; subtitle
   )
 }
 
-function InstructorHeroCard({ avatarUrl, initials, name, email, memberSince, editProfile, monthSessions, activeStudents, nextSession, monthHours }: any) {
+function InstructorHeroCard({ avatarUrl, initials, name, email, memberSince, editProfile, monthSessions, activeStudents, nextSession, monthHours, allCourses, myCourseIds }: any) {
+  const myCourses = (allCourses ?? []).filter((c: any) => (myCourseIds ?? []).includes(c.id))
+
   return (
     <section className="overflow-hidden rounded-xl bg-[#090909] p-7 text-white shadow-xl">
       <div className="flex flex-col gap-7 lg:flex-row lg:items-center lg:justify-between">
@@ -536,6 +540,16 @@ function InstructorHeroCard({ avatarUrl, initials, name, email, memberSince, edi
               <Icon name="crown" className="h-3.5 w-3.5" /> Membresía
             </span>
             <p className="mt-1 text-xs text-white/45">Miembro desde {memberSince}</p>
+            {myCourses.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {myCourses.map((c: any) => (
+                  <span key={c.id} className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.06] border border-white/10 px-2.5 py-1 text-xs font-semibold text-white/80">
+                    <InstrumentIcon courseName={c.name} className="h-3.5 w-3.5 text-[#ff7a00]" />
+                    {c.name}
+                  </span>
+                ))}
+              </div>
+            )}
             <div className="mt-3">{editProfile}</div>
           </div>
         </div>

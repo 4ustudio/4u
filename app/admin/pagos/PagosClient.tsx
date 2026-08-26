@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useTransition, useCallback, useMemo } from 'react'
+import { useState, useTransition, useCallback, useMemo, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import {
   MdClose, MdOpenInNew, MdCode, MdLink, MdMoreVert, MdCheck, MdAdd,
   MdLocalOffer, MdErrorOutline, MdHistory, MdWarningAmber, MdSearch,
 } from 'react-icons/md'
-import { getPayments, markPaymentOverdue, processOverduePayments, generateBoldCheckout } from './_actions'
+import { getPayments, markPaymentOverdue, processOverduePayments, generateBoldCheckout, generateMonthlyPaymentsForActiveStudents } from './_actions'
 import type { PaymentWithStudent, PaymentMetrics, BoldMetrics, PaymentTab, StudentOption, EnrollmentOption } from './_actions'
 import { PaymentStatusPill } from './_components/PaymentStatusPill'
 import RegisterPaymentModal from './_components/RegisterPaymentModal'
@@ -102,85 +103,98 @@ function BoldInfoDrawer({ payment, sessionUrl, onClose }: {
 }) {
   const [showPayload, setShowPayload] = useState(false)
   const checkoutUrl = sessionUrl ?? payment.metadata?.bold_checkout_url ?? null
+  const isPaid = payment.status === 'paid'
+
+  const STATUS_LABEL: Record<string, string> = {
+    paid: 'Pagado', pending: 'Pendiente', overdue: 'Vencido',
+    waived: 'Condonado', partial: 'Parcial', voided: 'Anulado',
+  }
+
+  const rows: { label: string; value: React.ReactNode }[] = [
+    { label: 'Estudiante', value: payment.student_name },
+    {
+      label: 'Estado',
+      value: (
+        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${isPaid ? 'bg-green-500/15 text-green-400' : 'bg-yellow-500/15 text-yellow-300'}`}>
+          {STATUS_LABEL[payment.status] ?? payment.status}
+        </span>
+      ),
+    },
+    { label: 'Referencia Bold', value: <span className="font-mono text-[11px]">{payment.external_ref ?? '—'}</span> },
+    {
+      label: 'Fecha de pago',
+      value: payment.paid_at
+        ? new Date(payment.paid_at).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+        : '—',
+    },
+    { label: 'Método', value: <span className="text-orange-300 font-semibold">Bold</span> },
+  ]
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-sm bg-[#0f0f0f] border-l border-white/10 h-full overflow-y-auto p-6 space-y-5">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-sm bg-[#0f0f0f] border border-white/12 rounded-2xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-orange-500" />
-            <p className="text-sm font-bold text-white">Información Bold</p>
+        <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-white/8">
+          <div className="flex items-center gap-2.5">
+            <span className="h-9 w-9 rounded-full bg-orange-500/15 flex items-center justify-center">
+              <span className="h-2 w-2 rounded-full bg-orange-500" />
+            </span>
+            <div>
+              <p className="text-sm font-bold text-white">Información Bold</p>
+              <p className="text-[11px] text-white/35">{formatCOP(payment.final_amount)}</p>
+            </div>
           </div>
           <button onClick={onClose} className="text-white/30 hover:text-white transition-colors p-1">
             <MdClose className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Datos */}
-        <div className="space-y-3 text-xs">
-          <div className="flex justify-between items-center py-2 border-b border-white/[0.06]">
-            <span className="text-white/40">Estudiante</span>
-            <span className="text-white font-medium">{payment.student_name}</span>
+        <div className="p-6 space-y-5">
+          {/* Datos */}
+          <div className="rounded-xl border border-white/8 divide-y divide-white/[0.06] overflow-hidden">
+            {rows.map(r => (
+              <div key={r.label} className="flex justify-between items-center px-4 py-2.5 text-xs">
+                <span className="text-white/40">{r.label}</span>
+                <span className="text-white font-medium">{r.value}</span>
+              </div>
+            ))}
           </div>
-          <div className="flex justify-between items-center py-2 border-b border-white/[0.06]">
-            <span className="text-white/40">Estado</span>
-            <span className={`font-semibold ${payment.status === 'paid' ? 'text-green-400' : 'text-yellow-300'}`}>
-              {payment.status === 'paid' ? 'Pagado' : payment.status}
-            </span>
-          </div>
-          <div className="flex justify-between items-center py-2 border-b border-white/[0.06]">
-            <span className="text-white/40">Referencia Bold</span>
-            <span className="text-white/70 font-mono text-[11px]">{payment.external_ref ?? '—'}</span>
-          </div>
-          <div className="flex justify-between items-center py-2 border-b border-white/[0.06]">
-            <span className="text-white/40">Fecha de pago</span>
-            <span className="text-white/70">
-              {payment.paid_at
-                ? new Date(payment.paid_at).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-                : '—'}
-            </span>
-          </div>
-          <div className="flex justify-between items-center py-2 border-b border-white/[0.06]">
-            <span className="text-white/40">Método</span>
-            <span className="text-orange-300 font-semibold">Bold</span>
-          </div>
-        </div>
 
-        {/* Botones */}
-        <div className="space-y-2">
-          {checkoutUrl ? (
-            <a
-              href={checkoutUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 w-full py-2.5 text-xs font-semibold rounded-xl border border-orange-500/40 text-orange-400 hover:bg-orange-500/10 transition-colors"
-            >
-              <MdOpenInNew className="h-3.5 w-3.5" />
-              Abrir checkout Bold
-            </a>
-          ) : (
-            <p className="text-center text-xs text-white/25 py-1">Sin link de checkout generado</p>
-          )}
+          {/* Botones */}
+          <div className="space-y-2">
+            {checkoutUrl ? (
+              <a
+                href={checkoutUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full py-2.5 text-xs font-semibold rounded-xl border border-orange-500/40 text-orange-400 hover:bg-orange-500/10 transition-colors"
+              >
+                <MdOpenInNew className="h-3.5 w-3.5" />
+                Abrir checkout Bold
+              </a>
+            ) : (
+              <p className="text-center text-xs text-white/25 py-1">Sin link de checkout generado</p>
+            )}
 
-          {payment.gateway_response && (
-            <button
-              onClick={() => setShowPayload(!showPayload)}
-              className="flex items-center justify-center gap-2 w-full py-2.5 text-xs font-semibold rounded-xl border border-white/10 text-white/50 hover:bg-white/5 transition-colors"
-            >
-              <MdCode className="h-3.5 w-3.5" />
-              {showPayload ? 'Ocultar payload' : 'Ver payload gateway'}
-            </button>
+            {payment.gateway_response && (
+              <button
+                onClick={() => setShowPayload(!showPayload)}
+                className="flex items-center justify-center gap-2 w-full py-2.5 text-xs font-semibold rounded-xl border border-white/10 text-white/50 hover:bg-white/5 transition-colors"
+              >
+                <MdCode className="h-3.5 w-3.5" />
+                {showPayload ? 'Ocultar payload' : 'Ver payload gateway'}
+              </button>
+            )}
+          </div>
+
+          {/* Payload JSON */}
+          {showPayload && payment.gateway_response && (
+            <pre className="text-[10px] text-green-300/80 bg-black/60 border border-white/8 rounded-xl p-3 overflow-x-auto whitespace-pre-wrap break-all max-h-48">
+              {JSON.stringify(payment.gateway_response, null, 2)}
+            </pre>
           )}
         </div>
-
-        {/* Payload JSON */}
-        {showPayload && payment.gateway_response && (
-          <pre className="text-[10px] text-green-300/80 bg-black/60 border border-white/8 rounded-xl p-3 overflow-x-auto whitespace-pre-wrap break-all">
-            {JSON.stringify(payment.gateway_response, null, 2)}
-          </pre>
-        )}
       </div>
     </div>
   )
@@ -286,27 +300,38 @@ function RowActions({
   onHistory:  () => void
 }) {
   const [open, setOpen] = useState(false)
+  const [pos, setPos]   = useState<{ top: number; right: number } | null>(null)
+  const btnRef = useRef<HTMLButtonElement>(null)
   const isPending  = payment.status === 'pending'
   const isOverdue  = payment.status === 'overdue'
   const canDiscount = payment.status !== 'paid' && payment.status !== 'voided'
   const canOverdue  = isPending
 
+  function toggleOpen() {
+    if (!open && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect()
+      setPos({ top: r.bottom + 4, right: window.innerWidth - r.right })
+    }
+    setOpen(o => !o)
+  }
+
   return (
     <div className="relative">
       <button
+        ref={btnRef}
         type="button"
-        onClick={() => setOpen(!open)}
+        onClick={toggleOpen}
         className="rounded-xl p-2 transition-colors"
         style={{ color: TEXT_FAINT }}
       >
         <MdMoreVert className="h-4 w-4" />
       </button>
-      {open && (
+      {open && pos && typeof document !== 'undefined' && createPortal(
         <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="fixed inset-0 z-[100]" onClick={() => setOpen(false)} />
           <div
-            className="absolute right-0 top-9 z-20 w-52 overflow-hidden rounded-2xl"
-            style={{ background: SURFACE, border: `1px solid ${BORDER}`, boxShadow: 'var(--adm-elevated-shadow)' }}
+            className="fixed z-[101] w-52 overflow-hidden rounded-2xl"
+            style={{ top: pos.top, right: pos.right, background: SURFACE, border: `1px solid ${BORDER}`, boxShadow: 'var(--adm-elevated-shadow)' }}
           >
             {(isPending || isOverdue) && (
               <button
@@ -380,7 +405,8 @@ function RowActions({
               Ver historial
             </button>
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   )
@@ -423,6 +449,40 @@ function ConfirmOverdue({ payment, onConfirm, onCancel, pending }: {
   )
 }
 
+function ConfirmGenerateMonth({ onConfirm, onCancel, pending }: {
+  onConfirm: () => void
+  onCancel: () => void
+  pending: boolean
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onCancel} />
+      <div className="relative z-10 w-full max-w-sm bg-[#0f0f0f] border border-white/12 rounded-2xl p-6 space-y-4">
+        <div className="h-10 w-10 rounded-full bg-orange-500/15 flex items-center justify-center mx-auto">
+          <MdAdd className="h-5 w-5 text-orange-400" />
+        </div>
+        <div className="text-center">
+          <p className="text-sm font-semibold text-white">Generar cobros del mes</p>
+          <p className="text-xs text-white/30 mt-2">Crea un cobro pendiente para cada estudiante activo con plan definido que aún no tenga cobro este mes.</p>
+        </div>
+        <div className="flex gap-3">
+          <button onClick={onCancel} className="flex-1 py-2.5 text-sm font-medium text-white/50 bg-white/5 hover:bg-white/8 rounded-xl transition-colors">
+            Cancelar
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={pending}
+            className="flex-1 py-2.5 text-sm font-bold text-white rounded-xl transition-all disabled:opacity-50"
+            style={{ backgroundColor: ORANGE }}
+          >
+            {pending ? 'Generando…' : 'Confirmar'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Componente principal ──────────────────────────────────────────
 
 interface Props {
@@ -436,8 +496,9 @@ interface Props {
 
 export default function PagosClient({ initialPayments, initialTotal, initialMetrics, boldMetrics, students, enrollments }: Props) {
   const router  = useRouter()
-  const [overduePending, startOverdue] = useTransition()
-  const [markPending,    startMark]    = useTransition()
+  const [overduePending, startOverdue]   = useTransition()
+  const [markPending,    startMark]      = useTransition()
+  const [genMonthPending, startGenMonth] = useTransition()
 
   const [tab,     setTab]     = useState<PaymentTab>('all')
   const [search,  setSearch]  = useState('')
@@ -453,6 +514,7 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
   const [discountFor,  setDiscountFor]    = useState<PaymentWithStudent | null>(null)
   const [historyFor,   setHistoryFor]     = useState<{ id: string; name: string } | null>(null)
   const [confirmOverdue, setConfirmOverdue] = useState<PaymentWithStudent | null>(null)
+  const [confirmGenMonth, setConfirmGenMonth] = useState(false)
   const [boldDrawer, setBoldDrawer] = useState<PaymentWithStudent | null>(null)
   const [showCobro, setShowCobro] = useState(false)
   const [boldUrls, setBoldUrls] = useState<Record<string, string>>({})
@@ -499,6 +561,20 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
     })
   }
 
+  function handleGenerateMonth() {
+    setConfirmGenMonth(false)
+    setOverdueMsg(null)
+    startGenMonth(async () => {
+      const res = await generateMonthlyPaymentsForActiveStudents()
+      if (res.error) { setOverdueMsg(`Error: ${res.error}`); reload(); return }
+      const parts = [`${res.created} cobro(s) creados`]
+      if (res.skipped_existing) parts.push(`${res.skipped_existing} ya tenían cobro este mes`)
+      if (res.skipped_no_plan.length) parts.push(`sin plan: ${res.skipped_no_plan.join(', ')}`)
+      setOverdueMsg(parts.join(' · '))
+      reload()
+    })
+  }
+
   const TABS: { key: PaymentTab; label: string }[] = [
     { key: 'all',     label: 'Todos' },
     { key: 'pending', label: 'Pendientes' },
@@ -525,6 +601,16 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
           >
             <MdErrorOutline className="h-3.5 w-3.5" />
             {overduePending ? 'Procesando…' : 'Procesar vencidos'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setConfirmGenMonth(true)}
+            disabled={genMonthPending}
+            className="flex items-center gap-1.5 rounded-2xl px-4 py-2.5 text-xs font-semibold transition-colors disabled:opacity-50"
+            style={{ border: `1px solid ${BORDER}`, background: SURFACE, color: 'var(--adm-accent)', boxShadow: 'var(--adm-card-shadow)' }}
+          >
+            <MdAdd className="h-3.5 w-3.5" />
+            {genMonthPending ? 'Generando…' : 'Generar cobros del mes'}
           </button>
           <button
             type="button"
@@ -794,6 +880,13 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
           payment={boldDrawer}
           sessionUrl={boldUrls[boldDrawer.id] ?? null}
           onClose={() => setBoldDrawer(null)}
+        />
+      )}
+      {confirmGenMonth && (
+        <ConfirmGenerateMonth
+          onConfirm={handleGenerateMonth}
+          onCancel={() => setConfirmGenMonth(false)}
+          pending={genMonthPending}
         />
       )}
     </div>

@@ -7,6 +7,7 @@ import { activity } from '@/lib/activity'
 import { getBirthdayBenefitStatus } from '@/lib/students/birthday'
 import { createBoldPaymentLink } from '@/lib/bold/client'
 import { resolveRole, hasAdminAccess } from '@/lib/auth/roles'
+import { planPrice } from '@/lib/students/plans'
 
 async function assertAdmin(): Promise<{ error: string } | null> {
   const { data: { user } } = await getAuthUser()
@@ -692,6 +693,70 @@ export async function createPendingPayment(input: CreateCobroInput): Promise<{ e
     return { error: null, id: data.id }
   } catch (e) {
     return { error: String(e) }
+  }
+}
+
+// ── Generación masiva de cobros del mes ───────────────────────────
+
+export interface GenerateMonthlyResult {
+  created: number
+  skipped_existing: number
+  skipped_no_plan: string[]
+  error: string | null
+}
+
+export async function generateMonthlyPaymentsForActiveStudents(): Promise<GenerateMonthlyResult> {
+  if (await assertAdmin()) return { created: 0, skipped_existing: 0, skipped_no_plan: [], error: 'No autorizado.' }
+  try {
+    const admin = createAdminClient()
+    const now   = new Date()
+    const year  = now.getFullYear()
+    const month = now.getMonth() + 1
+    const dueDate = new Date(year, month, 0).toISOString().split('T')[0]
+
+    const { data: students, error: studentsError } = await admin
+      .from('students')
+      .select('id, name, plan_name')
+      .eq('student_status', 'activo')
+      .is('archived_at', null)
+
+    if (studentsError) return { created: 0, skipped_existing: 0, skipped_no_plan: [], error: studentsError.message }
+    if (!students?.length) return { created: 0, skipped_existing: 0, skipped_no_plan: [], error: null }
+
+    const { data: existing } = await admin
+      .from('payments')
+      .select('student_id')
+      .eq('period_year', year)
+      .eq('period_month', month)
+      .in('student_id', students.map(s => s.id))
+
+    const alreadyHas = new Set((existing ?? []).map((p: any) => p.student_id))
+
+    let created = 0
+    let skipped_existing = 0
+    const skipped_no_plan: string[] = []
+
+    for (const s of students) {
+      if (alreadyHas.has(s.id)) { skipped_existing++; continue }
+      const price = planPrice(s.plan_name)
+      if (!price) { skipped_no_plan.push(s.name); continue }
+
+      const res = await createPendingPayment({
+        student_id:      s.id,
+        period_year:     year,
+        period_month:    month,
+        original_amount: price,
+        discount_amount: 0,
+        due_date:        dueDate,
+        plan_name:       s.plan_name ?? undefined,
+      })
+      if (!res.error) created++
+    }
+
+    revalidatePath('/admin/pagos')
+    return { created, skipped_existing, skipped_no_plan, error: null }
+  } catch (e) {
+    return { created: 0, skipped_existing: 0, skipped_no_plan: [], error: String(e) }
   }
 }
 

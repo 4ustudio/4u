@@ -5,6 +5,8 @@ import { revalidatePath } from 'next/cache'
 import type { StudentActivityEventType, StudentLifecycleStatus } from '@/types/admin'
 import type { Json } from '@/types/supabase'
 import { activity } from '@/lib/activity'
+import { getAuthUser } from '@/lib/supabase/server'
+import { reactivateStudent } from './followups'
 
 
 type Severity = 'info' | 'warning' | 'critical'
@@ -684,16 +686,23 @@ export async function recordStudentFollowUpAction(
 
   if (!student_id || !note) return { error: 'Escribe una observacion para guardar el seguimiento.' }
 
-  const { error } = await createAdminClient().from('student_admin_notes').insert({
+  // student_followups es la tabla ganadora de seguimiento (tenía student_admin_notes
+  // duplicada al lado, misma info, dos historiales separados para el mismo alumno).
+  const { data: { user } } = await getAuthUser()
+  const { error } = await createAdminClient().from('student_followups').insert({
     student_id,
-    note,
-    outcome,
-    follow_up_at: follow_up_at || null,
+    created_by: user?.id ?? null,
+    followup_type: 'observación',
+    notes: note,
+    next_action_date: follow_up_at || null,
+    status: follow_up_at ? 'pendiente' : 'completado',
+    result: outcome,
   })
 
   if (error) return { error: error.message }
 
   await safeRecordStudentActivity(student_id, 'follow_up', note, { outcome, follow_up_at })
+  revalidatePath('/admin/retencion')
   revalidatePath('/admin/reactivacion')
   revalidatePath(`/admin/students/${student_id}`)
   return { success: true }
@@ -707,12 +716,24 @@ export async function recordPhoneCallAction(
   const note = (formData.get('note') as string | null)?.trim() || 'Llamada registrada desde administración.'
   if (!student_id) return { error: 'ID de estudiante requerido.' }
 
+  const { data: { user } } = await getAuthUser()
+  await createAdminClient().from('student_followups').insert({
+    student_id,
+    created_by: user?.id ?? null,
+    followup_type: 'llamada',
+    notes: note,
+    status: 'completado',
+  })
+
   await safeRecordStudentActivity(student_id, 'phone_call', note, { channel: 'phone' })
+  revalidatePath('/admin/retencion')
   revalidatePath('/admin/reactivacion')
   revalidatePath(`/admin/students/${student_id}`)
   return { success: true }
 }
 
+// Alias de reactivateStudent() (followups.ts) adaptado a la firma useActionState
+// que usa ReactivationRowActions.tsx. La implementación vive en un solo lugar.
 export async function markStudentReactivatedAction(
   _prev: { error?: string; success?: boolean },
   formData: FormData
@@ -720,36 +741,8 @@ export async function markStudentReactivatedAction(
   const student_id = formData.get('student_id') as string
   if (!student_id) return { error: 'ID de estudiante requerido.' }
 
-  const now = isoNow()
-  const { error } = await createAdminClient()
-    .from('students')
-    .update({
-      student_status: 'activo',
-      last_activity_at: now,
-      reactivated_at: now,
-      retention_score: 85,
-    })
-    .eq('id', student_id)
-
-  if (error) return { error: error.message }
-
-  await createAdminClient()
-    .from('reactivation_tasks')
-    .update({ status: 'done', completed_at: now })
-    .eq('student_id', student_id)
-    .eq('status', 'pending')
-
-  await safeRecordStudentActivity(student_id, 'reactivated', 'Alumno marcado como reactivado desde administracion.')
-
-  const { data: stu } = await createAdminClient().from('students').select('name').eq('id', student_id).maybeSingle()
-  await activity.studentReactivated({
-    student_id,
-    student_name: stu?.name ?? 'Estudiante',
-    source:       'admin',
-  })
-
-  revalidatePath('/admin/reactivacion')
-  revalidatePath(`/admin/students/${student_id}`)
+  const result = await reactivateStudent(student_id)
+  if (!result.ok) return { error: result.error }
   return { success: true }
 }
 

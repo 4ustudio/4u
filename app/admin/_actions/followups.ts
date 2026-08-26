@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getAuthUser } from '@/lib/supabase/server'
+import { activity } from '@/lib/activity'
+import { safeRecordStudentActivity } from './retention'
 import type { Database, Json } from '@/types/supabase'
 
 type FollowupRow = Database['public']['Tables']['student_followups']['Row']
@@ -211,23 +213,34 @@ export async function createFollowup(formData: FormData): Promise<{ ok: boolean;
   return { ok: true }
 }
 
-export async function markStudentRecovered(studentId: string): Promise<{ ok: boolean; error?: string }> {
+// Única implementación de "marcar recuperado/reactivado" — antes existían dos
+// casi idénticas (markStudentRecovered acá y markStudentReactivatedAction en
+// retention.ts), con efectos secundarios distintos y compitiendo por el mismo
+// registro. Se consolida acá porque student_followups es la tabla ganadora de
+// seguimiento (tiene RPC dedicada y modal de historial ya construido).
+export async function reactivateStudent(studentId: string): Promise<{ ok: boolean; error?: string }> {
   const { data: { user } } = await getAuthUser()
   const db = createAdminClient()
 
-  // Leer estado previo para el log
   const { data: prevStudent } = await db
     .from('students')
     .select('student_status, risk_level, name')
     .eq('id', studentId)
     .single()
 
+  const now = new Date().toISOString()
   const { error: updateError } = await db
     .from('students')
-    .update({ student_status: 'activo', reactivated_at: new Date().toISOString() })
+    .update({ student_status: 'activo', last_activity_at: now, reactivated_at: now, retention_score: 85 })
     .eq('id', studentId)
 
   if (updateError) return { ok: false, error: updateError.message }
+
+  await db
+    .from('reactivation_tasks')
+    .update({ status: 'done', completed_at: now })
+    .eq('student_id', studentId)
+    .eq('status', 'pending')
 
   await db.from('student_followups').insert({
     student_id: studentId,
@@ -238,20 +251,21 @@ export async function markStudentRecovered(studentId: string): Promise<{ ok: boo
     result: 'Recuperado',
   })
 
-  await writeActivityLog({
-    actorUserId: user?.id,
-    entityType: 'student',
-    entityId: studentId,
-    action: 'student_recovered',
-    description: `Estudiante ${prevStudent?.name ?? studentId} marcado como recuperado`,
-    newData: {
-      prev_status: prevStudent?.student_status,
-      new_status: 'activo',
-      prev_risk_level: prevStudent?.risk_level,
-    },
-    severity: 'info',
+  await safeRecordStudentActivity(studentId, 'reactivated', 'Alumno marcado como reactivado desde administración.')
+
+  await activity.studentReactivated({
+    student_id: studentId,
+    student_name: prevStudent?.name ?? 'Estudiante',
+    source: 'admin',
   })
 
   revalidatePath('/admin/retencion')
+  revalidatePath('/admin/reactivacion')
+  revalidatePath(`/admin/students/${studentId}`)
   return { ok: true }
+}
+
+/** @deprecated usa reactivateStudent — se mantiene como alias hasta fusionar la UI en fase 3 */
+export async function markStudentRecovered(studentId: string): Promise<{ ok: boolean; error?: string }> {
+  return reactivateStudent(studentId)
 }

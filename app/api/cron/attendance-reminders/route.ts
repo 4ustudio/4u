@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { runRetentionDailyJob } from '@/app/admin/_actions/retention'
+import { sendClassReminderEmail } from '@/lib/email/class-reminder'
 
 export const dynamic = 'force-dynamic'
 
@@ -85,12 +86,18 @@ async function handler(req: Request) {
       weekday: 'long', day: 'numeric', month: 'long',
     })
 
-    // TODO: Integrar Resend/email real aquí
-    // await sendEmail({ to: session.student?.email, subject: '...', body: '...' })
     // TODO: WhatsApp API — preparado pero no activo
-    console.log(`[REMINDER-1] ${studentName} — ${dateLabel} ${timeLabel}hs — ${confirmUrl}`)
-
     if (!dryRun) {
+      const sent = await sendClassReminderEmail({
+        studentName,
+        studentEmail: session.student?.email ?? null,
+        dateLabel, timeLabel, confirmUrl,
+        variant: 'day-before',
+      })
+      if (!sent.ok && sent.error !== 'sin_email') {
+        console.error(`[REMINDER-1] Error enviando a ${studentName}:`, sent.error)
+      }
+
       const { error } = await db()
         .from('class_sessions')
         .update({ attendance_reminder_sent_at: now.toISOString() })
@@ -99,6 +106,7 @@ async function handler(req: Request) {
       if (error) results.first_reminder.errors++
       else results.first_reminder.processed++
     } else {
+      console.log(`[REMINDER-1][dry-run] ${studentName} — ${dateLabel} ${timeLabel}hs — ${confirmUrl}`)
       results.first_reminder.processed++
     }
   }
@@ -109,10 +117,17 @@ async function handler(req: Request) {
     const studentName = session.student?.name ?? 'Estudiante'
     const timeLabel   = session.start_time.slice(0, 5)
 
-    // TODO: Integrar Resend/email real aquí
-    console.log(`[REMINDER-2] ${studentName} — hoy ${timeLabel}hs — ${confirmUrl}`)
-
     if (!dryRun) {
+      const sent = await sendClassReminderEmail({
+        studentName,
+        studentEmail: session.student?.email ?? null,
+        dateLabel: '', timeLabel, confirmUrl,
+        variant: 'same-day',
+      })
+      if (!sent.ok && sent.error !== 'sin_email') {
+        console.error(`[REMINDER-2] Error enviando a ${studentName}:`, sent.error)
+      }
+
       const { error } = await db()
         .from('class_sessions')
         .update({ second_reminder_sent_at: now.toISOString() })
@@ -121,6 +136,7 @@ async function handler(req: Request) {
       if (error) results.second_reminder.errors++
       else results.second_reminder.processed++
     } else {
+      console.log(`[REMINDER-2][dry-run] ${studentName} — hoy ${timeLabel}hs — ${confirmUrl}`)
       results.second_reminder.processed++
     }
   }

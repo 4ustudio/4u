@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useTransition, useEffect, useCallback, useRef } from 'react'
+import { useState, useTransition, useEffect, useCallback, useRef, type Dispatch, type SetStateAction } from 'react'
 import { useRouter } from 'next/navigation'
 import { createPortal } from 'react-dom'
-import { saveInstructorAvailabilityAction, createInstructorAvailabilityAction, updateInstructorAvailabilityAction, deleteInstructorAvailabilityAction, extendInstructorAvailabilityAction, blockDateForInstructorAction, unblockDateForInstructorAction, getInstructorBlocksAction, getInstructorAvailabilityLogAction, getUnassignedStudentsForDay, assignInstructorToScheduleAction } from '../../_actions/student'
+import { saveInstructorAvailabilityAction, createInstructorAvailabilityAction, updateInstructorAvailabilityAction, deleteInstructorAvailabilityAction, extendInstructorAvailabilityAction, blockDateForInstructorAction, unblockDateForInstructorAction, getInstructorBlocksAction, getInstructorAvailabilityLogAction, getUnassignedStudentsForDay, assignInstructorToScheduleAction, saveInstructorCoursesAction } from '../../_actions/student'
 import { OPEN_SCHEDULE_EVENT, type OpenScheduleDetail, type ScheduleModalTab } from './scheduleEvents'
 
 const DAY_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
@@ -52,38 +52,77 @@ interface LogEntry {
   valid_until: string | null
 }
 
-interface Props {
-  initialAvailability: Slot[]
+interface Course {
+  id: string
+  name: string
 }
 
-export default function AvailabilityEditor({ initialAvailability }: Props) {
+interface Props {
+  initialAvailability: Slot[]
+  allCourses?: Course[]
+  myCourseIds?: string[]
+}
+
+function buildSlotsMap(source: Slot[]): Record<number, TimeRange[]> {
+  const init: Record<number, TimeRange[]> = {}
+  for (let d = 1; d <= 6; d++) {
+    init[d] = source.filter(s => s.day_of_week === d).map(s => ({ start: s.start_time.slice(0,5), end: s.end_time.slice(0,5), id: s.id }))
+  }
+  return init
+}
+
+export default function AvailabilityEditor({ initialAvailability, allCourses = [], myCourseIds = [] }: Props) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [focusDay, setFocusDay] = useState<number | null>(null)
   const [initialTab, setInitialTab] = useState<ScheduleModalTab>('horarios')
   const [mounted, setMounted] = useState(false)
+  // Vive en el padre (nunca se desmonta) para que reabrir el modal siempre muestre lo último guardado,
+  // sin depender del timing de router.refresh().
+  const [slots, setSlots] = useState<Record<number, TimeRange[]>>(() => buildSlotsMap(initialAvailability))
+  const [pageToast, setPageToastRaw] = useState<string | null>(null)
+  function setPageToast(msg: string) {
+    setPageToastRaw(msg)
+    setTimeout(() => setPageToastRaw(null), 3000)
+  }
   useEffect(() => { setMounted(true) }, [])
   useEffect(() => {
     const openIt = (e: Event) => {
       const detail = (e as CustomEvent<OpenScheduleDetail>).detail
-      setFocusDay(typeof detail === 'number' ? detail : detail?.focusDay ?? null)
+      const day = typeof detail === 'number' ? detail : detail?.focusDay ?? null
+      setFocusDay(day)
       setInitialTab(typeof detail === 'number' ? 'horarios' : detail?.tab ?? 'horarios')
+      if (day && (!slots[day] || slots[day].length === 0)) {
+        setSlots(prev => ({ ...prev, [day]: [{ start: DEFAULT_START, end: DEFAULT_END }] }))
+      }
       setOpen(true)
     }
     window.addEventListener(OPEN_SCHEDULE_EVENT, openIt)
     return () => window.removeEventListener(OPEN_SCHEDULE_EVENT, openIt)
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slots])
 
   return (
     <>
       {mounted && open && createPortal(
         <AvailabilityModal
-          initialSlots={initialAvailability}
+          slots={slots}
+          setSlots={setSlots}
           focusDay={focusDay}
           initialTab={initialTab}
           onClose={() => setOpen(false)}
-          onSaved={() => { setOpen(false); router.refresh() }}
+          onSaved={() => { setOpen(false); setPageToast('Horario guardado correctamente.'); router.refresh() }}
+          allCourses={allCourses}
+          myCourseIds={myCourseIds}
+          onCoursesSaved={() => setPageToast('Clases actualizadas correctamente.')}
         />,
+        document.body
+      )}
+      {mounted && pageToast && createPortal(
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[10000] flex items-center gap-2 rounded-full bg-gray-900 text-white text-xs font-semibold px-4 py-2.5 shadow-lg">
+          <svg className="h-4 w-4 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          {pageToast}
+        </div>,
         document.body
       )}
     </>
@@ -91,12 +130,16 @@ export default function AvailabilityEditor({ initialAvailability }: Props) {
 }
 
 /* ── Modal de edición completo ──────────────────────────────────── */
-function AvailabilityModal({ initialSlots, focusDay, initialTab, onClose, onSaved }: {
-  initialSlots: Slot[]
+function AvailabilityModal({ slots, setSlots, focusDay, initialTab, onClose, onSaved, allCourses, myCourseIds, onCoursesSaved }: {
+  slots: Record<number, TimeRange[]>
+  setSlots: Dispatch<SetStateAction<Record<number, TimeRange[]>>>
   focusDay?: number | null
   initialTab: ScheduleModalTab
   onClose: () => void
   onSaved: () => void
+  allCourses: Course[]
+  myCourseIds: string[]
+  onCoursesSaved: () => void
 }) {
   const [tab, setTab] = useState<ScheduleModalTab>(initialTab)
   const [mounted, setMounted] = useState(false)
@@ -128,6 +171,7 @@ function AvailabilityModal({ initialSlots, focusDay, initialTab, onClose, onSave
         <div className="flex border-b border-gray-100 px-6 shrink-0">
           {[
             { key: 'horarios' as const, label: 'Horarios', desc: 'Gestiona tus franjas' },
+            { key: 'clases' as const, label: 'Clases', desc: 'Qué instrumentos dictas' },
             { key: 'bloqueos' as const, label: 'Bloqueos', desc: 'Fechas específicas' },
             { key: 'historial' as const, label: 'Historial', desc: 'Cambios recientes' },
           ].map(t => (
@@ -147,7 +191,8 @@ function AvailabilityModal({ initialSlots, focusDay, initialTab, onClose, onSave
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-6 py-4">
-          {tab === 'horarios' && <HorariosTab initialSlots={initialSlots} onSaved={onSaved} focusDay={focusDay} />}
+          {tab === 'horarios' && <HorariosTab slots={slots} setSlots={setSlots} onSaved={onSaved} focusDay={focusDay} />}
+          {tab === 'clases' && <ClasesTab allCourses={allCourses} myCourseIds={myCourseIds} onSaved={onCoursesSaved} />}
           {tab === 'bloqueos' && <BloqueosTab />}
           {tab === 'historial' && <HistorialTab />}
         </div>
@@ -156,27 +201,87 @@ function AvailabilityModal({ initialSlots, focusDay, initialTab, onClose, onSave
   )
 }
 
-/* ── Tab: Horarios (CRUD individual + ampliar) ──────────────────── */
-function HorariosTab({ initialSlots, onSaved, focusDay }: { initialSlots: Slot[]; onSaved: () => void; focusDay?: number | null }) {
+/* ── Tab: Clases que dicta ──────────────────────────────────────── */
+function ClasesTab({ allCourses, myCourseIds, onSaved }: { allCourses: Course[]; myCourseIds: string[]; onSaved: () => void }) {
   const [isPending, startTransition] = useTransition()
-  const [slots, setSlots] = useState<Record<number, TimeRange[]>>(() => {
-    const init: Record<number, TimeRange[]> = {}
-    for (let d = 1; d <= 6; d++) {
-      const existing = initialSlots.filter(s => s.day_of_week === d)
-      init[d] = existing.length > 0
-        ? existing.map(s => ({ start: s.start_time.slice(0,5), end: s.end_time.slice(0,5), id: s.id }))
-        : (d === focusDay ? [{ start: DEFAULT_START, end: DEFAULT_END }] : [])
-    }
-    return init
-  })
+  const [selected, setSelected] = useState<string[]>(myCourseIds)
+  const [error, setError] = useState<string | null>(null)
+
+  function toggle(id: string) {
+    setSelected(prev => prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id])
+  }
+
+  function handleSave() {
+    setError(null)
+    startTransition(async () => {
+      const result = await saveInstructorCoursesAction(selected)
+      if (result.error) { setError(result.error); return }
+      onSaved()
+    })
+  }
+
+  if (allCourses.length === 0) {
+    return <p className="text-sm text-gray-400 text-center py-8">No hay clases activas configuradas.</p>
+  }
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-gray-600">Marca los instrumentos o clases que dictas. Se usan para asignarte alumnos y en el matching de horarios.</p>
+      {error && <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
+      <div className="flex flex-wrap gap-2">
+        {allCourses.map(c => {
+          const active = selected.includes(c.id)
+          return (
+            <button
+              key={c.id}
+              type="button"
+              disabled={isPending}
+              onClick={() => toggle(c.id)}
+              className={`px-3.5 py-2 rounded-full text-sm font-semibold border transition-colors disabled:opacity-50 ${
+                active
+                  ? 'bg-[#ff7a00] border-[#ff7a00] text-white'
+                  : 'bg-white border-gray-200 text-gray-600 hover:border-[#ff7a00]/40'
+              }`}
+            >
+              {c.name}
+            </button>
+          )
+        })}
+      </div>
+      <div className="pt-3 flex justify-end">
+        <button
+          onClick={handleSave}
+          disabled={isPending}
+          className="px-6 py-2.5 rounded-xl bg-[#ff7a00] text-sm font-bold text-white hover:bg-orange-600 transition-colors"
+        >
+          {isPending ? 'Guardando…' : 'Guardar cambios'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+/* ── Tab: Horarios (CRUD individual + ampliar) ──────────────────── */
+function HorariosTab({ slots, setSlots, onSaved, focusDay }: {
+  slots: Record<number, TimeRange[]>
+  setSlots: Dispatch<SetStateAction<Record<number, TimeRange[]>>>
+  onSaved: () => void
+  focusDay?: number | null
+}) {
+  const [isPending, startTransition] = useTransition()
   const [editingSlot, setEditingSlot] = useState<{ day: number; idx: number } | null>(null)
   const [editValue, setEditValue] = useState<{ start: string; end: string }>({ start: '', end: '' })
   const [extendingSlot, setExtendingSlot] = useState<{ day: number; idx: number } | null>(null)
   const [extendValue, setExtendValue] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [toast, setToastRaw] = useState<string | null>(null)
   const focusRef = useRef<HTMLDivElement>(null)
   useEffect(() => { focusRef.current?.scrollIntoView({ block: 'center' }) }, [])
+  function setToast(msg: string) {
+    setToastRaw(msg)
+    setTimeout(() => setToastRaw(null), 2500)
+  }
 
   function toggleDay(day: number) {
     const wasActive = slots[day].length > 0
@@ -218,8 +323,8 @@ function HorariosTab({ initialSlots, onSaved, focusDay }: { initialSlots: Slot[]
     })
   }
 
-  function isOverlapping(day: number): boolean {
-    const ranges = slots[day]
+  function isOverlapping(day: number, source: Record<number, TimeRange[]> = slots): boolean {
+    const ranges = source[day]
     for (let i = 0; i < ranges.length; i++) {
       for (let j = i + 1; j < ranges.length; j++) {
         if (ranges[i].start < ranges[j].end && ranges[j].start < ranges[i].end) return true
@@ -232,12 +337,30 @@ function HorariosTab({ initialSlots, onSaved, focusDay }: { initialSlots: Slot[]
     setError(null)
     setSuccess(null)
 
+    // Si hay una edición o ampliación abierta sin confirmar, aplicarla antes de guardar
+    let current = slots
+    if (editingSlot) {
+      if (editValue.start >= editValue.end) {
+        setError('La hora de inicio debe ser anterior a la de fin.')
+        return
+      }
+      const { day, idx } = editingSlot
+      current = { ...current, [day]: current[day].map((r, i) => i === idx ? { ...r, start: editValue.start, end: editValue.end } : r) }
+    } else if (extendingSlot) {
+      const { day, idx } = extendingSlot
+      if (extendValue <= current[day][idx].end) {
+        setError('La nueva hora debe ser mayor a la actual.')
+        return
+      }
+      current = { ...current, [day]: current[day].map((r, i) => i === idx ? { ...r, end: extendValue } : r) }
+    }
+
     for (let d = 1; d <= 6; d++) {
-      if (isOverlapping(d)) {
+      if (isOverlapping(d, current)) {
         setError(`${DAY_NAMES[d-1]}: los horarios no pueden solaparse.`)
         return
       }
-      for (const r of slots[d]) {
+      for (const r of current[d]) {
         if (r.start >= r.end) {
           setError(`${DAY_NAMES[d-1]}: cada rango debe tener inicio antes del fin.`)
           return
@@ -245,12 +368,23 @@ function HorariosTab({ initialSlots, onSaved, focusDay }: { initialSlots: Slot[]
       }
     }
 
-    const payload = Object.entries(slots).flatMap(([day, ranges]) => ranges.map(range => ({
+    const payload = Object.entries(current).flatMap(([day, ranges]) => ranges.map(range => ({
       day_of_week: Number(day), start_time: `${range.start}:00`, end_time: `${range.end}:00`,
     })))
     startTransition(async () => {
       const result = await saveInstructorAvailabilityAction(payload)
       if (result.error) { setError(result.error); return }
+      // Refleja los ids nuevos que devolvió el servidor (el guardado borra y reinserta todo)
+      const byDay: Record<number, TimeRange[]> = { ...current }
+      if (result.slots) {
+        for (const d of Object.keys(byDay).map(Number)) byDay[d] = []
+        for (const s of result.slots) {
+          byDay[s.day_of_week] = [...(byDay[s.day_of_week] ?? []), { start: s.start_time.slice(0,5), end: s.end_time.slice(0,5), id: s.id }]
+        }
+      }
+      setSlots(byDay)
+      setEditingSlot(null)
+      setExtendingSlot(null)
       setSuccess('Horarios guardados correctamente.')
       setTimeout(onSaved, 600)
     })
@@ -278,8 +412,11 @@ function HorariosTab({ initialSlots, onSaved, focusDay }: { initialSlots: Slot[]
     if (slotId) {
       startTransition(async () => {
         const result = await updateInstructorAvailabilityAction(slotId, { start_time: editValue.start + ':00', end_time: editValue.end + ':00' })
-        if (result.error) setError(result.error)
+        if (result.error) { setError(result.error); return }
+        setToast('Horario actualizado.')
       })
+    } else {
+      setToast('Horario actualizado.')
     }
   }
 
@@ -306,13 +443,22 @@ function HorariosTab({ initialSlots, onSaved, focusDay }: { initialSlots: Slot[]
     if (slotId) {
       startTransition(async () => {
         const result = await extendInstructorAvailabilityAction(slotId, extendValue + ':00')
-        if (result.error) setError(result.error)
+        if (result.error) { setError(result.error); return }
+        setToast('Horario ampliado.')
       })
+    } else {
+      setToast('Horario ampliado.')
     }
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 relative">
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[10000] flex items-center gap-2 rounded-full bg-gray-900 text-white text-xs font-semibold px-4 py-2.5 shadow-lg">
+          <svg className="h-4 w-4 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          {toast}
+        </div>
+      )}
       {error && <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
       {success && <p className="text-xs text-green-600 bg-green-50 rounded-lg px-3 py-2">{success}</p>}
 
@@ -356,18 +502,20 @@ function HorariosTab({ initialSlots, onSaved, focusDay }: { initialSlots: Slot[]
               <div key={idx} className="mt-2 pl-0 sm:pl-14">
                 {editingSlot?.day === day && editingSlot?.idx === idx ? (
                   /* Modo edición */
-                  <div className="flex items-end gap-2 rounded-lg bg-white/80 p-2 sm:p-0 flex-wrap">
-                    <label className="text-xs font-medium text-gray-600">De
-                    <input type="time" value={editValue.start} min="07:00" max="22:00" step="3600"
-                      onChange={e => setEditValue(p => ({ ...p, start: e.target.value }))}
-                      className="mt-1 block h-9 w-[112px] rounded-lg border border-gray-300 bg-white px-2 text-sm font-semibold text-gray-900 focus:border-[#ff7a00] focus:outline-none"
-                    />
+                  <div className="flex items-end gap-3 rounded-lg bg-white/80 p-2 sm:p-0 flex-wrap">
+                    <label className="text-xs font-medium text-gray-600">
+                      <span className="block mb-1">De</span>
+                      <input type="time" value={editValue.start} min="07:00" max="22:00" step="3600"
+                        onChange={e => setEditValue(p => ({ ...p, start: e.target.value }))}
+                        className="h-9 w-[140px] rounded-lg border border-gray-300 bg-white px-2 text-sm font-semibold text-gray-900 focus:border-[#ff7a00] focus:outline-none"
+                      />
                     </label>
-                    <label className="text-xs font-medium text-gray-600">A
-                    <input type="time" value={editValue.end} min="07:00" max="22:00" step="3600"
-                      onChange={e => setEditValue(p => ({ ...p, end: e.target.value }))}
-                      className="mt-1 block h-9 w-[112px] rounded-lg border border-gray-300 bg-white px-2 text-sm font-semibold text-gray-900 focus:border-[#ff7a00] focus:outline-none"
-                    />
+                    <label className="text-xs font-medium text-gray-600">
+                      <span className="block mb-1">A</span>
+                      <input type="time" value={editValue.end} min="07:00" max="22:00" step="3600"
+                        onChange={e => setEditValue(p => ({ ...p, end: e.target.value }))}
+                        className="h-9 w-[140px] rounded-lg border border-gray-300 bg-white px-2 text-sm font-semibold text-gray-900 focus:border-[#ff7a00] focus:outline-none"
+                      />
                     </label>
                     <button onClick={handleEditSave} className="h-9 rounded-lg bg-green-600 px-3 text-xs font-bold text-white hover:bg-green-700">Guardar</button>
                     <button onClick={() => setEditingSlot(null)} className="h-9 rounded-lg px-2 text-xs font-medium text-gray-600 hover:bg-gray-100">Cancelar</button>
@@ -378,7 +526,7 @@ function HorariosTab({ initialSlots, onSaved, focusDay }: { initialSlots: Slot[]
                     <span className="text-xs text-gray-500">Ampliar hasta</span>
                     <input type="time" value={extendValue} min={range.end} max="22:00" step="3600"
                       onChange={e => setExtendValue(e.target.value)}
-                      className="rounded-lg border border-gray-200 px-2 py-1.5 text-xs font-semibold text-gray-800 focus:border-[#ff7a00]/50 focus:outline-none bg-white w-[88px]"
+                      className="rounded-lg border border-gray-200 px-2 py-1.5 text-xs font-semibold text-gray-800 focus:border-[#ff7a00]/50 focus:outline-none bg-white w-[130px]"
                     />
                     <button onClick={handleExtendSave} className="text-xs font-bold text-green-600 hover:text-green-700 px-2">Guardar</button>
                     <button onClick={() => setExtendingSlot(null)} className="text-xs text-gray-500 hover:text-gray-700">Cancelar</button>

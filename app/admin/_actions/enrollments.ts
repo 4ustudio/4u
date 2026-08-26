@@ -167,11 +167,9 @@ export async function updateEnrollmentFieldsAction(
   return {}
 }
 
-export async function getEnrollmentFunnelMetrics(): Promise<EnrollmentFunnelMetrics> {
+export async function getEnrollmentFunnelMetrics(refMonth: Date = new Date()): Promise<EnrollmentFunnelMetrics> {
   try {
-    const startOfMonth = new Date()
-    startOfMonth.setDate(1)
-    startOfMonth.setHours(0, 0, 0, 0)
+    const startOfMonth = new Date(refMonth.getFullYear(), refMonth.getMonth(), 1)
 
     const { data, error } = await createAdminClient()
       .from('enrollments')

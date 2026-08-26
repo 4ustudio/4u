@@ -15,7 +15,6 @@ import {
   MdGroup,
   MdAutorenew,
   MdSchool,
-  MdDescription,
   MdShoppingCart,
   MdPersonAddAlt,
   MdShowChart,
@@ -32,7 +31,6 @@ const Icon = {
   students:     <MdGroup className="h-5 w-5" aria-hidden="true" />,
   retention:    <MdAutorenew className="h-5 w-5" aria-hidden="true" />,
   instructors:  <MdSchool className="h-5 w-5" aria-hidden="true" />,
-  enrollments:  <MdDescription className="h-5 w-5" aria-hidden="true" />,
   ventas:       <MdShoppingCart className="h-5 w-5" aria-hidden="true" />,
   leads:        <MdPersonAddAlt className="h-5 w-5" aria-hidden="true" />,
   activity:     <MdShowChart className="h-5 w-5" aria-hidden="true" />,
@@ -62,8 +60,7 @@ const GROUP_LABELS: Record<NavGroup, string> = {
 const NAV_ITEMS: NavItem[] = [
   { href: '/admin',                   label: 'Dashboard',      compactLabel: 'Inicio',       icon: Icon.dashboard,    area: 'shared',     group: 'general' },
   { href: '/admin/ventas',            label: 'Comercial',      compactLabel: 'Ingresos',     icon: Icon.ventas,       area: 'executive',  group: 'comercial' },
-  { href: '/admin/leads',             label: 'Leads',          compactLabel: 'Prospectos',   icon: Icon.leads,        area: 'executive',  group: 'comercial' },
-  { href: '/admin/enrollments',       label: 'Formularios',    compactLabel: 'Matrículas',   icon: Icon.enrollments,  area: 'academic',   group: 'comercial' },
+  { href: '/admin/leads',             label: 'Matrículas',     compactLabel: 'Matrículas',   icon: Icon.leads,        area: 'executive',  group: 'comercial' },
   { href: '/admin/pagos',             label: 'Pagos',          compactLabel: 'Cobros',       icon: Icon.pagos,        area: 'executive',  group: 'comercial' },
   { href: '/admin/agenda',            label: 'Clases',         compactLabel: 'Agenda',       icon: Icon.agenda,       area: 'academic',   group: 'academico' },
   { href: '/admin/students',          label: 'Estudiantes',    compactLabel: 'Alumnos',      icon: Icon.students,     area: 'academic',   group: 'academico' },
@@ -136,7 +133,8 @@ export default function AdminSidebar({ role }: { role: AppRole | null }) {
       style={{ background: 'var(--adm-surface)', borderColor: 'var(--adm-border)', boxShadow: 'var(--adm-sidebar-shadow)' }}
     >
       <div className="px-7 pt-8 pb-6 border-b" style={{ borderColor: 'var(--adm-border)' }}>
-        <div
+        <Link
+          href="/"
           className="inline-flex rounded-2xl px-2 py-1"
           style={{ background: 'var(--adm-logo-bg)', border: '1px solid var(--adm-logo-border)' }}
         >
@@ -148,7 +146,7 @@ export default function AdminSidebar({ role }: { role: AppRole | null }) {
             className="object-contain"
             style={{ filter: 'var(--adm-logo-filter)' } as React.CSSProperties}
           />
-        </div>
+        </Link>
       </div>
 
       <div className="px-4 pt-5">
@@ -213,7 +211,8 @@ export function MobileMenuDrawer({ role }: { role: AppRole | null }) {
       >
         {/* Header del drawer */}
         <div className="flex items-center justify-between px-6 pt-7 pb-5 border-b" style={{ borderColor: 'var(--adm-border)' }}>
-          <div
+          <Link
+            href="/"
             className="inline-flex rounded-2xl px-2 py-1"
             style={{ background: 'var(--adm-logo-bg)', border: '1px solid var(--adm-logo-border)' }}
           >
@@ -225,7 +224,7 @@ export function MobileMenuDrawer({ role }: { role: AppRole | null }) {
               className="object-contain"
               style={{ filter: 'var(--adm-logo-filter)' } as React.CSSProperties}
             />
-          </div>
+          </Link>
           <button
             type="button"
             onClick={() => setOpen(false)}

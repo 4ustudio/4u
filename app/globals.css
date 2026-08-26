@@ -902,3 +902,23 @@ body {
 [data-admin-theme="light"] [class*="text-pink-"] {
   color: #db2777 !important;
 }
+
+/* Exportar a PDF: imprime solo el elemento marcado con esta clase,
+   invirtiendo el tema oscuro a fondo claro sin reescribir cada color
+   literal a mano (mismo truco que "modo lectura" de los navegadores:
+   invert + hue-rotate(180deg) preserva el tono, solo voltea la luminosidad). */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .ventas-print-root,
+  .ventas-print-root * {
+    visibility: visible;
+  }
+  .ventas-print-root {
+    position: absolute;
+    inset: 0;
+    background: #fff;
+    filter: invert(1) hue-rotate(180deg);
+  }
+}

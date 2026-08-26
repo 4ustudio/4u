@@ -5,22 +5,34 @@ import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import { updateInstructorProfileAction, uploadAvatarAction } from '../../_actions/student'
 
+interface Course {
+  id: string
+  name: string
+}
+
 interface Props {
   name:      string
   email:     string
   avatarUrl?: string | null
+  allCourses?: Course[]
+  myCourseIds?: string[]
 }
 
 const inputClass =
   'w-full bg-stone-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm placeholder:text-gray-400 font-roboto focus:outline-none focus:ring-2 focus:ring-[#ff7a00]/60 focus:border-[#ff7a00]/40 transition-all disabled:opacity-50'
 
-export default function InstructorProfileModal({ name, email, avatarUrl }: Props) {
+export default function InstructorProfileModal({ name, email, avatarUrl, allCourses = [], myCourseIds = [] }: Props) {
   const [open, setOpen]           = useState(false)
   const [mounted, setMounted]     = useState(false)
   const [preview, setPreview]     = useState<string | null>(avatarUrl ?? null)
   const [uploading, setUploading] = useState(false)
   const [uploadedUrl, setUploadedUrl] = useState<string | null>(avatarUrl ?? null)
   const [uploadError, setUploadError] = useState<string | null>(null)
+  const [selectedCourses, setSelectedCourses] = useState<string[]>(myCourseIds)
+
+  function toggleCourse(id: string) {
+    setSelectedCourses(prev => prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id])
+  }
   const fileRef = useRef<HTMLInputElement>(null)
   const [isPending, startTransition] = useTransition()
   const [state, action] = useActionState(updateInstructorProfileAction, {})
@@ -130,6 +142,35 @@ export default function InstructorProfileModal({ name, email, avatarUrl }: Props
             <label className="block text-[10px] text-gray-500 mb-1.5 font-roboto uppercase tracking-wider">Correo</label>
             <input name="email" type="email" defaultValue={email} disabled={isPending} className={inputClass} placeholder="correo@ejemplo.com" />
           </div>
+
+          {allCourses.length > 0 && (
+            <div>
+              <label className="block text-[10px] text-gray-500 mb-1.5 font-roboto uppercase tracking-wider">Clases que dictas</label>
+              <div className="flex flex-wrap gap-1.5">
+                {allCourses.map(c => {
+                  const active = selectedCourses.includes(c.id)
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      disabled={isPending}
+                      onClick={() => toggleCourse(c.id)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors disabled:opacity-50 ${
+                        active
+                          ? 'bg-[#ff7a00] border-[#ff7a00] text-white'
+                          : 'bg-white border-gray-200 text-gray-600 hover:border-[#ff7a00]/40'
+                      }`}
+                    >
+                      {c.name}
+                    </button>
+                  )
+                })}
+              </div>
+              {selectedCourses.map(id => (
+                <input key={id} type="hidden" name="course_ids" value={id} />
+              ))}
+            </div>
+          )}
 
           {state.error && (
             <p className="text-red-400 text-xs font-roboto bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{state.error}</p>

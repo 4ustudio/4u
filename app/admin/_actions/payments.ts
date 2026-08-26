@@ -18,6 +18,15 @@ const PLAN_COLORS: Record<string, string> = {
 }
 const FALLBACK_COLORS = ['#3b82f6', '#f97316', '#22c55e', '#8b5cf6', '#60a5fa', '#fb7185', '#facc15']
 
+const METHOD_LABEL: Record<string, string> = {
+  efectivo: 'Efectivo', transferencia: 'Transferencia', nequi: 'Nequi',
+  daviplata: 'Daviplata', wompi: 'Wompi', pse: 'PSE', tarjeta: 'Tarjeta', bold: 'Bold', otro: 'Otro',
+}
+const METHOD_COLORS: Record<string, string> = {
+  efectivo: '#f97316', transferencia: '#60a5fa', nequi: '#c026d3', daviplata: '#ec4899',
+  wompi: '#22c55e', pse: '#3b82f6', tarjeta: '#8b5cf6', bold: '#ff7a00', otro: '#c4b5fd',
+}
+
 export type PaymentMetrics = {
   billedMonth: number
   cobradoMonth: number
@@ -31,24 +40,25 @@ export type PaymentMetrics = {
   salesGrowth: number | null
   monthlyTrend: Array<{ label: string; billed: number; cobrado: number }>
   byPlan: Array<{ label: string; value: number; color: string }>
+  byMethod: Array<{ label: string; value: number; color: string }>
   hasRealData: boolean
 }
 
-export async function getPaymentMetrics(): Promise<PaymentMetrics> {
+export async function getPaymentMetrics(refMonth: Date = new Date()): Promise<PaymentMetrics> {
   const db = createAdminClient()
   const now = new Date()
-  const currentYear = now.getFullYear()
-  const currentMonth = now.getMonth() + 1
+  const currentYear = refMonth.getFullYear()
+  const currentMonth = refMonth.getMonth() + 1
   const today = now.toISOString().slice(0, 10)
 
   const { data: payments, error } = await db
     .from('payments')
-    .select('period_year, period_month, final_amount, status, due_date, plan_name, paid_at')
+    .select('period_year, period_month, final_amount, status, due_date, plan_name, paid_at, payment_method')
 
   const empty: PaymentMetrics = {
     billedMonth: 0, cobradoMonth: 0, pendienteTotal: 0, pendienteCount: 0,
     overdueTotal: 0, overdueCount: 0, cobradoPct: 0, pendientePct: 0, moraPct: 0,
-    salesGrowth: null, monthlyTrend: [], byPlan: [], hasRealData: false,
+    salesGrowth: null, monthlyTrend: [], byPlan: [], byMethod: [], hasRealData: false,
   }
 
   if (error || !payments || payments.length === 0) return empty
@@ -101,7 +111,7 @@ export async function getPaymentMetrics(): Promise<PaymentMetrics> {
   }
 
   const monthlyTrend = Array.from({ length: 6 }, (_, i) => {
-    const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1)
+    const d = new Date(refMonth.getFullYear(), refMonth.getMonth() - (5 - i), 1)
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
     const data = monthlyMap.get(key) ?? { billed: 0, cobrado: 0 }
     return { label: MONTH_LABELS[d.getMonth()], billed: data.billed, cobrado: data.cobrado }
@@ -121,9 +131,23 @@ export async function getPaymentMetrics(): Promise<PaymentMetrics> {
       color: PLAN_COLORS[label] ?? FALLBACK_COLORS[i % FALLBACK_COLORS.length],
     }))
 
+  // ── Por método de pago (solo pagos confirmados) ───────────────
+  const methodMap = new Map<string, number>()
+  for (const p of rows.filter(p => p.status === 'paid')) {
+    const method = p.payment_method ?? 'otro'
+    methodMap.set(method, (methodMap.get(method) ?? 0) + p.final_amount)
+  }
+  const byMethod = Array.from(methodMap.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([key, value], i) => ({
+      label: METHOD_LABEL[key] ?? key,
+      value,
+      color: METHOD_COLORS[key] ?? FALLBACK_COLORS[i % FALLBACK_COLORS.length],
+    }))
+
   return {
     billedMonth, cobradoMonth, pendienteTotal, pendienteCount,
     overdueTotal, overdueCount, cobradoPct, pendientePct, moraPct,
-    salesGrowth, monthlyTrend, byPlan, hasRealData: true,
+    salesGrowth, monthlyTrend, byPlan, byMethod, hasRealData: true,
   }
 }

@@ -188,7 +188,7 @@ function StudentDashboard({ data, monthSessions, user, monthLabel, now, access }
 }
 
 function InstructorDashboard({ data, user, monthLabel, now }: any) {
-  const { instructor, students = [], sessions, availability, upcoming, cancelled, stats, blocksCount, lastModification, availabilitySummary, quickActionData } = data
+  const { instructor, students = [], sessions, availability, upcoming, cancelled, stats, blocksCount, lastModification, availabilitySummary, quickActionData, allCourses, myCourseIds } = data
   const avatarUrl = (user.user_metadata?.avatar_url as string | undefined) ?? null
   const name = instructor.name ?? user.user_metadata?.name ?? 'Instructor 4U'
   const initials = (name[0] ?? 'I').toUpperCase()
@@ -211,7 +211,7 @@ function InstructorDashboard({ data, user, monthLabel, now }: any) {
             name={name}
             email={instructor.email ?? user.email}
             memberSince={memberSince}
-            editProfile={<InstructorProfileModal name={name} email={instructor.email ?? user.email ?? ''} avatarUrl={avatarUrl} />}
+            editProfile={<InstructorProfileModal name={name} email={instructor.email ?? user.email ?? ''} avatarUrl={avatarUrl} allCourses={allCourses ?? []} myCourseIds={myCourseIds ?? []} />}
             monthSessions={sessions?.length ?? 0}
             activeStudents={stats.activeStudents}
             nextSession={nextSession}
@@ -348,7 +348,7 @@ function InstructorDashboard({ data, user, monthLabel, now }: any) {
 
           {/* Cancelar clase + Editor de disponibilidad */}
           <InstructorCancelSession upcomingSessions={upcoming ?? []} />
-          <AvailabilityEditor initialAvailability={availability ?? []} />
+          <AvailabilityEditor initialAvailability={availability ?? []} allCourses={allCourses ?? []} myCourseIds={myCourseIds ?? []} />
 
           <SupportBar />
         </div>

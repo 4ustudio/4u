@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useTransition, useCallback, useMemo, useRef } from 'react'
+import { useState, useEffect, useTransition, useCallback, useMemo, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import {
   MdClose, MdOpenInNew, MdCode, MdLink, MdMoreVert, MdCheck, MdAdd,
   MdLocalOffer, MdErrorOutline, MdHistory, MdWarningAmber, MdSearch,
@@ -494,13 +494,18 @@ interface Props {
   enrollments:     EnrollmentOption[]
 }
 
+const VALID_TABS: PaymentTab[] = ['all', 'pending', 'paid', 'overdue']
+
 export default function PagosClient({ initialPayments, initialTotal, initialMetrics, boldMetrics, students, enrollments }: Props) {
   const router  = useRouter()
+  const searchParams = useSearchParams()
   const [overduePending, startOverdue]   = useTransition()
   const [markPending,    startMark]      = useTransition()
   const [genMonthPending, startGenMonth] = useTransition()
 
-  const [tab,     setTab]     = useState<PaymentTab>('all')
+  const urlTab = searchParams.get('tab') as PaymentTab | null
+  const initialTab = urlTab && VALID_TABS.includes(urlTab) ? urlTab : 'all'
+  const [tab,     setTab]     = useState<PaymentTab>(initialTab)
   const [search,  setSearch]  = useState('')
   const [payments, setPayments] = useState<PaymentWithStudent[]>(initialPayments)
   const [total,    setTotal]    = useState(initialTotal)
@@ -522,6 +527,18 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
   function handleBoldUrl(paymentId: string, url: string) {
     setBoldUrls(prev => ({ ...prev, [paymentId]: url }))
   }
+
+  // Si se llega con ?tab= (ej. desde una alerta de /admin/ventas), cargar esa pestaña
+  useEffect(() => {
+    if (initialTab === 'all') return
+    setLoading(true)
+    getPayments(initialTab, '', 1).then(({ data, total: count }) => {
+      setPayments(data)
+      setTotal(count)
+      setLoading(false)
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const reload = useCallback(async (t: PaymentTab = tab, s: string = search) => {
     setLoading(true)

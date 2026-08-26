@@ -1,9 +1,13 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { createPortal } from 'react-dom'
+import { useSearchParams } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
-import Link from 'next/link'
-import { MdArrowForward, MdEvent, MdClose, MdEmail, MdCall, MdPersonAdd, MdRefresh, MdSearch } from 'react-icons/md'
+import {
+  MdArrowForward, MdEvent, MdClose, MdEmail, MdCall, MdPersonAdd, MdRefresh, MdSearch,
+  MdViewKanban, MdViewList, MdExpandMore,
+} from 'react-icons/md'
 import {
   getEnrollments,
   getEnrollmentEvents,
@@ -58,6 +62,12 @@ const PILL: Record<string, string> = {
   perdido:      'bg-red-500/10 text-red-400 border-red-500/20',
   cancelled:    'bg-red-500/10 text-red-400 border-red-500/20',
   converted:    'bg-[#ff7a00]/12 text-[#ff9a3b] border-[#ff7a00]/25',
+}
+
+const FILTERS = ['all', 'pending', 'contacted', 'clase_prueba', 'converted', 'perdido'] as const
+const FILTER_LABEL: Record<string, string> = {
+  all: 'Todos', pending: 'Nuevos', contacted: 'Contactados',
+  clase_prueba: 'Clase Prueba', converted: 'Matriculados', perdido: 'Perdidos',
 }
 
 const SOURCE_COLORS: Record<string, string> = {
@@ -275,7 +285,11 @@ function LeadDrawer({
     }
   }, [open, onClose])
 
-  return (
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+  if (!mounted) return null
+
+  return createPortal(
     <>
       <div
         aria-hidden="true"
@@ -363,16 +377,12 @@ function LeadDrawer({
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-[10px] text-white/30 mb-1.5">Fuente</label>
-                      <select
+                      <PopupSelect
                         value={e.source ?? ''}
-                        onChange={ev => onUpdateSource(ev.target.value)}
-                        className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/70 focus:outline-none focus:ring-1 focus:ring-orange-500/40 focus:border-orange-500/30"
-                      >
-                        <option value="">Sin fuente</option>
-                        {SOURCES.map(s => (
-                          <option key={s.value} value={s.value}>{s.label}</option>
-                        ))}
-                      </select>
+                        onChange={onUpdateSource}
+                        options={SOURCES}
+                        placeholder="Sin fuente"
+                      />
                     </div>
                     <div>
                       <label className="block text-[10px] text-white/30 mb-1.5">Próximo seguimiento</label>
@@ -390,16 +400,12 @@ function LeadDrawer({
                 {(canonicalStatus(e.status) === 'perdido') && (
                   <section>
                     <p className="text-[10px] uppercase tracking-widest text-white/25 font-semibold mb-3">Razón de pérdida</p>
-                    <select
+                    <PopupSelect
                       value={e.lost_reason ?? ''}
-                      onChange={ev => onUpdateLostReason(ev.target.value)}
-                      className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/70 focus:outline-none focus:ring-1 focus:ring-orange-500/40 focus:border-orange-500/30"
-                    >
-                      <option value="">Seleccionar razón…</option>
-                      {LOST_REASONS.map(r => (
-                        <option key={r} value={r}>{r}</option>
-                      ))}
-                    </select>
+                      onChange={onUpdateLostReason}
+                      options={LOST_REASONS.map(r => ({ value: r, label: r }))}
+                      placeholder="Seleccionar razón…"
+                    />
                   </section>
                 )}
 
@@ -539,7 +545,8 @@ function LeadDrawer({
           </>
         )}
       </div>
-    </>
+    </>,
+    document.body
   )
 }
 
@@ -572,6 +579,171 @@ function SpinIcon() {
   )
 }
 
+function PopupSelect({
+  value, onChange, options, placeholder,
+}: {
+  value: string
+  onChange: (v: string) => void
+  options: { value: string; label: string }[]
+  placeholder: string
+}) {
+  const [open, setOpen] = useState(false)
+  const selected = options.find(o => o.value === value)
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="w-full flex items-center justify-between gap-2 bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/70 focus:outline-none focus:ring-1 focus:ring-orange-500/40 focus:border-orange-500/30 text-left"
+      >
+        <span className={`truncate ${selected ? '' : 'text-white/30'}`}>{selected?.label ?? placeholder}</span>
+        <MdExpandMore className="h-4 w-4 text-white/30 shrink-0" aria-hidden="true" />
+      </button>
+      {open && typeof document !== 'undefined' && createPortal(
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-[2px] px-6"
+          onClick={() => setOpen(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            onClick={ev => ev.stopPropagation()}
+            className="w-full max-w-xs max-h-[70vh] overflow-y-auto rounded-2xl bg-[#141414] border border-white/10 py-2 shadow-2xl"
+          >
+            <button
+              type="button"
+              onClick={() => { onChange(''); setOpen(false) }}
+              className="w-full text-left px-4 py-2.5 text-sm text-white/40 hover:text-white hover:bg-white/5 transition-colors"
+            >
+              {placeholder}
+            </button>
+            {options.map(o => (
+              <button
+                key={o.value}
+                type="button"
+                onClick={() => { onChange(o.value); setOpen(false) }}
+                className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
+                  o.value === value ? 'text-orange-400 bg-orange-500/10' : 'text-white/70 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+        </div>,
+        document.body
+      )}
+    </>
+  )
+}
+
+function ConfirmModal({
+  open, title, message, confirmLabel = 'Aceptar', onConfirm, onCancel,
+}: {
+  open: boolean
+  title: string
+  message: string
+  confirmLabel?: string
+  onConfirm: () => void
+  onCancel: () => void
+}) {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+  if (!mounted || !open) return null
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-[2px] px-6"
+      onClick={onCancel}
+    >
+      <div
+        role="alertdialog"
+        aria-modal="true"
+        onClick={ev => ev.stopPropagation()}
+        className="w-full max-w-sm rounded-2xl bg-[#141414] border border-white/10 p-5 shadow-2xl"
+      >
+        <h3 className="text-sm font-bold text-white">{title}</h3>
+        <p className="text-sm text-white/60 mt-2">{message}</p>
+        <div className="flex items-center justify-end gap-2 mt-5">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="text-xs px-4 py-2 rounded-lg font-semibold text-white/60 border border-white/10 hover:border-white/25 hover:text-white transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="text-xs px-4 py-2 rounded-lg font-semibold text-white transition-colors"
+            style={{ background: '#ff7a00' }}
+          >
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  )
+}
+
+function Badge({ children, color }: { children: React.ReactNode; color: string }) {
+  return <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${color}`}>{children}</span>
+}
+
+function ViewToggle({ view, onChange }: { view: 'kanban' | 'lista'; onChange: (v: 'kanban' | 'lista') => void }) {
+  const options = [
+    { value: 'kanban' as const, label: 'Kanban', icon: <MdViewKanban className="h-3.5 w-3.5" aria-hidden="true" /> },
+    { value: 'lista' as const, label: 'Lista', icon: <MdViewList className="h-3.5 w-3.5" aria-hidden="true" /> },
+  ]
+  return (
+    <div className="flex items-center p-[3px] rounded-[10px] bg-white/[0.04] border border-white/[0.08]">
+      {options.map(opt => (
+        <button
+          key={opt.value}
+          onClick={() => onChange(opt.value)}
+          className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+            view === opt.value ? 'bg-[#ff7a00] text-white' : 'text-white/40 hover:text-white/70'
+          }`}
+        >
+          {opt.icon}
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function SummaryCards({ enrollments }: { enrollments: EnrollmentRow[] | null }) {
+  const s = useMemo(() => {
+    if (!enrollments) return { pending: 0, contacted: 0, clasePrueba: 0, converted: 0, perdido: 0 }
+    return {
+      pending:     enrollments.filter(e => e.status === 'pending').length,
+      contacted:   enrollments.filter(e => e.status === 'contacted').length,
+      clasePrueba: enrollments.filter(e => e.status === 'clase_prueba' || e.status === 'scheduled').length,
+      converted:   enrollments.filter(e => e.status === 'converted').length,
+      perdido:     enrollments.filter(e => e.status === 'perdido' || e.status === 'cancelled').length,
+    }
+  }, [enrollments])
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+      {([
+        { label: 'Nuevos',       val: s.pending,      c: 'text-yellow-400', bg: 'bg-yellow-400/8 border-yellow-400/10' },
+        { label: 'Contactados',  val: s.contacted,    c: 'text-white/55',   bg: 'bg-white/6 border-white/10' },
+        { label: 'Clase Prueba', val: s.clasePrueba,  c: 'text-green-400',  bg: 'bg-green-400/8 border-green-400/10' },
+        { label: 'Matriculados', val: s.converted,    c: 'text-[#ff9a3b]',  bg: 'bg-[#ff7a00]/8 border-[#ff7a00]/12' },
+        { label: 'Perdidos',     val: s.perdido,      c: 'text-red-400',    bg: 'bg-red-400/8 border-red-400/10' },
+      ] as const).map(card => (
+        <div key={card.label} className={`rounded-xl border px-4 py-3 ${card.bg}`}>
+          <p className={`text-2xl font-extrabold ${card.c}`}>{enrollments === null ? '—' : card.val}</p>
+          <p className="text-xs text-white/40 mt-0.5 font-medium">{card.label}</p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 // ── Página principal ──────────────────────────────────────────
 
 export default function LeadsClient({ initialEnrollments }: { initialEnrollments: EnrollmentRow[] }) {
@@ -591,6 +763,14 @@ export default function LeadsClient({ initialEnrollments }: { initialEnrollments
   const [search, setSearch]           = useState('')
   const [draggingId, setDraggingId]   = useState<string | null>(null)
   const [dragOverCol, setDragOverCol] = useState<KanbanStatus | null>(null)
+  const searchParams = useSearchParams()
+  const urlView = searchParams.get('view')
+  const urlEstado = searchParams.get('estado') as typeof FILTERS[number] | null
+  const [view, setView]               = useState<'kanban' | 'lista'>(urlView === 'lista' ? 'lista' : 'kanban')
+  const [statusFilter, setStatusFilter] = useState<typeof FILTERS[number]>(
+    urlEstado && FILTERS.includes(urlEstado) ? urlEstado : 'all'
+  )
+  const [confirmConvertOpen, setConfirmConvertOpen] = useState(false)
 
   const load = useCallback(async () => {
     const { data } = await getEnrollments()
@@ -655,6 +835,21 @@ export default function LeadsClient({ initialEnrollments }: { initialEnrollments
     }))
   }, [enrollments, search])
 
+  // Lista filtrada (vista tabla)
+  const listaFiltered = useMemo(() => {
+    if (!enrollments) return []
+    let list = statusFilter === 'all' ? enrollments : enrollments.filter(e => canonicalStatus(e.status) === statusFilter)
+    const q = search.trim().toLowerCase()
+    if (q) {
+      list = list.filter(e =>
+        e.student_name.toLowerCase().includes(q) ||
+        e.phone.includes(q) ||
+        e.course_interest.toLowerCase().includes(q)
+      )
+    }
+    return list
+  }, [enrollments, statusFilter, search])
+
   function showFlash(msg: string) { setFlash(msg); setTimeout(() => setFlash(null), 2500) }
 
   function openDrawer(e: EnrollmentRow) {
@@ -701,9 +896,13 @@ export default function LeadsClient({ initialEnrollments }: { initialEnrollments
     setTimeout(() => setNotesSaved(false), 2000)
   }
 
-  async function handleConvert() {
+  function handleConvert() {
     if (!selected) return
-    if (!window.confirm(`¿Convertir a ${selected.student_name} en estudiante activo?`)) return
+    setConfirmConvertOpen(true)
+  }
+
+  async function doConvert() {
+    if (!selected) return
     setConverting(true); setConvertError(null)
     const r = await convertEnrollmentToStudent(selected.id)
     setConverting(false)
@@ -751,20 +950,15 @@ export default function LeadsClient({ initialEnrollments }: { initialEnrollments
     <div className="space-y-5 w-full overflow-x-hidden">
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-xl font-bold text-white">Pipeline Comercial</h1>
+          <h1 className="text-xl font-bold text-white">Leads &amp; Matrículas</h1>
           <p className="text-sm text-white/40 mt-0.5">
             {total} leads en total
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Link
-            href="/admin/enrollments"
-            className="text-xs text-white/40 hover:text-white/70 transition-colors px-3 py-1.5 rounded-lg border border-white/10 hover:border-white/20"
-          >
-            Vista lista
-          </Link>
+          <ViewToggle view={view} onChange={setView} />
           <button
             onClick={reload}
             disabled={reloading}
@@ -780,67 +974,161 @@ export default function LeadsClient({ initialEnrollments }: { initialEnrollments
         <div className="px-4 py-2 rounded-lg bg-green-900/30 text-green-400 text-sm border border-green-500/20">{flash}</div>
       )}
 
-      {/* Buscador */}
-      <div className="relative max-w-xs">
-        <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25" aria-hidden="true" />
-        <input
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Buscar lead…"
-          className="w-full pl-9 pr-3 py-1.5 text-xs bg-white/[0.04] border border-white/10 rounded-lg text-white placeholder:text-white/25 focus:outline-none focus:ring-1 focus:ring-orange-500/40"
-        />
+      {view === 'lista' && <SummaryCards enrollments={enrollments} />}
+
+      {/* Buscador (+ filtros en vista lista) */}
+      <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+        <div className="relative max-w-xs w-full">
+          <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25" aria-hidden="true" />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder={view === 'kanban' ? 'Buscar lead…' : 'Buscar por nombre, teléfono…'}
+            className="w-full pl-9 pr-3 py-1.5 text-xs bg-white/[0.04] border border-white/10 rounded-lg text-white placeholder:text-white/25 focus:outline-none focus:ring-1 focus:ring-orange-500/40"
+          />
+        </div>
+        {view === 'lista' && (
+          <div className="flex gap-1.5 flex-wrap">
+            {FILTERS.map(s => (
+              <button
+                key={s}
+                onClick={() => setStatusFilter(s)}
+                className={`text-xs px-3 py-1.5 rounded-full font-medium transition-all ${statusFilter === s ? 'text-white' : 'text-white/40 hover:text-white/70'}`}
+                style={statusFilter === s ? { backgroundColor: '#ff7a00' } : { backgroundColor: 'rgba(255,255,255,0.06)' }}
+              >
+                {FILTER_LABEL[s]}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Kanban — scroll horizontal en mobile */}
-      <div className="overflow-x-auto pb-4">
-        <div className="flex gap-4 min-w-[900px]">
-          {columns.map(col => (
-            <div
-              key={col.status}
-              className="flex-1 min-w-[200px]"
-              onDragOver={ev => { ev.preventDefault(); ev.dataTransfer.dropEffect = 'move'; setDragOverCol(col.status) }}
-              onDragLeave={() => setDragOverCol(prev => (prev === col.status ? null : prev))}
-              onDrop={ev => {
-                ev.preventDefault()
-                const id = ev.dataTransfer.getData('text/plain')
-                setDragOverCol(null)
-                setDraggingId(null)
-                if (id) handleStatusChange(id, col.status)
-              }}
-            >
-              {/* Cabecera columna */}
-              <div className={`flex items-center gap-2 mb-3 pb-2.5 border-b ${col.border}`}>
+      {view === 'kanban' ? (
+        <>
+          {/* Barra de estados */}
+          <div className="flex items-center gap-x-6 gap-y-2 flex-wrap pb-2.5 border-b border-white/[0.08]">
+            {COLUMNS.map(col => (
+              <div key={col.status} className="flex items-center gap-2">
                 <span className={`w-2 h-2 rounded-full ${col.dot}`} />
                 <span className={`text-xs font-bold uppercase tracking-wider ${col.header.split(' ').find(c => c.startsWith('text-'))}`}>
                   {col.label}
                 </span>
-                <span className="ml-auto text-xs text-white/30 font-semibold">{col.items.length}</span>
+                <span className="text-xs text-white/30 font-semibold">
+                  {columns.find(c => c.status === col.status)?.items.length ?? 0}
+                </span>
               </div>
+            ))}
+          </div>
 
-              {/* Cards */}
-              <div className={`space-y-3 min-h-[80px] rounded-xl transition-colors ${dragOverCol === col.status ? 'ring-2 ring-orange-500/40 bg-orange-500/[0.04]' : ''}`}>
-                {col.items.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-white/[0.06] px-4 py-8 text-center">
-                    <p className="text-xs text-white/20">Sin leads</p>
+          {/* Kanban — scroll horizontal en mobile */}
+          <div className="overflow-x-auto pb-4">
+            <div className="flex gap-4 min-w-[900px]">
+              {columns.map(col => (
+                <div
+                  key={col.status}
+                  className="flex-1 min-w-[200px]"
+                  onDragOver={ev => { ev.preventDefault(); ev.dataTransfer.dropEffect = 'move'; setDragOverCol(col.status) }}
+                  onDragLeave={() => setDragOverCol(prev => (prev === col.status ? null : prev))}
+                  onDrop={ev => {
+                    ev.preventDefault()
+                    const id = ev.dataTransfer.getData('text/plain')
+                    setDragOverCol(null)
+                    setDraggingId(null)
+                    if (id) handleStatusChange(id, col.status)
+                  }}
+                >
+                  {/* Cards */}
+                  <div className={`space-y-3 min-h-[80px] rounded-xl transition-colors ${dragOverCol === col.status ? 'ring-2 ring-orange-500/40 bg-orange-500/[0.04]' : ''}`}>
+                    {col.items.length === 0 ? (
+                      <div className="rounded-xl border border-dashed border-white/[0.06] px-4 py-8 text-center">
+                        <p className="text-xs text-white/20">Sin leads</p>
+                      </div>
+                    ) : (
+                      col.items.map(e => (
+                        <LeadCard
+                          key={e.id}
+                          enrollment={e}
+                          onOpen={() => openDrawer(e)}
+                          onMove={status => handleStatusChange(e.id, status)}
+                          onDragStart={setDraggingId}
+                          onDragEnd={() => { setDraggingId(null); setDragOverCol(null) }}
+                          dragging={draggingId === e.id}
+                        />
+                      ))
+                    )}
                   </div>
-                ) : (
-                  col.items.map(e => (
-                    <LeadCard
-                      key={e.id}
-                      enrollment={e}
-                      onOpen={() => openDrawer(e)}
-                      onMove={status => handleStatusChange(e.id, status)}
-                      onDragStart={setDraggingId}
-                      onDragEnd={() => { setDraggingId(null); setDragOverCol(null) }}
-                      dragging={draggingId === e.id}
-                    />
-                  ))
-                )}
-              </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </div>
+          </div>
+        </>
+      ) : (
+        /* Vista lista */
+        listaFiltered.length === 0 ? (
+          <div className="text-center py-16 text-white/30 text-sm">No hay inscripciones.</div>
+        ) : (
+          <div className="bg-[#0f0f0f] border border-white/10 rounded-xl overflow-hidden">
+            <div className="hidden sm:grid grid-cols-[auto_1fr_140px_140px_120px_100px] gap-4 px-4 py-2.5 border-b border-white/[0.06] text-[10px] uppercase tracking-widest text-white/25 font-semibold">
+              <span className="w-2" />
+              <span>Prospecto</span>
+              <span>Curso</span>
+              <span>Contacto</span>
+              <span>Recibido</span>
+              <span className="text-right">Estado</span>
+            </div>
+            <div className="divide-y divide-white/[0.05]">
+              {listaFiltered.map(e => {
+                const isNew = isToday(e.created_at)
+                const isKid = e.student_age < 18
+                const canonical = canonicalStatus(e.status)
+                return (
+                  <button
+                    key={e.id}
+                    onClick={() => openDrawer(e)}
+                    className="w-full text-left px-4 py-3.5 hover:bg-white/[0.025] transition-all group"
+                  >
+                    {/* Mobile */}
+                    <div className="sm:hidden flex items-start gap-3">
+                      <span className={`mt-1.5 block w-2 h-2 shrink-0 rounded-full ${COLUMNS.find(c => c.status === canonical)?.dot}`} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-sm font-semibold text-white">{e.student_name}</span>
+                          {isNew && <Badge color="bg-orange-500/15 text-orange-400">Nuevo</Badge>}
+                          {isKid ? <Badge color="bg-white/8 text-white/55">Niño</Badge> : <Badge color="bg-white/5 text-white/30">Adulto</Badge>}
+                        </div>
+                        <p className="text-xs text-white/40 mt-0.5">{e.student_age} años · {e.course_interest}</p>
+                        <p className="text-xs text-white/50 font-mono mt-0.5">{e.phone}</p>
+                      </div>
+                      <span className="text-[11px] text-white/30 shrink-0 whitespace-nowrap">{timeAgo(e.created_at)}</span>
+                    </div>
+
+                    {/* Desktop */}
+                    <div className="hidden sm:grid grid-cols-[auto_1fr_140px_140px_120px_100px] gap-4 items-center">
+                      <span className={`block w-2 h-2 shrink-0 rounded-full ${COLUMNS.find(c => c.status === canonical)?.dot}`} />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-sm font-semibold text-white group-hover:text-orange-300 transition-colors truncate">{e.student_name}</span>
+                          {isNew && <Badge color="bg-orange-500/15 text-orange-400">Nuevo</Badge>}
+                          {isKid ? <Badge color="bg-white/8 text-white/55">Niño</Badge> : <Badge color="bg-white/5 text-white/30">Adulto</Badge>}
+                        </div>
+                        <p className="text-xs text-white/35 mt-0.5">{e.student_age} años</p>
+                      </div>
+                      <span className="text-xs text-white/55 truncate">{e.course_interest}</span>
+                      <span className="text-xs text-white/50 font-mono truncate">{e.phone}</span>
+                      <span className="text-xs text-white/30">{timeAgo(e.created_at)}</span>
+                      <span className="text-right">
+                        <span className={`text-[11px] px-2 py-0.5 rounded-full font-semibold border ${PILL[e.status]}`}>
+                          {COLUMNS.find(c => c.status === canonical)?.label ?? e.status}
+                        </span>
+                      </span>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )
+      )}
 
       {/* Drawer */}
       <LeadDrawer
@@ -863,6 +1151,15 @@ export default function LeadsClient({ initialEnrollments }: { initialEnrollments
         onUpdateSource={handleUpdateSource}
         onUpdateFollowup={handleUpdateFollowup}
         onUpdateLostReason={handleUpdateLostReason}
+      />
+
+      <ConfirmModal
+        open={confirmConvertOpen}
+        title="Convertir a estudiante"
+        message={`¿Convertir a ${selected?.student_name ?? ''} en estudiante activo?`}
+        confirmLabel="Convertir"
+        onCancel={() => setConfirmConvertOpen(false)}
+        onConfirm={() => { setConfirmConvertOpen(false); doConvert() }}
       />
     </div>
   )

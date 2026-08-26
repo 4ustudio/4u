@@ -7,6 +7,7 @@ import type { ClassSession } from '@/types/admin'
 import { safeRecordStudentActivity } from './retention'
 import { activity } from '@/lib/activity'
 import { resolveRole, hasAcademicAccess } from '@/lib/auth/roles'
+import { sendClassScheduledEmails } from '@/lib/email/class-scheduled'
 
 async function assertAdmin(): Promise<{ error: string } | null> {
   const { data: { user } } = await getAuthUser()
@@ -146,6 +147,46 @@ export async function bookSessionAction(
   }
 
   if (!firstSessionId) return { error: 'No se pudo crear la clase.' }
+
+  try {
+    const { data: firstSession } = await createAdminClient()
+      .from('class_sessions')
+      .select(`
+        scheduled_date,
+        start_time,
+        student:students(name, email),
+        instructor:instructors(name, email),
+        classroom:classrooms(name),
+        course:courses(name)
+      `)
+      .eq('id', firstSessionId)
+      .maybeSingle()
+
+    if (firstSession) {
+      const s = firstSession as unknown as {
+        scheduled_date: string
+        start_time:     string
+        student:    { name: string; email: string | null }
+        instructor: { name: string; email: string | null }
+        classroom:  { name: string }
+        course:     { name: string }
+      }
+
+      const classDateTime = new Date(`${s.scheduled_date}T${s.start_time}`)
+
+      await sendClassScheduledEmails({
+        student:    s.student,
+        instructor: s.instructor,
+        classroom:  s.classroom,
+        course:     s.course,
+        date: classDateTime.toLocaleDateString('es-CO', { timeZone: 'America/Bogota', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
+        time: classDateTime.toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: 'numeric', minute: '2-digit', hour12: true }),
+        repeatWeeks: input.repeat_weeks,
+      })
+    }
+  } catch (err) {
+    console.error('[bookSessionAction] Error enviando emails', err)
+  }
 
   revalidatePath('/admin/agenda')
 

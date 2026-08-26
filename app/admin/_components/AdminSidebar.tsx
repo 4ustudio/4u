@@ -22,7 +22,6 @@ import {
   MdCreditCard,
   MdBolt,
   MdBarChart,
-  MdRestartAlt,
   MdClose,
   MdMenu,
 } from 'react-icons/md'
@@ -40,7 +39,6 @@ const Icon = {
   pagos:        <MdCreditCard className="h-5 w-5" aria-hidden="true" />,
   automations:  <MdBolt className="h-5 w-5" aria-hidden="true" />,
   metrics:      <MdBarChart className="h-5 w-5" aria-hidden="true" />,
-  reactivacion: <MdRestartAlt className="h-5 w-5" aria-hidden="true" />,
 }
 
 type NavGroup = 'general' | 'comercial' | 'academico' | 'sistema'
@@ -70,8 +68,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/admin/agenda',            label: 'Clases',         compactLabel: 'Agenda',       icon: Icon.agenda,       area: 'academic',   group: 'academico' },
   { href: '/admin/students',          label: 'Estudiantes',    compactLabel: 'Alumnos',      icon: Icon.students,     area: 'academic',   group: 'academico' },
   { href: '/admin/instructors',       label: 'Instructores',   compactLabel: 'Profesores',   icon: Icon.instructors,  area: 'academic',   group: 'academico' },
-  { href: '/admin/retencion',         label: 'Retención',      compactLabel: 'En riesgo',    icon: Icon.retention,    area: 'academic',   group: 'academico' },
-  { href: '/admin/reactivacion',      label: 'Recuperación',   compactLabel: 'Inactivos',    icon: Icon.reactivacion, area: 'academic',   group: 'academico' },
+  { href: '/admin/seguimiento',       label: 'Seguimiento',    compactLabel: 'Alumnos',      icon: Icon.retention,    area: 'academic',   group: 'academico' },
   { href: '/admin/academico',         label: 'Indicadores',    compactLabel: 'Métricas',     icon: Icon.metrics,      area: 'academic',   group: 'academico' },
   { href: '/admin/automatizaciones',  label: 'Automatizaciones', compactLabel: 'Automático', icon: Icon.automations,  area: 'shared',     group: 'sistema' },
   { href: '/admin/actividad',         label: 'Actividad',      compactLabel: 'Auditoría',    icon: Icon.activity,     area: 'shared',     group: 'sistema' },

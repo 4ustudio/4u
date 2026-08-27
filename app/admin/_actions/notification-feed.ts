@@ -33,7 +33,7 @@ export async function getInitialBellFeed(): Promise<{ events: BellSeedEvent[]; a
   const [{ data: events }, { data: alerts }] = await Promise.all([
     admin.from('system_activity_log')
       .select('id, entity_type, action, description, severity, created_at')
-      .or('severity.in.(warning,critical),action.eq.attendance.confirmed')
+      .or('severity.in.(warning,critical),action.in.(attendance.confirmed,instructor.availability_changed,instructor.date_blocked,instructor.class_assigned)')
       .order('created_at', { ascending: false })
       .limit(30),
     admin.from('retention_alerts')

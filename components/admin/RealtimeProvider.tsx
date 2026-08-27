@@ -90,6 +90,9 @@ const ACTION_TITLE: Record<string, string> = {
   'payment.overdue':            'Pago vencido',
   'payment.received':           'Pago recibido',
   'retention.status_changed':   'Cambio de estado de riesgo',
+  'instructor.availability_changed': 'Horario actualizado',
+  'instructor.date_blocked':    'Fecha bloqueada',
+  'instructor.class_assigned':  'Clase asignada por instructor',
 }
 
 function typeForAction(action: string): NotifType {
@@ -308,7 +311,8 @@ export function RealtimeProvider({ children, role }: { children: ReactNode; role
       .channel('admin-bell-alerts')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'system_activity_log' },
         ({ new: row }) => {
-          const bellWorthy = row.severity === 'warning' || row.severity === 'critical' || row.action === 'attendance.confirmed'
+          const bellWorthy = row.severity === 'warning' || row.severity === 'critical'
+            || ['attendance.confirmed', 'instructor.availability_changed', 'instructor.date_blocked', 'instructor.class_assigned'].includes(row.action)
           if (!bellWorthy) return
           addNotif({
             id:        row.id,

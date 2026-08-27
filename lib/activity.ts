@@ -37,6 +37,9 @@ export type ActivityAction =
   | 'automation.job_created'
   | 'automation.job_completed'
   | 'automation.job_failed'
+  | 'instructor.availability_changed'
+  | 'instructor.date_blocked'
+  | 'instructor.class_assigned'
 
 export type EntityType =
   | 'enrollment'
@@ -46,6 +49,7 @@ export type EntityType =
   | 'student'
   | 'attendance'
   | 'retention'
+  | 'instructor'
 
 export type Severity = 'info' | 'warning' | 'critical'
 
@@ -538,6 +542,71 @@ export const activity = {
       created_by_system: true,
       severity: 'warning',
       new_data: { reason: params.reason, event: params.bold_event },
+    })
+  },
+
+  // Instructores
+  async instructorAvailabilityChanged(params: {
+    instructor_id: string
+    instructor_name: string
+    summary: string
+    actor_name?: string
+    actor_user_id?: string
+    actor_role?: string
+    source?: string
+  }) {
+    return logActivity({
+      entity_type: 'instructor',
+      entity_id: params.instructor_id,
+      action: 'instructor.availability_changed',
+      description: `Horario actualizado: ${params.instructor_name} — ${params.summary}`,
+      source: params.source ?? 'instructor',
+      actor_name: params.actor_name,
+      actor_user_id: params.actor_user_id,
+      actor_role: params.actor_role,
+    })
+  },
+
+  async instructorDateBlocked(params: {
+    instructor_id: string
+    instructor_name: string
+    blocked_date: string
+    reason: string
+    actor_name?: string
+    actor_user_id?: string
+    actor_role?: string
+    source?: string
+  }) {
+    return logActivity({
+      entity_type: 'instructor',
+      entity_id: params.instructor_id,
+      action: 'instructor.date_blocked',
+      description: `Fecha bloqueada: ${params.instructor_name} — ${params.blocked_date} (${params.reason})`,
+      source: params.source ?? 'instructor',
+      actor_name: params.actor_name,
+      actor_user_id: params.actor_user_id,
+      actor_role: params.actor_role,
+    })
+  },
+
+  async instructorClassAssigned(params: {
+    session_id: string
+    instructor_name: string
+    student_name: string
+    actor_name?: string
+    actor_user_id?: string
+    actor_role?: string
+    source?: string
+  }) {
+    return logActivity({
+      entity_type: 'session',
+      entity_id: params.session_id,
+      action: 'instructor.class_assigned',
+      description: `${params.instructor_name} agendó una clase con ${params.student_name}`,
+      source: params.source ?? 'instructor',
+      actor_name: params.actor_name,
+      actor_user_id: params.actor_user_id,
+      actor_role: params.actor_role,
     })
   },
 

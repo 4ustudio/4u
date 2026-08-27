@@ -7,6 +7,10 @@ import { redirect } from 'next/navigation'
 import type { BookingFormState } from '@/types/booking'
 import { safeRecordStudentActivity } from '@/app/admin/_actions/retention'
 import { activity } from '@/lib/activity'
+import { sendInstructorAvailabilityChangedEmail, sendInstructorDateBlockedEmail } from '@/lib/email/instructor-schedule-changed'
+import { sendClassScheduledEmails } from '@/lib/email/class-scheduled'
+
+const DOW_SHORT = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
 import { createBoldPaymentLink } from '@/lib/bold/client'
 import { PLANES_ADULTOS } from '@/data/plans-adults'
 
@@ -309,7 +313,7 @@ export async function getInstructorDashboardData(userId: string, email?: string 
   // Alumnos del instructor: historial completo, no solo el mes en curso.
   const { data: allSessions } = await adminClient
     .from('class_sessions')
-    .select('id, student_id, scheduled_date, start_time, status, course:courses(name), student:students(id, name, phone)')
+    .select('id, student_id, scheduled_date, start_time, status, attendance_status, course:courses(name), student:students(id, name, phone)')
     .eq('instructor_id', instructor.id)
     .order('scheduled_date', { ascending: false })
 
@@ -327,6 +331,7 @@ export async function getInstructorDashboardData(userId: string, email?: string 
         total: 0, completed: 0, cancelled: 0, noShow: 0,
         lastAttended: null as string | null,
         nextSession: null as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+        lastSession: null as any, // eslint-disable-line @typescript-eslint/no-explicit-any
       }
       studentsMap.set(s.student_id, row)
     }
@@ -342,6 +347,8 @@ export async function getInstructorDashboardData(userId: string, email?: string 
       const cur = row.nextSession
       if (!cur || s.scheduled_date + s.start_time < cur.scheduled_date + cur.start_time) row.nextSession = s
     }
+    // history viene ordenado por fecha desc → la primera es la clase más reciente (para re-registrar asistencia)
+    if (!row.lastSession) row.lastSession = s
   }
   const students = [...studentsMap.values()].sort((a, b) => a.name.localeCompare(b.name))
 
@@ -1038,8 +1045,33 @@ export async function createInstructorClassAction(input: { studentId: string; co
   if (!classroom) return { error: 'El salón no está disponible.' }
   const startTime = `${input.time}:00`
   const { data, error } = await adminClient.rpc('fn_book_session', { p_student_id: input.studentId, p_classroom_id: input.classroomId, p_course_id: input.courseId, p_date: input.date, p_start_time: startTime, p_instructor_id: session.instructor.id })
-  const result = data as { success?: boolean; error?: string } | null
+  const result = data as { success?: boolean; error?: string; session_id?: string } | null
   if (error || !result?.success) return { error: result?.error ?? error?.message ?? 'No se pudo crear la clase.' }
+
+  if (result.session_id) {
+    const { data: created } = await adminClient
+      .from('class_sessions')
+      .select('scheduled_date, start_time, student:students(name, email), course:courses(name), classroom:classrooms(name)')
+      .eq('id', result.session_id)
+      .maybeSingle()
+    const c = created as unknown as { scheduled_date: string; start_time: string; student: { name: string; email: string | null }; course: { name: string }; classroom: { name: string } } | null
+    if (c) {
+      await activity.instructorClassAssigned({
+        session_id: result.session_id, instructor_name: session.instructor.name, student_name: c.student.name,
+        actor_name: session.instructor.name, actor_user_id: session.instructor.id, actor_role: 'instructor',
+      })
+      const classDateTime = new Date(`${c.scheduled_date}T${c.start_time}`)
+      await sendClassScheduledEmails({
+        student: c.student,
+        instructor: { name: session.instructor.name, email: session.userEmail },
+        classroom: c.classroom,
+        course: c.course,
+        date: classDateTime.toLocaleDateString('es-CO', { timeZone: 'America/Bogota', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
+        time: classDateTime.toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: 'numeric', minute: '2-digit', hour12: true }),
+      })
+    }
+  }
+
   revalidatePath('/mi-cuenta')
   return { success: true }
 }
@@ -1264,6 +1296,15 @@ export async function saveInstructorAvailabilityAction(
     }
   }
 
+  const summary = insertedSlots.length > 0
+    ? `${insertedSlots.length} franja${insertedSlots.length === 1 ? '' : 's'} configurada${insertedSlots.length === 1 ? '' : 's'}`
+    : 'disponibilidad eliminada'
+  await activity.instructorAvailabilityChanged({
+    instructor_id: instructor.id, instructor_name: userName, summary,
+    actor_name: userName, actor_user_id: instructor.id, actor_role: 'instructor',
+  })
+  await sendInstructorAvailabilityChangedEmail({ instructorId: instructor.id, instructorName: userName, summary })
+
   revalidatePath('/mi-cuenta')
   return {
     success: true,
@@ -1312,6 +1353,13 @@ export async function createInstructorAvailabilityAction(
     changedByName: userName,
   })
 
+  const summary = `agregó ${DOW_SHORT[slot.day_of_week]} ${slot.start_time.slice(0, 5)}–${slot.end_time.slice(0, 5)}`
+  await activity.instructorAvailabilityChanged({
+    instructor_id: instructor.id, instructor_name: userName, summary,
+    actor_name: userName, actor_user_id: instructor.id, actor_role: 'instructor',
+  })
+  await sendInstructorAvailabilityChangedEmail({ instructorId: instructor.id, instructorName: userName, summary })
+
   revalidatePath('/mi-cuenta')
   return { success: true, id: newSlot?.id }
 }
@@ -1353,6 +1401,16 @@ export async function updateInstructorAvailabilityAction(
     prevValues: old as Record<string, unknown>,
   })
 
+  const dow = updates.day_of_week ?? (old as any).day_of_week
+  const start = updates.start_time ?? (old as any).start_time
+  const end = updates.end_time ?? (old as any).end_time
+  const summary = `modificó ${DOW_SHORT[dow]} → ${start.slice(0, 5)}–${end.slice(0, 5)}`
+  await activity.instructorAvailabilityChanged({
+    instructor_id: instructor.id, instructor_name: userName, summary,
+    actor_name: userName, actor_user_id: instructor.id, actor_role: 'instructor',
+  })
+  await sendInstructorAvailabilityChangedEmail({ instructorId: instructor.id, instructorName: userName, summary })
+
   revalidatePath('/mi-cuenta')
   return { success: true }
 }
@@ -1387,6 +1445,13 @@ export async function deleteInstructorAvailabilityAction(
     changedByName: userName,
     prevValues: old as Record<string, unknown>,
   })
+
+  const summary = `eliminó ${DOW_SHORT[(old as any).day_of_week]} ${(old as any).start_time.slice(0, 5)}–${(old as any).end_time.slice(0, 5)}`
+  await activity.instructorAvailabilityChanged({
+    instructor_id: instructor.id, instructor_name: userName, summary,
+    actor_name: userName, actor_user_id: instructor.id, actor_role: 'instructor',
+  })
+  await sendInstructorAvailabilityChangedEmail({ instructorId: instructor.id, instructorName: userName, summary })
 
   revalidatePath('/mi-cuenta')
   return { success: true }
@@ -1430,6 +1495,13 @@ export async function extendInstructorAvailabilityAction(
     prevValues: old as Record<string, unknown>,
   })
 
+  const summary = `amplió ${DOW_SHORT[(old as any).day_of_week]} hasta ${newEndTime.slice(0, 5)}`
+  await activity.instructorAvailabilityChanged({
+    instructor_id: instructor.id, instructor_name: userName, summary,
+    actor_name: userName, actor_user_id: instructor.id, actor_role: 'instructor',
+  })
+  await sendInstructorAvailabilityChangedEmail({ instructorId: instructor.id, instructorName: userName, summary })
+
   revalidatePath('/mi-cuenta')
   return { success: true }
 }
@@ -1467,6 +1539,16 @@ export async function blockDateForInstructorAction(params: {
     blockStartTime: params.start_time,
     blockEndTime: params.end_time,
     blockReason: params.reason,
+  })
+
+  await activity.instructorDateBlocked({
+    instructor_id: instructor.id, instructor_name: userName,
+    blocked_date: params.blocked_date, reason: params.reason,
+    actor_name: userName, actor_user_id: instructor.id, actor_role: 'instructor',
+  })
+  await sendInstructorDateBlockedEmail({
+    instructorId: instructor.id, instructorName: userName,
+    blockedDate: params.blocked_date, reason: params.reason,
   })
 
   revalidatePath('/mi-cuenta')

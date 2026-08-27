@@ -13,6 +13,7 @@ import ClassesCalendar from './_components/ClassesCalendar'
 import InstructorCalendar from './_components/InstructorCalendar'
 import AvailabilityEditor from './_components/AvailabilityEditor'
 import InstructorQuickActions from './_components/InstructorQuickActions'
+import StudentAttendanceButton from './_components/StudentAttendanceButton'
 import InstructorCancelSession from './_components/InstructorCancelSession'
 import OpenScheduleLink from './_components/OpenScheduleLink'
 import { InstrumentIcon } from './_components/instruments'
@@ -280,7 +281,8 @@ function InstructorDashboard({ data, user, monthLabel, now }: any) {
                       <th className="pb-2 pr-4 font-semibold">Curso</th>
                       <th className="pb-2 pr-4 font-semibold">Ultima asistencia</th>
                       <th className="pb-2 pr-4 font-semibold">Proxima clase</th>
-                      <th className="pb-2 font-semibold text-right">Tomadas / Total</th>
+                      <th className="pb-2 pr-4 font-semibold text-right">Tomadas / Total</th>
+                      <th className="pb-2 font-semibold text-right">Asistencia</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
@@ -303,8 +305,18 @@ function InstructorDashboard({ data, user, monthLabel, now }: any) {
                             ? `${fechaCorta(st.nextSession.scheduled_date)} ${st.nextSession.start_time?.slice(0, 5)}`
                             : '—'}
                         </td>
-                        <td className="py-2.5 text-right font-semibold text-gray-900">
+                        <td className="py-2.5 pr-4 text-right font-semibold text-gray-900">
                           {st.completed} / {st.total}
+                        </td>
+                        <td className="py-2.5 text-right">
+                          {(() => {
+                            const target = st.nextSession ?? st.lastSession
+                            return target ? (
+                              <StudentAttendanceButton sessionId={target.id} current={target.attendance_status ?? null} />
+                            ) : (
+                              <span className="text-xs text-gray-300">—</span>
+                            )
+                          })()}
                         </td>
                       </tr>
                     ))}

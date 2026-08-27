@@ -8,6 +8,7 @@ import { safeRecordStudentActivity } from './retention'
 import { activity } from '@/lib/activity'
 import { resolveRole, hasAcademicAccess } from '@/lib/auth/roles'
 import { sendClassScheduledEmails } from '@/lib/email/class-scheduled'
+import { getActorInfo } from '@/lib/auth/actor'
 
 async function assertAdmin(): Promise<{ error: string } | null> {
   const { data: { user } } = await getAuthUser()
@@ -275,7 +276,7 @@ export async function adminUpdateStatusAction(
 
   const { data: session } = await createAdminClient()
     .from('class_sessions')
-    .select('student_id, scheduled_date, start_time, course_id')
+    .select('student_id, scheduled_date, start_time, course_id, student:students(name)')
     .eq('id', session_id)
     .maybeSingle()
 
@@ -289,6 +290,8 @@ export async function adminUpdateStatusAction(
 
   if (error) return { error: error.message }
 
+  const studentName = (session?.student as { name?: string } | null)?.name ?? 'Estudiante'
+
   if (new_status === 'completed') {
     await safeRecordStudentActivity(session?.student_id, 'class_completed', 'Clase marcada como completada.', {
       session_id,
@@ -296,11 +299,13 @@ export async function adminUpdateStatusAction(
       scheduled_date: session?.scheduled_date,
       start_time: session?.start_time,
     })
-    await activity.attendanceConfirmed({ session_id, student_name: `Estudiante`, source: 'admin' })
+    const actor = await getActorInfo()
+    await activity.attendanceConfirmed({ session_id, student_name: studentName, source: 'admin', actor_name: actor?.actor_name, actor_user_id: actor?.actor_user_id, actor_role: actor?.actor_role })
   }
   if (new_status === 'no_show') {
     await safeRecordStudentActivity(session?.student_id, 'class_no_show', 'Clase marcada como no asistio.', { session_id })
-    await activity.attendanceNoShow({ session_id, student_name: `Estudiante`, source: 'admin' })
+    const actor = await getActorInfo()
+    await activity.attendanceNoShow({ session_id, student_name: studentName, source: 'admin', actor_name: actor?.actor_name, actor_user_id: actor?.actor_user_id, actor_role: actor?.actor_role })
   }
   if (new_status === 'cancelled') {
     await safeRecordStudentActivity(session?.student_id, 'class_cancelled', 'Clase marcada como cancelada.', { session_id })
@@ -448,6 +453,12 @@ export async function updateAttendanceStatusAction(
     update.attendance_confirmed_at = new Date().toISOString()
   }
 
+  const { data: session } = await createAdminClient()
+    .from('class_sessions')
+    .select('student:students(name)')
+    .eq('id', session_id)
+    .maybeSingle()
+
   const { error } = await createAdminClient()
     .from('class_sessions')
     .update(update as never)
@@ -456,7 +467,9 @@ export async function updateAttendanceStatusAction(
   if (error) return { error: error.message }
 
   if (attendance_status === 'confirmed') {
-    await activity.attendanceConfirmed({ session_id, student_name: 'Estudiante', source: 'admin' })
+    const studentName = (session?.student as { name?: string } | null)?.name ?? 'Estudiante'
+    const actor = await getActorInfo()
+    await activity.attendanceConfirmed({ session_id, student_name: studentName, source: 'admin', actor_name: actor?.actor_name, actor_user_id: actor?.actor_user_id, actor_role: actor?.actor_role })
   }
 
   revalidatePath('/admin/agenda')

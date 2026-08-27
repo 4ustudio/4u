@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import Link from 'next/link'
 import { useRealtime, type AdminNotif, type ConnectionStatus } from './RealtimeProvider'
 
 // ── Utilidades ────────────────────────────────────────────────
@@ -69,7 +70,46 @@ const TYPE_CONFIG = {
     ),
     bg: { background: 'var(--adm-accent-soft)', color: 'var(--adm-accent)' },
   },
+  attendance: {
+    dot: 'var(--adm-text-muted)',
+    icon: (
+      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        <circle cx="12" cy="12" r="9"/><path d="m9 12 2 2 4-4"/>
+      </svg>
+    ),
+    bg: { background: 'var(--adm-neutral-soft)', color: 'var(--adm-text-muted)' },
+  },
+  risk: {
+    dot: 'var(--adm-warning)',
+    icon: (
+      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+    ),
+    bg: { background: 'var(--adm-warning-soft)', color: 'var(--adm-warning)' },
+  },
+  payment_alert: {
+    dot: 'var(--adm-danger)',
+    icon: (
+      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="17" y1="15" x2="17.01" y2="15"/>
+      </svg>
+    ),
+    bg: { background: 'var(--adm-danger-soft)', color: 'var(--adm-danger)' },
+  },
 } as const
+
+function bgForNotif(n: AdminNotif) {
+  if (n.severity === 'critical') return { background: 'var(--adm-danger-soft)', color: 'var(--adm-danger)' }
+  if (n.severity === 'warning')  return { background: 'var(--adm-warning-soft)', color: 'var(--adm-warning)' }
+  return TYPE_CONFIG[n.type].bg
+}
+
+function dotForNotif(n: AdminNotif) {
+  if (n.severity === 'critical') return 'var(--adm-danger)'
+  if (n.severity === 'warning')  return 'var(--adm-warning)'
+  return TYPE_CONFIG[n.type].dot
+}
 
 // ── ConnectionDot ─────────────────────────────────────────────
 
@@ -92,9 +132,14 @@ export function ConnectionDot({ status }: { status: ConnectionStatus }) {
 
 function NotifItem({ n }: { n: AdminNotif }) {
   const cfg = TYPE_CONFIG[n.type]
+  const isAlert = n.kind === 'alert'
   return (
-    <div className={`flex gap-3 px-4 py-3 transition-colors ${n.read ? 'opacity-60' : ''}`}>
-      <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full" style={cfg.bg}>
+    <div
+      className={`flex gap-3 px-4 py-3 transition-colors ${n.read ? 'opacity-60' : ''}`}
+      style={isAlert ? { borderLeft: `2px solid ${dotForNotif(n)}` } : undefined}
+      title={isAlert ? 'Alerta activa — persiste hasta resolverse' : undefined}
+    >
+      <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full" style={bgForNotif(n)}>
         {cfg.icon}
       </div>
       <div className="flex-1 min-w-0">
@@ -104,7 +149,7 @@ function NotifItem({ n }: { n: AdminNotif }) {
         </div>
         <p className="mt-0.5 text-xs leading-relaxed" style={{ color: 'var(--adm-text-muted)' }}>{n.body}</p>
       </div>
-      {!n.read && <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: cfg.dot }} />}
+      {!n.read && <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: dotForNotif(n) }} />}
     </div>
   )
 }
@@ -238,13 +283,18 @@ export default function NotificationBell() {
           </div>
 
           {/* Footer con estado */}
-          <div className="flex items-center gap-2 border-t px-4 py-2.5" style={{ borderColor: 'var(--adm-border)' }}>
-            <ConnectionDot status={connectionStatus} />
-            <span className="text-[10px]" style={{ color: 'var(--adm-text-faint)' }}>
-              {connectionStatus === 'connected'    ? 'Actualización en tiempo real activa' :
-               connectionStatus === 'connecting'   ? 'Conectando al servidor…' :
-               'Sin conexión — actualizando…'}
-            </span>
+          <div className="flex items-center justify-between gap-2 border-t px-4 py-2.5" style={{ borderColor: 'var(--adm-border)' }}>
+            <div className="flex items-center gap-2 min-w-0">
+              <ConnectionDot status={connectionStatus} />
+              <span className="truncate text-[10px]" style={{ color: 'var(--adm-text-faint)' }}>
+                {connectionStatus === 'connected'    ? 'Actualización en tiempo real activa' :
+                 connectionStatus === 'connecting'   ? 'Conectando al servidor…' :
+                 'Sin conexión — actualizando…'}
+              </span>
+            </div>
+            <Link href="/admin/actividad" className="shrink-0 text-[10px] font-bold" style={{ color: 'var(--adm-accent)' }} onClick={() => setOpen(false)}>
+              Ver todo
+            </Link>
           </div>
         </div>
       )}

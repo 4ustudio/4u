@@ -34,7 +34,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     .join('') || '4U'
 
   return (
-    <RealtimeProvider>
+    <RealtimeProvider role={role}>
       <AdminThemeProvider className="min-h-screen flex">
         {/* Sidebar desktop */}
         <AdminSidebar role={role} />

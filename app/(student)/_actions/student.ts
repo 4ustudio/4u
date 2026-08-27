@@ -1052,14 +1052,14 @@ async function assertOwnSession(sessionId: string) {
 
   const { data: classSession } = await admin()
     .from('class_sessions')
-    .select('student_id, scheduled_date, start_time, course_id, status, instructor_id')
+    .select('student_id, scheduled_date, start_time, course_id, status, instructor_id, student:students(name)')
     .eq('id', sessionId)
     .maybeSingle()
 
   if (!classSession) return { error: 'Clase no encontrada.' } as const
   if (classSession.instructor_id !== session.instructor.id) return { error: 'No autorizado.' } as const
 
-  return { classSession } as const
+  return { classSession, instructor: session.instructor } as const
 }
 
 export async function instructorUpdateStatusAction(
@@ -1073,18 +1073,20 @@ export async function instructorUpdateStatusAction(
 
   const check = await assertOwnSession(sessionId)
   if ('error' in check) return { error: check.error }
-  const { classSession } = check
+  const { classSession, instructor } = check
+  const studentName = (classSession.student as { name?: string } | null)?.name ?? 'Estudiante'
+  const actorFields = { actor_name: instructor.name, actor_user_id: instructor.id, actor_role: 'instructor' as const }
 
   const { error } = await admin().from('class_sessions').update({ status: newStatus }).eq('id', sessionId)
   if (error) return { error: error.message }
 
   if (newStatus === 'completed') {
     await safeRecordStudentActivity(classSession.student_id, 'class_completed', 'Clase marcada como completada por el instructor.', { session_id: sessionId, course_id: classSession.course_id })
-    await activity.attendanceConfirmed({ session_id: sessionId, student_name: 'Estudiante', source: 'instructor' })
+    await activity.attendanceConfirmed({ session_id: sessionId, student_name: studentName, source: 'instructor', ...actorFields })
   }
   if (newStatus === 'no_show') {
     await safeRecordStudentActivity(classSession.student_id, 'class_no_show', 'Clase marcada como no asistió por el instructor.', { session_id: sessionId })
-    await activity.attendanceNoShow({ session_id: sessionId, student_name: 'Estudiante', source: 'instructor' })
+    await activity.attendanceNoShow({ session_id: sessionId, student_name: studentName, source: 'instructor', ...actorFields })
   }
 
   revalidatePath('/mi-cuenta')
@@ -1102,7 +1104,9 @@ export async function instructorRegisterAttendanceAction(
 
   const check = await assertOwnSession(sessionId)
   if ('error' in check) return { error: check.error }
-  const { classSession } = check
+  const { classSession, instructor } = check
+  const studentName = (classSession.student as { name?: string } | null)?.name ?? 'Estudiante'
+  const actorFields = { actor_name: instructor.name, actor_user_id: instructor.id, actor_role: 'instructor' as const }
 
   const update: Record<string, unknown> = {
     attendance_status: attendance,
@@ -1116,12 +1120,12 @@ export async function instructorRegisterAttendanceAction(
   if (attendance === 'attended') {
     await Promise.all([
       safeRecordStudentActivity(classSession.student_id, 'class_completed', 'Asistencia registrada por el instructor.', { session_id: sessionId, course_id: classSession.course_id }),
-      activity.attendanceConfirmed({ session_id: sessionId, student_name: 'Estudiante', source: 'instructor' }),
+      activity.attendanceConfirmed({ session_id: sessionId, student_name: studentName, source: 'instructor', ...actorFields }),
     ])
   } else {
     await Promise.all([
       safeRecordStudentActivity(classSession.student_id, 'class_no_show', 'Inasistencia registrada por el instructor.', { session_id: sessionId }),
-      activity.attendanceNoShow({ session_id: sessionId, student_name: 'Estudiante', source: 'instructor' }),
+      activity.attendanceNoShow({ session_id: sessionId, student_name: studentName, source: 'instructor', ...actorFields }),
     ])
   }
 

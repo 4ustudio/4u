@@ -4,6 +4,7 @@ import type { BoldWebhookPayload } from '@/lib/bold/types'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { activity } from '@/lib/activity'
 import { sendPaymentConfirmed, sendInternalAlert } from '@/lib/whatsapp-cloud'
+import { resolvePaymentAlerts } from '@/app/admin/_actions/retention'
 
 // No usar caché — siempre procesar en tiempo real
 export const dynamic = 'force-dynamic'
@@ -113,6 +114,7 @@ export async function POST(req: NextRequest) {
 
     // Solo sync y activity si el update fue exitoso
     await db().rpc('sync_student_payment_fields', { p_student_id: payment.student_id })
+    await resolvePaymentAlerts(payment.student_id)
 
     const { data: student } = await db()
       .from('students')

@@ -1,6 +1,6 @@
 'use client'
 
-import { MdDescription, MdCalendarMonth, MdPersonAddAlt, MdGroupAdd, MdCreditCard, MdHistory } from 'react-icons/md'
+import { MdDescription, MdCalendarMonth, MdPersonAddAlt, MdGroupAdd, MdCreditCard, MdHistory, MdCheckCircle, MdWarningAmber, MdErrorOutline } from 'react-icons/md'
 import { useRealtime, type AdminNotif } from '@/components/admin/RealtimeProvider'
 
 // ── Utilidades ────────────────────────────────────────────────
@@ -15,19 +15,25 @@ function timeAgo(d: Date): string {
 }
 
 const ICON_BG: Record<AdminNotif['type'], string> = {
-  enrollment: 'adm-activity-icon enrollment',
-  session:    'adm-activity-icon session',
-  conversion: 'adm-activity-icon conversion',
-  student:    'adm-activity-icon student',
-  payment:    'adm-activity-icon payment',
+  enrollment:    'adm-activity-icon enrollment',
+  session:       'adm-activity-icon session',
+  conversion:    'adm-activity-icon conversion',
+  student:       'adm-activity-icon student',
+  payment:       'adm-activity-icon payment',
+  attendance:    'adm-activity-icon session',
+  risk:          'adm-activity-icon payment',
+  payment_alert: 'adm-activity-icon payment',
 }
 
 const ICONS: Record<AdminNotif['type'], React.ReactNode> = {
-  enrollment: <MdDescription className="h-3.5 w-3.5" />,
-  session:    <MdCalendarMonth className="h-3.5 w-3.5" />,
-  conversion: <MdPersonAddAlt className="h-3.5 w-3.5" />,
-  student:    <MdGroupAdd className="h-3.5 w-3.5" />,
-  payment:    <MdCreditCard className="h-3.5 w-3.5" />,
+  enrollment:    <MdDescription className="h-3.5 w-3.5" />,
+  session:       <MdCalendarMonth className="h-3.5 w-3.5" />,
+  conversion:    <MdPersonAddAlt className="h-3.5 w-3.5" />,
+  student:       <MdGroupAdd className="h-3.5 w-3.5" />,
+  payment:       <MdCreditCard className="h-3.5 w-3.5" />,
+  attendance:    <MdCheckCircle className="h-3.5 w-3.5" />,
+  risk:          <MdWarningAmber className="h-3.5 w-3.5" />,
+  payment_alert: <MdErrorOutline className="h-3.5 w-3.5" />,
 }
 
 // ── ActivityFeed ──────────────────────────────────────────────
@@ -58,11 +64,15 @@ export function ActivityFeed() {
             className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${ICON_BG[n.type]}`}
             style={n.type === 'enrollment'
               ? { background: 'var(--adm-accent-soft)', color: 'var(--adm-accent)' }
-              : n.type === 'session'
+              : n.type === 'session' || n.type === 'attendance'
                 ? { background: 'var(--adm-neutral-soft)', color: 'var(--adm-text-muted)' }
                 : n.type === 'conversion'
                   ? { background: 'var(--adm-info-soft)', color: 'var(--adm-info)' }
-                  : { background: 'var(--adm-success-soft)', color: 'var(--adm-success)' }}
+                  : n.severity === 'critical'
+                    ? { background: 'var(--adm-danger-soft)', color: 'var(--adm-danger)' }
+                    : n.severity === 'warning'
+                      ? { background: 'var(--adm-warning-soft)', color: 'var(--adm-warning)' }
+                      : { background: 'var(--adm-success-soft)', color: 'var(--adm-success)' }}
           >
             {ICONS[n.type]}
           </div>

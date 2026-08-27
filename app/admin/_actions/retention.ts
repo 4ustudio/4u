@@ -324,6 +324,66 @@ function buildAlert(student: { id: string; name: string }, status: StudentLifecy
   }
 }
 
+// payments.status = 'overdue' no es confiable (solo se asigna al ejecutar
+// "Procesar vencidos" manualmente en /admin/pagos) — morosidad real se mide
+// por due_date, independiente del status guardado.
+async function getPaymentAlertItems(): Promise<RetentionPreview['alerts']> {
+  const today = new Date().toISOString().split('T')[0]
+  const tomorrowDate = new Date()
+  tomorrowDate.setDate(tomorrowDate.getDate() + 1)
+  const tomorrow = tomorrowDate.toISOString().split('T')[0]
+
+  const [{ data: overdue }, { data: dueTomorrow }] = await Promise.all([
+    createAdminClient()
+      .from('payments')
+      .select('id, student_id, due_date, final_amount, students(name)')
+      .not('status', 'in', '(paid,voided,waived)')
+      .lt('due_date', today),
+    createAdminClient()
+      .from('payments')
+      .select('id, student_id, due_date, final_amount, students(name)')
+      .eq('status', 'pending')
+      .eq('due_date', tomorrow),
+  ])
+
+  const fmt = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })
+  const alerts: RetentionPreview['alerts'] = []
+
+  const byStudent = new Map<string, { name: string; count: number; total: number; oldest: string }>()
+  for (const p of (overdue ?? []) as any[]) {
+    if (!p.student_id) continue
+    const name = p.students?.name ?? 'Estudiante'
+    const item = byStudent.get(p.student_id) ?? { name, count: 0, total: 0, oldest: p.due_date }
+    item.count++
+    item.total += Number(p.final_amount) || 0
+    if (p.due_date < item.oldest) item.oldest = p.due_date
+    byStudent.set(p.student_id, item)
+  }
+  for (const [student_id, item] of byStudent) {
+    alerts.push({
+      student_id,
+      alert_type: 'payment_overdue',
+      severity: 'critical',
+      title: `${item.name} tiene ${item.count} pago${item.count > 1 ? 's' : ''} vencido${item.count > 1 ? 's' : ''}`,
+      message: `Total vencido: ${fmt.format(item.total)} · vencimiento mas antiguo: ${item.oldest}.`,
+    })
+  }
+
+  for (const p of (dueTomorrow ?? []) as any[]) {
+    if (!p.student_id) continue
+    const name = p.students?.name ?? 'Estudiante'
+    alerts.push({
+      student_id: p.student_id,
+      alert_type: 'payment_pending',
+      severity: 'info',
+      title: `${name} tiene un pago que vence manana`,
+      message: `Vence el ${p.due_date} · ${fmt.format(Number(p.final_amount))}.`,
+    })
+  }
+
+  return alerts
+}
+
 function buildTask(student: { id: string; name: string }, status: StudentLifecycleStatus) {
   if (!['riesgo', 'inactivo', 'exalumno'].includes(status)) return null
 
@@ -438,6 +498,8 @@ export async function runRetentionDailyJob(options: { dryRun?: boolean } = {}): 
     const campaign = buildCampaignDraft(student, nextStatus)
     if (campaign) preview.campaignDrafts.push(campaign)
   }
+
+  preview.alerts.push(...await getPaymentAlertItems())
 
   preview.summary = {
     statusChanges: preview.statusChanges.length,
@@ -580,6 +642,18 @@ export async function runRetentionDailyJob(options: { dryRun?: boolean } = {}): 
   revalidatePath('/admin/reactivacion')
   revalidatePath('/admin/students')
   return preview
+}
+
+// Resuelve alertas abiertas de pago cuando el pago correspondiente se marca
+// 'paid' (registro manual o webhook de Bold) — evita que la campana siga
+// mostrando morosidad ya saldada.
+export async function resolvePaymentAlerts(studentId: string) {
+  await createAdminClient()
+    .from('retention_alerts')
+    .update({ status: 'resolved', resolved_at: new Date().toISOString() })
+    .eq('student_id', studentId)
+    .in('alert_type', ['payment_overdue', 'payment_pending'])
+    .eq('status', 'open')
 }
 
 export async function runRetentionPreviewAction(): Promise<{ error?: string; preview?: RetentionPreview }> {

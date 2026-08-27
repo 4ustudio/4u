@@ -8,6 +8,8 @@ import { getBirthdayBenefitStatus } from '@/lib/students/birthday'
 import { createBoldPaymentLink } from '@/lib/bold/client'
 import { resolveRole, hasAdminAccess } from '@/lib/auth/roles'
 import { planPrice } from '@/lib/students/plans'
+import { getActorInfo } from '@/lib/auth/actor'
+import { resolvePaymentAlerts } from '../_actions/retention'
 
 async function assertAdmin(): Promise<{ error: string } | null> {
   const { data: { user } } = await getAuthUser()
@@ -139,18 +141,6 @@ export interface StudentOption {
 }
 
 // ── Helpers ────────────────────────────────────────────────────────
-
-async function getActorInfo(): Promise<{ actor_name: string; actor_user_id: string; actor_role: string } | null> {
-  try {
-    const { data: { user } } = await getAuthUser()
-    if (!user) return null
-    return {
-      actor_user_id: user.id,
-      actor_name: (user.user_metadata?.name as string) ?? user.email ?? 'Admin',
-      actor_role:  (user.user_metadata?.role as string) ?? 'admin',
-    }
-  } catch { return null }
-}
 
 // updateStudentRiskFromOverdue() se eliminó: recalculaba students.risk_level
 // solo a partir de los pagos vencidos y pisaba el valor que escribe el job de
@@ -491,6 +481,8 @@ export async function registerPayment(input: RegisterPaymentInput): Promise<{ er
         actor_role:      actor?.actor_role,
       })
     }
+
+    await resolvePaymentAlerts(input.student_id)
 
     revalidatePath('/admin/pagos')
     revalidatePath(`/admin/students/${input.student_id}`)

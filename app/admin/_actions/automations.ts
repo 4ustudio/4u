@@ -1,6 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
+import { bogotaDateStr, bogotaTimeStr, BOGOTA_OFFSET } from '@/lib/tz'
 import { logActivity, type ActivityAction } from '@/lib/activity'
 import { JOB_CATEGORY } from '@/app/admin/automatizaciones/constants'
 
@@ -34,18 +35,14 @@ export type AutomationCategory = 'clases' | 'pagos' | 'retencion' | 'sistema'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function db(): any { return createAdminClient() }
 
-function addDays(date: Date, days: number): Date {
-  const d = new Date(date)
-  d.setDate(d.getDate() + days)
-  return d
-}
-
-function toDateStr(d: Date) { return d.toISOString().split('T')[0] }
+// Fechas en hora Bogotá: las columnas scheduled_date / due_date son hora local,
+// y el runner corre en UTC (ver lib/tz.ts).
+function toDateStr(d: Date, offsetDays = 0) { return bogotaDateStr(d, offsetDays) }
 
 // Evita duplicados: solo crea job si no existe uno pending/processing del mismo tipo+payload hoy
 async function upsertJob(type: AutomationJobType, payload: Record<string, unknown>) {
-  const todayStart = new Date()
-  todayStart.setHours(0, 0, 0, 0)
+  // Medianoche de hoy en Bogotá, no del servidor (UTC).
+  const todayStart = new Date(`${bogotaDateStr()}T00:00:00${BOGOTA_OFFSET}`)
 
   // Buscar referencia en payload para deduplicar (student_id o payment_id + tipo)
   const refKey = payload.payment_id ?? payload.student_id ?? payload.session_id ?? null
@@ -72,15 +69,17 @@ async function upsertJob(type: AutomationJobType, payload: Record<string, unknow
 async function runClassReminders(now: Date): Promise<number> {
   let created = 0
 
-  const tomorrow = toDateStr(addDays(now, 1))
-  const twoHoursLater = new Date(now.getTime() + 2 * 60 * 60 * 1000)
+  const tomorrow = toDateStr(now, 1)
 
-  // 24h — sesiones de mañana sin recordatorio
+  // 24h — sesiones de mañana sin recordatorio.
+  // attendance_status admite: pending | confirmed | declined | rescheduled |
+  // no_response | attended | absent | no_show (class_sessions_attendance_status_check).
+  // 'scheduled' no existe: filtrar por él no devolvía nunca una sola sesión.
   const { data: sessions24h } = await db()
     .from('class_sessions')
     .select('id, student_id, scheduled_date, start_time, student:students(name, phone), classroom:classrooms(name)')
     .eq('scheduled_date', tomorrow)
-    .eq('attendance_status', 'scheduled')
+    .in('attendance_status', ['pending', 'confirmed'])
     .is('attendance_reminder_sent_at', null)
 
   for (const s of sessions24h ?? []) {
@@ -99,18 +98,18 @@ async function runClassReminders(now: Date): Promise<number> {
   }
 
   // 2h — sesiones de hoy que empiezan en ~2h sin segundo recordatorio
-  const todayStr = toDateStr(now)
-  const windowStart = twoHoursLater.toTimeString().slice(0, 5)
-  const windowEnd   = new Date(twoHoursLater.getTime() + 15 * 60 * 1000).toTimeString().slice(0, 5)
+  // Vercel Hobby ejecuta el runner una vez al día: una ventana de 15 minutos
+  // nunca coincidiría con nada. Se generan los avisos del resto del día.
+  const todayStr    = toDateStr(now)
+  const windowStart = bogotaTimeStr(now)
 
   const { data: sessions2h } = await db()
     .from('class_sessions')
     .select('id, student_id, scheduled_date, start_time, student:students(name, phone), classroom:classrooms(name)')
     .eq('scheduled_date', todayStr)
-    .eq('attendance_status', 'scheduled')
+    .in('attendance_status', ['pending', 'confirmed'])
     .is('second_reminder_sent_at', null)
     .gte('start_time', windowStart)
-    .lte('start_time', windowEnd)
 
   for (const s of sessions2h ?? []) {
     const student = Array.isArray(s.student) ? s.student[0] : s.student
@@ -135,9 +134,9 @@ async function runClassReminders(now: Date): Promise<number> {
 async function runPaymentRules(now: Date): Promise<number> {
   let created = 0
 
-  const tomorrow = toDateStr(addDays(now, 1))
-  const minus3   = toDateStr(addDays(now, -3))
-  const minus7   = toDateStr(addDays(now, -7))
+  const tomorrow = toDateStr(now, 1)
+  const minus3   = toDateStr(now, -3)
+  const minus7   = toDateStr(now, -7)
 
   // Pago vence mañana
   const { data: dueTomorrow } = await db()
@@ -240,13 +239,13 @@ async function runRetentionRules(now: Date): Promise<number> {
   }
 
   // 3 ausencias consecutivas + asistencia < 50% → buscar en class_sessions
-  const thirtyDaysAgo = toDateStr(addDays(now, -30))
+  const thirtyDaysAgo = toDateStr(now, -30)
   const { data: sessions } = await db()
     .from('class_sessions')
     .select('student_id, attendance_status, scheduled_date')
     .gte('scheduled_date', thirtyDaysAgo)
     .lte('scheduled_date', todayStr)
-    .in('attendance_status', ['scheduled', 'no_show', 'confirmed'])
+    .in('attendance_status', ['pending', 'confirmed', 'attended', 'absent', 'no_show'])
     .order('student_id')
     .order('scheduled_date', { ascending: true })
 
@@ -260,12 +259,14 @@ async function runRetentionRules(now: Date): Promise<number> {
 
     for (const [studentId, rows] of Object.entries(byStudent)) {
       const total = rows.length
-      const attended = rows.filter(r => r.attendance_status === 'confirmed').length
+      // 'confirmed' es "el alumno dijo que viene"; la asistencia real la
+      // escriben admin/instructor como 'attended' (ver academic.ts / student.ts).
+      const attended = rows.filter(r => r.attendance_status === 'attended').length
       const attendancePct = total > 0 ? attended / total : 1
 
       // 3 ausencias consecutivas al final
       const last3 = rows.slice(-3)
-      const consecutiveAbsences = last3.filter(r => r.attendance_status === 'no_show').length
+      const consecutiveAbsences = last3.filter(r => r.attendance_status === 'no_show' || r.attendance_status === 'absent').length
 
       if (consecutiveAbsences >= 3) {
         const student = students?.find(s => s.id === studentId)
@@ -387,8 +388,7 @@ export async function getAutomationMetrics() {
   }
 
   // Tiempo promedio (procesados hoy)
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+  const today = new Date(`${bogotaDateStr()}T00:00:00${BOGOTA_OFFSET}`)
   const { data: processed } = await db()
     .from('automation_jobs')
     .select('created_at, processed_at')

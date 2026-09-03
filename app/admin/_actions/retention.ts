@@ -1,6 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
+import { bogotaDateStr } from '@/lib/tz'
 import { revalidatePath } from 'next/cache'
 import type { StudentActivityEventType, StudentLifecycleStatus } from '@/types/admin'
 import type { Json } from '@/types/supabase'
@@ -196,7 +197,7 @@ async function getOverdueCounts(studentIds: string[]): Promise<Map<string, numbe
   const counts = new Map<string, number>()
   if (studentIds.length === 0) return counts
 
-  const today = new Date().toISOString().split('T')[0]
+  const today = bogotaDateStr()
 
   const { data } = await createAdminClient()
     .from('payments')
@@ -230,12 +231,10 @@ async function getSessionSignals(studentIds: string[]) {
 
   if (studentIds.length === 0) return signals
 
-  const since = new Date()
-  since.setDate(since.getDate() - 120)
-  const sinceStr = since.toISOString().split('T')[0]
-  const today = new Date().toISOString().split('T')[0]
-  const d30 = new Date(); d30.setDate(d30.getDate() - 30); const d30str = d30.toISOString().split('T')[0]
-  const d60 = new Date(); d60.setDate(d60.getDate() - 60); const d60str = d60.toISOString().split('T')[0]
+  const sinceStr = bogotaDateStr(new Date(), -120)
+  const today    = bogotaDateStr()
+  const d30str   = bogotaDateStr(new Date(), -30)
+  const d60str   = bogotaDateStr(new Date(), -60)
 
   const { data } = await createAdminClient()
     .from('class_sessions')
@@ -328,10 +327,8 @@ function buildAlert(student: { id: string; name: string }, status: StudentLifecy
 // "Procesar vencidos" manualmente en /admin/pagos) — morosidad real se mide
 // por due_date, independiente del status guardado.
 async function getPaymentAlertItems(): Promise<RetentionPreview['alerts']> {
-  const today = new Date().toISOString().split('T')[0]
-  const tomorrowDate = new Date()
-  tomorrowDate.setDate(tomorrowDate.getDate() + 1)
-  const tomorrow = tomorrowDate.toISOString().split('T')[0]
+  const today    = bogotaDateStr()
+  const tomorrow = bogotaDateStr(new Date(), 1)
 
   const [{ data: overdue }, { data: dueTomorrow }] = await Promise.all([
     createAdminClient()
@@ -583,7 +580,7 @@ export async function runRetentionDailyJob(options: { dryRun?: boolean } = {}): 
   }).length
 
   await createAdminClient().from('retention_snapshots').upsert({
-    snapshot_date: new Date().toISOString().split('T')[0],
+    snapshot_date: bogotaDateStr(),
     total_activo:  counts.activo  ?? 0,
     total_riesgo:  counts.riesgo  ?? 0,
     total_inactivo: counts.inactivo ?? 0,

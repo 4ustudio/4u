@@ -2,11 +2,11 @@
   "crons": [
     {
       "path": "/api/cron/attendance-reminders",
-      "schedule": "0 8 * * *"
+      "schedule": "0 12 * * *"
     },
     {
       "path": "/api/cron/automation-runner",
-      "schedule": "0 9 * * *"
+      "schedule": "0 13 * * *"
     }
   ]
 }

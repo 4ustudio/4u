@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { runRetentionDailyJob } from '@/app/admin/_actions/retention'
 import { sendClassReminderEmail } from '@/lib/email/class-reminder'
+import { bogotaDateStr, bogotaTimeStr, formatBogotaDate } from '@/lib/tz'
 
 export const dynamic = 'force-dynamic'
 
@@ -37,12 +38,10 @@ async function handler(req: Request) {
   const dryRun = url.searchParams.get('dryRun') === '1'
 
   const now       = new Date()
-  const todayStr  = now.toISOString().split('T')[0]
+  const todayStr  = bogotaDateStr(now)
 
   // Fecha de mañana para el primer recordatorio (24h antes)
-  const tomorrow = new Date(now)
-  tomorrow.setDate(tomorrow.getDate() + 1)
-  const tomorrowStr = tomorrow.toISOString().split('T')[0]
+  const tomorrowStr = bogotaDateStr(now, 1)
 
   // ── Buscar sesiones para primer recordatorio (mañana, sin recordatorio aún) ──
   const { data: firstReminder } = await db()
@@ -52,10 +51,10 @@ async function handler(req: Request) {
     .is('attendance_reminder_sent_at', null)
     .not('status', 'in', '(cancelled,rescheduled,completed,no_show)')
 
-  // ── Buscar sesiones para segundo recordatorio (hoy, entre ahora y 3h, siguen pending) ──
-  const threeHoursFromNow = new Date(now.getTime() + 3 * 60 * 60 * 1000)
-  const nowTime           = now.toTimeString().slice(0, 5)           // ej: "13:00"
-  const threeHoursTime    = threeHoursFromNow.toTimeString().slice(0, 5) // ej: "16:00"
+  // ── Segundo recordatorio: clases de HOY que aún no empezaron y siguen pending ──
+  // El plan de Vercel es Hobby (un cron al día), así que esta única corrida
+  // matinal tiene que cubrir todas las clases del día, no una ventana de horas.
+  const nowTime = bogotaTimeStr(now)   // hora local Bogotá, ej: "07:00"
 
   const { data: secondReminder } = await db()
     .from('class_sessions')
@@ -64,7 +63,6 @@ async function handler(req: Request) {
     .is('second_reminder_sent_at', null)
     .eq('attendance_status', 'pending')
     .gte('start_time', nowTime)         // solo clases que aún no comenzaron
-    .lte('start_time', threeHoursTime)  // que comienzan en las próximas 3h
     .not('status', 'in', '(cancelled,rescheduled,completed,no_show)')
 
   const first:  SessionRow[] = firstReminder  ?? []
@@ -82,9 +80,7 @@ async function handler(req: Request) {
     const confirmUrl = `${SITE_URL}/confirmar/${session.attendance_confirmation_token}`
     const studentName = session.student?.name ?? 'Estudiante'
     const timeLabel   = session.start_time.slice(0, 5)
-    const dateLabel   = new Date(session.scheduled_date + 'T12:00:00').toLocaleDateString('es-CO', {
-      weekday: 'long', day: 'numeric', month: 'long',
-    })
+    const dateLabel   = formatBogotaDate(session.scheduled_date, { weekday: 'long', day: 'numeric', month: 'long' })
 
     // TODO: WhatsApp API — preparado pero no activo
     if (!dryRun) {
@@ -143,9 +139,7 @@ async function handler(req: Request) {
 
   // ── Cerrar como no_response las clases de ayer que siguen pending ────────────
   if (!dryRun) {
-    const yesterday = new Date(now)
-    yesterday.setDate(yesterday.getDate() - 1)
-    const yesterdayStr = yesterday.toISOString().split('T')[0]
+    const yesterdayStr = bogotaDateStr(now, -1)
 
     const { data: closedSessions } = await db()
       .from('class_sessions')

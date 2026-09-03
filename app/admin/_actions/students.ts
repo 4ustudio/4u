@@ -1,6 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
+import { bogotaNoon, bogotaDateStr } from '@/lib/tz'
 import { createAuthServerClient, getAuthUser } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type { Student, StudentLifecycleStatus, StudentStatus, StudentType, StudentSchedule, Frequency } from '@/types/admin'
@@ -153,8 +154,8 @@ export async function getStudentsDashboard(): Promise<{ students: StudentListRow
   const students = await getStudents()
   const db = createAdminClient()
   const ids = students.map(s => s.id)
-  const today = new Date()
-  const todayStr = today.toISOString().split('T')[0]
+  const today = bogotaNoon()
+  const todayStr = bogotaDateStr(today)
   const weekStart = new Date(today); weekStart.setDate(today.getDate() - ((today.getDay() || 7) - 1))
   const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6)
   const in7d = new Date(today); in7d.setDate(today.getDate() + 7)

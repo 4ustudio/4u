@@ -141,7 +141,7 @@ async function sendAdminNotification(
             <span style="background:#ff7a00;color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:0.1em;">Nueva Inscripción</span>
           </div>
           <h1 style="font-size:20px;font-weight:800;color:#fff;margin:0 0 4px;">${data.student_name}</h1>
-          <p style="font-size:13px;color:#888;margin:0 0 24px;">${new Date().toLocaleString('es-CO', { dateStyle: 'full', timeStyle: 'short' })}</p>
+          <p style="font-size:13px;color:#888;margin:0 0 24px;">${new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota', dateStyle: 'full', timeStyle: 'short' })}</p>
           <table style="width:100%;border-collapse:collapse;font-size:14px;">
             <tr><td style="padding:8px 0;color:#888;width:140px;">Para quién</td><td style="padding:8px 0;color:#fff;">${data.student_type === 'self' ? 'Para sí mismo' : data.student_type === 'child' ? 'Para su hijo/a' : 'Para otra persona'}</td></tr>
             <tr><td style="padding:8px 0;color:#888;">Edad</td><td style="padding:8px 0;color:#fff;">${data.student_age} años</td></tr>

@@ -9,6 +9,7 @@ import { safeRecordStudentActivity } from '@/app/admin/_actions/retention'
 import { activity } from '@/lib/activity'
 import { sendInstructorAvailabilityChangedEmail, sendInstructorDateBlockedEmail } from '@/lib/email/instructor-schedule-changed'
 import { sendClassScheduledEmails } from '@/lib/email/class-scheduled'
+import { bogotaDateStr, bogotaDateTime, bogotaNoon, formatBogotaDate, formatBogotaTime } from '@/lib/tz'
 
 const DOW_SHORT = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
 import { createBoldPaymentLink } from '@/lib/bold/client'
@@ -54,8 +55,8 @@ export async function getMyDashboardData(userId?: string) {
 
   if (!student) return null
 
-  const now = new Date()
-  const today = now.toISOString().split('T')[0]
+  const now = bogotaNoon()
+  const today = bogotaDateStr(now)
 
   const [usageResult, { data: sessions }, { data: schedules }] = await Promise.all([
     admin().rpc('fn_monthly_usage', {
@@ -235,8 +236,8 @@ export async function getMonthSessions(year: number, month: number) {
 
 export async function getInstructorDashboardData(userId: string, email?: string | null) {
   const adminClient = admin()
-  const now = new Date()
-  const today = now.toISOString().split('T')[0]
+  const now = bogotaNoon()
+  const today = bogotaDateStr(now)
   const mm = String(now.getMonth() + 1).padStart(2, '0')
   const monthStart = `${now.getFullYear()}-${mm}-01`
   const nextYear = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear()
@@ -1060,14 +1061,13 @@ export async function createInstructorClassAction(input: { studentId: string; co
         session_id: result.session_id, instructor_name: session.instructor.name, student_name: c.student.name,
         actor_name: session.instructor.name, actor_user_id: session.instructor.id, actor_role: 'instructor',
       })
-      const classDateTime = new Date(`${c.scheduled_date}T${c.start_time}`)
       await sendClassScheduledEmails({
         student: c.student,
         instructor: { name: session.instructor.name, email: session.userEmail },
         classroom: c.classroom,
         course: c.course,
-        date: classDateTime.toLocaleDateString('es-CO', { timeZone: 'America/Bogota', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
-        time: classDateTime.toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: 'numeric', minute: '2-digit', hour12: true }),
+        date: formatBogotaDate(c.scheduled_date),
+        time: formatBogotaTime(c.scheduled_date, c.start_time),
       })
     }
   }
@@ -1730,7 +1730,7 @@ export async function cancelInstructorSessionAction(sessionId: string): Promise<
   // el trigger fn_handle_late_cancellation solo descuenta crédito cuando
   // late_cancellation pasa de false→true; el estudiante nunca es penalizado
   // por una cancelación que no es su responsabilidad.
-  const classDateTime = new Date(`${session.scheduled_date}T${session.start_time}`)
+  const classDateTime = bogotaDateTime(session.scheduled_date, session.start_time)
   const hoursUntil = (classDateTime.getTime() - Date.now()) / (1000 * 60 * 60)
   const isShortNotice = hoursUntil < 24  // solo para aviso visual en UI
 

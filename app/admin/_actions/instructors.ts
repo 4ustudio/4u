@@ -1,6 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
+import { bogotaDateStr } from '@/lib/tz'
 import { getAuthUser } from '@/lib/supabase/server'
 import { revalidatePath, updateTag } from 'next/cache'
 import { resolveRole, hasAcademicAccess } from '@/lib/auth/roles'
@@ -57,7 +58,7 @@ export async function getInstructorStudents(instructorId: string) {
   if (authErr) throw new Error(authErr.error)
 
   const adminClient = createAdminClient()
-  const today = new Date().toISOString().split('T')[0]
+  const today = bogotaDateStr()
 
   const [{ data: schedules }, { data: sessions }] = await Promise.all([
     adminClient

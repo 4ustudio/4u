@@ -1,3 +1,5 @@
+import { BOGOTA_TZ, bogotaDateStr, bogotaNoon } from '@/lib/tz'
+
 export type RecentSale = {
   name: string
   detail: string
@@ -36,19 +38,17 @@ export function courseEstimate(course: string | null | undefined) {
 }
 
 export function formatOccurredAt(iso: string) {
+  // Se ejecuta en el servidor (UTC en Vercel): sin timeZone mostraba las ventas
+  // 5 horas adelantadas y marcaba como "Hoy" lo de la noche anterior.
   const date = new Date(iso)
-  const now = new Date()
-  const sameDay = date.toDateString() === now.toDateString()
-  const yesterday = new Date(now)
-  yesterday.setDate(now.getDate() - 1)
-  const isYesterday = date.toDateString() === yesterday.toDateString()
-  const time = date.toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' })
-  if (sameDay) return `Hoy, ${time}`
-  if (isYesterday) return `Ayer, ${time}`
-  return date.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
+  const day = bogotaDateStr(date)
+  const time = date.toLocaleTimeString('es-CO', { timeZone: BOGOTA_TZ, hour: 'numeric', minute: '2-digit' })
+  if (day === bogotaDateStr()) return `Hoy, ${time}`
+  if (day === bogotaDateStr(new Date(), -1)) return `Ayer, ${time}`
+  return date.toLocaleDateString('es-CO', { timeZone: BOGOTA_TZ, day: 'numeric', month: 'short' })
 }
 
-export function getMonthBounds(refMonth: Date = new Date()) {
+export function getMonthBounds(refMonth: Date = bogotaNoon()) {
   const start = new Date(refMonth.getFullYear(), refMonth.getMonth(), 1)
   const end = new Date(refMonth.getFullYear(), refMonth.getMonth() + 1, 0)
   return {
@@ -66,7 +66,7 @@ export function parseMonthParam(param: string | undefined): Date {
       if (month >= 0 && month <= 11) return new Date(year, month, 1)
     }
   }
-  const now = new Date()
+  const now = bogotaNoon()
   return new Date(now.getFullYear(), now.getMonth(), 1)
 }
 

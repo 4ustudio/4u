@@ -1,6 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
+import { bogotaDateStr } from '@/lib/tz'
 import { getAuthUser } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { activity } from '@/lib/activity'
@@ -236,7 +237,7 @@ export async function getPaymentMetrics(): Promise<PaymentMetrics> {
 export async function getBoldMetrics(): Promise<BoldMetrics> {
   if (await assertAdmin()) return { pagos_hoy: 0, recaudacion_hoy: 0, ultimo_webhook: null, webhooks_fallidos_hoy: 0 }
   try {
-    const today = new Date().toISOString().split('T')[0]
+    const today = bogotaDateStr()
 
     const [pagosHoyRes, lastWebhookRes, failedRes] = await Promise.all([
       createAdminClient().from('payments')
@@ -598,7 +599,7 @@ export async function markPaymentOverdue(payment_id: string): Promise<{ error: s
 export async function processOverduePayments(): Promise<{ processed: number; error: string | null }> {
   if (await assertAdmin()) return { processed: 0, error: 'No autorizado.' }
   try {
-    const today = new Date().toISOString().split('T')[0]
+    const today = bogotaDateStr()
 
     // Capturar los que serán afectados antes de actualizarlos
     const { data: toProcess } = await createAdminClient()

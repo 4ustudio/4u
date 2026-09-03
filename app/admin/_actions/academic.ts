@@ -1,6 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
+import { bogotaNoon, bogotaDateStr } from '@/lib/tz'
 import { getAuthUser } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { resolveRole, hasAcademicAccess } from '@/lib/auth/roles'
@@ -45,9 +46,9 @@ export async function getAcademicDashboardData(): Promise<AcademicDashboardData>
   if (authErr) throw new Error(authErr.error)
 
   const admin = createAdminClient()
-  const today = new Date().toISOString().split('T')[0]
+  const today = bogotaDateStr()
 
-  const weekStart = new Date()
+  const weekStart = bogotaNoon()
   weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1)
   const weekStartStr = weekStart.toISOString().split('T')[0]
   const weekEnd = new Date(weekStart)
@@ -55,7 +56,7 @@ export async function getAcademicDashboardData(): Promise<AcademicDashboardData>
   const weekEndStr = weekEnd.toISOString().split('T')[0]
 
   const monthStart = today.slice(0, 7) + '-01'
-  const nextMonth = new Date()
+  const nextMonth = bogotaNoon()
   nextMonth.setMonth(nextMonth.getMonth() + 1)
   const monthEnd = nextMonth.toISOString().split('T')[0]
 

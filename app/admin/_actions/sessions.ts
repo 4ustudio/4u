@@ -8,6 +8,7 @@ import { safeRecordStudentActivity } from './retention'
 import { activity } from '@/lib/activity'
 import { resolveRole, hasAcademicAccess } from '@/lib/auth/roles'
 import { sendClassScheduledEmails } from '@/lib/email/class-scheduled'
+import { bogotaDateTime, formatBogotaDate, formatBogotaTime } from '@/lib/tz'
 import { getActorInfo } from '@/lib/auth/actor'
 
 async function assertAdmin(): Promise<{ error: string } | null> {
@@ -173,15 +174,13 @@ export async function bookSessionAction(
         course:     { name: string }
       }
 
-      const classDateTime = new Date(`${s.scheduled_date}T${s.start_time}`)
-
       await sendClassScheduledEmails({
         student:    s.student,
         instructor: s.instructor,
         classroom:  s.classroom,
         course:     s.course,
-        date: classDateTime.toLocaleDateString('es-CO', { timeZone: 'America/Bogota', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
-        time: classDateTime.toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: 'numeric', minute: '2-digit', hour12: true }),
+        date: formatBogotaDate(s.scheduled_date),
+        time: formatBogotaTime(s.scheduled_date, s.start_time),
         repeatWeeks: input.repeat_weeks,
       })
     }
@@ -397,7 +396,7 @@ export async function cancelByInstructorAction(
     return { error: 'La clase ya no puede cancelarse.' }
   }
 
-  const classDateTime = new Date(`${session.scheduled_date}T${session.start_time}`)
+  const classDateTime = bogotaDateTime(session.scheduled_date, session.start_time)
   const hoursUntil    = (classDateTime.getTime() - Date.now()) / (1000 * 60 * 60)
 
   if (hoursUntil < 24) {

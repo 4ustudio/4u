@@ -1,6 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
+import { bogotaDateStr } from '@/lib/tz'
 import { createAuthServerClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type { EnrollmentEvent, EnrollmentEventType, EnrollmentFunnelMetrics } from '@/types/enrollment'
@@ -274,7 +275,7 @@ export async function convertEnrollmentToStudent(
       notes:        enrollment.notes ?? null,
       student_type: 'new',
       status:       'active',
-      enrolled_at:  new Date().toISOString().split('T')[0],
+      enrolled_at:  bogotaDateStr(),
       student_status: 'matriculado',
       student_since: now,
       last_activity_at: now,

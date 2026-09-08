@@ -69,6 +69,10 @@ export interface EnrollmentRow extends EnrollmentInsert {
   eps?:               string | null
   emergency_contact_name?:  string | null
   emergency_contact_phone?: string | null
+  // Clase de prueba (primera sesión de reconocimiento)
+  trial_date?:          string | null
+  trial_time?:          string | null
+  trial_instructor_id?: string | null
 }
 
 export interface EnrollmentEvent {

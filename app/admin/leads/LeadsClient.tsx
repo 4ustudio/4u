@@ -16,6 +16,7 @@ import {
   saveInternalNotes,
   convertEnrollmentToStudent,
   updateEnrollmentFieldsAction,
+  scheduleTrialClassAction,
 } from '../_actions/enrollments'
 import type { EnrollmentRow, EnrollmentEvent, EnrollmentSource } from '@/types/enrollment'
 import WhatsAppButton from '@/components/admin/WhatsAppButton'
@@ -227,6 +228,13 @@ function LeadCard({
           Seguimiento: {new Date(e.next_followup_at).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })}
         </div>
       )}
+
+      {e.trial_date && e.trial_time && (
+        <div className="mt-2 text-[10px] text-green-400/70 flex items-center gap-1">
+          <MdEvent className="h-3 w-3" aria-hidden="true" />
+          Clase prueba: {new Date(e.trial_date + 'T12:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })} · {e.trial_time.slice(0, 5)}
+        </div>
+      )}
     </div>
   )
 }
@@ -253,8 +261,10 @@ function LeadDrawer({
   onUpdateSource,
   onUpdateFollowup,
   onUpdateLostReason,
+  instructors,
 }: {
   enrollment: EnrollmentRow | null
+  instructors: { id: string; name: string }[]
   open: boolean
   events: EnrollmentEvent[]
   loadingEvents: boolean
@@ -320,6 +330,13 @@ function LeadDrawer({
                   </span>
                 </div>
                 <p className="text-xs text-white/35 mt-1">{timeAgo(e.created_at)}</p>
+                {e.trial_date && e.trial_time && (
+                  <p className="text-xs text-green-400/80 mt-1 flex items-center gap-1">
+                    <MdEvent className="h-3.5 w-3.5" aria-hidden="true" />
+                    Clase prueba: {new Date(e.trial_date + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'short' })} · {e.trial_time.slice(0, 5)}
+                    {e.trial_instructor_id && ` · ${instructors.find(i => i.id === e.trial_instructor_id)?.name ?? ''}`}
+                  </p>
+                )}
               </div>
               <button
                 onClick={onClose}
@@ -692,6 +709,82 @@ function Badge({ children, color }: { children: React.ReactNode; color: string }
   return <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${color}`}>{children}</span>
 }
 
+const inputClass = 'w-full bg-[#0f0f0f] border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500/30 disabled:opacity-50'
+
+function TrialClassModal({
+  studentName, instructors, onCancel, onSchedule,
+}: {
+  studentName: string
+  instructors: { id: string; name: string }[]
+  onCancel: () => void
+  onSchedule: (date: string, time: string, instructorId: string) => Promise<string | void>
+}) {
+  const [mounted, setMounted]         = useState(false)
+  const [date, setDate]               = useState('')
+  const [time, setTime]               = useState('')
+  const [instructorId, setInstructorId] = useState('')
+  const [submitting, setSubmitting]   = useState(false)
+  const [error, setError]             = useState<string | null>(null)
+
+  useEffect(() => { setMounted(true) }, [])
+  if (!mounted) return null
+
+  async function handleSubmit(ev: React.FormEvent) {
+    ev.preventDefault()
+    if (!date || !time || !instructorId) return
+    setSubmitting(true); setError(null)
+    const err = await onSchedule(date, time, instructorId)
+    setSubmitting(false)
+    if (err) setError(err)
+  }
+
+  return createPortal(
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-[2px] px-6" onClick={onCancel}>
+      <form
+        onClick={ev => ev.stopPropagation()}
+        onSubmit={handleSubmit}
+        className="w-full max-w-sm rounded-2xl bg-[#141414] border border-white/10 p-5 shadow-2xl space-y-3"
+      >
+        <div>
+          <h3 className="text-sm font-bold text-white">Agendar clase de prueba</h3>
+          <p className="text-xs text-white/40 mt-0.5">{studentName} · primera sesión de reconocimiento</p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs text-white/50 mb-1.5">Fecha *</label>
+            <input type="date" required disabled={submitting} value={date} onChange={e => setDate(e.target.value)} className={inputClass} />
+          </div>
+          <div>
+            <label className="block text-xs text-white/50 mb-1.5">Hora *</label>
+            <input type="time" required disabled={submitting} value={time} onChange={e => setTime(e.target.value)} className={inputClass} />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs text-white/50 mb-1.5">Instructor *</label>
+          <select required disabled={submitting} value={instructorId} onChange={e => setInstructorId(e.target.value)} className={inputClass + ' appearance-none'}>
+            <option value="" disabled>Selecciona un instructor</option>
+            {instructors.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
+          </select>
+        </div>
+
+        {error && <p className="text-red-400 text-xs">{error}</p>}
+
+        <div className="flex items-center justify-end gap-2 pt-1">
+          <button type="button" onClick={onCancel} disabled={submitting} className="text-xs px-4 py-2 rounded-lg font-semibold text-white/60 border border-white/10 hover:border-white/25 hover:text-white transition-colors">
+            Cancelar
+          </button>
+          <button type="submit" disabled={submitting} className="text-xs px-4 py-2 rounded-lg font-semibold text-white transition-colors disabled:opacity-50" style={{ background: '#ff7a00' }}>
+            {submitting ? 'Agendando…' : 'Agendar'}
+          </button>
+        </div>
+      </form>
+    </div>,
+    document.body
+  )
+}
+
 function ViewToggle({ view, onChange }: { view: 'kanban' | 'lista'; onChange: (v: 'kanban' | 'lista') => void }) {
   const options = [
     { value: 'kanban' as const, label: 'Kanban', icon: <MdViewKanban className="h-3.5 w-3.5" aria-hidden="true" /> },
@@ -746,7 +839,7 @@ function SummaryCards({ enrollments }: { enrollments: EnrollmentRow[] | null }) 
 
 // ── Página principal ──────────────────────────────────────────
 
-export default function LeadsClient({ initialEnrollments }: { initialEnrollments: EnrollmentRow[] }) {
+export default function LeadsClient({ initialEnrollments, instructors }: { initialEnrollments: EnrollmentRow[]; instructors: { id: string; name: string }[] }) {
   const [enrollments, setEnrollments] = useState<EnrollmentRow[] | null>(initialEnrollments)
   const [reloading, setReloading]     = useState(false)
   const [selected, setSelected]       = useState<EnrollmentRow | null>(null)
@@ -771,6 +864,7 @@ export default function LeadsClient({ initialEnrollments }: { initialEnrollments
     urlEstado && FILTERS.includes(urlEstado) ? urlEstado : 'all'
   )
   const [confirmConvertOpen, setConfirmConvertOpen] = useState(false)
+  const [trialModalId, setTrialModalId] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     const { data } = await getEnrollments()
@@ -865,6 +959,7 @@ export default function LeadsClient({ initialEnrollments }: { initialEnrollments
   }
 
   async function handleStatusChange(id: string, status: string) {
+    if (status === 'clase_prueba') { setTrialModalId(id); return }
     const fd = new FormData(); fd.set('id', id); fd.set('status', status)
     const r = await updateEnrollmentStatusAction({}, fd)
     if (r.success) {
@@ -877,6 +972,22 @@ export default function LeadsClient({ initialEnrollments }: { initialEnrollments
       }
       showFlash('Estado actualizado')
     }
+  }
+
+  async function handleScheduleTrial(date: string, time: string, instructorId: string): Promise<string | void> {
+    if (!trialModalId) return
+    const fd = new FormData()
+    fd.set('id', trialModalId); fd.set('trial_date', date); fd.set('trial_time', time); fd.set('instructor_id', instructorId)
+    const r = await scheduleTrialClassAction({}, fd)
+    if (r.error) return r.error
+    const patch = { status: 'clase_prueba' as const, trial_date: date, trial_time: time, trial_instructor_id: instructorId }
+    setEnrollments(prev => prev?.map(e => e.id === trialModalId ? { ...e, ...patch } : e) ?? null)
+    if (selected?.id === trialModalId) {
+      setSelected(prev => prev ? { ...prev, ...patch } : prev)
+      reloadEvents()
+    }
+    setTrialModalId(null)
+    showFlash('Clase de prueba agendada')
   }
 
   async function handleQuickAction(type: 'whatsapp_sent' | 'called' | 'email_sent', desc: string, href: string) {
@@ -1133,6 +1244,7 @@ export default function LeadsClient({ initialEnrollments }: { initialEnrollments
       {/* Drawer */}
       <LeadDrawer
         enrollment={selected}
+        instructors={instructors}
         open={drawerOpen}
         events={events}
         loadingEvents={loadingEvents}
@@ -1152,6 +1264,15 @@ export default function LeadsClient({ initialEnrollments }: { initialEnrollments
         onUpdateFollowup={handleUpdateFollowup}
         onUpdateLostReason={handleUpdateLostReason}
       />
+
+      {trialModalId && (
+        <TrialClassModal
+          studentName={enrollments?.find(e => e.id === trialModalId)?.student_name ?? ''}
+          instructors={instructors}
+          onCancel={() => setTrialModalId(null)}
+          onSchedule={handleScheduleTrial}
+        />
+      )}
 
       <ConfirmModal
         open={confirmConvertOpen}

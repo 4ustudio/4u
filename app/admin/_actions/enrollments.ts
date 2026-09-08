@@ -127,6 +127,54 @@ export async function updateEnrollmentStatusAction(
   return { success: true }
 }
 
+export async function getActiveInstructorsLite(): Promise<{ id: string; name: string }[]> {
+  const { data } = await createAdminClient()
+    .from('instructors')
+    .select('id, name')
+    .eq('status', 'active')
+    .order('name')
+  return data ?? []
+}
+
+export async function scheduleTrialClassAction(
+  _prev: { error?: string; success?: boolean },
+  formData: FormData
+): Promise<{ error?: string; success?: boolean }> {
+  const id             = formData.get('id') as string
+  const trial_date     = formData.get('trial_date') as string
+  const trial_time     = formData.get('trial_time') as string
+  const instructor_id  = formData.get('instructor_id') as string
+
+  if (!id || !trial_date || !trial_time || !instructor_id) return { error: 'Faltan datos.' }
+
+  const admin = createAdminClient()
+
+  const { data: conflict } = await admin.rpc('fn_instructor_free', {
+    p_instructor_id: instructor_id,
+    p_date:          trial_date,
+    p_start_time:    trial_time,
+  })
+  if (conflict) return { error: conflict as string }
+
+  const { data: instructor } = await admin.from('instructors').select('name').eq('id', instructor_id).single()
+
+  const { error } = await admin
+    .from('enrollments')
+    .update({ status: 'clase_prueba', trial_date, trial_time, trial_instructor_id: instructor_id })
+    .eq('id', id)
+
+  if (error) return { error: error.message }
+
+  await admin.from('enrollment_events').insert({
+    enrollment_id: id,
+    type:         'status_changed',
+    description:  `Clase de prueba agendada: ${trial_date} ${trial_time} con ${instructor?.name ?? 'instructor'}`,
+  })
+
+  revalidatePath('/admin/leads')
+  return { success: true }
+}
+
 export async function saveInternalNotes(
   enrollmentId: string,
   notes: string

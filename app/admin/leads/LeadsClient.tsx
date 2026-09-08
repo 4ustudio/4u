@@ -738,7 +738,7 @@ function TrialClassModal({
 
   async function handleSubmit(ev: React.FormEvent) {
     ev.preventDefault()
-    if (!date || !time || !instructorId) return
+    if (!date || !time || !instructorId) { setError('Completa fecha, hora e instructor.'); return }
     setSubmitting(true); setError(null)
     const err = await onSchedule(date, time, instructorId)
     setSubmitting(false)
@@ -770,10 +770,12 @@ function TrialClassModal({
 
         <div>
           <label className="block text-xs text-white/50 mb-1.5">Instructor *</label>
-          <select required disabled={submitting} value={instructorId} onChange={e => setInstructorId(e.target.value)} className={inputClass + ' appearance-none'}>
-            <option value="" disabled>Selecciona un instructor</option>
-            {instructors.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
-          </select>
+          <PopupSelect
+            value={instructorId}
+            onChange={setInstructorId}
+            placeholder="Selecciona un instructor"
+            options={instructors.map(i => ({ value: i.id, label: i.name }))}
+          />
         </div>
 
         {error && <p className="text-red-400 text-xs">{error}</p>}

@@ -47,13 +47,18 @@ const LOST_REASONS = [
 
 type KanbanStatus = 'pending' | 'contacted' | 'clase_prueba' | 'converted' | 'perdido'
 
-const COLUMNS: { status: KanbanStatus; label: string; dot: string; header: string; border: string }[] = [
-  { status: 'pending',      label: 'Nuevo',        dot: 'bg-yellow-400', header: 'border-yellow-500/30 text-yellow-400', border: 'border-yellow-500/10' },
-  { status: 'contacted',    label: 'Contactado',   dot: 'bg-white/40',   header: 'border-violet-500/30 text-white/55',    border: 'border-white/10' },
-  { status: 'clase_prueba', label: 'Clase Prueba', dot: 'bg-green-400',  header: 'border-green-500/30 text-green-400',  border: 'border-green-500/10' },
-  { status: 'converted',    label: 'Matriculado',  dot: 'bg-[#ff7a00]', header: 'border-purple-500/30 text-[#ff9a3b]',border: 'border-purple-500/10' },
-  { status: 'perdido',      label: 'Perdido',      dot: 'bg-red-500',    header: 'border-red-500/30 text-red-400',      border: 'border-red-500/10' },
+const COLUMNS: { status: KanbanStatus; label: string; dot: string; header: string; border: string; accent: string }[] = [
+  { status: 'pending',      label: 'Nuevo',        dot: 'bg-yellow-400',  header: 'border-yellow-500/30 text-yellow-400', border: 'border-yellow-500/10', accent: '#facc15' },
+  { status: 'contacted',    label: 'Contactado',   dot: 'bg-violet-400',  header: 'border-violet-500/30 text-violet-300', border: 'border-violet-500/10', accent: '#a78bfa' },
+  { status: 'clase_prueba', label: 'Clase Prueba', dot: 'bg-green-400',   header: 'border-green-500/30 text-green-400',   border: 'border-green-500/10', accent: '#4ade80' },
+  { status: 'converted',    label: 'Matriculado',  dot: 'bg-[#ff7a00]',   header: 'border-purple-500/30 text-[#ff9a3b]',  border: 'border-purple-500/10', accent: '#ff7a00' },
+  { status: 'perdido',      label: 'Perdido',      dot: 'bg-red-500',     header: 'border-red-500/30 text-red-400',       border: 'border-red-500/10', accent: '#f87171' },
 ]
+
+function hexToRgba(hex: string, alpha: number): string {
+  const n = parseInt(hex.slice(1), 16)
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`
+}
 
 const PILL: Record<string, string> = {
   pending:      'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
@@ -129,12 +134,14 @@ function LeadCard({
   const [menuOpen, setMenuOpen] = useState(false)
   const canonical = canonicalStatus(e.status)
   const nextSteps = COLUMNS.filter(c => c.status !== canonical && c.status !== 'converted')
+  const accent = COLUMNS.find(c => c.status === canonical)?.accent ?? '#666'
 
   return (
     <div
       draggable
       onDragStart={ev => { ev.dataTransfer.setData('text/plain', e.id); ev.dataTransfer.effectAllowed = 'move'; onDragStart(e.id) }}
       onDragEnd={onDragEnd}
+      style={{ borderLeft: `3px solid ${accent}` }}
       className={`relative bg-[#0f0f0f] border border-white/[0.08] rounded-xl p-4 hover:border-white/15 transition-all group cursor-grab active:cursor-grabbing ${dragging ? 'opacity-40' : ''}`}
     >
 
@@ -1137,7 +1144,11 @@ export default function LeadsClient({ initialEnrollments, instructors }: { initi
               {columns.map(col => (
                 <div
                   key={col.status}
-                  className="flex-1 min-w-[200px]"
+                  className="flex-1 min-w-[200px] rounded-2xl p-3.5"
+                  style={{
+                    background: `linear-gradient(180deg, ${hexToRgba(col.accent, 0.08)}, ${hexToRgba(col.accent, 0.015)} 140px, ${hexToRgba(col.accent, 0.015)})`,
+                    border: `1px solid ${hexToRgba(col.accent, 0.18)}`,
+                  }}
                   onDragOver={ev => { ev.preventDefault(); ev.dataTransfer.dropEffect = 'move'; setDragOverCol(col.status) }}
                   onDragLeave={() => setDragOverCol(prev => (prev === col.status ? null : prev))}
                   onDrop={ev => {
@@ -1148,10 +1159,32 @@ export default function LeadsClient({ initialEnrollments, instructors }: { initi
                     if (id) handleStatusChange(id, col.status)
                   }}
                 >
+                  {/* Header de columna */}
+                  <div
+                    className="flex items-center justify-between mb-3.5 pb-3"
+                    style={{ borderBottom: `1px solid ${hexToRgba(col.accent, 0.2)}` }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="w-2 h-2 rounded-full shrink-0"
+                        style={{ background: col.accent, boxShadow: `0 0 8px ${hexToRgba(col.accent, 0.7)}` }}
+                      />
+                      <span className="text-[11px] font-extrabold uppercase tracking-wider" style={{ color: col.accent }}>
+                        {col.label}
+                      </span>
+                    </div>
+                    <span
+                      className="text-[11px] font-bold px-2 py-0.5 rounded-full"
+                      style={{ color: col.accent, background: hexToRgba(col.accent, 0.15) }}
+                    >
+                      {col.items.length}
+                    </span>
+                  </div>
+
                   {/* Cards */}
                   <div className={`space-y-3 min-h-[80px] rounded-xl transition-colors ${dragOverCol === col.status ? 'ring-2 ring-orange-500/40 bg-orange-500/[0.04]' : ''}`}>
                     {col.items.length === 0 ? (
-                      <div className="rounded-xl border border-dashed border-white/[0.06] px-4 py-8 text-center">
+                      <div className="rounded-xl border border-dashed px-4 py-8 text-center" style={{ borderColor: hexToRgba(col.accent, 0.18) }}>
                         <p className="text-xs text-white/20">Sin leads</p>
                       </div>
                     ) : (

@@ -300,9 +300,9 @@ function LeadCard({
       </div>
 
       {/* Clase de prueba */}
-      <div className="mt-3 flex items-center gap-2 text-xs">
+      <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
         {lead.trial_date ? (
-          <span className="flex items-center gap-1.5 text-green-400/90">
+          <span className="flex flex-wrap items-center gap-x-1.5 text-green-400/90">
             <MdEventAvailable className="h-4 w-4 shrink-0" aria-hidden="true" />
             {formatTrial(lead.trial_date, lead.trial_time)}
             {instructorName && <span className="text-white/35">· {instructorName}</span>}

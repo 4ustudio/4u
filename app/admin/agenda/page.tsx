@@ -2,7 +2,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getAvailableSlots } from '../_actions/sessions'
 import { getCachedCourses, getCachedClassrooms, getCachedInstructors } from '@/lib/cache/catalogs'
 import HybridView from './_components/HybridView'
-import type { ClassSession, AvailableSlot } from '@/types/admin'
+import type { ClassSession, AvailableSlot, TrialSession } from '@/types/admin'
 
 export const dynamic = 'force-dynamic'
 
@@ -32,6 +32,7 @@ async function getPageData(weekStart: string) {
       { data: sessions },
       { data: blocked },
       { data: students },
+      { data: trials },
     ],
     courses,
     classrooms,
@@ -56,6 +57,17 @@ async function getPageData(weekStart: string) {
         .from('students')
         .select('id, name, phone, email, status, student_type')
         .order('name'),
+
+      // Sesiones de reconocimiento (clases de prueba de interesados): viven en
+      // enrollments, no en class_sessions, pero ocupan el mismo horario y salón.
+      supabase
+        .from('enrollments')
+        .select('id, student_name, phone, course_interest, status, trial_date, trial_time, trial_instructor_id, trial_classroom_id, instructor:instructors!enrollments_trial_instructor_id_fkey(name), classroom:classrooms(name)')
+        .gte('trial_date', weekStart)
+        .lte('trial_date', end)
+        .not('trial_date', 'is', null)
+        .not('status', 'in', '(perdido,cancelled,converted)')
+        .order('trial_time'),
     ]),
     getCachedCourses(),
     getCachedClassrooms(),
@@ -71,6 +83,7 @@ async function getPageData(weekStart: string) {
 
   return {
     sessions:    (sessions as ClassSession[]) ?? [],
+    trials:      (trials as unknown as TrialSession[]) ?? [],
     blocked:     blocked ?? [],
     students:    students ?? [],
     courses:     courses  ?? [],

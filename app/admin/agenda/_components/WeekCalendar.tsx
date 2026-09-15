@@ -4,8 +4,10 @@ import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import BookSessionModal from './BookSessionModal'
 import SessionDetailModal from './SessionDetailModal'
-import type { ClassSession, AvailableSlot } from '@/types/admin'
+import TrialDetailModal from './TrialDetailModal'
+import type { ClassSession, AvailableSlot, TrialSession } from '@/types/admin'
 import type { Classroom } from './BookSessionModal'
+import type { ViewFilter } from './HybridView'
 
 // Slots por día de la semana
 // ISODOW: 1=Lun…6=Sáb → 10:00–22:00  |  7=Dom → cerrado
@@ -64,6 +66,8 @@ function getSlotStatus(
 interface Props {
   weekStart:         string
   sessions:          ClassSession[]
+  trials:            TrialSession[]
+  viewFilter:        ViewFilter
   blocked:           any[]
   students:          { id: string; name: string; phone: string }[]
   courses:           { id: string; name: string }[]
@@ -73,10 +77,16 @@ interface Props {
   defaultStudentId?: string
 }
 
-export default function WeekCalendar({ weekStart, sessions, blocked, students, courses, classrooms, instructors, availabilityByDay, defaultStudentId }: Props) {
+export default function WeekCalendar({ weekStart, sessions, trials, viewFilter, blocked, students, courses, classrooms, instructors, availabilityByDay, defaultStudentId }: Props) {
   const router = useRouter()
   const [bookSlot, setBookSlot] = useState<{ date: string; time: string } | null>(null)
   const [viewSession, setViewSession] = useState<ClassSession | null>(null)
+  const [viewTrial, setViewTrial] = useState<TrialSession | null>(null)
+
+  // El tipo no seleccionado sigue visible pero apagado: así se ve que el hueco
+  // está ocupado y no se agenda encima.
+  const dimClasses = viewFilter === 'trials'
+  const dimTrials  = viewFilter === 'classes'
 
   const prevWeek = addDays(weekStart, -7)
   const nextWeek = addDays(weekStart,  7)
@@ -87,6 +97,15 @@ export default function WeekCalendar({ weekStart, sessions, blocked, students, c
     const key = `${s.scheduled_date}|${s.start_time.slice(0, 5)}`
     if (!sessionsBySlot[key]) sessionsBySlot[key] = []
     sessionsBySlot[key].push(s)
+  }
+
+  // Índice paralelo de sesiones de reconocimiento
+  const trialsBySlot: Record<string, TrialSession[]> = {}
+  for (const t of trials) {
+    if (!t.trial_date || !t.trial_time) continue
+    const key = `${t.trial_date}|${t.trial_time.slice(0, 5)}`
+    if (!trialsBySlot[key]) trialsBySlot[key] = []
+    trialsBySlot[key].push(t)
   }
 
   // Conjunto de fechas bloqueadas
@@ -138,6 +157,8 @@ export default function WeekCalendar({ weekStart, sessions, blocked, students, c
         <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-red-900/50 border border-red-900/50" />Ocupado</span>
         <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-green-900/30 border-l-2 border-l-green-400" />Confirmada</span>
         <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-yellow-900/20 border-l-2 border-l-yellow-400" />Pendiente</span>
+        <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-sky-900/30 border-l-2 border-dashed border-l-sky-400" />Reconocimiento</span>
+        <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-white/10 opacity-40" />Atenuado = ocupado por el otro tipo</span>
         <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-red-900/20" />Sin disponibilidad</span>
       </div>
 
@@ -176,6 +197,7 @@ export default function WeekCalendar({ weekStart, sessions, blocked, students, c
                   const inRange    = validSlots.includes(slot)
                   const key        = `${dateStr}|${slot}`
                   const slotSessions = sessionsBySlot[key] ?? []
+                  const slotTrials   = trialsBySlot[key] ?? []
 
                   // Domingo → cerrado
                   if (isClosed) {
@@ -210,16 +232,37 @@ export default function WeekCalendar({ weekStart, sessions, blocked, students, c
                     )
                   }
 
-                  // Tiene sesiones
-                  if (slotSessions.length > 0) {
+                  // Tiene clases o sesiones de reconocimiento
+                  if (slotSessions.length > 0 || slotTrials.length > 0) {
                     return (
                       <td key={dateStr} className="px-1 py-1 border-l border-white/5 align-top">
                         <div className="space-y-0.5">
+                          {slotTrials.map((t) => (
+                            <button
+                              key={t.id}
+                              onClick={() => setViewTrial(t)}
+                              disabled={dimTrials}
+                              className={`w-full text-left px-2 py-1.5 rounded border-l-2 border-dashed border-l-sky-400 bg-sky-900/20 transition-all ${
+                                dimTrials ? 'opacity-40 pointer-events-none' : 'cursor-pointer hover:brightness-125'
+                              }`}
+                            >
+                              <div className="flex items-center gap-1 mb-0.5">
+                                <p className="text-white/90 font-medium truncate text-[11px] flex-1">{t.student_name}</p>
+                                <span className="shrink-0 text-[8px] uppercase tracking-wider font-bold text-sky-300/80">Recon.</span>
+                              </div>
+                              <p className="text-white/40 truncate text-[10px]">
+                                {t.instructor?.name ?? 'Sin instructor'} · {t.classroom?.name ?? 'Sin salón'}
+                              </p>
+                            </button>
+                          ))}
                           {slotSessions.map((s) => (
                             <button
                               key={s.id}
                               onClick={() => setViewSession(s)}
-                              className={`w-full text-left px-2 py-1.5 rounded border-l-2 cursor-pointer hover:brightness-125 transition-all ${STATUS_COLOR[s.status] ?? 'bg-[#141414] border-l-gray-500'}`}
+                              disabled={dimClasses}
+                              className={`w-full text-left px-2 py-1.5 rounded border-l-2 transition-all ${STATUS_COLOR[s.status] ?? 'bg-[#141414] border-l-gray-500'} ${
+                                dimClasses ? 'opacity-40 pointer-events-none' : 'cursor-pointer hover:brightness-125'
+                              }`}
                             >
                               <div className="flex items-center gap-1 mb-0.5">
                                 <p className="text-white/90 font-medium truncate text-[11px] flex-1">
@@ -297,6 +340,16 @@ export default function WeekCalendar({ weekStart, sessions, blocked, students, c
           classrooms={classrooms}
           instructors={instructors}
           onClose={() => setViewSession(null)}
+        />
+      )}
+
+      {/* Modal: sesión de reconocimiento */}
+      {viewTrial && (
+        <TrialDetailModal
+          trial={viewTrial}
+          instructors={instructors}
+          classrooms={classrooms}
+          onClose={() => setViewTrial(null)}
         />
       )}
     </div>

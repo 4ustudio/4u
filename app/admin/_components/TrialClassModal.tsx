@@ -6,13 +6,14 @@ import PopupSelect from './PopupSelect'
 import { inputClass } from './leadConstants'
 
 export default function TrialClassModal({
-  studentName, instructors, initial, onCancel, onSchedule,
+  studentName, instructors, classrooms, initial, onCancel, onSchedule,
 }: {
   studentName: string
   instructors: { id: string; name: string }[]
-  initial?: { date?: string | null; time?: string | null; instructorId?: string | null }
+  classrooms: { id: string; name: string }[]
+  initial?: { date?: string | null; time?: string | null; instructorId?: string | null; classroomId?: string | null }
   onCancel: () => void
-  onSchedule: (date: string, time: string, instructorId: string) => Promise<string | void>
+  onSchedule: (date: string, time: string, instructorId: string, classroomId: string) => Promise<string | void>
 }) {
   const isReschedule = Boolean(initial?.date)
 
@@ -20,6 +21,7 @@ export default function TrialClassModal({
   const [date, setDate]                 = useState(initial?.date ?? '')
   const [time, setTime]                 = useState(initial?.time?.slice(0, 5) ?? '')
   const [instructorId, setInstructorId] = useState(initial?.instructorId ?? '')
+  const [classroomId, setClassroomId]   = useState(initial?.classroomId ?? '')
   const [submitting, setSubmitting]     = useState(false)
   const [error, setError]               = useState<string | null>(null)
 
@@ -28,9 +30,11 @@ export default function TrialClassModal({
 
   async function handleSubmit(ev: React.FormEvent) {
     ev.preventDefault()
-    if (!date || !time || !instructorId) { setError('Completa fecha, hora e instructor.'); return }
+    if (!date || !time || !instructorId || !classroomId) {
+      setError('Completa fecha, hora, instructor y salón.'); return
+    }
     setSubmitting(true); setError(null)
-    const err = await onSchedule(date, time, instructorId)
+    const err = await onSchedule(date, time, instructorId, classroomId)
     setSubmitting(false)
     if (err) setError(err)
   }
@@ -67,6 +71,16 @@ export default function TrialClassModal({
             onChange={setInstructorId}
             placeholder="Selecciona un instructor"
             options={instructors.map(i => ({ value: i.id, label: i.name }))}
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs text-white/50 mb-1.5">Salón *</label>
+          <PopupSelect
+            value={classroomId}
+            onChange={setClassroomId}
+            placeholder="Selecciona un salón"
+            options={classrooms.map(c => ({ value: c.id, label: c.name }))}
           />
         </div>
 

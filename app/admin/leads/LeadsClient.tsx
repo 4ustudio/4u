@@ -588,7 +588,7 @@ function SummaryCards({ enrollments }: { enrollments: EnrollmentRow[] | null }) 
 
 // ── Página principal ──────────────────────────────────────────
 
-export default function LeadsClient({ initialEnrollments, instructors }: { initialEnrollments: EnrollmentRow[]; instructors: { id: string; name: string }[] }) {
+export default function LeadsClient({ initialEnrollments, instructors, classrooms }: { initialEnrollments: EnrollmentRow[]; instructors: { id: string; name: string }[]; classrooms: { id: string; name: string }[] }) {
   const [enrollments, setEnrollments] = useState<EnrollmentRow[] | null>(initialEnrollments)
   const [reloading, setReloading]     = useState(false)
   const [selected, setSelected]       = useState<EnrollmentRow | null>(null)
@@ -728,13 +728,18 @@ export default function LeadsClient({ initialEnrollments, instructors }: { initi
     }
   }
 
-  async function handleScheduleTrial(date: string, time: string, instructorId: string): Promise<string | void> {
+  async function handleScheduleTrial(date: string, time: string, instructorId: string, classroomId: string): Promise<string | void> {
     if (!trialModalId) return
     const fd = new FormData()
-    fd.set('id', trialModalId); fd.set('trial_date', date); fd.set('trial_time', time); fd.set('instructor_id', instructorId)
+    fd.set('id', trialModalId); fd.set('trial_date', date); fd.set('trial_time', time)
+    fd.set('instructor_id', instructorId); fd.set('classroom_id', classroomId)
     const r = await scheduleTrialClassAction({}, fd)
     if (r.error) return r.error
-    const patch = { status: 'clase_prueba' as const, trial_date: date, trial_time: time, trial_instructor_id: instructorId }
+    const patch = {
+      status: 'clase_prueba' as const,
+      trial_date: date, trial_time: time,
+      trial_instructor_id: instructorId, trial_classroom_id: classroomId,
+    }
     setEnrollments(prev => prev?.map(e => e.id === trialModalId ? { ...e, ...patch } : e) ?? null)
     if (selected?.id === trialModalId) {
       setSelected(prev => prev ? { ...prev, ...patch } : prev)
@@ -1060,14 +1065,24 @@ export default function LeadsClient({ initialEnrollments, instructors }: { initi
         onUpdateLostReason={handleUpdateLostReason}
       />
 
-      {trialModalId && (
-        <TrialClassModal
-          studentName={enrollments?.find(e => e.id === trialModalId)?.student_name ?? ''}
-          instructors={instructors}
-          onCancel={() => setTrialModalId(null)}
-          onSchedule={handleScheduleTrial}
-        />
-      )}
+      {trialModalId && (() => {
+        const target = enrollments?.find(e => e.id === trialModalId)
+        return (
+          <TrialClassModal
+            studentName={target?.student_name ?? ''}
+            instructors={instructors}
+            classrooms={classrooms}
+            initial={{
+              date: target?.trial_date,
+              time: target?.trial_time,
+              instructorId: target?.trial_instructor_id,
+              classroomId: target?.trial_classroom_id,
+            }}
+            onCancel={() => setTrialModalId(null)}
+            onSchedule={handleScheduleTrial}
+          />
+        )
+      })()}
 
       <ConfirmModal
         open={confirmConvertOpen}

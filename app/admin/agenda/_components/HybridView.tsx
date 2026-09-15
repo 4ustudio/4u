@@ -3,11 +3,19 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { MdAdd, MdSearch, MdCalendarMonth, MdClose, MdPerson, MdRefresh } from 'react-icons/md'
+import { MdAdd, MdSearch, MdCalendarMonth, MdClose, MdPerson, MdRefresh, MdViewAgenda, MdSchool, MdPersonSearch } from 'react-icons/md'
 import { createBrowserClient } from '@supabase/ssr'
 import WeekCalendar from './WeekCalendar'
-import type { ClassSession, AvailableSlot } from '@/types/admin'
+import type { ClassSession, AvailableSlot, TrialSession } from '@/types/admin'
 import type { Classroom } from './BookSessionModal'
+
+export type ViewFilter = 'all' | 'classes' | 'trials'
+
+const VIEW_FILTERS: { value: ViewFilter; label: string; icon: React.ReactNode }[] = [
+  { value: 'all',     label: 'Todo',          icon: <MdViewAgenda className="h-3.5 w-3.5" aria-hidden="true" /> },
+  { value: 'classes', label: 'Clases',        icon: <MdSchool className="h-3.5 w-3.5" aria-hidden="true" /> },
+  { value: 'trials',  label: 'Reconocimiento', icon: <MdPersonSearch className="h-3.5 w-3.5" aria-hidden="true" /> },
+]
 
 interface Student {
   id: string
@@ -21,6 +29,7 @@ interface Student {
 interface Props {
   weekStart:         string
   sessions:          ClassSession[]
+  trials:            TrialSession[]
   blocked:           any[]
   students:          Student[]
   courses:           { id: string; name: string }[]
@@ -42,10 +51,11 @@ function addDays(dateStr: string, days: number): string {
 }
 
 export default function HybridView({
-  weekStart, sessions, blocked, students, courses, classrooms, instructors, availabilityByDay,
+  weekStart, sessions, trials, blocked, students, courses, classrooms, instructors, availabilityByDay,
 }: Props) {
   const router                          = useRouter()
   const [selectedId, setSelectedId]     = useState<string | null>(null)
+  const [viewFilter, setViewFilter]     = useState<ViewFilter>('all')
   const [search, setSearch]             = useState('')
   const [mobileTab, setMobileTab]       = useState<'agenda' | 'students'>('agenda')
   const [lastRefresh, setLastRefresh]   = useState<Date>(new Date())
@@ -96,6 +106,11 @@ export default function HybridView({
           event:  '*',
           schema: 'public',
           table:  'blocked_dates',
+        }, () => doRefreshRef.current())
+        .on('postgres_changes', {
+          event:  '*',
+          schema: 'public',
+          table:  'enrollments',
         }, () => doRefreshRef.current())
         .subscribe((status) => {
           if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
@@ -312,9 +327,27 @@ export default function HybridView({
         </button>
       </div>
 
+      {/* Filtro de tipo de sesión */}
+      <div className="flex items-center gap-1 mb-3 p-[3px] rounded-[10px] bg-white/[0.04] border border-white/[0.08] w-fit">
+        {VIEW_FILTERS.map(f => (
+          <button
+            key={f.value}
+            onClick={() => setViewFilter(f.value)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+              viewFilter === f.value ? 'bg-[#ff7a00] text-white' : 'text-white/40 hover:text-white/70'
+            }`}
+          >
+            {f.icon}
+            {f.label}
+          </button>
+        ))}
+      </div>
+
       <WeekCalendar
         weekStart={weekStart}
         sessions={visibleSessions}
+        trials={trials}
+        viewFilter={viewFilter}
         blocked={blocked}
         students={students}
         courses={courses}

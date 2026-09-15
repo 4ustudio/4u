@@ -47,10 +47,11 @@ function formatTrial(date: string, time?: string | null): string {
 }
 
 export default function InterestedClient({
-  leads, instructors, today,
+  leads, instructors, classrooms, today,
 }: {
   leads: EnrollmentRow[]
   instructors: { id: string; name: string }[]
+  classrooms: { id: string; name: string }[]
   today: string
 }) {
   const router = useRouter()
@@ -88,13 +89,14 @@ export default function InterestedClient({
 
   const total = leads.length
 
-  async function handleSchedule(date: string, time: string, instructorId: string): Promise<string | void> {
+  async function handleSchedule(date: string, time: string, instructorId: string, classroomId: string): Promise<string | void> {
     if (!trialFor) return
     const fd = new FormData()
     fd.set('id', trialFor.id)
     fd.set('trial_date', date)
     fd.set('trial_time', time)
     fd.set('instructor_id', instructorId)
+    fd.set('classroom_id', classroomId)
     const r = await scheduleTrialClassAction({}, fd)
     if (r.error) return r.error
     setTrialFor(null)
@@ -207,7 +209,13 @@ export default function InterestedClient({
         <TrialClassModal
           studentName={trialFor.student_name}
           instructors={instructors}
-          initial={{ date: trialFor.trial_date, time: trialFor.trial_time, instructorId: trialFor.trial_instructor_id }}
+          classrooms={classrooms}
+          initial={{
+            date: trialFor.trial_date,
+            time: trialFor.trial_time,
+            instructorId: trialFor.trial_instructor_id,
+            classroomId: trialFor.trial_classroom_id,
+          }}
           onCancel={() => setTrialFor(null)}
           onSchedule={handleSchedule}
         />

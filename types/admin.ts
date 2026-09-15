@@ -137,6 +137,22 @@ export interface ClassSession {
   instructor?: { name: string } | null
 }
 
+/** Sesión de reconocimiento: la clase de prueba de un interesado.
+ *  Vive en enrollments, no en class_sessions, pero ocupa horario y salón igual. */
+export interface TrialSession {
+  id: string
+  student_name: string
+  phone: string
+  course_interest: string
+  status: string
+  trial_date: string
+  trial_time: string
+  trial_instructor_id: string | null
+  trial_classroom_id: string | null
+  instructor?: { name: string } | null
+  classroom?: { name: string } | null
+}
+
 export interface MonthlyUsage {
   quota_total: number
   classes_scheduled: number

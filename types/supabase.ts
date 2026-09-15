@@ -682,6 +682,7 @@ export type Database = {
           terms_version: string | null
           trial_date: string | null
           trial_instructor_id: string | null
+          trial_classroom_id: string | null
           trial_notes: string | null
           trial_time: string | null
         }
@@ -721,6 +722,7 @@ export type Database = {
           terms_version?: string | null
           trial_date?: string | null
           trial_instructor_id?: string | null
+          trial_classroom_id?: string | null
           trial_notes?: string | null
           trial_time?: string | null
         }
@@ -760,6 +762,7 @@ export type Database = {
           terms_version?: string | null
           trial_date?: string | null
           trial_instructor_id?: string | null
+          trial_classroom_id?: string | null
           trial_notes?: string | null
           trial_time?: string | null
         }
@@ -2671,6 +2674,16 @@ export type Database = {
       fn_is_blocked: {
         Args: { p_classroom_id?: string; p_date: string; p_start_time: string }
         Returns: boolean
+      }
+      fn_trial_slot_free: {
+        Args: {
+          p_classroom_id: string
+          p_date: string
+          p_exclude_enrollment_id?: string
+          p_instructor_id: string
+          p_start_time: string
+        }
+        Returns: string
       }
       fn_latest_followup_per_student: {
         Args: never

@@ -221,23 +221,37 @@ export async function scheduleTrialClassAction(
   const trial_date     = formData.get('trial_date') as string
   const trial_time     = formData.get('trial_time') as string
   const instructor_id  = formData.get('instructor_id') as string
+  const classroom_id   = (formData.get('classroom_id') as string | null) || null
 
   if (!id || !trial_date || !trial_time || !instructor_id) return { error: 'Faltan datos.' }
+  if (!classroom_id) return { error: 'Selecciona el salón.' }
 
   const admin = createAdminClient()
 
-  const { data: conflict } = await admin.rpc('fn_instructor_free', {
-    p_instructor_id: instructor_id,
-    p_date:          trial_date,
-    p_start_time:    trial_time,
+  // Valida instructor y salón a la vez; se excluye a sí misma para poder reagendar.
+  const { data: conflict } = await admin.rpc('fn_trial_slot_free', {
+    p_instructor_id:          instructor_id,
+    p_classroom_id:           classroom_id,
+    p_date:                   trial_date,
+    p_start_time:             trial_time,
+    p_exclude_enrollment_id:  id,
   })
   if (conflict) return { error: conflict as string }
 
-  const { data: instructor } = await admin.from('instructors').select('name').eq('id', instructor_id).single()
+  const [{ data: instructor }, { data: classroom }] = await Promise.all([
+    admin.from('instructors').select('name').eq('id', instructor_id).single(),
+    admin.from('classrooms').select('name').eq('id', classroom_id).single(),
+  ])
 
   const { error } = await admin
     .from('enrollments')
-    .update({ status: 'clase_prueba', trial_date, trial_time, trial_instructor_id: instructor_id })
+    .update({
+      status: 'clase_prueba',
+      trial_date,
+      trial_time,
+      trial_instructor_id: instructor_id,
+      trial_classroom_id:  classroom_id,
+    })
     .eq('id', id)
 
   if (error) return { error: error.message }
@@ -245,7 +259,7 @@ export async function scheduleTrialClassAction(
   await admin.from('enrollment_events').insert({
     enrollment_id: id,
     type:         'status_changed',
-    description:  `Clase de prueba agendada: ${trial_date} ${trial_time} con ${instructor?.name ?? 'instructor'}`,
+    description:  `Clase de prueba agendada: ${trial_date} ${trial_time} con ${instructor?.name ?? 'instructor'} en ${classroom?.name ?? 'salón'}`,
   })
 
   revalidatePath('/admin/leads')

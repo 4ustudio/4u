@@ -73,6 +73,7 @@ export interface EnrollmentRow extends EnrollmentInsert {
   trial_date?:          string | null
   trial_time?:          string | null
   trial_instructor_id?: string | null
+  trial_classroom_id?:  string | null
   trial_notes?:         string | null
 }
 

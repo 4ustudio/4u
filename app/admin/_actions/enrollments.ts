@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { bogotaDateStr } from '@/lib/tz'
 import { createAuthServerClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import type { EnrollmentEvent, EnrollmentEventType, EnrollmentFunnelMetrics } from '@/types/enrollment'
+import type { EnrollmentEvent, EnrollmentEventType, EnrollmentFunnelMetrics, EnrollmentRow } from '@/types/enrollment'
 import { safeRecordStudentActivity } from './retention'
 import { activity } from '@/lib/activity'
 
@@ -47,6 +47,81 @@ export async function getEnrollments(): Promise<{ data: any[]; error: string | n
   } catch (e) {
     return { data: [], error: e instanceof Error ? e.message : 'Error desconocido' }
   }
+}
+
+/** Interesados activos: siguen en juego y aún no se han matriculado.
+ *  Se filtra por converted_at (no por converted_student_id) porque un prospecto
+ *  creado desde /admin/students/nuevo ya tiene ficha vinculada sin estar matriculado. */
+export async function getInterestedLeads(): Promise<{ data: EnrollmentRow[]; error: string | null }> {
+  const ACTIVE = ['pending', 'contacted', 'clase_prueba', 'scheduled']
+
+  const run = (client: ReturnType<typeof createAdminClient>) =>
+    client
+      .from('enrollments')
+      .select('*')
+      .in('status', ACTIVE)
+      .is('converted_at', null)
+      .order('trial_date', { ascending: true, nullsFirst: false })
+      .order('created_at', { ascending: false })
+      .limit(200)
+
+  try {
+    const supabase = await createAuthServerClient()
+    const { data, error } = await run(supabase as never)
+    if (error) {
+      const { data: d2, error: e2 } = await run(createAdminClient())
+      if (e2) return { data: [], error: e2.message }
+      return { data: (d2 ?? []) as EnrollmentRow[], error: null }
+    }
+    return { data: (data ?? []) as EnrollmentRow[], error: null }
+  } catch (e) {
+    return { data: [], error: e instanceof Error ? e.message : 'Error desconocido' }
+  }
+}
+
+/** Alta rápida de un interesado: solo lo indispensable.
+ *  El resto de columnas NOT NULL se rellenan con defaults válidos según los checks de la tabla. */
+export async function createQuickLeadAction(
+  _prev: { error?: string; success?: boolean },
+  formData: FormData
+): Promise<{ error?: string; success?: boolean }> {
+  const student_name    = (formData.get('student_name') as string)?.trim() || ''
+  const phone           = (formData.get('phone') as string)?.trim() || ''
+  const course_interest = (formData.get('course_interest') as string)?.trim() || ''
+  const email           = (formData.get('email') as string | null)?.trim() || ''
+  const source          = (formData.get('source') as string | null)?.trim() || 'presencial'
+  const ageRaw          = Number(formData.get('student_age'))
+
+  if (!student_name || !phone) return { error: 'Nombre y WhatsApp son obligatorios.' }
+
+  // student_age tiene check (>= 6 y < 120); sin dato usable asumimos adulto.
+  const student_age = Number.isFinite(ageRaw) && ageRaw >= 6 && ageRaw < 120 ? ageRaw : 18
+
+  const admin = createAdminClient()
+  const { data, error } = await admin
+    .from('enrollments')
+    .insert({
+      student_name,
+      phone,
+      email,
+      student_age,
+      student_type:    student_age < 18 ? 'child' : 'self',
+      course_interest: course_interest || 'Por definir',
+      level:           'never',
+      preferred_time:  'Por definir',
+      source,
+      status:          'pending',
+    })
+    .select('id')
+    .single()
+
+  if (error) return { error: error.message }
+
+  await addEnrollmentEvent(data.id, 'note_added', 'Interesado registrado manualmente desde el panel')
+
+  revalidatePath('/admin/interesados')
+  revalidatePath('/admin/leads')
+  return { success: true }
 }
 
 export async function getEnrollment(id: string) {
@@ -124,6 +199,8 @@ export async function updateEnrollmentStatusAction(
   })
 
   revalidatePath('/admin/enrollments')
+  revalidatePath('/admin/leads')
+  revalidatePath('/admin/interesados')
   return { success: true }
 }
 
@@ -172,6 +249,7 @@ export async function scheduleTrialClassAction(
   })
 
   revalidatePath('/admin/leads')
+  revalidatePath('/admin/interesados')
   return { success: true }
 }
 
@@ -207,6 +285,7 @@ export async function saveTrialNotesAction(
   if (error) return { error: error.message }
 
   revalidatePath('/admin/leads')
+  revalidatePath('/admin/interesados')
   return {}
 }
 
@@ -228,6 +307,7 @@ export async function updateEnrollmentFieldsAction(
   if (error) return { error: error.message }
   revalidatePath('/admin/enrollments')
   revalidatePath('/admin/leads')
+  revalidatePath('/admin/interesados')
   return {}
 }
 
@@ -322,6 +402,33 @@ export async function convertEnrollmentToStudent(
   if (!enrollment) return { error: 'Inscripción no encontrada.' }
   if (enrollment.converted_at) return { error: 'Esta inscripción ya fue convertida.' }
 
+  // El prospecto ya tiene ficha de estudiante (creada desde /admin/students/nuevo):
+  // solo hay que matricularlo, no crear una segunda ficha.
+  if (enrollment.converted_student_id) {
+    const nowIso = new Date().toISOString()
+    const { error: linkErr } = await createAdminClient()
+      .from('enrollments')
+      .update({ status: 'converted', converted_at: nowIso })
+      .eq('id', enrollmentId)
+    if (linkErr) return { error: linkErr.message }
+
+    await createAdminClient()
+      .from('students')
+      .update({ student_status: 'matriculado', enrolled_at: bogotaDateStr() })
+      .eq('id', enrollment.converted_student_id)
+
+    await createAdminClient().from('enrollment_events').insert({
+      enrollment_id: enrollmentId,
+      type:         'converted',
+      description:  'Matriculado (ya tenía ficha de estudiante)',
+    })
+
+    revalidatePath('/admin/enrollments')
+    revalidatePath('/admin/leads')
+    revalidatePath('/admin/interesados')
+    return { studentId: enrollment.converted_student_id }
+  }
+
   const parts      = enrollment.student_name.trim().split(/\s+/)
   const first_name = parts[0] ?? ''
   const last_name  = parts.slice(1).join(' ') || ''
@@ -394,6 +501,7 @@ export async function convertEnrollmentToStudent(
 
   revalidatePath('/admin/enrollments')
   revalidatePath('/admin/leads')
+  revalidatePath('/admin/interesados')
   revalidatePath('/admin/students')
   return { studentId: student.id }
 }

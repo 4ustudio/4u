@@ -549,7 +549,7 @@ export async function createStudentAction(
       emergency_contact_name,
       emergency_contact_phone,
       status: 'active',
-      student_status: 'activo',
+      student_status: student_type === 'new' ? 'lead' : 'activo',
       student_since: now,
       last_activity_at: now,
       retention_score: 100,
@@ -564,37 +564,45 @@ export async function createStudentAction(
 
   await safeRecordStudentActivity(student?.id, 'enrolled', 'Estudiante creado desde administracion.')
 
-  let student_age = 18
-  if (birth_date) {
-    const b = new Date(birth_date)
-    const t = new Date()
-    const calculated = t.getFullYear() - b.getFullYear() - (t < new Date(t.getFullYear(), b.getMonth(), b.getDate()) ? 1 : 0)
-    if (calculated >= 6 && calculated < 120) student_age = calculated
-  }
+  // Solo los prospectos entran al seguimiento de interesados; quien ya está
+  // matriculado no debe aparecer como lead nuevo en el pipeline.
+  if (student_type === 'new') {
+    let student_age = 18
+    if (birth_date) {
+      const b = new Date(birth_date)
+      const t = new Date()
+      const calculated = t.getFullYear() - b.getFullYear() - (t < new Date(t.getFullYear(), b.getMonth(), b.getDate()) ? 1 : 0)
+      if (calculated >= 6 && calculated < 120) student_age = calculated
+    }
 
-  const { error: enrollErr } = await createAdminClient().from('enrollments').insert({
-    student_name:    name,
-    phone,
-    email:           email ?? '',
-    city,
-    music_genre,
-    payment_method,
-    notes,
-    eps,
-    emergency_contact_name,
-    emergency_contact_phone,
-    course_interest: plan_name || 'Por definir',
-    level:           'never',
-    student_age,
-    student_type:    student_age < 18 ? 'child' : 'self',
-    source:          'presencial',
-    status:          'pending',
-    converted_student_id: student?.id ?? null,
-  })
-  if (enrollErr) console.error('[createStudentAction] enrollments insert failed:', enrollErr)
+    const { error: enrollErr } = await createAdminClient().from('enrollments').insert({
+      student_name:    name,
+      phone,
+      email:           email ?? '',
+      city,
+      music_genre,
+      payment_method,
+      notes,
+      eps,
+      emergency_contact_name,
+      emergency_contact_phone,
+      course_interest: plan_name || 'Por definir',
+      level:           'never',
+      preferred_time:  'Por definir',
+      student_age,
+      student_type:    student_age < 18 ? 'child' : 'self',
+      source:          'presencial',
+      status:          'pending',
+      // Vínculo con la ficha ya creada: evita que al "convertir" se duplique el estudiante.
+      // converted_at sigue null, así que el prospecto sí aparece en /admin/interesados.
+      converted_student_id: student?.id ?? null,
+    })
+    if (enrollErr) console.error('[createStudentAction] enrollments insert failed:', enrollErr)
+  }
 
   revalidatePath('/admin/students')
   revalidatePath('/admin/leads')
+  revalidatePath('/admin/interesados')
   return { success: true }
 }
 

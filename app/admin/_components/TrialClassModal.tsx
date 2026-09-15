@@ -6,16 +6,19 @@ import PopupSelect from './PopupSelect'
 import { inputClass } from './leadConstants'
 
 export default function TrialClassModal({
-  studentName, instructors, classrooms, initial, onCancel, onSchedule,
+  studentName, instructors, classrooms, initial, reschedule, onCancel, onSchedule,
 }: {
   studentName: string
   instructors: { id: string; name: string }[]
   classrooms: { id: string; name: string }[]
   initial?: { date?: string | null; time?: string | null; instructorId?: string | null; classroomId?: string | null }
+  /** Fuerza el copy: al agendar desde el calendario la fecha viene precargada
+   *  del slot, pero no es un reagendamiento. */
+  reschedule?: boolean
   onCancel: () => void
   onSchedule: (date: string, time: string, instructorId: string, classroomId: string) => Promise<string | void>
 }) {
-  const isReschedule = Boolean(initial?.date)
+  const isReschedule = reschedule ?? Boolean(initial?.date)
 
   const [mounted, setMounted]           = useState(false)
   const [date, setDate]                 = useState(initial?.date ?? '')

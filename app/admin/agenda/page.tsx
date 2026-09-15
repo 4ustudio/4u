@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getAvailableSlots } from '../_actions/sessions'
+import { getInterestedLeads } from '../_actions/enrollments'
 import { getCachedCourses, getCachedClassrooms, getCachedInstructors } from '@/lib/cache/catalogs'
 import HybridView from './_components/HybridView'
 import type { ClassSession, AvailableSlot, TrialSession } from '@/types/admin'
@@ -38,6 +39,7 @@ async function getPageData(weekStart: string) {
     classrooms,
     instructors,
     availabilityResults,
+    { data: leads },
   ] = await Promise.all([
     Promise.all([
       supabase
@@ -73,6 +75,7 @@ async function getPageData(weekStart: string) {
     getCachedClassrooms(),
     getCachedInstructors(),
     Promise.allSettled(days.map(day => getAvailableSlots(day))),
+    getInterestedLeads(),
   ])
 
   const availabilityByDay: Record<string, AvailableSlot[]> = {}
@@ -86,6 +89,7 @@ async function getPageData(weekStart: string) {
     trials:      (trials as unknown as TrialSession[]) ?? [],
     blocked:     blocked ?? [],
     students:    students ?? [],
+    leads:       leads ?? [],
     courses:     courses  ?? [],
     classrooms:  classrooms ?? [],
     instructors: instructors ?? [],

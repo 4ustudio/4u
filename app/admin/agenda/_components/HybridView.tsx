@@ -7,6 +7,7 @@ import { MdAdd, MdSearch, MdCalendarMonth, MdClose, MdPerson, MdRefresh, MdViewA
 import { createBrowserClient } from '@supabase/ssr'
 import WeekCalendar from './WeekCalendar'
 import type { ClassSession, AvailableSlot, TrialSession } from '@/types/admin'
+import type { EnrollmentRow } from '@/types/enrollment'
 import type { Classroom } from './BookSessionModal'
 
 export type ViewFilter = 'all' | 'classes' | 'trials'
@@ -30,6 +31,7 @@ interface Props {
   weekStart:         string
   sessions:          ClassSession[]
   trials:            TrialSession[]
+  leads:             EnrollmentRow[]
   blocked:           any[]
   students:          Student[]
   courses:           { id: string; name: string }[]
@@ -51,10 +53,12 @@ function addDays(dateStr: string, days: number): string {
 }
 
 export default function HybridView({
-  weekStart, sessions, trials, blocked, students, courses, classrooms, instructors, availabilityByDay,
+  weekStart, sessions, trials, leads, blocked, students, courses, classrooms, instructors, availabilityByDay,
 }: Props) {
   const router                          = useRouter()
   const [selectedId, setSelectedId]     = useState<string | null>(null)
+  // Un interesado no es un estudiante: se le agenda clase de prueba, no clase regular.
+  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null)
   const [viewFilter, setViewFilter]     = useState<ViewFilter>('all')
   const [search, setSearch]             = useState('')
   const [mobileTab, setMobileTab]       = useState<'agenda' | 'students'>('agenda')
@@ -158,13 +162,39 @@ export default function HybridView({
     )
   }, [students, search])
 
+  const filteredLeads = useMemo(() => {
+    const q = search.toLowerCase().trim()
+    if (!q) return leads
+    return leads.filter(l =>
+      l.student_name.toLowerCase().includes(q) ||
+      l.phone.includes(q) ||
+      l.course_interest.toLowerCase().includes(q)
+    )
+  }, [leads, search])
+
   const visibleSessions = useMemo(
     () => selectedId ? sessions.filter(s => s.student_id === selectedId) : sessions,
     [sessions, selectedId]
   )
 
+  const visibleTrials = useMemo(
+    () => selectedLeadId ? trials.filter(t => t.id === selectedLeadId) : trials,
+    [trials, selectedLeadId]
+  )
+
   const selectedStudent = selectedId ? students.find(s => s.id === selectedId) : null
+  const selectedLead    = selectedLeadId ? leads.find(l => l.id === selectedLeadId) : null
   const activeCount = students.filter(s => s.status === 'active').length
+
+  function pickStudent(id: string) {
+    setSelectedLeadId(null)
+    setSelectedId(prev => (prev === id ? null : id))
+  }
+
+  function pickLead(id: string) {
+    setSelectedId(null)
+    setSelectedLeadId(prev => (prev === id ? null : id))
+  }
 
   // Panel de estudiantes (compartido entre móvil y desktop)
   const StudentsPanel = (
@@ -196,19 +226,34 @@ export default function HybridView({
           />
         </div>
 
-        {!selectedId && (
+        {!selectedId && !selectedLeadId && (
           <p className="text-[10px] text-white/25 leading-relaxed">
-            Toca un estudiante para filtrar el calendario →
+            Toca un estudiante o interesado para filtrar el calendario →
           </p>
         )}
 
-        {selectedId && selectedStudent && (
+        {selectedStudent && (
           <div className="flex items-center gap-2 bg-orange-500/10 border border-orange-500/25 rounded-lg px-3 py-2">
             <MdCalendarMonth className="h-3.5 w-3.5 text-orange-400 shrink-0" aria-hidden="true" />
             <span className="text-xs text-orange-300 flex-1 truncate font-medium">{selectedStudent.name}</span>
             <button onClick={() => setSelectedId(null)} className="text-orange-400/50 hover:text-orange-300 shrink-0 transition-colors" title="Ver todos">
               <MdClose className="h-3.5 w-3.5" aria-hidden="true" />
             </button>
+          </div>
+        )}
+
+        {selectedLead && (
+          <div className="bg-sky-500/10 border border-sky-500/25 rounded-lg px-3 py-2 space-y-1">
+            <div className="flex items-center gap-2">
+              <MdPersonSearch className="h-3.5 w-3.5 text-sky-400 shrink-0" aria-hidden="true" />
+              <span className="text-xs text-sky-200 flex-1 truncate font-medium">{selectedLead.student_name}</span>
+              <button onClick={() => setSelectedLeadId(null)} className="text-sky-400/50 hover:text-sky-300 shrink-0 transition-colors" title="Ver todos">
+                <MdClose className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
+            </div>
+            <p className="text-[10px] text-sky-300/60 leading-relaxed">
+              Toca una hora libre para agendarle la clase de prueba
+            </p>
           </div>
         )}
       </div>
@@ -234,7 +279,7 @@ export default function HybridView({
                 >
                   <button
                     onClick={() => {
-                      setSelectedId(isSelected ? null : s.id)
+                      pickStudent(s.id)
                       // En móvil, al seleccionar estudiante ir a agenda
                       if (!isSelected) setMobileTab('agenda')
                     }}
@@ -275,6 +320,71 @@ export default function HybridView({
                 </div>
               )
             })}
+          </div>
+        )}
+
+        {/* Interesados: aún no son alumnos, se les agenda clase de prueba */}
+        {filteredLeads.length > 0 && (
+          <div className="mt-4">
+            <div className="px-4 pb-2 flex items-center gap-2">
+              <MdPersonSearch className="h-3.5 w-3.5 text-sky-400/70 shrink-0" aria-hidden="true" />
+              <h3 className="text-[11px] font-bold text-sky-300/80 uppercase tracking-wider">Interesados</h3>
+              <span className="text-[10px] text-white/25">{filteredLeads.length}</span>
+            </div>
+            <div className="space-y-px px-2">
+              {filteredLeads.map((l) => {
+                const isSelected = selectedLeadId === l.id
+                const hasTrial   = Boolean(l.trial_date)
+                return (
+                  <div
+                    key={l.id}
+                    className={`rounded-xl border transition-all ${
+                      isSelected ? 'border-sky-500/40 bg-sky-500/10' : 'border-transparent hover:border-white/10 hover:bg-white/[0.03]'
+                    }`}
+                  >
+                    <button
+                      onClick={() => {
+                        pickLead(l.id)
+                        if (!isSelected) setMobileTab('agenda')
+                      }}
+                      className="w-full flex items-center gap-3 px-3 py-3 text-left"
+                    >
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 border border-dashed ${
+                        isSelected ? 'bg-sky-500 text-white border-sky-300' : 'bg-sky-500/10 text-sky-300/80 border-sky-400/40'
+                      }`}>
+                        {l.student_name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className={`text-sm font-semibold truncate ${isSelected ? 'text-sky-200' : 'text-white/90'}`}>{l.student_name}</p>
+                        </div>
+                        <p className="text-[11px] text-white/35 truncate">{l.phone} · {l.course_interest}</p>
+                      </div>
+                      <span
+                        className={`text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0 border ${
+                          hasTrial
+                            ? 'bg-sky-500/15 text-sky-300 border-sky-500/25'
+                            : 'bg-white/5 text-white/30 border-white/10'
+                        }`}
+                        title={hasTrial ? 'Ya tiene clase de prueba agendada' : 'Sin clase de prueba'}
+                      >
+                        {hasTrial ? 'Agendado' : 'Sin cita'}
+                      </span>
+                    </button>
+                    <div className="px-3 pb-2.5 -mt-1">
+                      <Link
+                        href="/admin/interesados"
+                        className="flex items-center gap-1 text-[11px] text-white/30 hover:text-sky-400 transition-colors w-fit"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MdPersonSearch className="h-3 w-3" aria-hidden="true" />
+                        Ver en Interesados
+                      </Link>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           </div>
         )}
       </div>
@@ -346,8 +456,9 @@ export default function HybridView({
       <WeekCalendar
         weekStart={weekStart}
         sessions={visibleSessions}
-        trials={trials}
+        trials={visibleTrials}
         viewFilter={viewFilter}
+        selectedLead={selectedLead ? { id: selectedLead.id, name: selectedLead.student_name } : undefined}
         blocked={blocked}
         students={students}
         courses={courses}

@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import BookSessionModal from './BookSessionModal'
 import SessionDetailModal from './SessionDetailModal'
 import TrialDetailModal from './TrialDetailModal'
+import TrialClassModal from '../../_components/TrialClassModal'
+import { scheduleTrialClassAction } from '../../_actions/enrollments'
 import type { ClassSession, AvailableSlot, TrialSession } from '@/types/admin'
 import type { Classroom } from './BookSessionModal'
 import type { ViewFilter } from './HybridView'
@@ -68,6 +70,7 @@ interface Props {
   sessions:          ClassSession[]
   trials:            TrialSession[]
   viewFilter:        ViewFilter
+  selectedLead?:     { id: string; name: string }
   blocked:           any[]
   students:          { id: string; name: string; phone: string }[]
   courses:           { id: string; name: string }[]
@@ -77,9 +80,10 @@ interface Props {
   defaultStudentId?: string
 }
 
-export default function WeekCalendar({ weekStart, sessions, trials, viewFilter, blocked, students, courses, classrooms, instructors, availabilityByDay, defaultStudentId }: Props) {
+export default function WeekCalendar({ weekStart, sessions, trials, viewFilter, selectedLead, blocked, students, courses, classrooms, instructors, availabilityByDay, defaultStudentId }: Props) {
   const router = useRouter()
   const [bookSlot, setBookSlot] = useState<{ date: string; time: string } | null>(null)
+  const [trialSlot, setTrialSlot] = useState<{ date: string; time: string } | null>(null)
   const [viewSession, setViewSession] = useState<ClassSession | null>(null)
   const [viewTrial, setViewTrial] = useState<TrialSession | null>(null)
 
@@ -123,10 +127,12 @@ export default function WeekCalendar({ weekStart, sessions, trials, viewFilter, 
   }
   const sortedSlots = Array.from(allSlots).sort()
 
+  // Con un interesado seleccionado se agenda su clase de prueba, no una clase regular.
   const handleSlotClick = useCallback((date: string, time: string, isodow: number, valid: boolean) => {
     if (!valid) return
-    setBookSlot({ date, time })
-  }, [])
+    if (selectedLead) setTrialSlot({ date, time })
+    else setBookSlot({ date, time })
+  }, [selectedLead])
 
   return (
     <div>
@@ -340,6 +346,30 @@ export default function WeekCalendar({ weekStart, sessions, trials, viewFilter, 
           classrooms={classrooms}
           instructors={instructors}
           onClose={() => setViewSession(null)}
+        />
+      )}
+
+      {/* Modal: agendar clase de prueba al interesado seleccionado */}
+      {trialSlot && selectedLead && (
+        <TrialClassModal
+          studentName={selectedLead.name}
+          instructors={instructors}
+          classrooms={classrooms}
+          initial={{ date: trialSlot.date, time: trialSlot.time }}
+          reschedule={false}
+          onCancel={() => setTrialSlot(null)}
+          onSchedule={async (date, time, instructorId, classroomId) => {
+            const fd = new FormData()
+            fd.set('id', selectedLead.id)
+            fd.set('trial_date', date)
+            fd.set('trial_time', time)
+            fd.set('instructor_id', instructorId)
+            fd.set('classroom_id', classroomId)
+            const r = await scheduleTrialClassAction({}, fd)
+            if (r.error) return r.error
+            setTrialSlot(null)
+            router.refresh()
+          }}
         />
       )}
 

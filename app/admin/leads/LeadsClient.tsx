@@ -19,100 +19,21 @@ import {
   updateEnrollmentFieldsAction,
   scheduleTrialClassAction,
 } from '../_actions/enrollments'
-import type { EnrollmentRow, EnrollmentEvent, EnrollmentSource } from '@/types/enrollment'
+import type { EnrollmentRow, EnrollmentEvent } from '@/types/enrollment'
 import WhatsAppButton from '@/components/admin/WhatsAppButton'
-
-// ── Constantes ────────────────────────────────────────────────
-
-const SOURCES: { value: EnrollmentSource; label: string }[] = [
-  { value: 'inscripcion', label: 'Formulario web' },
-  { value: 'whatsapp',    label: 'WhatsApp' },
-  { value: 'instagram',   label: 'Instagram' },
-  { value: 'facebook',    label: 'Facebook' },
-  { value: 'google',      label: 'Google' },
-  { value: 'referido',    label: 'Referido' },
-  { value: 'web',         label: 'Web' },
-  { value: 'presencial',  label: 'Presencial' },
-  { value: 'otro',        label: 'Otro' },
-]
-
-const LOST_REASONS = [
-  'Precio muy alto',
-  'Horario no disponible',
-  'Eligió otra academia',
-  'No respondió',
-  'Sin interés definitivo',
-  'Aplazó la decisión',
-  'Otro',
-]
-
-type KanbanStatus = 'pending' | 'contacted' | 'clase_prueba' | 'converted' | 'perdido'
-
-const COLUMNS: { status: KanbanStatus; label: string; dot: string; header: string; border: string; accent: string }[] = [
-  { status: 'pending',      label: 'Nuevo',        dot: 'bg-yellow-400',  header: 'border-yellow-500/30 text-yellow-400', border: 'border-yellow-500/10', accent: '#facc15' },
-  { status: 'contacted',    label: 'Contactado',   dot: 'bg-violet-400',  header: 'border-violet-500/30 text-violet-300', border: 'border-violet-500/10', accent: '#a78bfa' },
-  { status: 'clase_prueba', label: 'Clase Prueba', dot: 'bg-green-400',   header: 'border-green-500/30 text-green-400',   border: 'border-green-500/10', accent: '#4ade80' },
-  { status: 'converted',    label: 'Matriculado',  dot: 'bg-[#ff7a00]',   header: 'border-purple-500/30 text-[#ff9a3b]',  border: 'border-purple-500/10', accent: '#ff7a00' },
-  { status: 'perdido',      label: 'Perdido',      dot: 'bg-red-500',     header: 'border-red-500/30 text-red-400',       border: 'border-red-500/10', accent: '#f87171' },
-]
-
-function hexToRgba(hex: string, alpha: number): string {
-  const n = parseInt(hex.slice(1), 16)
-  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`
-}
-
-const PILL: Record<string, string> = {
-  pending:      'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
-  contacted:    'bg-white/8 text-white/55 border-white/12',
-  clase_prueba: 'bg-green-500/10 text-green-400 border-green-500/20',
-  scheduled:    'bg-green-500/10 text-green-400 border-green-500/20',
-  perdido:      'bg-red-500/10 text-red-400 border-red-500/20',
-  cancelled:    'bg-red-500/10 text-red-400 border-red-500/20',
-  converted:    'bg-[#ff7a00]/12 text-[#ff9a3b] border-[#ff7a00]/25',
-}
+import PopupSelect from '../_components/PopupSelect'
+import TrialClassModal from '../_components/TrialClassModal'
+import { InfoRow, QuickBtn, SpinIcon, Badge, ConfirmModal } from '../_components/LeadUI'
+import {
+  SOURCES, LOST_REASONS, COLUMNS, PILL, SOURCE_COLORS, LEVEL_LABELS,
+  hexToRgba, timeAgo, isToday, cleanPhone, canonicalStatus,
+  type KanbanStatus,
+} from '../_components/leadConstants'
 
 const FILTERS = ['all', 'pending', 'contacted', 'clase_prueba', 'converted', 'perdido'] as const
 const FILTER_LABEL: Record<string, string> = {
   all: 'Todos', pending: 'Nuevos', contacted: 'Contactados',
   clase_prueba: 'Clase Prueba', converted: 'Matriculados', perdido: 'Perdidos',
-}
-
-const SOURCE_COLORS: Record<string, string> = {
-  inscripcion: 'text-orange-400',
-  whatsapp:    'text-green-400',
-  instagram:   'text-pink-400',
-  facebook:    'text-white/55',
-  google:      'text-yellow-400',
-  referido:    'text-orange-400',
-  web:         'text-white/55',
-  presencial:  'text-white/50',
-  otro:        'text-white/30',
-}
-
-// ── Utils ─────────────────────────────────────────────────────
-
-function timeAgo(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime()
-  const m = Math.floor(diff / 60000)
-  if (m < 1)  return 'Ahora mismo'
-  if (m < 60) return `Hace ${m}m`
-  const h = Math.floor(m / 60)
-  if (h < 24) return `Hace ${h}h`
-  const d = Math.floor(h / 24)
-  return d === 1 ? 'Ayer' : `Hace ${d}d`
-}
-
-function isToday(iso: string): boolean {
-  const d = new Date(iso), n = new Date()
-  return d.getDate() === n.getDate() && d.getMonth() === n.getMonth() && d.getFullYear() === n.getFullYear()
-}
-
-function cleanPhone(p: string) { return p.replace(/[^0-9]/g, '') }
-
-function canonicalStatus(s: string): KanbanStatus {
-  if (s === 'scheduled')  return 'clase_prueba'
-  if (s === 'cancelled')  return 'perdido'
-  return s as KanbanStatus
 }
 
 // ── Card ──────────────────────────────────────────────────────
@@ -375,7 +296,7 @@ function LeadDrawer({
                   <div className="grid grid-cols-2 gap-x-6 gap-y-3">
                     <InfoRow label="Edad"    value={`${e.student_age} años`} />
                     <InfoRow label="Curso"   value={e.course_interest} />
-                    <InfoRow label="Nivel"   value={{ never: 'Sin experiencia', beginner: 'Principiante', intermediate: 'Intermedio', advanced: 'Avanzado' }[e.level] ?? e.level} />
+                    <InfoRow label="Nivel"   value={LEVEL_LABELS[e.level] ?? e.level} />
                     <InfoRow label="Hora"    value={e.preferred_time} />
                     {e.guardian_name && <InfoRow label="Acudiente" value={e.guardian_name} />}
                   </div>
@@ -609,226 +530,6 @@ function LeadDrawer({
         )}
       </div>
     </>,
-    document.body
-  )
-}
-
-// ── Micro-componentes ─────────────────────────────────────────
-
-function InfoRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-[10px] text-white/30 mb-0.5">{label}</p>
-      <p className="text-sm text-white/75 font-medium">{value}</p>
-    </div>
-  )
-}
-
-function QuickBtn({ icon, label, hover, onClick }: { icon: React.ReactNode; label: string; hover: string; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex flex-col items-center gap-2 py-3 rounded-xl border border-white/[0.08] text-white/40 transition-all ${hover}`}
-    >
-      {icon}
-      <span className="text-[11px] font-medium">{label}</span>
-    </button>
-  )
-}
-
-function SpinIcon() {
-  return (
-    <MdRefresh className="h-4 w-4 animate-spin" aria-hidden="true" />
-  )
-}
-
-function PopupSelect({
-  value, onChange, options, placeholder,
-}: {
-  value: string
-  onChange: (v: string) => void
-  options: { value: string; label: string }[]
-  placeholder: string
-}) {
-  const [open, setOpen] = useState(false)
-  const selected = options.find(o => o.value === value)
-
-  return (
-    <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="w-full flex items-center justify-between gap-2 bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/70 focus:outline-none focus:ring-1 focus:ring-orange-500/40 focus:border-orange-500/30 text-left"
-      >
-        <span className={`truncate ${selected ? '' : 'text-white/30'}`}>{selected?.label ?? placeholder}</span>
-        <MdExpandMore className="h-4 w-4 text-white/30 shrink-0" aria-hidden="true" />
-      </button>
-      {open && typeof document !== 'undefined' && createPortal(
-        <div
-          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-[2px] px-6"
-          onClick={() => setOpen(false)}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            onClick={ev => ev.stopPropagation()}
-            className="w-full max-w-xs max-h-[70vh] overflow-y-auto rounded-2xl bg-[#141414] border border-white/10 py-2 shadow-2xl"
-          >
-            <button
-              type="button"
-              onClick={() => { onChange(''); setOpen(false) }}
-              className="w-full text-left px-4 py-2.5 text-sm text-white/40 hover:text-white hover:bg-white/5 transition-colors"
-            >
-              {placeholder}
-            </button>
-            {options.map(o => (
-              <button
-                key={o.value}
-                type="button"
-                onClick={() => { onChange(o.value); setOpen(false) }}
-                className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
-                  o.value === value ? 'text-orange-400 bg-orange-500/10' : 'text-white/70 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                {o.label}
-              </button>
-            ))}
-          </div>
-        </div>,
-        document.body
-      )}
-    </>
-  )
-}
-
-function ConfirmModal({
-  open, title, message, confirmLabel = 'Aceptar', onConfirm, onCancel,
-}: {
-  open: boolean
-  title: string
-  message: string
-  confirmLabel?: string
-  onConfirm: () => void
-  onCancel: () => void
-}) {
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => { setMounted(true) }, [])
-  if (!mounted || !open) return null
-
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-[2px] px-6"
-      onClick={onCancel}
-    >
-      <div
-        role="alertdialog"
-        aria-modal="true"
-        onClick={ev => ev.stopPropagation()}
-        className="w-full max-w-sm rounded-2xl bg-[#141414] border border-white/10 p-5 shadow-2xl"
-      >
-        <h3 className="text-sm font-bold text-white">{title}</h3>
-        <p className="text-sm text-white/60 mt-2">{message}</p>
-        <div className="flex items-center justify-end gap-2 mt-5">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="text-xs px-4 py-2 rounded-lg font-semibold text-white/60 border border-white/10 hover:border-white/25 hover:text-white transition-colors"
-          >
-            Cancelar
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            className="text-xs px-4 py-2 rounded-lg font-semibold text-white transition-colors"
-            style={{ background: '#ff7a00' }}
-          >
-            {confirmLabel}
-          </button>
-        </div>
-      </div>
-    </div>,
-    document.body
-  )
-}
-
-function Badge({ children, color }: { children: React.ReactNode; color: string }) {
-  return <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${color}`}>{children}</span>
-}
-
-const inputClass = 'w-full bg-[#0f0f0f] border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500/30 disabled:opacity-50'
-
-function TrialClassModal({
-  studentName, instructors, onCancel, onSchedule,
-}: {
-  studentName: string
-  instructors: { id: string; name: string }[]
-  onCancel: () => void
-  onSchedule: (date: string, time: string, instructorId: string) => Promise<string | void>
-}) {
-  const [mounted, setMounted]         = useState(false)
-  const [date, setDate]               = useState('')
-  const [time, setTime]               = useState('')
-  const [instructorId, setInstructorId] = useState('')
-  const [submitting, setSubmitting]   = useState(false)
-  const [error, setError]             = useState<string | null>(null)
-
-  useEffect(() => { setMounted(true) }, [])
-  if (!mounted) return null
-
-  async function handleSubmit(ev: React.FormEvent) {
-    ev.preventDefault()
-    if (!date || !time || !instructorId) { setError('Completa fecha, hora e instructor.'); return }
-    setSubmitting(true); setError(null)
-    const err = await onSchedule(date, time, instructorId)
-    setSubmitting(false)
-    if (err) setError(err)
-  }
-
-  return createPortal(
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-[2px] px-6" onClick={onCancel}>
-      <form
-        onClick={ev => ev.stopPropagation()}
-        onSubmit={handleSubmit}
-        className="w-full max-w-sm rounded-2xl bg-[#141414] border border-white/10 p-5 shadow-2xl space-y-3"
-      >
-        <div>
-          <h3 className="text-sm font-bold text-white">Agendar clase de prueba</h3>
-          <p className="text-xs text-white/40 mt-0.5">{studentName} · primera sesión de reconocimiento</p>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs text-white/50 mb-1.5">Fecha *</label>
-            <input type="date" required disabled={submitting} value={date} onChange={e => setDate(e.target.value)} className={inputClass} />
-          </div>
-          <div>
-            <label className="block text-xs text-white/50 mb-1.5">Hora *</label>
-            <input type="time" required disabled={submitting} value={time} onChange={e => setTime(e.target.value)} className={inputClass} />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-xs text-white/50 mb-1.5">Instructor *</label>
-          <PopupSelect
-            value={instructorId}
-            onChange={setInstructorId}
-            placeholder="Selecciona un instructor"
-            options={instructors.map(i => ({ value: i.id, label: i.name }))}
-          />
-        </div>
-
-        {error && <p className="text-red-400 text-xs">{error}</p>}
-
-        <div className="flex items-center justify-end gap-2 pt-1">
-          <button type="button" onClick={onCancel} disabled={submitting} className="text-xs px-4 py-2 rounded-lg font-semibold text-white/60 border border-white/10 hover:border-white/25 hover:text-white transition-colors">
-            Cancelar
-          </button>
-          <button type="submit" disabled={submitting} className="text-xs px-4 py-2 rounded-lg font-semibold text-white transition-colors disabled:opacity-50" style={{ background: '#ff7a00' }}>
-            {submitting ? 'Agendando…' : 'Agendar'}
-          </button>
-        </div>
-      </form>
-    </div>,
     document.body
   )
 }

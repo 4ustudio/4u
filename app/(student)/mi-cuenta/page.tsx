@@ -20,6 +20,7 @@ import { InstrumentIcon } from './_components/instruments'
 import { statusMeta } from './_components/statusMeta'
 import BirthdayBenefitCard from './_components/BirthdayBenefitCard'
 import DocumentsSection from './_components/DocumentsSection'
+import TrialClassNotes from './_components/TrialClassNotes'
 import { getBirthdayBenefitStatus, isBirthdayMonth } from '@/lib/students/birthday'
 import { ACADEMY } from '@/lib/constants'
 import { getHolidayMap } from '@/lib/calendar/colombia-holidays'
@@ -189,7 +190,7 @@ function StudentDashboard({ data, monthSessions, user, monthLabel, now, access }
 }
 
 function InstructorDashboard({ data, user, monthLabel, now }: any) {
-  const { instructor, students = [], sessions, availability, upcoming, cancelled, stats, blocksCount, lastModification, availabilitySummary, quickActionData, allCourses, myCourseIds } = data
+  const { instructor, students = [], sessions, availability, upcoming, cancelled, stats, blocksCount, lastModification, availabilitySummary, quickActionData, allCourses, myCourseIds, trialClasses = [] } = data
   const avatarUrl = (user.user_metadata?.avatar_url as string | undefined) ?? null
   const name = instructor.name ?? user.user_metadata?.name ?? 'Instructor 4U'
   const initials = (name[0] ?? 'I').toUpperCase()
@@ -325,6 +326,31 @@ function InstructorDashboard({ data, user, monthLabel, now }: any) {
               </div>
             )}
           </section>
+
+          {/* Clases de prueba */}
+          {trialClasses.length > 0 && (
+            <section id="clases-prueba" className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+              <SectionTitle
+                title="Clases de prueba"
+                subtitle="Deja observaciones de lo notado en la primera sesión."
+              />
+              <div className="mt-4 space-y-3">
+                {trialClasses.map((t: any) => (
+                  <div key={t.id} className="rounded-xl border border-gray-100 p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="font-semibold text-gray-900 text-sm truncate">{t.student_name}</p>
+                      <p className="text-xs text-gray-400 shrink-0">
+                        {fechaCorta(t.trial_date)} {t.trial_time?.slice(0, 5)}
+                      </p>
+                    </div>
+                    <div className="mt-2">
+                      <TrialClassNotes enrollmentId={t.id} initialNotes={t.trial_notes ?? null} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* Disponibilidad */}
           <section id="disponibilidad">

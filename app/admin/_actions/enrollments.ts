@@ -195,6 +195,21 @@ export async function saveInternalNotes(
   return {}
 }
 
+export async function saveTrialNotesAction(
+  enrollmentId: string,
+  notes: string
+): Promise<{ error?: string }> {
+  const { error } = await createAdminClient()
+    .from('enrollments')
+    .update({ trial_notes: notes || null })
+    .eq('id', enrollmentId)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/admin/leads')
+  return {}
+}
+
 export async function updateEnrollmentFieldsAction(
   enrollmentId: string,
   fields: {

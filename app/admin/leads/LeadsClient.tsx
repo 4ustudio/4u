@@ -14,6 +14,7 @@ import {
   updateEnrollmentStatusAction,
   addEnrollmentEvent,
   saveInternalNotes,
+  saveTrialNotesAction,
   convertEnrollmentToStudent,
   updateEnrollmentFieldsAction,
   scheduleTrialClassAction,
@@ -256,6 +257,9 @@ function LeadDrawer({
   notesText,
   savingNotes,
   notesSaved,
+  trialNotesText,
+  savingTrialNotes,
+  trialNotesSaved,
   converting,
   convertedStudentId,
   convertError,
@@ -264,6 +268,8 @@ function LeadDrawer({
   onQuickAction,
   onNotesChange,
   onSaveNotes,
+  onTrialNotesChange,
+  onSaveTrialNotes,
   onConvert,
   onUpdateSource,
   onUpdateFollowup,
@@ -278,6 +284,9 @@ function LeadDrawer({
   notesText: string
   savingNotes: boolean
   notesSaved: boolean
+  trialNotesText: string
+  savingTrialNotes: boolean
+  trialNotesSaved: boolean
   converting: boolean
   convertedStudentId: string | null
   convertError: string | null
@@ -286,6 +295,8 @@ function LeadDrawer({
   onQuickAction: (type: 'whatsapp_sent' | 'called' | 'email_sent', desc: string, href: string) => void
   onNotesChange: (v: string) => void
   onSaveNotes: () => void
+  onTrialNotesChange: (v: string) => void
+  onSaveTrialNotes: () => void
   onConvert: () => void
   onUpdateSource: (source: string) => void
   onUpdateFollowup: (date: string) => void
@@ -507,6 +518,34 @@ function LeadDrawer({
                           {col.label}
                         </button>
                       ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* Observaciones de la clase de prueba */}
+                {e.trial_date && (
+                  <section>
+                    <p className="text-[10px] uppercase tracking-widest text-white/25 font-semibold mb-3">Observaciones clase de prueba</p>
+                    <textarea
+                      value={trialNotesText}
+                      onChange={ev => onTrialNotesChange(ev.target.value)}
+                      rows={3}
+                      placeholder="Qué se notó en la primera sesión: nivel, actitud, disponibilidad…"
+                      className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-3 text-white/80 text-sm placeholder:text-white/20 focus:outline-none focus:ring-1 focus:ring-orange-500/40 focus:border-orange-500/30 resize-none transition-all leading-relaxed"
+                    />
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="text-[11px] text-white/20">También editable por el instructor</span>
+                      <button
+                        onClick={onSaveTrialNotes}
+                        disabled={savingTrialNotes}
+                        className={`text-xs px-4 py-1.5 rounded-lg font-semibold transition-all disabled:opacity-50 ${
+                          trialNotesSaved
+                            ? 'bg-green-500/15 text-green-400 border border-green-500/25'
+                            : 'text-white/70 border border-white/15 hover:border-white/30 hover:bg-white/5 hover:text-white'
+                        }`}
+                      >
+                        {savingTrialNotes ? 'Guardando…' : trialNotesSaved ? '✓ Guardado' : 'Guardar'}
+                      </button>
                     </div>
                   </section>
                 )}
@@ -858,6 +897,9 @@ export default function LeadsClient({ initialEnrollments, instructors }: { initi
   const [notesText, setNotesText]     = useState('')
   const [savingNotes, setSavingNotes] = useState(false)
   const [notesSaved, setNotesSaved]   = useState(false)
+  const [trialNotesText, setTrialNotesText]     = useState('')
+  const [savingTrialNotes, setSavingTrialNotes] = useState(false)
+  const [trialNotesSaved, setTrialNotesSaved]   = useState(false)
   const [converting, setConverting]   = useState(false)
   const [convertedStudentId, setConvertedStudentId] = useState<string | null>(null)
   const [convertError, setConvertError] = useState<string | null>(null)
@@ -916,6 +958,8 @@ export default function LeadsClient({ initialEnrollments, instructors }: { initi
   useEffect(() => {
     setNotesText(selected?.internal_notes ?? '')
     setNotesSaved(false)
+    setTrialNotesText(selected?.trial_notes ?? '')
+    setTrialNotesSaved(false)
     setConvertError(null)
     setConvertedStudentId(selected?.converted_student_id ?? null)
   }, [selected?.id])
@@ -1014,6 +1058,16 @@ export default function LeadsClient({ initialEnrollments, instructors }: { initi
     if (error) { showFlash('Error al guardar'); return }
     setNotesSaved(true)
     setTimeout(() => setNotesSaved(false), 2000)
+  }
+
+  async function handleSaveTrialNotes() {
+    if (!selected) return
+    setSavingTrialNotes(true)
+    const { error } = await saveTrialNotesAction(selected.id, trialNotesText)
+    setSavingTrialNotes(false)
+    if (error) { showFlash('Error al guardar'); return }
+    setTrialNotesSaved(true)
+    setTimeout(() => setTrialNotesSaved(false), 2000)
   }
 
   function handleConvert() {
@@ -1286,6 +1340,9 @@ export default function LeadsClient({ initialEnrollments, instructors }: { initi
         notesText={notesText}
         savingNotes={savingNotes}
         notesSaved={notesSaved}
+        trialNotesText={trialNotesText}
+        savingTrialNotes={savingTrialNotes}
+        trialNotesSaved={trialNotesSaved}
         converting={converting}
         convertedStudentId={convertedStudentId}
         convertError={convertError}
@@ -1294,6 +1351,8 @@ export default function LeadsClient({ initialEnrollments, instructors }: { initi
         onQuickAction={handleQuickAction}
         onNotesChange={v => { setNotesText(v); setNotesSaved(false) }}
         onSaveNotes={handleSaveNotes}
+        onTrialNotesChange={v => { setTrialNotesText(v); setTrialNotesSaved(false) }}
+        onSaveTrialNotes={handleSaveTrialNotes}
         onConvert={handleConvert}
         onUpdateSource={handleUpdateSource}
         onUpdateFollowup={handleUpdateFollowup}

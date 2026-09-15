@@ -300,6 +300,14 @@ export async function getInstructorDashboardData(userId: string, email?: string 
     adminClient.from('instructor_courses').select('course_id').eq('instructor_id', instructor.id),
   ])
 
+  const { data: trialClasses } = await adminClient
+    .from('enrollments')
+    .select('id, student_name, phone, trial_date, trial_time, trial_notes')
+    .eq('trial_instructor_id', instructor.id)
+    .not('trial_date', 'is', null)
+    .order('trial_date', { ascending: false })
+    .limit(20)
+
   const monthSessions = (sessions ?? []) as any[] // eslint-disable-line @typescript-eslint/no-explicit-any
   const upcoming = monthSessions
     .filter(s => s.scheduled_date >= today && ['pending', 'confirmed'].includes(s.status))
@@ -367,6 +375,7 @@ export async function getInstructorDashboardData(userId: string, email?: string 
     },
     upcoming,
     cancelled,
+    trialClasses: trialClasses ?? [],
     blocksCount: blockCount ?? 0,
     lastModification: lastMod,
     availabilitySummary: {
@@ -1163,6 +1172,34 @@ export async function instructorRegisterAttendanceAction(
 
   revalidatePath('/mi-cuenta')
   return { success: true }
+}
+
+export async function instructorSaveTrialNotesAction(
+  enrollmentId: string,
+  notes: string
+): Promise<{ error?: string }> {
+  const session = await getInstructorFromSession()
+  if (!session) return { error: 'Sesión expirada.' }
+
+  const adminClient = admin()
+  const { data: enrollment } = await adminClient
+    .from('enrollments')
+    .select('trial_instructor_id')
+    .eq('id', enrollmentId)
+    .maybeSingle()
+
+  if (!enrollment) return { error: 'Clase de prueba no encontrada.' }
+  if (enrollment.trial_instructor_id !== session.instructor.id) return { error: 'No autorizado.' }
+
+  const { error } = await adminClient
+    .from('enrollments')
+    .update({ trial_notes: notes || null })
+    .eq('id', enrollmentId)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/mi-cuenta')
+  return {}
 }
 
 // ─── Helpers de sesión para instructor ──────────────────────────────

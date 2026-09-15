@@ -682,6 +682,7 @@ export type Database = {
           terms_version: string | null
           trial_date: string | null
           trial_instructor_id: string | null
+          trial_notes: string | null
           trial_time: string | null
         }
         Insert: {
@@ -720,6 +721,7 @@ export type Database = {
           terms_version?: string | null
           trial_date?: string | null
           trial_instructor_id?: string | null
+          trial_notes?: string | null
           trial_time?: string | null
         }
         Update: {
@@ -758,6 +760,7 @@ export type Database = {
           terms_version?: string | null
           trial_date?: string | null
           trial_instructor_id?: string | null
+          trial_notes?: string | null
           trial_time?: string | null
         }
         Relationships: [

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
@@ -183,6 +184,18 @@ export default function StudentsClient({ initialStudents, kpis }: { initialStude
   const [sortOpen, setSortOpen] = useState(false)
   const [page, setPage]         = useState(1)
   const [perPage, setPerPage]   = useState(10)
+  const [deletedToast, setDeletedToast] = useState(false)
+
+  // Viene de permanentlyDeleteStudentAction (?borrado=1)
+  useEffect(() => {
+    const url = new URL(window.location.href)
+    if (!url.searchParams.has('borrado')) return
+    url.searchParams.delete('borrado')
+    window.history.replaceState(null, '', url)
+    setDeletedToast(true)
+    const t = setTimeout(() => setDeletedToast(false), 3500)
+    return () => clearTimeout(t)
+  }, [])
 
   const filtered = useMemo(() => {
     let list = filter === 'all' ? students : students.filter(s => (s.student_status ?? s.status) === filter)
@@ -563,6 +576,13 @@ export default function StudentsClient({ initialStudents, kpis }: { initialStude
             </div>
           </div>
         </div>
+      )}
+      {deletedToast && createPortal(
+        <div role="status" className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[10000] flex items-center gap-2 rounded-full bg-gray-900 text-white text-xs font-semibold px-4 py-2.5 shadow-lg">
+          <MdCheckCircle className="h-4 w-4 text-green-400" />
+          Estudiante eliminado correctamente.
+        </div>,
+        document.body
       )}
     </div>
   )

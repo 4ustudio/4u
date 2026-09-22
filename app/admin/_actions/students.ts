@@ -711,7 +711,7 @@ export async function permanentlyDeleteStudentAction(
   for (const table of [
     'class_sessions', 'payments', 'campaign_messages', 'reactivation_tasks',
     'retention_alerts', 'student_activity_events', 'student_admin_notes',
-  ]) {
+  ] as const) {
     const { error } = await client.from(table).delete().eq('student_id', id)
     if (error) return { error: `${table}: ${error.message}` }
   }
@@ -720,7 +720,7 @@ export async function permanentlyDeleteStudentAction(
 
   revalidatePath('/admin/students')
   revalidatePath('/admin/reactivacion')
-  redirect('/admin/students')
+  redirect('/admin/students?borrado=1')
 }
 
 export async function setStudentPasswordAction(

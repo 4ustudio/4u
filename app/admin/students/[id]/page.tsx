@@ -8,6 +8,7 @@ import StudentEditForm from './_form'
 import ScheduleSection from './_components/ScheduleSection'
 import GenerateClassesButton from './_components/GenerateClassesButton'
 import DeleteStudentButton from './_components/DeleteStudentButton'
+import PermanentDeleteStudentButton from './_components/PermanentDeleteStudentButton'
 import StudentSessionsPanel from './_components/StudentSessionsPanel'
 import PasswordSection from './_components/PasswordSection'
 import BirthdayBenefitPanel from './_components/BirthdayBenefitPanel'
@@ -279,6 +280,7 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
           <div className="bg-[#0f0f0f] border border-white/10 rounded-xl p-5 space-y-3">
             <h2 className="text-sm font-semibold text-white">Acciones</h2>
             <DeleteStudentButton studentId={id} studentName={student.name} />
+            <PermanentDeleteStudentButton studentId={id} studentName={student.name} />
           </div>
 
           <div className="bg-[#0f0f0f] border border-white/10 rounded-xl p-5">

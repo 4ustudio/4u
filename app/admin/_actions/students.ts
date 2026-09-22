@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { bogotaNoon, bogotaDateStr } from '@/lib/tz'
 import { createAuthServerClient, getAuthUser } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 import type { Student, StudentLifecycleStatus, StudentStatus, StudentType, StudentSchedule, Frequency } from '@/types/admin'
 import { safeRecordStudentActivity } from './retention'
 import { activity, logActivity } from '@/lib/activity'
@@ -693,6 +694,25 @@ export async function deleteStudentAction(
   revalidatePath('/admin/students')
   revalidatePath('/admin/reactivacion')
   return { success: true }
+}
+
+export async function permanentlyDeleteStudentAction(
+  _prev: { error?: string; success?: boolean },
+  formData: FormData
+): Promise<{ error?: string; success?: boolean }> {
+  const authErr = await assertAdmin()
+  if (authErr) return authErr
+
+  const id = formData.get('id') as string
+  if (!id) return { error: 'ID de estudiante requerido.' }
+
+  const client = createAdminClient()
+  const { error } = await client.from('students').delete().eq('id', id)
+  if (error) return { error: error.message }
+
+  revalidatePath('/admin/students')
+  revalidatePath('/admin/reactivacion')
+  redirect('/admin/students')
 }
 
 export async function setStudentPasswordAction(

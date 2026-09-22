@@ -707,6 +707,14 @@ export async function permanentlyDeleteStudentAction(
   if (!id) return { error: 'ID de estudiante requerido.' }
 
   const client = createAdminClient()
+  // Tablas con FK RESTRICT/NO ACTION hacia students: se borran antes (el resto es CASCADE/SET NULL)
+  for (const table of [
+    'class_sessions', 'payments', 'campaign_messages', 'reactivation_tasks',
+    'retention_alerts', 'student_activity_events', 'student_admin_notes',
+  ]) {
+    const { error } = await client.from(table).delete().eq('student_id', id)
+    if (error) return { error: `${table}: ${error.message}` }
+  }
   const { error } = await client.from('students').delete().eq('id', id)
   if (error) return { error: error.message }
 

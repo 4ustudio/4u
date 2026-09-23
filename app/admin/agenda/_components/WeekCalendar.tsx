@@ -12,11 +12,11 @@ import type { Classroom } from './BookSessionModal'
 import type { ViewFilter } from './HybridView'
 
 // Slots por día de la semana
-// ISODOW: 1=Lun…6=Sáb → 10:00–22:00  |  7=Dom → cerrado
+// ISODOW: 1=Lun…6=Sáb → 8:00–22:00  |  7=Dom → cerrado
 function generateSlots(isodow: number): string[] {
   if (isodow === 7) return []
   const slots: string[] = []
-  for (let h = 10; h <= 22; h++) slots.push(`${String(h).padStart(2, '0')}:00`)
+  for (let h = 8; h <= 22; h++) slots.push(`${String(h).padStart(2, '0')}:00`)
   return slots
 }
 
@@ -57,12 +57,14 @@ function getSlotStatus(
   date: string,
   time: string,
   availabilityByDay: Record<string, AvailableSlot[]>
-): 'available' | 'occupied' | 'unknown' {
+): 'available' | 'occupied' | 'no_instructor' | 'unknown' {
   const daySlots = availabilityByDay[date]
   if (!daySlots || daySlots.length === 0) return 'unknown'
   const slotsForTime = daySlots.filter(s => s.slot_time.slice(0, 5) === time)
   if (slotsForTime.length === 0) return 'unknown'
-  return slotsForTime.some(s => s.is_available) ? 'available' : 'occupied'
+  if (slotsForTime.some(s => s.is_available)) return 'available'
+  if (slotsForTime.every(s => !s.has_instructor)) return 'no_instructor'
+  return 'occupied'
 }
 
 interface Props {
@@ -161,6 +163,7 @@ export default function WeekCalendar({ weekStart, sessions, trials, viewFilter, 
       <div className="flex flex-wrap gap-3 mb-3 text-xs text-white/40">
         <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-[#ff7a00]/8 border border-[#ff7a00]/35" />Disponible</span>
         <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-red-900/50 border border-red-900/50" />Ocupado</span>
+        <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-white/5 border border-white/10" />Sin instructor</span>
         <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-green-900/30 border-l-2 border-l-green-400" />Confirmada</span>
         <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-yellow-900/20 border-l-2 border-l-yellow-400" />Pendiente</span>
         <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-sky-900/30 border-l-2 border-dashed border-l-sky-400" />Reconocimiento</span>
@@ -302,6 +305,21 @@ export default function WeekCalendar({ weekStart, sessions, trials, viewFilter, 
                           title="Ocupado — todos los salones están ocupados en este horario"
                         >
                           <span className="text-red-400/40 text-[10px]">Ocupado</span>
+                        </button>
+                      </td>
+                    )
+                  }
+
+                  if (slotStatus === 'no_instructor') {
+                    return (
+                      <td key={dateStr} className="px-1 py-1 border-l border-white/5 align-top">
+                        <button
+                          onClick={() => handleSlotClick(dateStr, slot, isodow, true)}
+                          className="w-full min-h-[52px] rounded border border-white/8 bg-white/[0.02] hover:bg-[#ff7a00]/8 hover:border-[#ff7a00]/25 transition-all group cursor-pointer"
+                          title="Ningún instructor tiene disponibilidad configurada en este horario"
+                        >
+                          <span className="text-white/25 text-[10px] group-hover:hidden">Sin instructor</span>
+                          <span className="text-[#ff7a00]/45 group-hover:text-[#ff7a00]/75 text-lg hidden group-hover:inline transition-colors">+</span>
                         </button>
                       </td>
                     )

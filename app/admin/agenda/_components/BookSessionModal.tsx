@@ -1,9 +1,10 @@
 'use client'
 
 import { useActionState, useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { MdClose } from 'react-icons/md'
 import { useRouter } from 'next/navigation'
-import { bookSessionAction } from '../../_actions/sessions'
+import { bookSessionAction, getAvailableInstructors } from '../../_actions/sessions'
 
 const initial = { error: undefined as string | undefined, success: undefined as boolean | undefined }
 
@@ -30,6 +31,27 @@ export default function BookSessionModal({ date, time, students, courses, classr
   const router = useRouter()
   const [state, action, isPending] = useActionState(bookSessionAction, initial)
   const [selectedClassroomId, setSelectedClassroomId] = useState('')
+  const [mounted, setMounted] = useState(false)
+  const [selectedTime, setSelectedTime] = useState(time)
+  const [selectedInstructorId, setSelectedInstructorId] = useState('')
+  const [availableInstructors, setAvailableInstructors] = useState(instructors)
+  const [loadingInstructors, setLoadingInstructors] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
+
+  useEffect(() => {
+    if (!selectedTime) return
+    let cancelled = false
+    setLoadingInstructors(true)
+    getAvailableInstructors(date, selectedTime)
+      .then(list => {
+        if (cancelled) return
+        setAvailableInstructors(list)
+        setSelectedInstructorId(prev => (list.some(i => i.id === prev) ? prev : ''))
+      })
+      .finally(() => { if (!cancelled) setLoadingInstructors(false) })
+    return () => { cancelled = true }
+  }, [date, selectedTime])
 
   useEffect(() => {
     if (state.success) {
@@ -37,6 +59,8 @@ export default function BookSessionModal({ date, time, students, courses, classr
       onClose()
     }
   }, [state.success, router, onClose])
+
+  if (!mounted) return null
 
   const selectedClassroom = classrooms.find(c => c.id === selectedClassroomId)
   const allowedCourseIds  = selectedClassroom?.classroom_courses.map(cc => cc.course_id)
@@ -48,7 +72,7 @@ export default function BookSessionModal({ date, time, students, courses, classr
     weekday: 'long', day: 'numeric', month: 'long',
   })
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
       <div
         className="w-full max-w-md bg-[#0f0f0f] border border-white/10 rounded-2xl shadow-2xl p-6 space-y-4"
@@ -57,7 +81,7 @@ export default function BookSessionModal({ date, time, students, courses, classr
         <div className="flex items-start justify-between">
           <div>
             <h2 className="text-base font-bold text-white">Crear clase</h2>
-            <p className="text-xs text-white/40 capitalize mt-0.5">{dateLabel} · {time}</p>
+            <p className="text-xs text-white/40 capitalize mt-0.5">{dateLabel} · {selectedTime}</p>
           </div>
           <button onClick={onClose} className="text-white/30 hover:text-white p-1" aria-label="Cerrar">
             <MdClose className="h-5 w-5" aria-hidden="true" />
@@ -65,8 +89,16 @@ export default function BookSessionModal({ date, time, students, courses, classr
         </div>
 
         <form action={action} className="space-y-3">
-          <input type="hidden" name="date"       value={date} />
-          <input type="hidden" name="start_time" value={time} />
+          <input type="hidden" name="date" value={date} />
+
+          <div>
+            <label className="block text-xs text-white/50 mb-1.5">Hora *</label>
+            <input
+              type="time" name="start_time" required disabled={isPending}
+              value={selectedTime} onChange={e => setSelectedTime(e.target.value)}
+              className={inputClass}
+            />
+          </div>
 
           <div>
             <label className="block text-xs text-white/50 mb-1.5">Estudiante *</label>
@@ -97,9 +129,19 @@ export default function BookSessionModal({ date, time, students, courses, classr
             </div>
             <div>
               <label className="block text-xs text-white/50 mb-1.5">Instructor *</label>
-              <select name="instructor_id" required disabled={isPending} className={inputClass + ' appearance-none'} defaultValue="">
-                <option value="" disabled>Selecciona un instructor</option>
-                {instructors.map((i) => (
+              <select
+                name="instructor_id" required disabled={isPending || loadingInstructors}
+                className={inputClass + ' appearance-none'}
+                value={selectedInstructorId} onChange={e => setSelectedInstructorId(e.target.value)}
+              >
+                <option value="" disabled>
+                  {loadingInstructors
+                    ? 'Buscando disponibles…'
+                    : availableInstructors.length
+                      ? 'Selecciona un instructor'
+                      : 'Nadie disponible a esa hora'}
+                </option>
+                {availableInstructors.map((i) => (
                   <option key={i.id} value={i.id}>{i.name}</option>
                 ))}
               </select>
@@ -152,6 +194,7 @@ export default function BookSessionModal({ date, time, students, courses, classr
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

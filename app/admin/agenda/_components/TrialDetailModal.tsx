@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { MdClose, MdEvent, MdPerson, MdMeetingRoom, MdSchool, MdArrowForward } from 'react-icons/md'
@@ -19,6 +20,9 @@ export default function TrialDetailModal({
 }) {
   const router = useRouter()
   const [rescheduling, setRescheduling] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
 
   const dateLabel = new Date(trial.trial_date + 'T12:00:00').toLocaleDateString('es-CO', {
     weekday: 'long', day: 'numeric', month: 'long',
@@ -56,7 +60,9 @@ export default function TrialDetailModal({
     )
   }
 
-  return (
+  if (!mounted) return null
+
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
       <div
         role="dialog"
@@ -120,7 +126,8 @@ export default function TrialDetailModal({
           </Link>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 

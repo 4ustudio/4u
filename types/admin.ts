@@ -166,6 +166,7 @@ export interface AvailableSlot {
   classroom_id: string
   classroom_name: string
   is_available: boolean
+  has_instructor: boolean
 }
 
 export interface Lead {

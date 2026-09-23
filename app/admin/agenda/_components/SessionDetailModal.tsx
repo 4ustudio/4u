@@ -1,6 +1,7 @@
 'use client'
 
 import { useActionState, useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import {
   MdClose, MdCheckCircle, MdCancel, MdCalendarMonth, MdHistory,
@@ -72,6 +73,9 @@ interface Props {
 export default function SessionDetailModal({ session, classrooms, instructors, onClose }: Props) {
   const router   = useRouter()
   const [action, setAction] = useState<Action>(null)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
 
   const [cancelState,     cancelAction,     cancelPending]     = useActionState(cancelSessionAction,        initialCancel)
   const [reschedState,    reschedAction,    reschedPending]    = useActionState(adminRescheduleAction,       initialReschedule)
@@ -99,7 +103,9 @@ export default function SessionDetailModal({ session, classrooms, instructors, o
 
   const toggleAction = (a: Action) => setAction(prev => prev === a ? null : a)
 
-  return (
+  if (!mounted) return null
+
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
       <div
         className="w-full max-w-md bg-[#0f0f0f] border border-white/10 rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
@@ -427,7 +433,8 @@ export default function SessionDetailModal({ session, classrooms, instructors, o
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 

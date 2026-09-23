@@ -2636,6 +2636,7 @@ export type Database = {
         Returns: {
           classroom_id: string
           classroom_name: string
+          has_instructor: boolean
           is_available: boolean
           slot_time: string
         }[]

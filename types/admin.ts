@@ -149,6 +149,7 @@ export interface TrialSession {
   trial_time: string
   trial_instructor_id: string | null
   trial_classroom_id: string | null
+  trial_notes?: string | null
   instructor?: { name: string } | null
   classroom?: { name: string } | null
 }

@@ -458,7 +458,8 @@ export default function HybridView({
         sessions={visibleSessions}
         trials={visibleTrials}
         viewFilter={viewFilter}
-        selectedLead={selectedLead ? { id: selectedLead.id, name: selectedLead.student_name } : undefined}
+        selectedLead={selectedLead ? { id: selectedLead.id, name: selectedLead.student_name, notes: selectedLead.trial_notes } : undefined}
+        leads={leads.map(l => ({ id: l.id, name: l.student_name, notes: l.trial_notes }))}
         blocked={blocked}
         students={students}
         courses={courses}

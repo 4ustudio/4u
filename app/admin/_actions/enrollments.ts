@@ -298,6 +298,7 @@ export async function saveTrialNotesAction(
 
   if (error) return { error: error.message }
 
+  revalidatePath('/admin/agenda')
   revalidatePath('/admin/leads')
   revalidatePath('/admin/interesados')
   return {}

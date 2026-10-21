@@ -64,7 +64,7 @@ async function getPageData(weekStart: string) {
       // enrollments, no en class_sessions, pero ocupan el mismo horario y salón.
       supabase
         .from('enrollments')
-        .select('id, student_name, phone, course_interest, status, trial_date, trial_time, trial_instructor_id, trial_classroom_id, instructor:instructors!enrollments_trial_instructor_id_fkey(name), classroom:classrooms(name)')
+        .select('id, student_name, phone, course_interest, status, trial_date, trial_time, trial_instructor_id, trial_classroom_id, trial_notes, instructor:instructors!enrollments_trial_instructor_id_fkey(name), classroom:classrooms(name)')
         .gte('trial_date', weekStart)
         .lte('trial_date', end)
         .not('trial_date', 'is', null)

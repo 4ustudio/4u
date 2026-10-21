@@ -1,12 +1,14 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
+import { MdEvent, MdPersonSearch } from 'react-icons/md'
 import BookSessionModal from './BookSessionModal'
 import SessionDetailModal from './SessionDetailModal'
 import TrialDetailModal from './TrialDetailModal'
 import TrialClassModal from '../../_components/TrialClassModal'
-import { scheduleTrialClassAction } from '../../_actions/enrollments'
+import { scheduleTrialClassAction, saveTrialNotesAction } from '../../_actions/enrollments'
 import type { ClassSession, AvailableSlot, TrialSession } from '@/types/admin'
 import type { Classroom } from './BookSessionModal'
 import type { ViewFilter } from './HybridView'
@@ -72,7 +74,8 @@ interface Props {
   sessions:          ClassSession[]
   trials:            TrialSession[]
   viewFilter:        ViewFilter
-  selectedLead?:     { id: string; name: string }
+  selectedLead?:     { id: string; name: string; notes?: string | null }
+  leads:             { id: string; name: string; notes?: string | null }[]
   blocked:           any[]
   students:          { id: string; name: string; phone: string }[]
   courses:           { id: string; name: string }[]
@@ -82,10 +85,12 @@ interface Props {
   defaultStudentId?: string
 }
 
-export default function WeekCalendar({ weekStart, sessions, trials, viewFilter, selectedLead, blocked, students, courses, classrooms, instructors, availabilityByDay, defaultStudentId }: Props) {
+export default function WeekCalendar({ weekStart, sessions, trials, viewFilter, selectedLead, leads, blocked, students, courses, classrooms, instructors, availabilityByDay, defaultStudentId }: Props) {
   const router = useRouter()
   const [bookSlot, setBookSlot] = useState<{ date: string; time: string } | null>(null)
   const [trialSlot, setTrialSlot] = useState<{ date: string; time: string } | null>(null)
+  // Hueco tocado sin nadie seleccionado: se elige entre clase regular o de prueba.
+  const [pickSlot, setPickSlot] = useState<{ date: string; time: string } | null>(null)
   const [viewSession, setViewSession] = useState<ClassSession | null>(null)
   const [viewTrial, setViewTrial] = useState<TrialSession | null>(null)
 
@@ -133,8 +138,9 @@ export default function WeekCalendar({ weekStart, sessions, trials, viewFilter, 
   const handleSlotClick = useCallback((date: string, time: string, isodow: number, valid: boolean) => {
     if (!valid) return
     if (selectedLead) setTrialSlot({ date, time })
-    else setBookSlot({ date, time })
-  }, [selectedLead])
+    else if (defaultStudentId) setBookSlot({ date, time })
+    else setPickSlot({ date, time })
+  }, [selectedLead, defaultStudentId])
 
   return (
     <div>
@@ -367,24 +373,68 @@ export default function WeekCalendar({ weekStart, sessions, trials, viewFilter, 
         />
       )}
 
-      {/* Modal: agendar clase de prueba al interesado seleccionado */}
-      {trialSlot && selectedLead && (
+      {/* Popup: elegir tipo de clase para el hueco */}
+      {pickSlot && createPortal(
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-[2px] px-6" onClick={() => setPickSlot(null)}>
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Qué quieres agendar"
+            onClick={e => e.stopPropagation()}
+            className="w-full max-w-xs rounded-2xl bg-[#141414] border border-white/10 p-5 shadow-2xl space-y-3"
+          >
+            <div>
+              <h3 className="text-sm font-bold text-white">¿Qué quieres agendar?</h3>
+              <p className="text-xs text-white/40 mt-0.5 capitalize">{formatDateHeader(pickSlot.date)} · {pickSlot.time}</p>
+            </div>
+            <button
+              onClick={() => { setBookSlot(pickSlot); setPickSlot(null) }}
+              className="w-full flex items-center gap-3 px-3 py-3 rounded-xl border border-white/10 hover:border-[#ff7a00]/40 hover:bg-[#ff7a00]/8 text-left transition-colors"
+            >
+              <MdEvent className="h-5 w-5 text-[#ff7a00] shrink-0" aria-hidden="true" />
+              <span>
+                <span className="block text-sm font-semibold text-white">Clase regular</span>
+                <span className="block text-[11px] text-white/40">Para un estudiante matriculado</span>
+              </span>
+            </button>
+            <button
+              onClick={() => { setTrialSlot(pickSlot); setPickSlot(null) }}
+              className="w-full flex items-center gap-3 px-3 py-3 rounded-xl border border-white/10 hover:border-sky-500/40 hover:bg-sky-500/8 text-left transition-colors"
+            >
+              <MdPersonSearch className="h-5 w-5 text-sky-300 shrink-0" aria-hidden="true" />
+              <span>
+                <span className="block text-sm font-semibold text-white">Clase de prueba</span>
+                <span className="block text-[11px] text-white/40">Para un interesado, con observaciones</span>
+              </span>
+            </button>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Modal: agendar clase de prueba (al interesado seleccionado o a uno elegido) */}
+      {trialSlot && (
         <TrialClassModal
-          studentName={selectedLead.name}
+          studentName={selectedLead?.name}
+          leads={selectedLead ? undefined : leads}
+          withNotes
           instructors={instructors}
           classrooms={classrooms}
-          initial={{ date: trialSlot.date, time: trialSlot.time }}
+          initial={{ date: trialSlot.date, time: trialSlot.time, notes: selectedLead?.notes }}
           reschedule={false}
           onCancel={() => setTrialSlot(null)}
-          onSchedule={async (date, time, instructorId, classroomId) => {
+          onSchedule={async (date, time, instructorId, classroomId, { leadId, notes }) => {
+            const id = selectedLead?.id ?? leadId
             const fd = new FormData()
-            fd.set('id', selectedLead.id)
+            fd.set('id', id)
             fd.set('trial_date', date)
             fd.set('trial_time', time)
             fd.set('instructor_id', instructorId)
             fd.set('classroom_id', classroomId)
             const r = await scheduleTrialClassAction({}, fd)
             if (r.error) return r.error
+            const n = await saveTrialNotesAction(id, notes)
+            if (n.error) return n.error
             setTrialSlot(null)
             router.refresh()
           }}

@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { MdClose, MdEvent, MdPerson, MdMeetingRoom, MdSchool, MdArrowForward } from 'react-icons/md'
-import { scheduleTrialClassAction } from '../../_actions/enrollments'
+import { scheduleTrialClassAction, saveTrialNotesAction } from '../../_actions/enrollments'
 import TrialClassModal from '../../_components/TrialClassModal'
 import WhatsAppButton from '@/components/admin/WhatsAppButton'
 import type { TrialSession } from '@/types/admin'
@@ -28,7 +28,7 @@ export default function TrialDetailModal({
     weekday: 'long', day: 'numeric', month: 'long',
   })
 
-  async function handleReschedule(date: string, time: string, instructorId: string, classroomId: string): Promise<string | void> {
+  async function handleReschedule(date: string, time: string, instructorId: string, classroomId: string, { notes }: { notes: string }): Promise<string | void> {
     const fd = new FormData()
     fd.set('id', trial.id)
     fd.set('trial_date', date)
@@ -37,6 +37,8 @@ export default function TrialDetailModal({
     fd.set('classroom_id', classroomId)
     const r = await scheduleTrialClassAction({}, fd)
     if (r.error) return r.error
+    const n = await saveTrialNotesAction(trial.id, notes)
+    if (n.error) return n.error
     setRescheduling(false)
     onClose()
     router.refresh()
@@ -53,7 +55,9 @@ export default function TrialDetailModal({
           time: trial.trial_time,
           instructorId: trial.trial_instructor_id,
           classroomId: trial.trial_classroom_id,
+          notes: trial.trial_notes,
         }}
+        withNotes
         onCancel={() => setRescheduling(false)}
         onSchedule={handleReschedule}
       />
@@ -95,6 +99,13 @@ export default function TrialDetailModal({
           <Row icon={<MdPerson className="h-4 w-4" aria-hidden="true" />} label="Instructor" value={trial.instructor?.name ?? 'Sin asignar'} />
           <Row icon={<MdMeetingRoom className="h-4 w-4" aria-hidden="true" />} label="Salón" value={trial.classroom?.name ?? 'Sin asignar'} />
         </div>
+
+        {trial.trial_notes && (
+          <div className="px-3 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+            <p className="text-[11px] text-white/35 mb-1">Observaciones</p>
+            <p className="text-sm text-white/75 whitespace-pre-wrap">{trial.trial_notes}</p>
+          </div>
+        )}
 
         <div className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06]">
           <span className="text-sm text-white/70 font-mono truncate">{trial.phone}</span>

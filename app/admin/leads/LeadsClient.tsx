@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import {
   MdArrowForward, MdEvent, MdClose, MdEmail, MdCall, MdPersonAdd, MdRefresh, MdSearch,
-  MdViewKanban, MdViewList, MdExpandMore,
+  MdViewKanban, MdViewList, MdExpandMore, MdEdit, MdCheck,
 } from 'react-icons/md'
 import {
   getEnrollments,
@@ -193,6 +193,7 @@ function LeadDrawer({
   onSaveTrialNotes,
   onConvert,
   onUpdateSource,
+  onRename,
   onUpdateFollowup,
   onUpdateLostReason,
   instructors,
@@ -220,9 +221,24 @@ function LeadDrawer({
   onSaveTrialNotes: () => void
   onConvert: () => void
   onUpdateSource: (source: string) => void
+  onRename: (name: string) => Promise<string | void>
   onUpdateFollowup: (date: string) => void
   onUpdateLostReason: (reason: string) => void
 }) {
+  const [editingName, setEditingName] = useState(false)
+  const [nameDraft, setNameDraft] = useState('')
+  const [nameError, setNameError] = useState<string | null>(null)
+  const [savingName, setSavingName] = useState(false)
+  useEffect(() => { setEditingName(false); setNameError(null) }, [e?.id])
+
+  async function saveName() {
+    setSavingName(true)
+    const err = await onRename(nameDraft)
+    setSavingName(false)
+    if (err) { setNameError(err); return }
+    setEditingName(false); setNameError(null)
+  }
+
   useEffect(() => {
     if (!open) return
     document.body.style.overflow = 'hidden'
@@ -263,11 +279,43 @@ function LeadDrawer({
             <div className="shrink-0 flex items-start justify-between gap-4 px-6 pt-5 pb-4 border-b border-white/[0.07]">
               <div className="min-w-0">
                 <div className="flex items-center gap-2.5 flex-wrap">
-                  <h2 className="text-lg font-bold text-white leading-tight">{e.student_name}</h2>
+                  {editingName ? (
+                    <form onSubmit={ev => { ev.preventDefault(); saveName() }} className="flex items-center gap-1.5">
+                      <input
+                        autoFocus
+                        value={nameDraft}
+                        onChange={ev => setNameDraft(ev.target.value)}
+                        onKeyDown={ev => { if (ev.key === 'Escape') { ev.stopPropagation(); setEditingName(false) } }}
+                        disabled={savingName}
+                        aria-label="Nombre del interesado"
+                        className="bg-[#141414] border border-white/15 rounded-lg px-2.5 py-1 text-base font-bold text-white focus:outline-none focus:ring-2 focus:ring-orange-500/40"
+                      />
+                      <button type="submit" disabled={savingName} aria-label="Guardar nombre" className="p-1.5 rounded-lg text-green-400 hover:bg-white/5 disabled:opacity-50">
+                        {savingName ? <SpinIcon /> : <MdCheck className="h-4 w-4" aria-hidden="true" />}
+                      </button>
+                      <button type="button" onClick={() => setEditingName(false)} aria-label="Cancelar" className="p-1.5 rounded-lg text-white/40 hover:bg-white/5">
+                        <MdClose className="h-4 w-4" aria-hidden="true" />
+                      </button>
+                    </form>
+                  ) : (
+                    <>
+                      <h2 className="text-lg font-bold text-white leading-tight">{e.student_name}</h2>
+                      <button
+                        type="button"
+                        onClick={() => { setNameDraft(e.student_name); setNameError(null); setEditingName(true) }}
+                        aria-label="Editar nombre"
+                        title="Editar nombre"
+                        className="p-1 rounded-md text-white/30 hover:text-white hover:bg-white/5"
+                      >
+                        <MdEdit className="h-4 w-4" aria-hidden="true" />
+                      </button>
+                    </>
+                  )}
                   <span className={`text-[11px] px-2 py-0.5 rounded-full font-semibold border ${PILL[e.status]}`}>
                     {COLUMNS.find(c => c.status === canonicalStatus(e.status))?.label ?? e.status}
                   </span>
                 </div>
+                {nameError && <p className="text-xs text-red-400 mt-1">{nameError}</p>}
                 <p className="text-xs text-white/35 mt-1">{timeAgo(e.created_at)}</p>
                 {e.trial_date && e.trial_time && (
                   <p className="text-xs text-green-400/80 mt-1 flex items-center gap-1">
@@ -808,6 +856,16 @@ export default function LeadsClient({ initialEnrollments, instructors, classroom
     setEnrollments(prev => prev?.map(e => e.id === selected.id ? { ...e, source: value } : e) ?? null)
   }
 
+  async function handleRename(name: string): Promise<string | void> {
+    if (!selected) return
+    const value = name.trim()
+    const r = await updateEnrollmentFieldsAction(selected.id, { student_name: value })
+    if (r.error) return r.error
+    setSelected(prev => prev ? { ...prev, student_name: value } : null)
+    setEnrollments(prev => prev?.map(e => e.id === selected.id ? { ...e, student_name: value } : e) ?? null)
+    showFlash('Nombre actualizado')
+  }
+
   async function handleUpdateFollowup(date: string) {
     if (!selected) return
     const value = date ? `${date}T00:00:00Z` : null
@@ -1061,6 +1119,7 @@ export default function LeadsClient({ initialEnrollments, instructors, classroom
         onSaveTrialNotes={handleSaveTrialNotes}
         onConvert={handleConvert}
         onUpdateSource={handleUpdateSource}
+        onRename={handleRename}
         onUpdateFollowup={handleUpdateFollowup}
         onUpdateLostReason={handleUpdateLostReason}
       />

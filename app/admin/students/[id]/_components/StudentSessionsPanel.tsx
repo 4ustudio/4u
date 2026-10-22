@@ -75,7 +75,7 @@ function QuickDatePicker({ onConfirm, onClose }: { onConfirm: (date: string, tim
           </div>
           <div>
             <label className="block text-xs text-white/50 mb-1.5">Hora *</label>
-            <input type="time" value={time} onChange={(e) => setTime(e.target.value)} step="3600" className={inputClass} />
+            <input type="time" value={time} onChange={(e) => setTime(e.target.value)} className={inputClass} />
           </div>
         </div>
         <button

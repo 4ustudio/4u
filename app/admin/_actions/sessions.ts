@@ -70,13 +70,14 @@ export async function getAvailableSlots(date: string, studentId?: string) {
 
 // Filtra instructores activos a los que fn_instructor_free (la misma regla
 // que usa fn_book_session al guardar) no les pone objeción en ese día/hora.
+// p_admin: el admin puede asignar instructores sin disponibilidad configurada.
 export async function getAvailableInstructors(date: string, startTime: string) {
   const supabase = createAdminClient()
   const { data: instructors } = await supabase.from('instructors').select('id, name').eq('status', 'active')
   if (!instructors?.length) return []
 
   const checks = await Promise.all(
-    instructors.map(i => supabase.rpc('fn_instructor_free', { p_instructor_id: i.id, p_date: date, p_start_time: startTime }))
+    instructors.map(i => supabase.rpc('fn_instructor_free', { p_instructor_id: i.id, p_date: date, p_start_time: startTime, p_exclude_id: null, p_admin: true }))
   )
   return instructors.filter((_, idx) => !checks[idx].error && checks[idx].data === null)
 }

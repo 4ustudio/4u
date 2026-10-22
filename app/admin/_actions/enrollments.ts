@@ -307,6 +307,7 @@ export async function saveTrialNotesAction(
 export async function updateEnrollmentFieldsAction(
   enrollmentId: string,
   fields: {
+    student_name?: string
     source?: string | null
     assigned_to?: string | null
     last_contact_at?: string | null
@@ -314,6 +315,10 @@ export async function updateEnrollmentFieldsAction(
     lost_reason?: string | null
   }
 ): Promise<{ error?: string }> {
+  if (fields.student_name !== undefined) {
+    fields.student_name = fields.student_name.trim()
+    if (!fields.student_name) return { error: 'El nombre no puede estar vacío.' }
+  }
   const { error } = await createAdminClient()
     .from('enrollments')
     .update(fields)
@@ -323,6 +328,7 @@ export async function updateEnrollmentFieldsAction(
   revalidatePath('/admin/enrollments')
   revalidatePath('/admin/leads')
   revalidatePath('/admin/interesados')
+  revalidatePath('/admin/agenda')
   return {}
 }
 

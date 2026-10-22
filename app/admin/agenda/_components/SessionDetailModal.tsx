@@ -294,7 +294,7 @@ export default function SessionDetailModal({ session, classrooms, instructors, o
                 </div>
                 <div>
                   <label className="block text-xs text-white/50 mb-1.5">Nueva hora</label>
-                  <input type="time" name="new_start_time" required defaultValue={session.start_time.slice(0, 5)} disabled={reschedPending} className={inputClass} step="3600" />
+                  <input type="time" name="new_start_time" required defaultValue={session.start_time.slice(0, 5)} disabled={reschedPending} className={inputClass} />
                 </div>
               </div>
               <div>

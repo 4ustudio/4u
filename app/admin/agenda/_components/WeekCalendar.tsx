@@ -22,6 +22,9 @@ function generateSlots(isodow: number): string[] {
   return slots
 }
 
+// Clase que no empieza en punto (ej. 11:30)
+const offHour = (time: string) => time.slice(3, 5) !== '00'
+
 function getIsodow(date: Date): number {
   const d = date.getDay()
   return d === 0 ? 7 : d
@@ -104,10 +107,11 @@ export default function WeekCalendar({ weekStart, sessions, trials, viewFilter, 
   const prevWeek = addDays(weekStart, -7)
   const nextWeek = addDays(weekStart,  7)
 
-  // Índice de sesiones por fecha+hora
+  // Índice de sesiones por fecha+hora. Las filas son por hora en punto: una
+  // clase a las 11:30 se agrupa en la fila de las 11:00 y muestra su hora exacta.
   const sessionsBySlot: Record<string, ClassSession[]> = {}
   for (const s of sessions) {
-    const key = `${s.scheduled_date}|${s.start_time.slice(0, 5)}`
+    const key = `${s.scheduled_date}|${s.start_time.slice(0, 2)}:00`
     if (!sessionsBySlot[key]) sessionsBySlot[key] = []
     sessionsBySlot[key].push(s)
   }
@@ -116,7 +120,7 @@ export default function WeekCalendar({ weekStart, sessions, trials, viewFilter, 
   const trialsBySlot: Record<string, TrialSession[]> = {}
   for (const t of trials) {
     if (!t.trial_date || !t.trial_time) continue
-    const key = `${t.trial_date}|${t.trial_time.slice(0, 5)}`
+    const key = `${t.trial_date}|${t.trial_time.slice(0, 2)}:00`
     if (!trialsBySlot[key]) trialsBySlot[key] = []
     trialsBySlot[key].push(t)
   }
@@ -264,6 +268,7 @@ export default function WeekCalendar({ weekStart, sessions, trials, viewFilter, 
                               }`}
                             >
                               <div className="flex items-center gap-1 mb-0.5">
+                                {offHour(t.trial_time) && <span className="shrink-0 text-[10px] font-bold text-sky-300">{t.trial_time.slice(0, 5)}</span>}
                                 <p className="text-white/90 font-medium truncate text-[11px] flex-1">{t.student_name}</p>
                                 <span className="shrink-0 text-[8px] uppercase tracking-wider font-bold text-sky-300/80">Recon.</span>
                               </div>
@@ -282,6 +287,7 @@ export default function WeekCalendar({ weekStart, sessions, trials, viewFilter, 
                               }`}
                             >
                               <div className="flex items-center gap-1 mb-0.5">
+                                {offHour(s.start_time) && <span className="shrink-0 text-[10px] font-bold text-[#ff7a00]">{s.start_time.slice(0, 5)}</span>}
                                 <p className="text-white/90 font-medium truncate text-[11px] flex-1">
                                   {(s.student as any)?.name ?? '—'}
                                 </p>

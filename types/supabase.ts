@@ -2643,6 +2643,7 @@ export type Database = {
       }
       fn_book_session: {
         Args: {
+          p_admin?: boolean
           p_classroom_id: string
           p_course_id: string
           p_date: string
@@ -2778,7 +2779,7 @@ export type Database = {
         Returns: boolean
       }
       fn_validate_schedule_rules: {
-        Args: { p_date: string; p_start_time: string; p_student_id: string }
+        Args: { p_admin?: boolean; p_date: string; p_start_time: string; p_student_id: string }
         Returns: string
       }
       sync_student_payment_fields: {

@@ -20,7 +20,7 @@ export default function TrialClassModal({
    *  del slot, pero no es un reagendamiento. */
   reschedule?: boolean
   onCancel: () => void
-  onSchedule: (date: string, time: string, instructorId: string, classroomId: string, extra: { leadId: string; notes: string }) => Promise<string | void>
+  onSchedule: (date: string, time: string, instructorId: string, classroomId: string, extra: { leadId: string; notes: string; newLead?: { name: string; phone: string } }) => Promise<string | void>
 }) {
   const isReschedule = reschedule ?? Boolean(initial?.date)
 
@@ -30,6 +30,9 @@ export default function TrialClassModal({
   const [instructorId, setInstructorId] = useState(initial?.instructorId ?? '')
   const [classroomId, setClassroomId]   = useState(initial?.classroomId ?? '')
   const [leadId, setLeadId]             = useState('')
+  const [isNewLead, setIsNewLead]       = useState(false)
+  const [newName, setNewName]           = useState('')
+  const [newPhone, setNewPhone]         = useState('')
   const [notes, setNotes]               = useState(initial?.notes ?? '')
   const [submitting, setSubmitting]     = useState(false)
   const [error, setError]               = useState<string | null>(null)
@@ -39,12 +42,14 @@ export default function TrialClassModal({
 
   async function handleSubmit(ev: React.FormEvent) {
     ev.preventDefault()
-    if (leads && !leadId) { setError('Selecciona el interesado.'); return }
+    if (leads && isNewLead && (!newName.trim() || !newPhone.trim())) { setError('Nombre y WhatsApp son obligatorios.'); return }
+    if (leads && !isNewLead && !leadId) { setError('Selecciona el interesado.'); return }
     if (!date || !time || !instructorId || !classroomId) {
       setError('Completa fecha, hora, instructor y salón.'); return
     }
     setSubmitting(true); setError(null)
-    const err = await onSchedule(date, time, instructorId, classroomId, { leadId, notes: notes.trim() })
+    const newLead = leads && isNewLead ? { name: newName.trim(), phone: newPhone.trim() } : undefined
+    const err = await onSchedule(date, time, instructorId, classroomId, { leadId: newLead ? '' : leadId, notes: notes.trim(), newLead })
     setSubmitting(false)
     if (err) setError(err)
   }
@@ -65,13 +70,30 @@ export default function TrialClassModal({
 
         {leads && (
           <div>
-            <label className="block text-xs text-white/50 mb-1.5">Interesado *</label>
-            <PopupSelect
-              value={leadId}
-              onChange={id => { setLeadId(id); setNotes(leads.find(l => l.id === id)?.notes ?? '') }}
-              placeholder={leads.length ? 'Selecciona un interesado' : 'No hay interesados activos'}
-              options={leads.map(l => ({ value: l.id, label: l.name }))}
-            />
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs text-white/50">Interesado *</label>
+              <button
+                type="button"
+                disabled={submitting}
+                onClick={() => { setIsNewLead(v => !v); setError(null) }}
+                className="text-[11px] font-semibold text-[#ff7a00] hover:underline"
+              >
+                {isNewLead ? 'Elegir existente' : '+ Nuevo interesado'}
+              </button>
+            </div>
+            {isNewLead ? (
+              <div className="grid grid-cols-2 gap-3">
+                <input aria-label="Nombre del interesado" required disabled={submitting} value={newName} onChange={e => setNewName(e.target.value)} placeholder="Nombre" className={inputClass} />
+                <input aria-label="WhatsApp del interesado" type="tel" required disabled={submitting} value={newPhone} onChange={e => setNewPhone(e.target.value)} placeholder="WhatsApp" className={inputClass} />
+              </div>
+            ) : (
+              <PopupSelect
+                value={leadId}
+                onChange={id => { setLeadId(id); setNotes(leads.find(l => l.id === id)?.notes ?? '') }}
+                placeholder={leads.length ? 'Selecciona un interesado' : 'No hay interesados activos'}
+                options={leads.map(l => ({ value: l.id, label: l.name }))}
+              />
+            )}
           </div>
         )}
 

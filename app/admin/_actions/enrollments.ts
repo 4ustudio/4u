@@ -84,7 +84,7 @@ export async function getInterestedLeads(): Promise<{ data: EnrollmentRow[]; err
 export async function createQuickLeadAction(
   _prev: { error?: string; success?: boolean },
   formData: FormData
-): Promise<{ error?: string; success?: boolean }> {
+): Promise<{ error?: string; success?: boolean; id?: string }> {
   const student_name    = (formData.get('student_name') as string)?.trim() || ''
   const phone           = (formData.get('phone') as string)?.trim() || ''
   const course_interest = (formData.get('course_interest') as string)?.trim() || ''
@@ -121,7 +121,7 @@ export async function createQuickLeadAction(
 
   revalidatePath('/admin/interesados')
   revalidatePath('/admin/leads')
-  return { success: true }
+  return { success: true, id: data.id }
 }
 
 export async function getEnrollment(id: string) {

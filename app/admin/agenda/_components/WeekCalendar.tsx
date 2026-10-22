@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { MdEvent, MdPersonSearch } from 'react-icons/md'
@@ -8,7 +8,7 @@ import BookSessionModal from './BookSessionModal'
 import SessionDetailModal from './SessionDetailModal'
 import TrialDetailModal from './TrialDetailModal'
 import TrialClassModal from '../../_components/TrialClassModal'
-import { scheduleTrialClassAction, saveTrialNotesAction } from '../../_actions/enrollments'
+import { scheduleTrialClassAction, saveTrialNotesAction, createQuickLeadAction } from '../../_actions/enrollments'
 import type { ClassSession, AvailableSlot, TrialSession } from '@/types/admin'
 import type { Classroom } from './BookSessionModal'
 import type { ViewFilter } from './HybridView'
@@ -89,6 +89,8 @@ export default function WeekCalendar({ weekStart, sessions, trials, viewFilter, 
   const router = useRouter()
   const [bookSlot, setBookSlot] = useState<{ date: string; time: string } | null>(null)
   const [trialSlot, setTrialSlot] = useState<{ date: string; time: string } | null>(null)
+  // Interesado creado desde el modal: si agendar falla, el reintento no lo duplica.
+  const createdLead = useRef<{ key: string; id: string } | null>(null)
   // Hueco tocado sin nadie seleccionado: se elige entre clase regular o de prueba.
   const [pickSlot, setPickSlot] = useState<{ date: string; time: string } | null>(null)
   const [viewSession, setViewSession] = useState<ClassSession | null>(null)
@@ -423,8 +425,20 @@ export default function WeekCalendar({ weekStart, sessions, trials, viewFilter, 
           initial={{ date: trialSlot.date, time: trialSlot.time, notes: selectedLead?.notes }}
           reschedule={false}
           onCancel={() => setTrialSlot(null)}
-          onSchedule={async (date, time, instructorId, classroomId, { leadId, notes }) => {
-            const id = selectedLead?.id ?? leadId
+          onSchedule={async (date, time, instructorId, classroomId, { leadId, notes, newLead }) => {
+            let id = selectedLead?.id ?? leadId
+            if (newLead) {
+              const key = `${newLead.name}|${newLead.phone}`
+              if (createdLead.current?.key !== key) {
+                const lf = new FormData()
+                lf.set('student_name', newLead.name)
+                lf.set('phone', newLead.phone)
+                const c = await createQuickLeadAction({}, lf)
+                if (c.error || !c.id) return c.error ?? 'No se pudo crear el interesado.'
+                createdLead.current = { key, id: c.id }
+              }
+              id = createdLead.current.id
+            }
             const fd = new FormData()
             fd.set('id', id)
             fd.set('trial_date', date)
@@ -435,6 +449,7 @@ export default function WeekCalendar({ weekStart, sessions, trials, viewFilter, 
             if (r.error) return r.error
             const n = await saveTrialNotesAction(id, notes)
             if (n.error) return n.error
+            createdLead.current = null
             setTrialSlot(null)
             router.refresh()
           }}

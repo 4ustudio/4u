@@ -123,6 +123,7 @@ export async function bookSessionAction(
   const totalOccurrences = Math.min(Math.max(input.repeat_weeks ?? 0, 0), 7) + 1
   const failedDates: string[] = []
   let firstSessionId: string | undefined
+  let firstError: string | undefined
 
   for (let i = 0; i < totalOccurrences; i++) {
     const occurrenceDate = new Date(baseDate)
@@ -137,11 +138,13 @@ export async function bookSessionAction(
       p_start_time:    input.start_time,
       p_instructor_id: input.instructor_id ?? null,
       p_notes:         input.notes ?? null,
+      p_admin:         true,
     })
     const data = rpcData as { success: boolean; error?: string; session_id?: string } | null
 
     if (error || !data?.success) {
       failedDates.push(dateStr)
+      firstError ??= data?.error ?? error?.message
       continue
     }
 
@@ -161,7 +164,7 @@ export async function bookSessionAction(
     })
   }
 
-  if (!firstSessionId) return { error: 'No se pudo crear la clase.' }
+  if (!firstSessionId) return { error: firstError ?? 'No se pudo crear la clase.' }
 
   try {
     const { data: firstSession } = await createAdminClient()

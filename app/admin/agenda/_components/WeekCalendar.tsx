@@ -297,6 +297,17 @@ export default function WeekCalendar({ weekStart, sessions, trials, viewFilter, 
                               </p>
                             </button>
                           ))}
+                          {/* Otro salón libre a esta hora: permite agendar en paralelo */}
+                          {getSlotStatus(dateStr, slot, availabilityByDay) === 'available' && (
+                            <button
+                              onClick={() => handleSlotClick(dateStr, slot, isodow, true)}
+                              className="w-full rounded border border-dashed border-white/8 hover:bg-[#ff7a00]/8 hover:border-[#ff7a00]/25 transition-all cursor-pointer"
+                              title="Agendar en otro salón a esta hora"
+                              aria-label="Agendar en otro salón a esta hora"
+                            >
+                              <span className="text-[#ff7a00]/45 hover:text-[#ff7a00]/75 text-sm">+</span>
+                            </button>
+                          )}
                         </div>
                       </td>
                     )

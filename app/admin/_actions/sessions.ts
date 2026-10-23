@@ -375,7 +375,7 @@ export async function adminRescheduleAction(
       scheduled_date: new_date,
       start_time:     new_start_time + ':00',
       classroom_id:   new_classroom_id,
-      instructor_id:  new_instructor_id,
+      ...(new_instructor_id ? { instructor_id: new_instructor_id } : {}),
       status:         'confirmed',
     })
     .eq('id', session_id)
@@ -387,6 +387,31 @@ export async function adminRescheduleAction(
     new_time: `${new_date} ${new_start_time}`,
     source:   'admin',
   })
+
+  revalidatePath('/admin/agenda')
+  revalidatePath('/admin')
+  return { success: true }
+}
+
+// ─── Asignar / cambiar profesor de una sesión ───────────────────────────────
+
+export async function adminAssignInstructorAction(
+  _prev: { error?: string; success?: boolean },
+  formData: FormData
+): Promise<{ error?: string; success?: boolean }> {
+  const authErr = await assertAdmin()
+  if (authErr) return authErr
+
+  const session_id    = formData.get('session_id') as string
+  const instructor_id = formData.get('instructor_id') as string | null
+  if (!session_id || !instructor_id) return { error: 'Selecciona un profesor.' }
+
+  const { error } = await createAdminClient()
+    .from('class_sessions')
+    .update({ instructor_id })
+    .eq('id', session_id)
+
+  if (error) return { error: error.message }
 
   revalidatePath('/admin/agenda')
   revalidatePath('/admin')

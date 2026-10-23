@@ -5,8 +5,9 @@ import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import {
   MdClose, MdCheckCircle, MdCancel, MdCalendarMonth, MdHistory,
-  MdPersonAdd, MdWarningAmber, MdExpandMore,
+  MdPersonAdd, MdWarningAmber, MdExpandMore, MdPerson,
 } from 'react-icons/md'
+import PopupSelect from '../../_components/PopupSelect'
 import WhatsAppButton from '@/components/admin/WhatsAppButton'
 import {
   cancelSessionAction,
@@ -14,6 +15,7 @@ import {
   adminUpdateStatusAction,
   cancelByInstructorAction,
   updateAttendanceStatusAction,
+  adminAssignInstructorAction,
 } from '../../_actions/sessions'
 import { registerAttendanceAction } from '../../_actions/academic'
 import type { ClassSession, AttendanceStatus } from '@/types/admin'
@@ -61,7 +63,7 @@ const STATUS_COLOR: Record<string, string> = {
   no_show:     'bg-[#141414]      text-white/40   border border-white/10',
 }
 
-type Action = 'attendance' | 'attendance-simple' | 'attendance-confirm' | 'reschedule' | 'cancel' | 'cancel-instructor' | null
+type Action = 'instructor' | 'attendance' | 'attendance-simple' | 'attendance-confirm' | 'reschedule' | 'cancel' | 'cancel-instructor' | null
 
 interface Props {
   session:     ClassSession
@@ -83,13 +85,18 @@ export default function SessionDetailModal({ session, classrooms, instructors, o
   const [instCancelState, instCancelAction, instCancelPending] = useActionState(cancelByInstructorAction,    initialInstCancel)
   const [attendanceState, attendanceAction, attendancePending] = useActionState(updateAttendanceStatusAction, initialAttendance)
   const [regAttendanceState, regAttendanceAction, regAttendancePending] = useActionState(registerAttendanceAction, initialAttendance)
+  const [assignState,     assignAction,     assignPending]     = useActionState(adminAssignInstructorAction, initialStatus)
+  const [instructorId, setInstructorId] = useState(session.instructor_id ?? '')
+  const [reschedClassroom,  setReschedClassroom]  = useState(session.classroom_id ?? '')
+  const [reschedInstructor, setReschedInstructor] = useState(session.instructor_id ?? '')
+  const instructorOptions = instructors.map(i => ({ value: i.id, label: i.name }))
 
   useEffect(() => {
-    if (cancelState.success || reschedState.success || statusState.success || instCancelState.success || attendanceState.success || regAttendanceState.success) {
+    if (cancelState.success || reschedState.success || statusState.success || instCancelState.success || attendanceState.success || regAttendanceState.success || assignState.success) {
       router.refresh()
       onClose()
     }
-  }, [cancelState.success, reschedState.success, statusState.success, instCancelState.success, attendanceState.success, regAttendanceState.success, router, onClose])
+  }, [cancelState.success, reschedState.success, statusState.success, instCancelState.success, attendanceState.success, regAttendanceState.success, assignState.success, router, onClose])
 
   const dateLabel = new Date(session.scheduled_date + 'T12:00:00').toLocaleDateString('es-CO', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
@@ -195,6 +202,31 @@ export default function SessionDetailModal({ session, classrooms, instructors, o
             ¿Qué necesitas hacer?
           </p>
 
+          {/* Acción 0: Asignar / cambiar profesor */}
+          <ActionCard
+            icon={<MdPerson className="h-5 w-5" aria-hidden="true" />}
+            title={session.instructor_id ? 'Cambiar profesor' : 'Asignar profesor'}
+            subtitle="Elegir qué profesor dicta esta clase."
+            open={action === 'instructor'}
+            color="orange"
+            onClick={() => toggleAction('instructor')}
+          >
+            <form action={assignAction} className="space-y-3 pt-1">
+              <input type="hidden" name="session_id" value={session.id} />
+              <input type="hidden" name="instructor_id" value={instructorId} />
+              <PopupSelect value={instructorId} onChange={setInstructorId} options={instructorOptions} placeholder="Seleccionar profesor" />
+              {assignState.error && <p className="text-red-400 text-xs">{assignState.error}</p>}
+              <button
+                type="submit"
+                disabled={assignPending || !instructorId || instructorId === (session.instructor_id ?? '')}
+                className="w-full py-2.5 rounded-lg text-sm font-bold text-white disabled:opacity-50 transition-opacity"
+                style={{ backgroundColor: '#ff7a00' }}
+              >
+                {assignPending ? 'Guardando…' : 'Guardar profesor'}
+              </button>
+            </form>
+          </ActionCard>
+
           {/* Acción 1: Registrar asistencia */}
           <ActionCard
             icon={
@@ -299,17 +331,13 @@ export default function SessionDetailModal({ session, classrooms, instructors, o
               </div>
               <div>
                 <label className="block text-xs text-white/50 mb-1.5">Salón</label>
-                <select name="new_classroom_id" required disabled={reschedPending} className={inputClass + ' appearance-none'} defaultValue={session.classroom_id}>
-                  <option value="" disabled>Seleccionar estudio</option>
-                  {classrooms.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
-                </select>
+                <input type="hidden" name="new_classroom_id" value={reschedClassroom} />
+                <PopupSelect value={reschedClassroom} onChange={setReschedClassroom} options={classrooms.map(r => ({ value: r.id, label: r.name }))} placeholder="Seleccionar estudio" />
               </div>
               <div>
                 <label className="block text-xs text-white/50 mb-1.5">Instructor</label>
-                <select name="new_instructor_id" disabled={reschedPending} className={inputClass + ' appearance-none'} defaultValue={session.instructor_id ?? ''}>
-                  <option value="">Sin asignar</option>
-                  {instructors.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
-                </select>
+                <input type="hidden" name="new_instructor_id" value={reschedInstructor} />
+                <PopupSelect value={reschedInstructor} onChange={setReschedInstructor} options={instructorOptions} placeholder="Seleccionar profesor" />
               </div>
               {reschedState.error && <p className="text-red-400 text-xs">{reschedState.error}</p>}
               <button type="submit" disabled={reschedPending} className="w-full py-2.5 rounded-lg text-sm font-bold text-white disabled:opacity-50 transition-opacity" style={{ backgroundColor: '#ff7a00' }}>

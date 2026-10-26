@@ -5,7 +5,7 @@ import { MdClose } from 'react-icons/md'
 import { getStudentPaymentDefaults, registerPayment } from '../_actions'
 import type { StudentOption, PaymentMethod, StudentPaymentDefaults } from '../_actions'
 import { getBirthdayBenefitStatus } from '@/lib/students/birthday'
-import { PLAN_OPTIONS } from '@/lib/students/plans'
+import { usePlans } from '@/app/admin/planes/usePlans'
 
 const ORANGE = '#ff7a00'
 
@@ -36,6 +36,7 @@ interface Props {
 }
 
 export default function GeneratePaymentModal({ preselectedStudentId, students, onClose, onSuccess }: Props) {
+  const plans = usePlans()
   const [pending, startTransition]       = useTransition()
   const [loading, setLoading]            = useState(false)
   const [error, setError]                = useState<string | null>(null)
@@ -88,7 +89,7 @@ export default function GeneratePaymentModal({ preselectedStudentId, students, o
 
   function handlePlanChange(name: string) {
     setPlanName(name)
-    const plan = PLAN_OPTIONS.find(p => p.name === name)
+    const plan = plans.find(p => p.name === name)
     if (plan?.price) setOriginalAmt(String(plan.price))
   }
 
@@ -215,7 +216,7 @@ export default function GeneratePaymentModal({ preselectedStudentId, students, o
                 className="w-full px-3 py-2 text-sm bg-white/[0.04] border border-white/10 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-orange-500/40"
               >
                 <option value="">Seleccionar…</option>
-                {PLAN_OPTIONS.map(p => <option key={p.name} value={p.name}>{p.label}</option>)}
+                {plans.map(p => <option key={p.name} value={p.name}>{p.label}</option>)}
               </select>
             </div>
             <div>

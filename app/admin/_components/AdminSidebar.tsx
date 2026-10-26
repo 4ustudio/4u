@@ -20,6 +20,7 @@ import {
   MdPersonSearch,
   MdShowChart,
   MdCreditCard,
+  MdSell,
   MdBolt,
   MdBarChart,
   MdClose,
@@ -37,6 +38,7 @@ const Icon = {
   interesados:  <MdPersonSearch className="h-5 w-5" aria-hidden="true" />,
   activity:     <MdShowChart className="h-5 w-5" aria-hidden="true" />,
   pagos:        <MdCreditCard className="h-5 w-5" aria-hidden="true" />,
+  planes:       <MdSell className="h-5 w-5" aria-hidden="true" />,
   automations:  <MdBolt className="h-5 w-5" aria-hidden="true" />,
   metrics:      <MdBarChart className="h-5 w-5" aria-hidden="true" />,
 }
@@ -65,6 +67,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/admin/interesados',       label: 'Interesados',    compactLabel: 'Prospectos',   icon: Icon.interesados,  area: 'executive',  group: 'comercial' },
   { href: '/admin/leads',             label: 'Pipeline',       compactLabel: 'Matrículas',   icon: Icon.leads,        area: 'executive',  group: 'comercial' },
   { href: '/admin/pagos',             label: 'Pagos',          compactLabel: 'Cobros',       icon: Icon.pagos,        area: 'executive',  group: 'comercial' },
+  { href: '/admin/planes',            label: 'Planes',         compactLabel: 'Precios',      icon: Icon.planes,       area: 'executive',  group: 'comercial' },
   { href: '/admin/agenda',            label: 'Clases',         compactLabel: 'Agenda',       icon: Icon.agenda,       area: 'academic',   group: 'academico' },
   { href: '/admin/students',          label: 'Estudiantes',    compactLabel: 'Alumnos',      icon: Icon.students,     area: 'academic',   group: 'academico' },
   { href: '/admin/instructors',       label: 'Instructores',   compactLabel: 'Profesores',   icon: Icon.instructors,  area: 'academic',   group: 'academico' },

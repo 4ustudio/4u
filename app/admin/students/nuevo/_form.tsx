@@ -3,6 +3,7 @@
 import { useActionState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createStudentAction } from '../../_actions/students'
+import { usePlans } from '../../planes/usePlans'
 
 const initial = { error: undefined as string | undefined, success: undefined as boolean | undefined }
 
@@ -11,6 +12,7 @@ const inputClass = 'w-full bg-[#141414] border border-white/10 rounded-lg px-3 p
 export default function NewStudentForm() {
   const router = useRouter()
   const [state, action, isPending] = useActionState(createStudentAction, initial)
+  const plans = usePlans()
 
   if (state.success) {
     router.push('/admin/students')
@@ -149,19 +151,7 @@ export default function NewStudentForm() {
             <label className="block text-xs text-white/50 mb-1.5">Plan escogido</label>
             <select name="plan_name" disabled={isPending} className={inputClass + ' appearance-none'}>
               <option value="">Seleccionar…</option>
-              <optgroup label="Jóvenes y Adultos">
-                <option value="Plan New Talent">Plan New Talent — $1.100.000/mes</option>
-                <option value="Plan Fast Talent">Plan Fast Talent — $1.900.000/mes</option>
-                <option value="Plan Bandas">Plan Bandas — $2.500.000/mes</option>
-                <option value="Plan Artista">Plan Artista — $3.500.000/mes</option>
-                <option value="Plan Artista Premium">Plan Artista Premium — $4.500.000/mes</option>
-                <option value="Plan Profesional">Plan Profesional — Cotización</option>
-                <option value="Plan Corporativo">Plan Corporativo — Cotización</option>
-              </optgroup>
-              <optgroup label="Kids &amp; Teens">
-                <option value="Plan Kids &amp; Teens">Plan Kids &amp; Teens</option>
-                <option value="Plan Premium Kids &amp; Teens">Plan Premium Kids &amp; Teens</option>
-              </optgroup>
+              {plans.map(p => <option key={p.id} value={p.name}>{p.label}</option>)}
             </select>
           </div>
           <div>

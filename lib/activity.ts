@@ -12,6 +12,8 @@ export type ActivityAction =
   | 'payment.bold_link_created'
   | 'payment.bold_webhook_received'
   | 'payment.bold_webhook_failed'
+  | 'payment.deleted'
+  | 'payment.student_changed'
   | 'session.created'
   | 'session.cancelled'
   | 'session.rescheduled'
@@ -60,6 +62,7 @@ const SEVERITY_BY_ACTION: Partial<Record<ActivityAction, Severity>> = {
   'retention.status_changed': 'warning',
   'payment.overdue':               'warning',
   'payment.bold_webhook_failed':   'warning',
+  'payment.deleted':               'warning',
   'whatsapp.message_failed':       'warning',
   'whatsapp.template_rejected':    'warning',
 }

@@ -4,11 +4,11 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { bogotaDateStr } from '@/lib/tz'
 import { getAuthUser } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { activity } from '@/lib/activity'
+import { activity, logActivity } from '@/lib/activity'
 import { getBirthdayBenefitStatus } from '@/lib/students/birthday'
 import { createBoldPaymentLink } from '@/lib/bold/client'
 import { resolveRole, hasAdminAccess } from '@/lib/auth/roles'
-import { planPrice } from '@/lib/students/plans'
+import { getPlans } from '../planes/_actions'
 import { getActorInfo } from '@/lib/auth/actor'
 import { resolvePaymentAlerts } from '../_actions/retention'
 
@@ -724,6 +724,8 @@ export async function generateMonthlyPaymentsForActiveStudents(): Promise<Genera
       .in('student_id', students.map(s => s.id))
 
     const alreadyHas = new Set((existing ?? []).map((p: any) => p.student_id))
+    // Precio por nombre incluyendo planes inactivos: un alumno puede seguir en un plan que ya no se vende
+    const priceByPlan = new Map((await getPlans(true)).map(p => [p.name, p.price]))
 
     let created = 0
     let skipped_existing = 0
@@ -731,7 +733,7 @@ export async function generateMonthlyPaymentsForActiveStudents(): Promise<Genera
 
     for (const s of students) {
       if (alreadyHas.has(s.id)) { skipped_existing++; continue }
-      const price = planPrice(s.plan_name)
+      const price = s.plan_name ? priceByPlan.get(s.plan_name) ?? null : null
       if (!price) { skipped_no_plan.push(s.name); continue }
 
       const res = await createPendingPayment({
@@ -807,5 +809,82 @@ export async function generateBoldCheckout(payment_id: string): Promise<{
     return { url: checkoutUrl, error: null }
   } catch (e) {
     return { url: null, error: String(e) }
+  }
+}
+
+// ── Eliminar / cambiar estudiante ─────────────────────────────────
+
+export async function deletePayment(payment_id: string): Promise<{ error: string | null }> {
+  if (await assertAdmin()) return { error: 'No autorizado.' }
+  try {
+    const actor = await getActorInfo()
+    const admin = createAdminClient()
+    const { data: payment } = await admin.from('payments').select('*, students(name)').eq('id', payment_id).single()
+    if (!payment) return { error: 'Pago no encontrado.' }
+
+    const { error } = await admin.from('payments').delete().eq('id', payment_id)
+    if (error) return { error: error.message }
+
+    await admin.rpc('sync_student_payment_fields', { p_student_id: payment.student_id })
+
+    const { students, ...old_data } = payment as any
+    await logActivity({
+      entity_type: 'payment',
+      entity_id:   payment_id,
+      action:      'payment.deleted',
+      description: `Pago eliminado — ${students?.name ?? '—'} (${payment.period_month}/${payment.period_year})`,
+      old_data,
+      actor_name:    actor?.actor_name,
+      actor_user_id: actor?.actor_user_id,
+      actor_role:    actor?.actor_role,
+      source:        'admin',
+    })
+
+    revalidatePath('/admin/pagos')
+    revalidatePath(`/admin/students/${payment.student_id}`)
+    return { error: null }
+  } catch (e) {
+    return { error: String(e) }
+  }
+}
+
+export async function changePaymentStudent(payment_id: string, student_id: string): Promise<{ error: string | null }> {
+  if (await assertAdmin()) return { error: 'No autorizado.' }
+  try {
+    const actor = await getActorInfo()
+    const admin = createAdminClient()
+    const { data: payment } = await admin.from('payments').select('student_id').eq('id', payment_id).single()
+    if (!payment) return { error: 'Pago no encontrado.' }
+    if (payment.student_id === student_id) return { error: null }
+
+    const { error } = await admin
+      .from('payments')
+      .update({ student_id, updated_at: new Date().toISOString() })
+      .eq('id', payment_id)
+    if (error) return { error: error.message }
+
+    await Promise.all([
+      admin.rpc('sync_student_payment_fields', { p_student_id: payment.student_id }),
+      admin.rpc('sync_student_payment_fields', { p_student_id: student_id }),
+    ])
+
+    await logActivity({
+      entity_type: 'payment',
+      entity_id:   payment_id,
+      action:      'payment.student_changed',
+      old_data:    { student_id: payment.student_id },
+      new_data:    { student_id },
+      actor_name:    actor?.actor_name,
+      actor_user_id: actor?.actor_user_id,
+      actor_role:    actor?.actor_role,
+      source:        'admin',
+    })
+
+    revalidatePath('/admin/pagos')
+    revalidatePath(`/admin/students/${payment.student_id}`)
+    revalidatePath(`/admin/students/${student_id}`)
+    return { error: null }
+  } catch (e) {
+    return { error: String(e) }
   }
 }

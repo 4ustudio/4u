@@ -5,6 +5,7 @@ import { MdClose } from 'react-icons/md'
 import { registerPayment } from '../_actions'
 import type { StudentOption, PaymentType, PaymentMethod } from '../_actions'
 import { getBirthdayBenefitStatus } from '@/lib/students/birthday'
+import { usePlans } from '@/app/admin/planes/usePlans'
 
 const ORANGE = '#ff7a00'
 
@@ -20,18 +21,6 @@ const METHODS: { value: PaymentMethod; label: string }[] = [
   { value: 'daviplata',     label: 'Daviplata' },
   { value: 'tarjeta',       label: 'Tarjeta' },
   { value: 'otro',          label: 'Otro' },
-]
-
-const PLAN_OPTIONS: { name: string; price: number | null; label: string }[] = [
-  { name: 'Plan New Talent',          price: 1100000, label: 'Plan New Talent — $1.100.000/mes' },
-  { name: 'Plan Fast Talent',         price: 1900000, label: 'Plan Fast Talent — $1.900.000/mes' },
-  { name: 'Plan Bandas',              price: 2500000, label: 'Plan Bandas — $2.500.000/mes' },
-  { name: 'Plan Artista',             price: 3500000, label: 'Plan Artista — $3.500.000/mes' },
-  { name: 'Plan Artista Premium',     price: 4500000, label: 'Plan Artista Premium — $4.500.000/mes' },
-  { name: 'Plan Profesional',         price: null,    label: 'Plan Profesional — Cotización personalizada' },
-  { name: 'Plan Corporativo',         price: null,    label: 'Plan Corporativo — Cotización personalizada' },
-  { name: 'Plan Kids & Teens',        price: 1100000, label: 'Plan Kids & Teens — $1.100.000/mes' },
-  { name: 'Plan Premium Kids & Teens',price: 1600000, label: 'Plan Premium Kids & Teens — $1.600.000/mes' },
 ]
 
 const TYPES: { value: PaymentType; label: string }[] = [
@@ -53,6 +42,7 @@ interface Props {
 }
 
 export default function RegisterPaymentModal({ students, onClose, onSuccess }: Props) {
+  const plans = usePlans()
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
@@ -98,7 +88,7 @@ export default function RegisterPaymentModal({ students, onClose, onSuccess }: P
 
   function handlePlanChange(name: string) {
     setPlanName(name)
-    const plan = PLAN_OPTIONS.find(p => p.name === name)
+    const plan = plans.find(p => p.name === name)
     if (plan?.price) setOriginalAmt(String(plan.price))
   }
 
@@ -219,7 +209,7 @@ export default function RegisterPaymentModal({ students, onClose, onSuccess }: P
                 className="w-full px-3 py-2 text-sm bg-white/[0.04] border border-white/10 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-orange-500/40"
               >
                 <option value="">Seleccionar…</option>
-                {PLAN_OPTIONS.map(p => <option key={p.name} value={p.name}>{p.label}</option>)}
+                {plans.map(p => <option key={p.name} value={p.name}>{p.label}</option>)}
               </select>
             </div>
           </div>

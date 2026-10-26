@@ -1375,6 +1375,42 @@ export type Database = {
           },
         ]
       }
+      plans: {
+        Row: {
+          id: string
+          name: string
+          price: number | null
+          duration_months: number | null
+          description: string | null
+          active: boolean
+          sort_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          price?: number | null
+          duration_months?: number | null
+          description?: string | null
+          active?: boolean
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          price?: number | null
+          duration_months?: number | null
+          description?: string | null
+          active?: boolean
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       reactivation_tasks: {
         Row: {
           assigned_to: string | null

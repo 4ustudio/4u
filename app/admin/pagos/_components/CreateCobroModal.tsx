@@ -4,7 +4,7 @@ import { useState, useTransition, useEffect } from 'react'
 import { MdClose, MdLink } from 'react-icons/md'
 import { createPendingPayment, createStudentAndPayment, getStudentPaymentDefaults } from '../_actions'
 import type { StudentOption, EnrollmentOption, StudentPaymentDefaults } from '../_actions'
-import { PLAN_OPTIONS } from '@/lib/students/plans'
+import { usePlans } from '@/app/admin/planes/usePlans'
 
 const ORANGE = '#ff7a00'
 
@@ -28,6 +28,7 @@ interface Props {
 }
 
 export default function CreateCobroModal({ preselectedStudentId, students, enrollments, onClose, onSuccess }: Props) {
+  const plans = usePlans()
   const [pending, startTransition] = useTransition()
   const [loading, setLoading]      = useState(false)
   const [error, setError]          = useState<string | null>(null)
@@ -96,7 +97,7 @@ export default function CreateCobroModal({ preselectedStudentId, students, enrol
 
   function handlePlanChange(name: string) {
     setPlanName(name)
-    const plan = PLAN_OPTIONS.find(p => p.name === name)
+    const plan = plans.find(p => p.name === name)
     if (plan?.price) setOriginalAmt(String(plan.price))
   }
 
@@ -324,7 +325,7 @@ export default function CreateCobroModal({ preselectedStudentId, students, enrol
                 className="w-full px-3 py-2 text-sm bg-white/[0.04] border border-white/10 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-orange-500/40"
               >
                 <option value="">Seleccionar…</option>
-                {PLAN_OPTIONS.map(p => <option key={p.name} value={p.name}>{p.label}</option>)}
+                {plans.map(p => <option key={p.name} value={p.name}>{p.label}</option>)}
               </select>
             </div>
             <div>

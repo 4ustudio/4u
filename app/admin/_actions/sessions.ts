@@ -8,6 +8,7 @@ import { safeRecordStudentActivity } from './retention'
 import { activity } from '@/lib/activity'
 import { resolveRole, hasAcademicAccess } from '@/lib/auth/roles'
 import { sendClassScheduledEmails } from '@/lib/email/class-scheduled'
+import { sendManualClassReminder } from '@/lib/email/class-reminder'
 import { bogotaDateTime, formatBogotaDate, formatBogotaTime } from '@/lib/tz'
 import { getActorInfo } from '@/lib/auth/actor'
 
@@ -29,7 +30,7 @@ export async function getWeekSessions(weekStart: string): Promise<ClassSession[]
     .from('class_sessions')
     .select(`
       *,
-      student:students(name, phone),
+      student:students(name, phone, email),
       classroom:classrooms(name),
       course:courses(name),
       instructor:instructors(name)
@@ -537,4 +538,53 @@ export async function restoreCreditAction(
 
   revalidatePath(`/admin/students/${formData.get('student_id')}`)
   return { success: true, message: restoreResult?.message }
+}
+
+// ─── Recordatorio manual por correo (con invitación de calendario) ───
+// Si el estudiante no tiene correo, `newEmail` es obligatorio y se guarda en su ficha.
+export async function sendClassReminderAction(
+  sessionId: string,
+  newEmail?: string,
+): Promise<{ error?: string; success?: boolean; sentTo?: string }> {
+  const denied = await assertAdmin()
+  if (denied) return denied
+
+  const db = createAdminClient()
+  const { data: ses } = await db
+    .from('class_sessions')
+    .select('student_id, scheduled_date, start_time, attendance_confirmation_token, student:students(name, email), course:courses(name), classroom:classrooms(name), instructor:instructors(name)')
+    .eq('id', sessionId)
+    .single()
+  if (!ses) return { error: 'Clase no encontrada.' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const r = ses as any
+  let email: string | null = r.student?.email?.trim() || null
+
+  if (!email) {
+    const candidate = newEmail?.trim().toLowerCase()
+    if (!candidate) return { error: 'sin_email' }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(candidate)) return { error: 'Correo no válido.' }
+    const { error } = await db.from('students').update({ email: candidate }).eq('id', ses.student_id)
+    if (error) return { error: 'No se pudo guardar el correo.' }
+    email = candidate
+  }
+
+  const sent = await sendManualClassReminder({
+    studentName:  r.student?.name ?? 'Estudiante',
+    studentEmail: email,
+    course:       r.course?.name ?? 'Clase',
+    classroom:    r.classroom?.name ?? '—',
+    instructor:   r.instructor?.name ?? 'Por asignar',
+    dateLabel:    formatBogotaDate(ses.scheduled_date, { weekday: 'long', day: 'numeric', month: 'long' }),
+    timeLabel:    ses.start_time.slice(0, 5),
+    startUtc:     bogotaDateTime(ses.scheduled_date, ses.start_time),
+    confirmUrl:   ses.attendance_confirmation_token
+      ? `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://4ustudioacademy.com'}/confirmar/${ses.attendance_confirmation_token}`
+      : undefined,
+  })
+  if (!sent.ok) return { error: `No se pudo enviar: ${sent.error}` }
+
+  revalidatePath('/admin/agenda')
+  return { success: true, sentTo: email }
 }

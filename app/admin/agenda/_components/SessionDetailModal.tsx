@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import {
   MdClose, MdCheckCircle, MdCancel, MdCalendarMonth, MdHistory,
-  MdPersonAdd, MdWarningAmber, MdExpandMore, MdPerson,
+  MdPersonAdd, MdWarningAmber, MdExpandMore, MdPerson, MdNotificationsActive,
 } from 'react-icons/md'
 import PopupSelect from '../../_components/PopupSelect'
 import WhatsAppButton from '@/components/admin/WhatsAppButton'
@@ -16,6 +16,7 @@ import {
   cancelByInstructorAction,
   updateAttendanceStatusAction,
   adminAssignInstructorAction,
+  sendClassReminderAction,
 } from '../../_actions/sessions'
 import { registerAttendanceAction } from '../../_actions/academic'
 import type { ClassSession, AttendanceStatus } from '@/types/admin'
@@ -63,7 +64,7 @@ const STATUS_COLOR: Record<string, string> = {
   no_show:     'bg-[#141414]      text-white/40   border border-white/10',
 }
 
-type Action = 'instructor' | 'attendance' | 'attendance-simple' | 'attendance-confirm' | 'reschedule' | 'cancel' | 'cancel-instructor' | null
+type Action = 'instructor' | 'attendance' | 'attendance-simple' | 'attendance-confirm' | 'reschedule' | 'cancel' | 'cancel-instructor' | 'reminder' | null
 
 interface Props {
   session:     ClassSession
@@ -89,6 +90,17 @@ export default function SessionDetailModal({ session, classrooms, instructors, o
   const [instructorId, setInstructorId] = useState(session.instructor_id ?? '')
   const [reschedClassroom,  setReschedClassroom]  = useState(session.classroom_id ?? '')
   const [reschedInstructor, setReschedInstructor] = useState(session.instructor_id ?? '')
+  const studentEmail = ((session.student as any)?.email as string | null)?.trim() || null
+  const [reminderEmail, setReminderEmail] = useState('')
+  const [reminderPending, setReminderPending] = useState(false)
+  const [reminderMsg, setReminderMsg] = useState<{ ok: boolean; text: string } | null>(null)
+  async function sendReminder() {
+    setReminderPending(true); setReminderMsg(null)
+    const res = await sendClassReminderAction(session.id, reminderEmail)
+    setReminderPending(false)
+    if (res.success) { setReminderMsg({ ok: true, text: `Recordatorio enviado a ${res.sentTo}.` }); router.refresh() }
+    else setReminderMsg({ ok: false, text: res.error ?? 'Error al enviar.' })
+  }
   const instructorOptions = instructors.map(i => ({ value: i.id, label: i.name }))
 
   useEffect(() => {
@@ -305,6 +317,39 @@ export default function SessionDetailModal({ session, classrooms, instructors, o
               {regAttendanceState.error && <p className="text-red-400 text-xs mt-2">{regAttendanceState.error}</p>}
             </div>
           </ActionCard>
+
+          {/* Recordatorio por correo + calendario */}
+          {isActive && (
+            <ActionCard
+              icon={<MdNotificationsActive className="h-5 w-5" aria-hidden="true" />}
+              title="Enviar recordatorio"
+              subtitle="Correo al estudiante con invitación para su calendario."
+              open={action === 'reminder'}
+              color="orange"
+              onClick={() => toggleAction('reminder')}
+            >
+              <div className="space-y-3 pt-1">
+                {studentEmail ? (
+                  <p className="text-xs text-white/50">Se enviará a <span className="text-white/80">{studentEmail}</span>.</p>
+                ) : (
+                  <div>
+                    <p className="text-xs text-amber-400 mb-1.5">Estudiante sin correo. Agrégalo para poder enviar (se guarda en su ficha).</p>
+                    <input type="email" value={reminderEmail} onChange={e => setReminderEmail(e.target.value)} placeholder="correo@ejemplo.com" disabled={reminderPending} className={inputClass} />
+                  </div>
+                )}
+                {reminderMsg && <p className={`text-xs ${reminderMsg.ok ? 'text-green-400' : 'text-red-400'}`}>{reminderMsg.text}</p>}
+                <button
+                  type="button"
+                  onClick={sendReminder}
+                  disabled={reminderPending || (!studentEmail && !reminderEmail.trim())}
+                  className="w-full py-2.5 rounded-lg text-sm font-bold text-white disabled:opacity-50 transition-opacity"
+                  style={{ backgroundColor: '#ff7a00' }}
+                >
+                  {reminderPending ? 'Enviando…' : studentEmail ? 'Enviar recordatorio' : 'Guardar correo y enviar'}
+                </button>
+              </div>
+            </ActionCard>
+          )}
 
           {/* Acción 2: Cambiar horario */}
           <ActionCard

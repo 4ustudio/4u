@@ -44,7 +44,7 @@ async function getPageData(weekStart: string) {
     Promise.all([
       supabase
         .from('class_sessions')
-        .select('*, student:students(name,phone), course:courses(name), classroom:classrooms(name), instructor:instructors(name)')
+        .select('*, student:students(name,phone,email), course:courses(name), classroom:classrooms(name), instructor:instructors(name)')
         .gte('scheduled_date', weekStart)
         .lte('scheduled_date', end)
         .order('start_time'),

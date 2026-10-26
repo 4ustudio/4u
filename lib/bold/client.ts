@@ -27,7 +27,8 @@ export async function createBoldPaymentLink(params: CreateBoldLinkParams): Promi
       total_amount: Math.round(params.amount),
       tip_amount: 0,
     },
-    reference: params.paymentId,
+    // Bold rechaza referencias repetidas: sufijo único por link (el webhook usa solo los 36 chars del UUID)
+    reference: `${params.paymentId}-${Date.now().toString(36)}`,
     ...(params.description && { description: params.description }),
     ...(params.expiresAt && { expiration_date: params.expiresAt }),
   }

@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
 
   const { type, data } = payload
   const boldPaymentId   = data.payment_id
-  const ourPaymentId    = data.metadata?.reference  // Nuestro payments.id
+  const ourPaymentId    = data.metadata?.reference?.slice(0, 36)  // Nuestro payments.id (UUID; el resto es sufijo)
 
   console.info(`[bold-webhook] Evento=${type} bold_id=${boldPaymentId} ref=${ourPaymentId}`)
 

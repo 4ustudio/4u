@@ -20,6 +20,7 @@ import WhatsAppButton from '@/components/admin/WhatsAppButton'
 import PopupSelect from '../_components/PopupSelect'
 import TrialClassModal from '../_components/TrialClassModal'
 import { ConfirmModal } from '../_components/LeadUI'
+import ExportButtons from '../_components/ExportButtons'
 import { SOURCES, PILL, statusLabel, timeAgo, inputClass } from '../_components/leadConstants'
 
 type Group = 'hoy' | 'proximas' | 'sin_agendar' | 'pasadas'
@@ -126,6 +127,12 @@ export default function InterestedClient({
             {total === 0 ? 'Nadie en seguimiento' : `${total} ${total === 1 ? 'persona' : 'personas'} en seguimiento`}
           </p>
         </div>
+        <ExportButtons
+          title="Estudiantes Interesados"
+          filename="interesados"
+          headers={['Nombre', 'Teléfono', 'Email', 'Curso', 'Estado', 'Fuente', 'Clase de prueba', 'Registrado']}
+          rows={Object.values(grouped).flat().map(l => [l.student_name, l.phone, l.email, l.course_interest, statusLabel(l.status), l.source, l.trial_date ? `${l.trial_date} ${l.trial_time ?? ''}`.trim() : '', l.created_at.slice(0, 10)])}
+        />
         <button
           onClick={() => setNewOpen(true)}
           className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold text-white transition-colors"

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
+import ExportButtons from '../_components/ExportButtons'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -231,6 +232,12 @@ export default function StudentsClient({ initialStudents, kpis }: { initialStude
           <h1 className="text-xl font-bold text-white">Estudiantes</h1>
           <p className="text-sm text-white/40 mt-0.5">Directorio de la academia</p>
         </div>
+        <ExportButtons
+          title="Estudiantes"
+          filename="estudiantes"
+          headers={['Nombre', 'Documento', 'Teléfono', 'Email', 'Ciudad', 'Estado', 'Plan', 'Próximo pago', 'Matriculado']}
+          rows={filtered.map(s => [s.name, [s.document_type, s.document_number].filter(Boolean).join(' '), s.phone, s.email, s.city, STATUS_LABEL[s.student_status ?? s.status], s.plan_name, s.next_payment_due_at?.slice(0, 10), s.enrolled_at?.slice(0, 10)])}
+        />
         <Link
           href="/admin/students/nuevo"
           className="flex items-center gap-2 text-xs font-bold text-white px-4 py-2 rounded-xl transition-all hover:brightness-110"

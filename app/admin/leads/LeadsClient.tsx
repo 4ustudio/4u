@@ -22,11 +22,12 @@ import {
 import type { EnrollmentRow, EnrollmentEvent } from '@/types/enrollment'
 import WhatsAppButton from '@/components/admin/WhatsAppButton'
 import PopupSelect from '../_components/PopupSelect'
+import ExportButtons from '../_components/ExportButtons'
 import TrialClassModal from '../_components/TrialClassModal'
 import { InfoRow, QuickBtn, SpinIcon, Badge, ConfirmModal } from '../_components/LeadUI'
 import {
   SOURCES, LOST_REASONS, COLUMNS, PILL, SOURCE_COLORS, LEVEL_LABELS,
-  hexToRgba, timeAgo, isToday, cleanPhone, canonicalStatus,
+  hexToRgba, timeAgo, isToday, cleanPhone, canonicalStatus, statusLabel,
   type KanbanStatus,
 } from '../_components/leadConstants'
 
@@ -896,6 +897,12 @@ export default function LeadsClient({ initialEnrollments, instructors, classroom
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <ExportButtons
+            title="Leads y Matrículas"
+            filename="pipeline"
+            headers={['Nombre', 'Teléfono', 'Email', 'Curso', 'Estado', 'Fuente', 'Clase de prueba', 'Registrado']}
+            rows={(view === 'lista' ? listaFiltered : columns.flatMap(c => c.items)).map(e => [e.student_name, e.phone, e.email, e.course_interest, statusLabel(e.status), e.source, e.trial_date ? `${e.trial_date} ${e.trial_time ?? ''}`.trim() : '', e.created_at.slice(0, 10)])}
+          />
           <ViewToggle view={view} onChange={setView} />
           <button
             onClick={reload}

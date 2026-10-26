@@ -15,6 +15,7 @@ import GeneratePaymentModal from './_components/GeneratePaymentModal'
 import ApplyDiscountModal from './_components/ApplyDiscountModal'
 import StudentHistoryModal from './_components/StudentHistoryModal'
 import CreateCobroModal from './_components/CreateCobroModal'
+import ExportButtons from '../_components/ExportButtons'
 import { getBirthdayBenefitStatus } from '@/lib/students/birthday'
 import WhatsAppButton from '@/components/admin/WhatsAppButton'
 
@@ -609,6 +610,12 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
           <p className="mt-1 text-sm" style={{ color: TEXT_MUTED }}>Gestión de cobros mensuales</p>
         </div>
         <div className="flex items-center gap-2">
+          <ExportButtons
+            title="Pagos"
+            filename="pagos"
+            headers={['Estudiante', 'Teléfono', 'Periodo', 'Plan', 'Valor', 'Descuento', 'Total', 'Estado', 'Vence', 'Pagado', 'Método']}
+            rows={payments.map(p => [p.student_name, p.student_phone, periodLabel(p.period_year, p.period_month), p.plan_name ?? p.student_plan_name, p.original_amount, p.discount_amount, p.final_amount, p.status, p.due_date, p.paid_at?.slice(0, 10), p.payment_method])}
+          />
           <button
             type="button"
             onClick={handleProcessOverdue}

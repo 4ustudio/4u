@@ -5,9 +5,9 @@ import { createPortal } from 'react-dom'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
   MdClose, MdOpenInNew, MdCode, MdLink, MdMoreVert, MdCheck, MdAdd,
-  MdLocalOffer, MdErrorOutline, MdHistory, MdWarningAmber, MdSearch, MdPersonOutline, MdDeleteOutline,
+  MdLocalOffer, MdErrorOutline, MdHistory, MdWarningAmber, MdSearch, MdEdit, MdDeleteOutline,
 } from 'react-icons/md'
-import { getPayments, markPaymentOverdue, processOverduePayments, generateBoldCheckout, generateMonthlyPaymentsForActiveStudents, deletePayment, changePaymentStudent } from './_actions'
+import { getPayments, markPaymentOverdue, processOverduePayments, generateBoldCheckout, generateMonthlyPaymentsForActiveStudents, deletePayment } from './_actions'
 import type { PaymentWithStudent, PaymentMetrics, BoldMetrics, PaymentTab, StudentOption, EnrollmentOption } from './_actions'
 import { PaymentStatusPill } from './_components/PaymentStatusPill'
 import RegisterPaymentModal from './_components/RegisterPaymentModal'
@@ -15,10 +15,10 @@ import GeneratePaymentModal from './_components/GeneratePaymentModal'
 import ApplyDiscountModal from './_components/ApplyDiscountModal'
 import StudentHistoryModal from './_components/StudentHistoryModal'
 import CreateCobroModal from './_components/CreateCobroModal'
+import EditPaymentModal from './_components/EditPaymentModal'
 import ExportButtons from '../_components/ExportButtons'
 import { getBirthdayBenefitStatus } from '@/lib/students/birthday'
 import WhatsAppButton from '@/components/admin/WhatsAppButton'
-import PopupSelect from '../_components/PopupSelect'
 
 const ORANGE = '#ff7a00'
 const SURFACE = 'var(--adm-surface)'
@@ -293,7 +293,7 @@ function RowActions({
   onDiscount,
   onOverdue,
   onHistory,
-  onChangeStudent,
+  onEdit,
   onDelete,
 }: {
   payment: PaymentWithStudent
@@ -302,7 +302,7 @@ function RowActions({
   onDiscount: () => void
   onOverdue:  () => void
   onHistory:  () => void
-  onChangeStudent: () => void
+  onEdit:     () => void
   onDelete:   () => void
 }) {
   const [open, setOpen] = useState(false)
@@ -417,12 +417,12 @@ function RowActions({
             <div style={{ borderTop: `1px solid ${BORDER}` }} />
             <button
               type="button"
-              onClick={() => { setOpen(false); onChangeStudent() }}
+              onClick={() => { setOpen(false); onEdit() }}
               className="w-full text-left flex items-center gap-2.5 px-4 py-3 text-xs transition-colors"
               style={{ color: TEXT_MUTED }}
             >
-              <MdPersonOutline className="h-3.5 w-3.5" style={{ color: TEXT_FAINT }} />
-              Cambiar estudiante
+              <MdEdit className="h-3.5 w-3.5" style={{ color: TEXT_FAINT }} />
+              Editar
             </button>
             <button
               type="button"
@@ -522,50 +522,6 @@ function ConfirmDelete({ payment, onConfirm, onCancel, pending, error }: {
   )
 }
 
-function ChangeStudentModal({ payment, students, onConfirm, onCancel, pending, error }: {
-  payment: PaymentWithStudent
-  students: StudentOption[]
-  onConfirm: (studentId: string) => void
-  onCancel: () => void
-  pending: boolean
-  error: string | null
-}) {
-  const [studentId, setStudentId] = useState(payment.student_id)
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onCancel} />
-      <div className="relative z-10 w-full max-w-sm bg-[#0f0f0f] border border-white/12 rounded-2xl p-6 space-y-4">
-        <div>
-          <p className="text-sm font-semibold text-white">Cambiar estudiante</p>
-          <p className="text-xs text-white/40 mt-1">{periodLabel(payment.period_year, payment.period_month)} · {formatCOP(payment.final_amount)}</p>
-        </div>
-        <PopupSelect
-          value={studentId}
-          onChange={setStudentId}
-          placeholder="Selecciona un estudiante"
-          options={students.map(s => ({ value: s.id, label: s.phone ? `${s.name} · ${s.phone}` : s.name }))}
-        />
-        {error && <p className="text-xs text-red-400">{error}</p>}
-        <div className="flex gap-3">
-          <button onClick={onCancel} className="flex-1 py-2.5 text-sm font-medium text-white/50 bg-white/5 hover:bg-white/8 rounded-xl transition-colors">
-            Cancelar
-          </button>
-          <button
-            onClick={() => onConfirm(studentId)}
-            disabled={pending || !studentId || studentId === payment.student_id}
-            className="flex-1 py-2.5 text-sm font-bold text-white rounded-xl transition-all disabled:opacity-50"
-            style={{ backgroundColor: ORANGE }}
-          >
-            {pending ? 'Guardando…' : 'Guardar'}
-          </button>
-        </div>
-      </div>
-    </div>,
-    // page-animate usa transform y atrapa position:fixed
-    document.querySelector('[data-admin-theme]') ?? document.body
-  )
-}
-
 function ConfirmGenerateMonth({ onConfirm, onCancel, pending }: {
   onConfirm: () => void
   onCancel: () => void
@@ -641,7 +597,7 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
   const [showCobro, setShowCobro] = useState(false)
   const [boldUrls, setBoldUrls] = useState<Record<string, string>>({})
   const [deleteFor, setDeleteFor] = useState<PaymentWithStudent | null>(null)
-  const [changeFor, setChangeFor] = useState<PaymentWithStudent | null>(null)
+  const [editFor,   setEditFor]   = useState<PaymentWithStudent | null>(null)
   const [editError, setEditError] = useState<string | null>(null)
   const [editPending, startEdit]  = useTransition()
 
@@ -652,17 +608,6 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
       const res = await deletePayment(deleteFor.id)
       if (res.error) { setEditError(res.error); return }
       setDeleteFor(null)
-      reload()
-    })
-  }
-
-  function handleChangeStudent(studentId: string) {
-    if (!changeFor) return
-    setEditError(null)
-    startEdit(async () => {
-      const res = await changePaymentStudent(changeFor.id, studentId)
-      if (res.error) { setEditError(res.error); return }
-      setChangeFor(null)
       reload()
     })
   }
@@ -935,7 +880,7 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
                       onDiscount={() => setDiscountFor(p)}
                       onOverdue={() => setConfirmOverdue(p)}
                       onHistory={() => setHistoryFor({ id: p.student_id, name: p.student_name })}
-                      onChangeStudent={() => { setEditError(null); setChangeFor(p) }}
+                      onEdit={() => setEditFor(p)}
                       onDelete={() => { setEditError(null); setDeleteFor(p) }}
                     />
                   </div>
@@ -988,7 +933,7 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
                       onDiscount={() => setDiscountFor(p)}
                       onOverdue={() => setConfirmOverdue(p)}
                       onHistory={() => setHistoryFor({ id: p.student_id, name: p.student_name })}
-                      onChangeStudent={() => { setEditError(null); setChangeFor(p) }}
+                      onEdit={() => setEditFor(p)}
                       onDelete={() => { setEditError(null); setDeleteFor(p) }}
                     />
                   </div>
@@ -1061,14 +1006,12 @@ export default function PagosClient({ initialPayments, initialTotal, initialMetr
           error={editError}
         />
       )}
-      {changeFor && (
-        <ChangeStudentModal
-          payment={changeFor}
+      {editFor && (
+        <EditPaymentModal
+          payment={editFor}
           students={students}
-          onConfirm={handleChangeStudent}
-          onCancel={() => setChangeFor(null)}
-          pending={editPending}
-          error={editError}
+          onClose={() => setEditFor(null)}
+          onSuccess={reload}
         />
       )}
       {confirmGenMonth && (

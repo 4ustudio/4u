@@ -14,6 +14,7 @@ export type ActivityAction =
   | 'payment.bold_webhook_failed'
   | 'payment.deleted'
   | 'payment.student_changed'
+  | 'payment.updated'
   | 'session.created'
   | 'session.cancelled'
   | 'session.rescheduled'

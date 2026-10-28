@@ -1,7 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
-import { bogotaDateStr } from '@/lib/tz'
+import { bogotaDateStr, bogotaNoon } from '@/lib/tz'
 import { getAuthUser } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { activity, logActivity } from '@/lib/activity'
@@ -848,32 +848,79 @@ export async function deletePayment(payment_id: string): Promise<{ error: string
   }
 }
 
-export async function changePaymentStudent(payment_id: string, student_id: string): Promise<{ error: string | null }> {
+export interface UpdatePaymentInput {
+  student_id: string
+  period_year: number
+  period_month: number
+  payment_type: PaymentType
+  status: PaymentStatus
+  original_amount: number
+  discount_amount: number
+  discount_reason: string | null
+  payment_method: PaymentMethod | null
+  due_date: string
+  paid_at: string | null   // YYYY-MM-DD (Bogotá)
+  plan_name: string | null
+  notes: string | null
+}
+
+export async function updatePayment(payment_id: string, input: UpdatePaymentInput): Promise<{ error: string | null }> {
   if (await assertAdmin()) return { error: 'No autorizado.' }
   try {
     const actor = await getActorInfo()
     const admin = createAdminClient()
-    const { data: payment } = await admin.from('payments').select('student_id').eq('id', payment_id).single()
-    if (!payment) return { error: 'Pago no encontrado.' }
-    if (payment.student_id === student_id) return { error: null }
+    const { data: old } = await admin.from('payments').select('*').eq('id', payment_id).single()
+    if (!old) return { error: 'Pago no encontrado.' }
+
+    if (!input.student_id) return { error: 'Selecciona un estudiante.' }
+    if (input.original_amount < 0 || input.discount_amount < 0) return { error: 'Los valores no pueden ser negativos.' }
+    const final_amount = input.original_amount - input.discount_amount
+    if (final_amount < 0) return { error: 'El descuento supera el valor original.' }
+
+    // Solo pagado/parcial llevan fecha de pago; si falta, se toma hoy
+    const isPaid  = input.status === 'paid' || input.status === 'partial'
+    const paidDay = input.paid_at || bogotaDateStr()
+    const paid_at = !isPaid ? null
+      : old.paid_at && bogotaDateStr(new Date(old.paid_at)) === paidDay ? old.paid_at  // misma fecha: conservar hora real
+      : bogotaNoon(paidDay).toISOString()
+
+    const new_data = {
+      student_id:       input.student_id,
+      period_year:      input.period_year,
+      period_month:     input.period_month,
+      payment_type:     input.payment_type,
+      status:           input.status,
+      original_amount:  input.original_amount,
+      discount_amount:  input.discount_amount,
+      discount_percent: input.original_amount > 0 ? Math.round(input.discount_amount / input.original_amount * 100) : 0,
+      discount_reason:  input.discount_amount > 0 ? input.discount_reason : null,
+      final_amount,
+      payment_method:   input.payment_method,
+      due_date:         input.due_date,
+      paid_at,
+      plan_name:        input.plan_name,
+      notes:            input.notes,
+    }
 
     const { error } = await admin
       .from('payments')
-      .update({ student_id, updated_at: new Date().toISOString() })
+      .update({ ...new_data, updated_at: new Date().toISOString() })
       .eq('id', payment_id)
     if (error) return { error: error.message }
 
-    await Promise.all([
-      admin.rpc('sync_student_payment_fields', { p_student_id: payment.student_id }),
-      admin.rpc('sync_student_payment_fields', { p_student_id: student_id }),
-    ])
+    const studentIds = [...new Set([old.student_id, input.student_id])]
+    await Promise.all(studentIds.map(id => admin.rpc('sync_student_payment_fields', { p_student_id: id })))
+    if (isPaid) await resolvePaymentAlerts(input.student_id)
 
+    // Solo los campos que cambiaron
+    const changed = (Object.keys(new_data) as (keyof typeof new_data)[]).filter(k => String(old[k] ?? '') !== String(new_data[k] ?? ''))
     await logActivity({
       entity_type: 'payment',
       entity_id:   payment_id,
-      action:      'payment.student_changed',
-      old_data:    { student_id: payment.student_id },
-      new_data:    { student_id },
+      action:      'payment.updated',
+      description: `Pago editado (${changed.join(', ') || 'sin cambios'})`,
+      old_data:    Object.fromEntries(changed.map(k => [k, old[k]])),
+      new_data:    Object.fromEntries(changed.map(k => [k, new_data[k]])),
       actor_name:    actor?.actor_name,
       actor_user_id: actor?.actor_user_id,
       actor_role:    actor?.actor_role,
@@ -881,8 +928,7 @@ export async function changePaymentStudent(payment_id: string, student_id: strin
     })
 
     revalidatePath('/admin/pagos')
-    revalidatePath(`/admin/students/${payment.student_id}`)
-    revalidatePath(`/admin/students/${student_id}`)
+    studentIds.forEach(id => revalidatePath(`/admin/students/${id}`))
     return { error: null }
   } catch (e) {
     return { error: String(e) }

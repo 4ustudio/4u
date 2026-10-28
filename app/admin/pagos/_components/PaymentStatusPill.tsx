@@ -9,7 +9,7 @@ const PILL: Record<PaymentStatus, string> = {
   voided:  'bg-white/5 text-white/25 border-white/8',
 }
 
-const LABEL: Record<PaymentStatus, string> = {
+export const LABEL: Record<PaymentStatus, string> = {
   pending: 'Pendiente',
   paid:    'Pagado',
   overdue: 'Vencido',

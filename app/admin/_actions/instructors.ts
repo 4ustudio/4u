@@ -289,28 +289,43 @@ export async function updateInstructorAction(
 export async function deleteInstructorAction(
   instructorId: string,
   email: string
-): Promise<{ error?: string; success?: boolean }> {
+): Promise<{ error?: string; success?: boolean; deactivated?: boolean }> {
   const authErr = await assertAdmin()
   if (authErr) return authErr
 
   const adminClient = createAdminClient()
 
-  // Buscar y borrar usuario auth por email
-  const { data: users } = await createAdminClient().auth.admin.listUsers()
-  const authUser = (users?.users as Array<{ email?: string; id: string }> ?? []).find(u => u.email === email)
-  if (authUser) {
-    await createAdminClient().auth.admin.deleteUser(authUser.id)
+  // class_sessions.instructor_id es NOT NULL sin cascade: el historial impide el borrado físico.
+  const [{ count: futureCount, error: futErr }, { count: totalCount, error: totErr }] = await Promise.all([
+    adminClient.from('class_sessions').select('id', { count: 'exact', head: true })
+      .eq('instructor_id', instructorId)
+      .gte('scheduled_date', bogotaDateStr())
+      .in('status', ['pending', 'confirmed']),
+    adminClient.from('class_sessions').select('id', { count: 'exact', head: true })
+      .eq('instructor_id', instructorId),
+  ])
+  if (futErr || totErr) return { error: (futErr ?? totErr)!.message }
+
+  if (futureCount) {
+    return { error: `Tiene ${futureCount} clase(s) pendientes desde hoy. Reasígnalas o cancélalas antes de eliminarlo.` }
   }
 
-  const { error } = await adminClient
-    .from('instructors')
-    .delete()
-    .eq('id', instructorId)
+  if (totalCount) {
+    // Con historial: se desactiva para conservar asistencia y reportes.
+    const { error } = await adminClient.from('instructors').update({ status: 'inactive' }).eq('id', instructorId)
+    if (error) return { error: error.message }
+  } else {
+    const { error } = await adminClient.from('instructors').delete().eq('id', instructorId)
+    if (error) return { error: error.message }
+  }
 
-  if (error) return { error: error.message }
+  // El acceso se quita solo después de que la BD aceptó el cambio.
+  const { data: users } = await adminClient.auth.admin.listUsers()
+  const authUser = (users?.users as Array<{ email?: string; id: string }> ?? []).find(u => u.email === email)
+  if (authUser) await adminClient.auth.admin.deleteUser(authUser.id)
 
   revalidatePath('/admin/instructors')
   revalidatePath('/agendar')
   updateTag('catalog-instructors')
-  return { success: true }
+  return { success: true, deactivated: !!totalCount }
 }

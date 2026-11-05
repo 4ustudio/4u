@@ -288,8 +288,9 @@ export async function updateInstructorAction(
 
 export async function deleteInstructorAction(
   instructorId: string,
-  email: string
-): Promise<{ error?: string; success?: boolean; deactivated?: boolean }> {
+  email: string,
+  pending?: { mode: 'cancel' } | { mode: 'reassign'; to: string }
+): Promise<{ error?: string; success?: boolean; deactivated?: boolean; pendingCount?: number }> {
   const authErr = await assertAdmin()
   if (authErr) return authErr
 
@@ -307,7 +308,45 @@ export async function deleteInstructorAction(
   if (futErr || totErr) return { error: (futErr ?? totErr)!.message }
 
   if (futureCount) {
-    return { error: `Tiene ${futureCount} clase(s) pendientes desde hoy. Reasígnalas o cancélalas antes de eliminarlo.` }
+    // Sin decisión todavía: el cliente pide confirmar cancelar o reasignar.
+    if (!pending) return { pendingCount: futureCount }
+
+    const { data: future, error: fErr } = await adminClient.from('class_sessions')
+      .select('id, scheduled_date, start_time')
+      .eq('instructor_id', instructorId)
+      .gte('scheduled_date', bogotaDateStr())
+      .in('status', ['pending', 'confirmed'])
+    if (fErr) return { error: fErr.message }
+    const ids = (future ?? []).map(f => f.id)
+
+    if (pending.mode === 'reassign') {
+      if (!pending.to || pending.to === instructorId) return { error: 'Elige otro instructor.' }
+      // Evita doble reserva: el destino no puede tener clase a la misma fecha y hora.
+      const { data: busy, error: bErr } = await adminClient.from('class_sessions')
+        .select('scheduled_date, start_time')
+        .eq('instructor_id', pending.to)
+        .gte('scheduled_date', bogotaDateStr())
+        .in('status', ['pending', 'confirmed'])
+      if (bErr) return { error: bErr.message }
+      const taken = new Set((busy ?? []).map(b => `${b.scheduled_date} ${b.start_time}`))
+      const clashes = (future ?? []).filter(f => taken.has(`${f.scheduled_date} ${f.start_time}`)).length
+      if (clashes) return { error: `El instructor elegido ya tiene ${clashes} clase(s) a la misma hora. Elige otro o cancélalas.` }
+
+      const { error } = await adminClient.from('class_sessions').update({ instructor_id: pending.to }).in('id', ids)
+      if (error) return { error: error.message }
+      // Los horarios fijos también pasan al nuevo instructor para que no generen clases huérfanas.
+      const { error: sErr } = await adminClient.from('student_schedules')
+        .update({ instructor_id: pending.to }).eq('instructor_id', instructorId).eq('status', 'active')
+      if (sErr) return { error: sErr.message }
+    } else {
+      const { error } = await adminClient.from('class_sessions').update({
+        status: 'cancelled',
+        cancelled_at: new Date().toISOString(),
+        cancelled_by: 'admin',
+        cancellation_reason: 'Instructor eliminado',
+      }).in('id', ids)
+      if (error) return { error: error.message }
+    }
   }
 
   if (totalCount) {

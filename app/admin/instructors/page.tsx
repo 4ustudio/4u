@@ -96,7 +96,7 @@ export default async function InstructorsPage() {
                       >
                         Editar
                       </Link>
-                      <DeleteInstructorButton id={inst.id} email={inst.email} name={inst.name} />
+                      <DeleteInstructorButton id={inst.id} email={inst.email} name={inst.name} others={instructors.filter(o => o.id !== inst.id && o.status !== 'inactive').map(o => ({ id: o.id, name: o.name }))} />
                     </div>
                   </td>
                 </tr>
@@ -148,7 +148,7 @@ export default async function InstructorsPage() {
                 >
                   Editar
                 </Link>
-                <DeleteInstructorButton id={inst.id} email={inst.email} name={inst.name} />
+                <DeleteInstructorButton id={inst.id} email={inst.email} name={inst.name} others={instructors.filter(o => o.id !== inst.id && o.status !== 'inactive').map(o => ({ id: o.id, name: o.name }))} />
               </div>
             </div>
           ))}
